@@ -3,6 +3,7 @@ import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
+import { CartDrawer } from '@/components/CartDrawer';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -135,6 +136,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Nav />
         <main>{children}</main>
         <Footer />
+        {/* Global slide-in cart drawer — opens whenever the cart store's
+            isDrawerOpen flips true (e.g. after any "Add to cart"). */}
+        <CartDrawer />
       </body>
     </html>
   );

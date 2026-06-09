@@ -64,8 +64,6 @@ const ACCENT_COLORS = {
   emerald: { bg: 'rgba(74,139,110,0.12)', text: '#4A8B6E', border: 'rgba(74,139,110,0.30)' },
 } as const;
 
-const MAX_COMPARE = 3;
-
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
@@ -92,26 +90,21 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
   const [selectedFamily, setSelectedFamily] = useState<Family | 'all'>('all');
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [subscribeMode, setSubscribeMode] = useState(false);
-  const [compareList, setCompareList] = useState<string[]>([]);
-  const [compareOpen, setCompareOpen] = useState(false);
   const [quickViewHandle, setQuickViewHandle] = useState<string | null>(null);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
-  // Brief confirmation flash after bulk-add. Auto-clears after 2s.
-  const [addedFlash, setAddedFlash] = useState<{ count: number; cents: number } | null>(null);
 
   const addToCart = useCart((s) => s.add);
 
-  // Lock body scroll when modal/drawer is open
+  // Lock body scroll only when the quick-view modal is open. The cart
+  // drawer manages its own scroll lock via the cart store.
   useEffect(() => {
-    const shouldLock = quickViewHandle !== null || compareOpen;
-    if (shouldLock) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = original;
-      };
-    }
-  }, [quickViewHandle, compareOpen]);
+    if (quickViewHandle === null) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [quickViewHandle]);
 
   const filtered = useMemo(() => {
     if (selectedFamily === 'all') return products;
@@ -142,56 +135,30 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
     ? products.find((p) => p.product.handle === quickViewHandle)?.product
     : null;
 
-  const comparedProducts = compareList
-    .map((h) => products.find((p) => p.product.handle === h))
-    .filter(Boolean) as EnrichedProduct[];
-
-  function toggleCompare(handle: string) {
-    setCompareList((curr) => {
-      if (curr.includes(handle)) return curr.filter((h) => h !== handle);
-      if (curr.length >= MAX_COMPARE) return curr;
-      return [...curr, handle];
-    });
+  // Per-card add-to-cart handler. Uses subscribe pricing if the catalog-
+  // level Subscribe toggle is on, otherwise the Single bundle. The cart
+  // store auto-opens the slide-in drawer after every successful add, so
+  // there's no separate toast UI.
+  function handleAddToCart(product: Product) {
+    const bundle = subscribeMode
+      ? product.bundles?.find((b) => b.label.toLowerCase().includes('subscribe'))
+        ?? product.bundles?.[0]
+        ?? { label: 'Single', vials: 1, priceCents: product.priceCents }
+      : product.bundles?.[0]
+        ?? { label: 'Single', vials: 1, priceCents: product.priceCents };
+    const unitCents = subscribeMode && bundle.vials > 0
+      ? Math.round(bundle.priceCents / bundle.vials)
+      : bundle.priceCents;
+    addToCart(
+      {
+        handle: product.handle,
+        title: product.title,
+        bundleLabel: subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label,
+        unitCents,
+      },
+      1,
+    );
   }
-
-  // Bulk add: drops every checked product into the cart at its Single
-  // bundle (or subscribe-bundle pricing if Subscribe toggle is on),
-  // qty 1 each. Clears the selection + closes the compare drawer.
-  function handleAddAllToCart() {
-    if (comparedProducts.length === 0) return;
-    let totalCents = 0;
-    comparedProducts.forEach(({ product }) => {
-      const bundle = subscribeMode
-        ? product.bundles?.find((b) => b.label.toLowerCase().includes('subscribe'))
-          ?? product.bundles?.[0]
-          ?? { label: 'Single', vials: 1, priceCents: product.priceCents }
-        : product.bundles?.[0]
-          ?? { label: 'Single', vials: 1, priceCents: product.priceCents };
-      const unitCents = subscribeMode && bundle.vials > 0
-        ? Math.round(bundle.priceCents / bundle.vials)
-        : bundle.priceCents;
-      addToCart(
-        {
-          handle: product.handle,
-          title: product.title,
-          bundleLabel: subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label,
-          unitCents,
-        },
-        1,
-      );
-      totalCents += unitCents;
-    });
-    setAddedFlash({ count: comparedProducts.length, cents: totalCents });
-    setCompareList([]);
-    setCompareOpen(false);
-  }
-
-  // Auto-clear the added-to-cart confirmation flash after 2.5s.
-  useEffect(() => {
-    if (!addedFlash) return;
-    const t = setTimeout(() => setAddedFlash(null), 2500);
-    return () => clearTimeout(t);
-  }, [addedFlash]);
 
   return (
     <main className="bg-cream min-h-screen">
@@ -306,21 +273,6 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
         </div>
       </div>
 
-      {/* Discoverability hint — sits between the sticky filter strip and
-          the first product row. Fades out once the user has selected
-          anything (they've learned the pattern). */}
-      {compareList.length === 0 && (
-        <div className="px-6 lg:px-12 pt-4 pb-1 max-w-[1400px] mx-auto">
-          <p className="inline-flex items-center gap-2 text-[11px] text-ink-soft">
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cobalt/10 border border-cobalt/20 text-cobalt font-bold text-[10px] tracking-[0.08em] uppercase">
-              <span className="w-3 h-3 rounded-sm border border-cobalt/50" />
-              Select
-            </span>
-            <span>Tap on any card to add multiple to cart or compare side-by-side.</span>
-          </p>
-        </div>
-      )}
-
       {/* ═══════════════ MAIN GRID ═══════════════ */}
       <div className="px-6 lg:px-12 py-6 lg:py-10 max-w-[1400px] mx-auto">
         {/* Product grid with editorial breaks interspersed */}
@@ -328,8 +280,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
           products={sorted}
           stacks={stacks}
           subscribeMode={subscribeMode}
-          compareList={compareList}
-          onToggleCompare={toggleCompare}
+          onAddToCart={handleAddToCart}
           onQuickView={setQuickViewHandle}
           showStacksAt={6}
           showSupportAt={12}
@@ -408,97 +359,6 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
         </div>
       </div>
 
-      {/* ═══════════════ SELECTION FAB — two-action pill ═══════════════
-          Floats above the sticky trust footer. Left section: count.
-          Middle: primary cobalt "Add to cart". Right: outline "Compare".
-          Both actions operate on the same checkbox selection set. */}
-      {compareList.length > 0 && (
-        <div
-          className="fixed bottom-16 right-3 left-3 sm:left-auto lg:bottom-20 lg:right-12 z-30 flex items-stretch bg-ink text-white rounded-full shadow-2xl overflow-hidden border border-white/10"
-        >
-          {/* Count badge */}
-          <div className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 border-r border-white/10 whitespace-nowrap">
-            <span className="font-display text-base sm:text-lg font-black leading-none">
-              {compareList.length}
-            </span>
-            <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-white/70 font-bold leading-tight">
-              selected
-            </span>
-          </div>
-
-          {/* Add to cart — primary action */}
-          <button
-            type="button"
-            onClick={handleAddAllToCart}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 sm:py-3 bg-cobalt hover:bg-cobalt/85 transition font-bold text-[12px] sm:text-sm whitespace-nowrap"
-            aria-label={`Add ${compareList.length} selected to cart`}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
-            Add to cart
-          </button>
-
-          {/* Compare — secondary action */}
-          <button
-            type="button"
-            onClick={() => setCompareOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-white/8 transition font-bold text-[12px] sm:text-sm border-l border-white/10 whitespace-nowrap"
-            aria-label={`Compare ${compareList.length} selected`}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-              <line x1="14" y1="17.5" x2="21" y2="17.5" strokeLinecap="round" />
-              <line x1="17.5" y1="14" x2="17.5" y2="21" strokeLinecap="round" />
-            </svg>
-            Compare
-            <span className="hidden sm:inline text-white/60 font-semibold">
-              {compareList.length}/{MAX_COMPARE}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* ═══════════════ ADDED-TO-CART TOAST ═══════════════
-          Floats top-center for ~2.5s after a bulk add. Cobalt for
-          on-brand confirmation; auto-dismisses via the effect above. */}
-      {addedFlash && (
-        <div
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-cobalt text-white px-5 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 animate-[slideDown_0.25s_ease-out]"
-          role="status"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          {addedFlash.count} added to cart · {money(addedFlash.cents)}
-          <Link
-            href="/cart"
-            className="ml-2 text-[11px] tracking-[0.14em] uppercase font-bold text-white/85 hover:text-white underline-offset-2 hover:underline"
-          >
-            View cart →
-          </Link>
-        </div>
-      )}
-
-      {/* ═══════════════ COMPARE DRAWER ═══════════════ */}
-      {compareOpen && (
-        <CompareDrawer
-          products={comparedProducts}
-          onClose={() => setCompareOpen(false)}
-          onClear={() => {
-            setCompareList([]);
-            setCompareOpen(false);
-          }}
-          onRemove={(handle) => toggleCompare(handle)}
-          onAddAll={handleAddAllToCart}
-          subscribeMode={subscribeMode}
-        />
-      )}
-
       {/* ═══════════════ QUICK VIEW MODAL ═══════════════ */}
       {quickViewProduct && (
         <QuickViewModal
@@ -519,8 +379,7 @@ function ProductGridWithBreaks({
   products,
   stacks,
   subscribeMode,
-  compareList,
-  onToggleCompare,
+  onAddToCart,
   onQuickView,
   showStacksAt,
   showSupportAt,
@@ -528,8 +387,7 @@ function ProductGridWithBreaks({
   products: EnrichedProduct[];
   stacks: StackResolved[];
   subscribeMode: boolean;
-  compareList: string[];
-  onToggleCompare: (handle: string) => void;
+  onAddToCart: (product: Product) => void;
   onQuickView: (handle: string) => void;
   showStacksAt: number;
   showSupportAt: number;
@@ -558,8 +416,7 @@ function ProductGridWithBreaks({
               key={`p-${section.data.product.handle}`}
               enriched={section.data}
               subscribeMode={subscribeMode}
-              inCompare={compareList.includes(section.data.product.handle)}
-              onToggleCompare={onToggleCompare}
+              onAddToCart={onAddToCart}
               onQuickView={onQuickView}
             />
           );
@@ -589,53 +446,20 @@ function ProductGridWithBreaks({
 function ProductCard({
   enriched,
   subscribeMode,
-  inCompare,
-  onToggleCompare,
+  onAddToCart,
   onQuickView,
 }: {
   enriched: EnrichedProduct;
   subscribeMode: boolean;
-  inCompare: boolean;
-  onToggleCompare: (handle: string) => void;
+  onAddToCart: (product: Product) => void;
   onQuickView: (handle: string) => void;
 }) {
-  const { product: p, family, pharmacistNote, restock } = enriched;
+  const { product: p, family, restock } = enriched;
   const displayPrice = subscribeMode ? subscribePrice(p) : p.priceCents;
 
   return (
     <div className="group relative bg-white rounded-2xl border border-cobalt/8 hover:border-cobalt/30 transition-colors overflow-hidden flex flex-col">
-      {/* Selection chip — top-left. Labeled so users discover the
-          bulk add-to-cart / compare flow. Was a bare checkbox; nobody
-          who hadn't been shown the pattern would tap it. */}
-      <label
-        className={`absolute top-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.08em] uppercase transition select-none ${
-          inCompare
-            ? 'bg-cobalt text-white border border-cobalt shadow-sm'
-            : 'bg-white/95 text-ink border border-cobalt/25 hover:border-cobalt/60 hover:bg-white'
-        }`}
-      >
-        <input
-          type="checkbox"
-          checked={inCompare}
-          onChange={() => onToggleCompare(p.handle)}
-          className="sr-only peer"
-        />
-        <span
-          className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 transition ${
-            inCompare ? 'bg-white border-white' : 'border-cobalt/50 bg-transparent'
-          }`}
-          aria-hidden="true"
-        >
-          {inCompare && (
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#2E4DDB" strokeWidth="4">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
-        </span>
-        {inCompare ? 'Selected' : 'Select'}
-      </label>
-
-      {/* Restock signal — top-right */}
+      {/* Restock signal — top-right corner only */}
       {restock && (
         <span
           className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] uppercase px-2 py-1 rounded ${
@@ -671,28 +495,40 @@ function ProductCard({
             className="object-contain p-5 sm:p-8 lg:p-10 group-hover:scale-[1.04] transition-transform duration-500"
           />
         )}
-        {/* Hover hint — desktop only (touch users tap to quick-view) */}
         <span className="hidden sm:inline-flex absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-ink/90 text-white text-[10px] font-bold tracking-[0.16em] uppercase px-3 py-1 rounded-full whitespace-nowrap">
           Quick view
         </span>
       </button>
 
-      {/* Card body — tighter padding/type at half-width mobile */}
+      {/* Card body */}
       <div className="p-3.5 sm:p-5 lg:p-6 flex flex-col flex-1">
         {/* Family pill */}
         <span className="inline-block self-start text-[9px] font-bold tracking-[0.14em] sm:tracking-[0.16em] uppercase text-cobalt mb-2 sm:mb-3">
           {familyLabel(family)}
         </span>
 
-        {/* Title + format */}
-        <h3 className="font-display text-[15px] sm:text-lg lg:text-xl font-extrabold text-ink tracking-tight leading-tight mb-1">
-          {p.title}
-        </h3>
+        {/* Title + price on one line. Title truncates at the half-width
+            mobile breakpoint so the price never wraps off-row. */}
+        <div className="flex items-baseline justify-between gap-2 mb-1">
+          <h3 className="font-display text-[15px] sm:text-lg lg:text-xl font-extrabold text-ink tracking-tight leading-tight truncate">
+            <Link
+              href={`/products/${p.handle}`}
+              className="hover:text-cobalt transition"
+            >
+              {p.title}
+            </Link>
+          </h3>
+          <span className="font-display text-[15px] sm:text-lg lg:text-xl font-black text-ink tracking-tight leading-tight whitespace-nowrap">
+            {money(displayPrice)}
+          </span>
+        </div>
+
+        {/* Format */}
         <p className="text-[11px] sm:text-[12px] text-ink-soft mb-2 sm:mb-3">
           {p.vialSize} · {p.format}
         </p>
 
-        {/* Lot data — the substance. Compacted on mobile to one short line. */}
+        {/* Lot data */}
         {p.lot.id !== 'TBD' && (
           <p className="text-[10.5px] sm:text-[11px] text-ink-soft mb-3 sm:mb-4 leading-snug">
             <span className="text-cobalt font-bold">Lot {p.lot.id}</span>
@@ -703,52 +539,25 @@ function ProductCard({
           </p>
         )}
 
-        {/* Pharmacist's note — hidden on mobile (too dense at half-width) */}
-        {pharmacistNote && (
-          <div className="hidden sm:block mb-4 px-3 py-2 bg-cream/60 border-l-2 border-cobalt/40 rounded-r-md">
-            <p className="text-[10.5px] tracking-[0.18em] uppercase text-cobalt font-bold mb-1">
-              The pharmacist
-            </p>
-            <p className="text-[12px] text-ink-soft leading-snug italic">
-              &ldquo;{pharmacistNote}&rdquo;
-            </p>
-          </div>
-        )}
-
-        {/* Restock message — desktop only at half-width mobile */}
-        {restock && (
-          <p className="hidden sm:block text-[11px] text-ink-soft mb-4">
-            {restock.message}
-          </p>
-        )}
-
-        {/* Pricing row — bottom. Stack on mobile so the price isn't crushed
-            against the "Details →" link at half-width. */}
-        <div className="mt-auto pt-3 sm:pt-4 border-t border-cobalt/10">
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-0">
-            <div>
-              <span className="font-display text-base sm:text-xl lg:text-2xl font-bold text-ink">
-                {money(displayPrice)}
-              </span>
-              {!subscribeMode && (
-                <span className="hidden sm:inline text-[11px] text-ink-soft ml-2">
-                  or {money(subscribePrice(p))} subscribe
-                </span>
-              )}
-              {subscribeMode && (
-                <span className="text-[10px] sm:text-[11px] text-ink-muted ml-2 line-through">
-                  {money(p.priceCents)}
-                </span>
-              )}
-            </div>
-            <Link
-              href={`/products/${p.handle}`}
-              className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-cobalt font-bold hover:text-ink transition"
-            >
-              Details →
-            </Link>
-          </div>
-        </div>
+        {/* Add to cart button — sits where the price/Details row used to.
+            Full-width cobalt; primary action for the card. */}
+        <button
+          type="button"
+          onClick={() => onAddToCart(p)}
+          className="mt-auto w-full text-white py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-sm font-bold shadow-sm hover:opacity-95 transition flex items-center justify-center gap-1.5 sm:gap-2"
+          style={{
+            background:
+              'linear-gradient(135deg, #2E4DDB 0%, #5078FF 50%, #2E4DDB 100%)',
+          }}
+          aria-label={`Add ${p.title} to cart`}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
+          Add to cart
+        </button>
       </div>
     </div>
   );
@@ -989,177 +798,3 @@ function QuickViewModal({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Compare Drawer
-// ─────────────────────────────────────────────────────────────────────────
-
-function CompareDrawer({
-  products,
-  onClose,
-  onClear,
-  onRemove,
-  onAddAll,
-  subscribeMode,
-}: {
-  products: EnrichedProduct[];
-  onClose: () => void;
-  onClear: () => void;
-  onRemove: (handle: string) => void;
-  onAddAll: () => void;
-  subscribeMode: boolean;
-}) {
-  if (products.length === 0) {
-    return (
-      <div className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-        <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center" onClick={(e) => e.stopPropagation()}>
-          <p className="text-ink-soft mb-4">No compounds selected for compare.</p>
-          <button type="button" onClick={onClose} className="bg-ink text-white px-5 py-2.5 rounded-lg font-bold text-sm">
-            Close
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-end lg:items-stretch justify-end"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-full lg:w-[720px] max-h-[90vh] lg:max-h-full overflow-y-auto rounded-t-2xl lg:rounded-none lg:rounded-l-2xl flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-cobalt/10 p-5 lg:p-6 flex items-center justify-between z-10">
-          <div>
-            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
-              — Compare
-            </p>
-            <h2 className="font-display text-xl font-extrabold text-ink">
-              {products.length} compounds, side by side
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-9 h-9 rounded-full border border-cobalt/20 flex items-center justify-center hover:border-cobalt/50 transition"
-            aria-label="Close compare drawer"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Comparison grid */}
-        <div className="p-5 lg:p-6">
-          <div
-            className="grid gap-3"
-            style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}
-          >
-            {/* Image row */}
-            {products.map((ep) => (
-              <div key={`img-${ep.product.handle}`} className="relative aspect-square bg-cream rounded-lg overflow-hidden">
-                {ep.product.imageUrl && (
-                  <Image
-                    src={ep.product.imageUrl}
-                    alt={ep.product.title}
-                    fill
-                    sizes="33vw"
-                    className="object-contain p-3"
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => onRemove(ep.product.handle)}
-                  className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white border border-cobalt/30 flex items-center justify-center hover:bg-red-500 hover:border-red-500 hover:text-white transition"
-                  aria-label="Remove from compare"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Spec rows */}
-          <div className="mt-5 space-y-0">
-            {[
-              { label: 'Family', getter: (ep: EnrichedProduct) => familyLabel(ep.family) },
-              { label: 'Vial size', getter: (ep: EnrichedProduct) => ep.product.vialSize },
-              { label: 'Format', getter: (ep: EnrichedProduct) => ep.product.format },
-              { label: 'Current lot', getter: (ep: EnrichedProduct) => ep.product.lot.id === 'TBD' ? '—' : `Lot ${ep.product.lot.id}` },
-              { label: 'Purity', getter: (ep: EnrichedProduct) => ep.product.lot.purity || '—' },
-              { label: 'Price', getter: (ep: EnrichedProduct) => money(subscribeMode ? subscribePrice(ep.product) : ep.product.priceCents) },
-            ].map((row) => (
-              <div key={row.label} className="grid gap-3 py-3 border-b border-cobalt/10" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}>
-                <div className="col-span-full mb-1">
-                  <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold">
-                    {row.label}
-                  </p>
-                </div>
-                {products.map((ep) => (
-                  <div key={`${row.label}-${ep.product.handle}`}>
-                    <p className="text-sm text-ink font-semibold">
-                      {ep.product === products[0].product && row.label === 'Family' ? '' : ''}
-                      {row.getter(ep)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ))}
-
-            {/* Titles row */}
-            <div className="grid gap-3 pt-3" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}>
-              {products.map((ep) => (
-                <Link
-                  key={`title-${ep.product.handle}`}
-                  href={`/products/${ep.product.handle}`}
-                  className="text-center text-[11px] uppercase tracking-[0.18em] text-cobalt font-bold hover:text-ink transition"
-                >
-                  {ep.product.title} →
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Footer — Clear (left), Close (middle), Add all to cart (right primary) */}
-        <div className="sticky bottom-0 bg-white border-t border-cobalt/10 p-4 lg:p-5 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onClear}
-            className="text-[11px] uppercase tracking-[0.18em] text-ink-soft font-bold hover:text-ink transition whitespace-nowrap"
-          >
-            Clear all
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-lg font-bold text-sm border border-cobalt/20 text-ink hover:bg-cream transition whitespace-nowrap"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              onClick={onAddAll}
-              className="bg-cobalt text-white px-4 sm:px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition whitespace-nowrap inline-flex items-center gap-2"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-              </svg>
-              Add all to cart
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
