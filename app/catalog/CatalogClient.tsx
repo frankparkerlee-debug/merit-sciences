@@ -306,8 +306,23 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
         </div>
       </div>
 
+      {/* Discoverability hint — sits between the sticky filter strip and
+          the first product row. Fades out once the user has selected
+          anything (they've learned the pattern). */}
+      {compareList.length === 0 && (
+        <div className="px-6 lg:px-12 pt-4 pb-1 max-w-[1400px] mx-auto">
+          <p className="inline-flex items-center gap-2 text-[11px] text-ink-soft">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cobalt/10 border border-cobalt/20 text-cobalt font-bold text-[10px] tracking-[0.08em] uppercase">
+              <span className="w-3 h-3 rounded-sm border border-cobalt/50" />
+              Select
+            </span>
+            <span>Tap on any card to add multiple to cart or compare side-by-side.</span>
+          </p>
+        </div>
+      )}
+
       {/* ═══════════════ MAIN GRID ═══════════════ */}
-      <div className="px-6 lg:px-12 py-10 lg:py-14 max-w-[1400px] mx-auto">
+      <div className="px-6 lg:px-12 py-6 lg:py-10 max-w-[1400px] mx-auto">
         {/* Product grid with editorial breaks interspersed */}
         <ProductGridWithBreaks
           products={sorted}
@@ -589,8 +604,16 @@ function ProductCard({
 
   return (
     <div className="group relative bg-white rounded-2xl border border-cobalt/8 hover:border-cobalt/30 transition-colors overflow-hidden flex flex-col">
-      {/* Compare checkbox — top-left */}
-      <label className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 cursor-pointer">
+      {/* Selection chip — top-left. Labeled so users discover the
+          bulk add-to-cart / compare flow. Was a bare checkbox; nobody
+          who hadn't been shown the pattern would tap it. */}
+      <label
+        className={`absolute top-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.08em] uppercase transition select-none ${
+          inCompare
+            ? 'bg-cobalt text-white border border-cobalt shadow-sm'
+            : 'bg-white/95 text-ink border border-cobalt/25 hover:border-cobalt/60 hover:bg-white'
+        }`}
+      >
         <input
           type="checkbox"
           checked={inCompare}
@@ -598,18 +621,18 @@ function ProductCard({
           className="sr-only peer"
         />
         <span
-          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition ${
-            inCompare
-              ? 'bg-cobalt border-cobalt'
-              : 'bg-white/90 border-cobalt/30 group-hover:border-cobalt/60'
+          className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 transition ${
+            inCompare ? 'bg-white border-white' : 'border-cobalt/50 bg-transparent'
           }`}
+          aria-hidden="true"
         >
           {inCompare && (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#2E4DDB" strokeWidth="4">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           )}
         </span>
+        {inCompare ? 'Selected' : 'Select'}
       </label>
 
       {/* Restock signal — top-right */}
