@@ -25,7 +25,7 @@ export default function HomePage() {
       title: 'BPC + TB',
       compounds: ['BPC-157', 'TB-500', 'Wolverine'],
       desc: 'The pentadecapeptide-class compounds.',
-      img: '/brand/lane-bpc-transparent.png',
+      img: '/brand/lane-bpc-transparent.webp',
       alt: 'Merit BPC + TB vial — transparent label, lyophilized',
       tiltDeg: -6,
       // Cobalt (Merit core)
@@ -40,7 +40,7 @@ export default function HomePage() {
       title: 'NAD+ Family',
       compounds: ['NAD⁺', 'GHK-Cu', 'MOTS-c'],
       desc: 'Coenzymes and signaling peptides.',
-      img: '/brand/lane-nad-transparent.png',
+      img: '/brand/lane-nad-transparent.webp',
       alt: 'Merit NAD+ vial — transparent label, lyophilized',
       tiltDeg: 5,
       // Amber (metabolic warmth)
@@ -55,7 +55,7 @@ export default function HomePage() {
       title: 'Selank + Semax',
       compounds: ['Selank', 'Semax'],
       desc: 'Russian-derived synthetic neuropeptides.',
-      img: '/brand/lane-selank-transparent.png',
+      img: '/brand/lane-selank-transparent.webp',
       alt: 'Merit Selank vial — transparent label, lyophilized',
       tiltDeg: -8,
       // Violet (cognitive)
@@ -70,7 +70,7 @@ export default function HomePage() {
       title: 'Multi-Compound Vials',
       compounds: ['KLOW', 'GLOW', 'CJC + Ipa'],
       desc: 'Multiple molecules co-formulated in one vial.',
-      img: '/brand/lane-blends-transparent.png',
+      img: '/brand/lane-blends-transparent.webp',
       alt: 'Merit KLOW vial — transparent label, lyophilized',
       tiltDeg: 7,
       // Emerald (multi-pathway)
@@ -145,7 +145,7 @@ export default function HomePage() {
                 style={{ transformOrigin: 'center center' }}
               >
                 <Image
-                  src="/brand/merit-vial-transparent.png"
+                  src="/brand/merit-vial-transparent.webp"
                   alt=""
                   fill
                   priority
@@ -180,7 +180,7 @@ export default function HomePage() {
       <section className="relative text-white border-y border-cobalt/30 overflow-hidden bg-[#C2410C]">
         {/* Background pattern image */}
         <Image
-          src="/brand/scene-pattern-orange.png"
+          src="/brand/scene-pattern-orange.webp"
           alt=""
           fill
           sizes="100vw"
@@ -390,7 +390,7 @@ export default function HomePage() {
                   abstract atmospheric mist. bg-cobalt on parent acts as
                   fallback if image fails. */}
               <Image
-                src="/brand/scene-pattern-cobalt.png"
+                src="/brand/scene-pattern-cobalt.webp"
                 alt=""
                 fill
                 sizes="(max-width: 1024px) 100vw, 33vw"
@@ -737,7 +737,7 @@ export default function HomePage() {
       <section id="process" className="relative py-20 lg:py-28 px-6 lg:px-12 overflow-hidden bg-ink">
         {/* Charcoal vial-pattern background */}
         <Image
-          src="/brand/scene-pattern-charcoal.png"
+          src="/brand/scene-pattern-charcoal.webp"
           alt=""
           fill
           sizes="100vw"

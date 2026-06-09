@@ -55,7 +55,7 @@ export default function HeroesComparePage() {
             style={{ aspectRatio: '16 / 9', maxHeight: '480px', background: '#F4F1EA' }}
           >
             <Image
-              src="/brand/hero-B-mono.png"
+              src="/brand/hero-B-mono.webp"
               alt="Merit Sciences — MADE IN AMERICA left-aligned typographic hero, vial bridging baseline at right"
               fill
               priority
@@ -135,7 +135,7 @@ export default function HeroesComparePage() {
             style={{ aspectRatio: '16 / 9', maxHeight: '480px', background: '#2E4DDB' }}
           >
             <Image
-              src="/brand/hero-D-blend.png"
+              src="/brand/hero-D-blend.webp"
               alt="Merit Sciences — MADE IN AMERICA left-aligned in cobalt sky, vial bridging horizon in right third"
               fill
               priority
