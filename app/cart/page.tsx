@@ -1,7 +1,7 @@
 'use client';
 
 import { useCart } from '@/lib/cart';
-import { money } from '@/lib/catalog';
+import { money } from '@/lib/product-types';
 import Link from 'next/link';
 
 export default function CartPage() {
