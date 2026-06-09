@@ -1,0 +1,51 @@
+{
+  "handle": "th9507",
+  "title": "Tesamorelin",
+  "compound": "Tesamorelin",
+  "eyebrow": "GHRH ANALOG · LIPID METABOLISM RESEARCH",
+  "vialSize": "10 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 9000,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 9000
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 25650
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 48600
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 8100
+    }
+  ],
+  "spec": {
+    "cas": "218949-48-5",
+    "mw": "5135.9 Da",
+    "aminoAcids": 44
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "clinic",
+  "channel": "rua",
+  "shopifySuspended": true,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/rx-th9507_1200x.png?v=1780122724",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/rx-th9507_1200x.png?v=1780122724"
+  ]
+}

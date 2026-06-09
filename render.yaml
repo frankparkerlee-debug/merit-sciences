@@ -1,0 +1,25 @@
+# Render service config — deploy via "New Web Service" pointed at this repo
+# https://render.com/docs/deploy-nextjs-app
+services:
+  - type: web
+    name: merit-render
+    runtime: node
+    plan: starter            # bump to 'standard' once traffic grows
+    region: oregon           # closest to Dallas warehouse for cold-start latency
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Payment processor keys — populate in Render dashboard, not here
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: SHOPIFY_STOREFRONT_TOKEN
+        sync: false           # only needed if we headless the Shopify catalog later

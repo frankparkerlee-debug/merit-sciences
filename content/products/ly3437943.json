@@ -1,0 +1,51 @@
+{
+  "handle": "ly3437943",
+  "title": "Retatrutide",
+  "compound": "Retatrutide",
+  "eyebrow": "TRIPLE GLP-1/GIP/GLUCAGON AGONIST",
+  "vialSize": "30 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 13500,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 13500
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 38475
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 72900
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 12150
+    }
+  ],
+  "spec": {
+    "cas": "2381089-83-2",
+    "mw": "5419 Da",
+    "aminoAcids": 39
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "clinic",
+  "channel": "rua",
+  "shopifySuspended": true,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/rx-ly3437943_1200x.png?v=1780122723",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/rx-ly3437943_1200x.png?v=1780122723"
+  ]
+}

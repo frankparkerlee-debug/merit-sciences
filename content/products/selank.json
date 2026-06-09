@@ -1,0 +1,52 @@
+{
+  "handle": "selank",
+  "title": "Selank",
+  "compound": "Selank",
+  "eyebrow": "HEPTAPEPTIDE · COGNITION RESEARCH",
+  "vialSize": "10 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 4900,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 4900
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 13965
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 26460
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 4410
+    }
+  ],
+  "spec": {
+    "cas": "129954-34-3",
+    "mw": "751.9 Da",
+    "sequence": "TKPRPGP",
+    "aminoAcids": 7
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "biohacker",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/selank_1200x.png?v=1780431872",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/selank_1200x.png?v=1780431872"
+  ]
+}

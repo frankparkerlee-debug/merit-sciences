@@ -1,0 +1,47 @@
+{
+  "handle": "melanotan-ii",
+  "title": "MT-II",
+  "compound": "Melanotan II",
+  "eyebrow": "MELANOCORTIN ANALOG · PIGMENTATION RESEARCH",
+  "vialSize": "10 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 5000,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 5000
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 14250
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 27000
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 4500
+    }
+  ],
+  "spec": {
+    "cas": "121062-08-6",
+    "mw": "1024.2 Da",
+    "aminoAcids": 7
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "aesthetic",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active"
+}

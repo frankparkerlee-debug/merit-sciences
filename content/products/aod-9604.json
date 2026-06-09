@@ -1,0 +1,52 @@
+{
+  "handle": "aod-9604",
+  "title": "AOD-9604",
+  "compound": "AOD-9604",
+  "eyebrow": "GH FRAGMENT · LIPID METABOLISM RESEARCH",
+  "vialSize": "5 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 7500,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 7500
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 21375
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 40500
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 6750
+    }
+  ],
+  "spec": {
+    "cas": "221231-10-3",
+    "mw": "2180.4 Da",
+    "sequence": "YLRIVQCRSVEGSCGF",
+    "aminoAcids": 16
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "biohacker",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/aod-9604_1200x.png?v=1780431806",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/aod-9604_1200x.png?v=1780431806"
+  ]
+}

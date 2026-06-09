@@ -1,0 +1,47 @@
+{
+  "handle": "sermorelin",
+  "title": "Sermorelin Acetate",
+  "compound": "Sermorelin Acetate",
+  "eyebrow": "GHRH ANALOG · GH-AXIS RESEARCH",
+  "vialSize": "10 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 8000,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 8000
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 22800
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 43200
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 7200
+    }
+  ],
+  "spec": {
+    "cas": "86168-78-7",
+    "mw": "3357.9 Da",
+    "aminoAcids": 29
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "biohacker",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active"
+}

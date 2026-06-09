@@ -1,0 +1,22 @@
+{
+  "handle": "bacteriostatic-water",
+  "title": "Bacteriostatic Water",
+  "compound": "Bacteriostatic Water",
+  "eyebrow": "DILUENT · RECONSTITUTION ACCESSORY",
+  "vialSize": "30 mL",
+  "format": "reconstituted",
+  "oneLiner": "Sterile water for reconstitution research, preserved with 0.9% benzyl alcohol. The standard diluent for reconstituting lyophilized peptide research compounds.",
+  "priceCents": 999,
+  "spec": {
+    "sequence": "Sterile water + 0.9% benzyl alcohol"
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "USP grade",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "biohacker",
+  "channel": "rua",
+  "status": "active"
+}

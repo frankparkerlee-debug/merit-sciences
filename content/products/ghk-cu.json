@@ -1,0 +1,52 @@
+{
+  "handle": "ghk-cu",
+  "title": "GHK-Cu",
+  "compound": "GHK-Cu",
+  "eyebrow": "COPPER TRIPEPTIDE · CELLULAR RESEARCH",
+  "vialSize": "100 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 7500,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 7500
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 21375
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 40500
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 6750
+    }
+  ],
+  "spec": {
+    "cas": "49557-75-7",
+    "mw": "340.4 Da",
+    "sequence": "GHK",
+    "aminoAcids": 3
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "aesthetic",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/ghk-cu-50mg_1200x.png?v=1779769581",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/ghk-cu-50mg_1200x.png?v=1779769581"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "handle": "bpc-157-tb-500",
+  "title": "Wolverine Blend",
+  "compound": "BPC-157 + TB-500",
+  "eyebrow": "RECOVERY RESEARCH BLEND",
+  "vialSize": "10+10 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 11600,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 11600
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 33060
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 62640
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 10440
+    }
+  ],
+  "spec": {
+    "sequence": "BPC-157 + TB-500"
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "athletic",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/bpc-157-tb-500_1200x.png?v=1779769577",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/bpc-157-tb-500_1200x.png?v=1779769577",
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/chromatogram-wolverine_1200x.png?v=1778794027"
+  ]
+}

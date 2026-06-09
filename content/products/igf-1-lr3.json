@@ -1,0 +1,50 @@
+{
+  "handle": "igf-1-lr3",
+  "title": "IGF-1 LR3",
+  "compound": "IGF-1 LR3",
+  "eyebrow": "INSULIN-LIKE GROWTH FACTOR · ANABOLIC RESEARCH",
+  "vialSize": "1 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 8000,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 8000
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 22800
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 43200
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 7200
+    }
+  ],
+  "spec": {
+    "mw": "9111 Da",
+    "aminoAcids": 83
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "athletic",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/igf-1-lr3_1200x.png?v=1780431813",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/igf-1-lr3_1200x.png?v=1780431813"
+  ]
+}

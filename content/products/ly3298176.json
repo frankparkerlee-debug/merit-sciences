@@ -1,0 +1,51 @@
+{
+  "handle": "ly3298176",
+  "title": "Tirzepatide",
+  "compound": "Tirzepatide",
+  "eyebrow": "DUAL GIP/GLP-1 RECEPTOR AGONIST",
+  "vialSize": "30 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 12100,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 12100
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 34485
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 65340
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 10890
+    }
+  ],
+  "spec": {
+    "cas": "2023788-19-2",
+    "mw": "4813.5 Da",
+    "aminoAcids": 39
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "clinic",
+  "channel": "rua",
+  "shopifySuspended": true,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/rx-ly3298176_1200x.png?v=1780122722",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/rx-ly3298176_1200x.png?v=1780122722"
+  ]
+}

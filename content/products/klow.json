@@ -1,0 +1,49 @@
+{
+  "handle": "klow",
+  "title": "KLOW Blend",
+  "compound": "KLOW Blend",
+  "eyebrow": "MULTI-PATHWAY RESEARCH BLEND",
+  "vialSize": "80 mg total",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 17500,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 17500
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 49875
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 94500
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 15750
+    }
+  ],
+  "spec": {
+    "sequence": "BPC-157 + KPV + TB-500 + GHK-Cu"
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "aesthetic",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/klow_1200x.png?v=1779769585",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/klow_1200x.png?v=1779769585"
+  ]
+}

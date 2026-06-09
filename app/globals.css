@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #FFFFFF;
+  color: #0B0F19;
+  -webkit-font-smoothing: antialiased;
+}
+
+.eyebrow {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Credentials marquee — §02 homepage.
+   Two duplicated content blocks scroll right-to-left; at 50% the animation
+   resets seamlessly because both copies are identical. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 45s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee { animation: none; }
+}
+
+/* Hero vial float — subtle vertical drift combined with the -8deg tilt.
+   The tilt is encoded in the keyframe (CSS transform replaces, doesn't
+   compose, so we have to include rotation in the keyframe). A small
+   variance in rotation during the float (-8deg → -7deg) gives the
+   movement an organic, breathing quality rather than a rigid bob. */
+@keyframes float-vial {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50%      { transform: translateY(-14px) rotate(-7deg); }
+}
+.animate-float-vial {
+  animation: float-vial 4.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-vial {
+    animation: none;
+    transform: rotate(-8deg);
+  }
+}
+
+/* Soft float — for catalog family cards. Smaller vertical drift than the
+   hero, no rotation. Cards stay static; only the vial inside drifts.
+   Per-instance animationDelay is set inline so cards don't sync. */
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+.animate-float-soft {
+  animation: float-soft 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-soft { animation: none; }
+}
+
+/* Hide native scrollbar on horizontal-scroll product carousels. Tailwind
+   doesn't ship this utility; defining it here so .scrollbar-hide works. */
+.scrollbar-hide {
+  -ms-overflow-style: none;        /* IE / Edge */
+  scrollbar-width: none;            /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;                    /* Chrome / Safari / Webkit */
+}

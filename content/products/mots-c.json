@@ -1,0 +1,51 @@
+{
+  "handle": "mots-c",
+  "title": "MOTS-c",
+  "compound": "MOTS-c",
+  "eyebrow": "MITOCHONDRIAL-DERIVED PEPTIDE",
+  "vialSize": "40 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 12000,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 12000
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 34200
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 64800
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 10800
+    }
+  ],
+  "spec": {
+    "mw": "2173.5 Da",
+    "aminoAcids": 16
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "aesthetic",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/mots-c-20mg_1200x.png?v=1779769587",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/mots-c-20mg_1200x.png?v=1779769587",
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/chromatogram-mots-c_1200x.png?v=1778794025"
+  ]
+}

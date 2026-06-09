@@ -1,0 +1,47 @@
+{
+  "handle": "thymosin-alpha-1",
+  "title": "Thymosin Alpha-1",
+  "compound": "Thymosin Alpha-1",
+  "eyebrow": "28-AMINO-ACID PEPTIDE · IMMUNE RESEARCH",
+  "vialSize": "10 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 11500,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 11500
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 32775
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 62100
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 10350
+    }
+  ],
+  "spec": {
+    "cas": "62304-98-7",
+    "mw": "3108.3 Da",
+    "aminoAcids": 28
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "biohacker",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active"
+}

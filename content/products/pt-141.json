@@ -1,0 +1,51 @@
+{
+  "handle": "pt-141",
+  "title": "PT-141",
+  "compound": "PT-141",
+  "eyebrow": "MELANOCORTIN AGONIST · NEUROENDOCRINE RESEARCH",
+  "vialSize": "10 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 5700,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 5700
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 16245
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 30780
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 5130
+    }
+  ],
+  "spec": {
+    "cas": "189691-06-3",
+    "mw": "1025.2 Da",
+    "aminoAcids": 7
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "biohacker",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/pt-141_1200x.png?v=1780431869",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/pt-141_1200x.png?v=1780431869"
+  ]
+}

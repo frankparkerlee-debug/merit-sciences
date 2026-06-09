@@ -1,0 +1,52 @@
+{
+  "handle": "semax",
+  "title": "Semax",
+  "compound": "Semax",
+  "eyebrow": "HEPTAPEPTIDE · NEUROPROTECTIVE RESEARCH",
+  "vialSize": "10 mg",
+  "format": "lyophilized",
+  "oneLiner": "",
+  "priceCents": 4900,
+  "bundles": [
+    {
+      "label": "Single",
+      "vials": 1,
+      "priceCents": 4900
+    },
+    {
+      "label": "3-Pack",
+      "vials": 3,
+      "priceCents": 13965
+    },
+    {
+      "label": "6-Pack",
+      "vials": 6,
+      "priceCents": 26460
+    },
+    {
+      "label": "Subscribe & Save 10%",
+      "vials": 1,
+      "priceCents": 4410
+    }
+  ],
+  "spec": {
+    "cas": "80714-61-0",
+    "mw": "813.9 Da",
+    "sequence": "MEHFPGP",
+    "aminoAcids": 7
+  },
+  "lot": {
+    "id": "TBD",
+    "purity": "≥99%",
+    "testedDate": "",
+    "bud": ""
+  },
+  "segment": "biohacker",
+  "channel": "rua",
+  "shopifySuspended": false,
+  "status": "active",
+  "imageUrl": "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/semax-10mg_1200x.png?v=1779769590",
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0665/1661/5279/files/semax-10mg_1200x.png?v=1779769590"
+  ]
+}
