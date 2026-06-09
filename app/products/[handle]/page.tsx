@@ -12,6 +12,7 @@ import {
   type Family,
 } from '@/lib/catalog-meta';
 import { ProductBuyBox } from './ProductBuyBox';
+import { PdpStackAddButton } from './PdpStackAddButton';
 
 type Props = { params: { handle: string } };
 
@@ -287,20 +288,18 @@ export default function ProductPage({ params }: Props) {
                 </div>
                 <div className="flex items-baseline justify-between pt-4 border-t border-cobalt/10">
                   <div>
-                    <p className="font-display text-2xl font-bold text-ink">
+                    <Link
+                      href={`/stacks/${stack.slug}`}
+                      className="font-display text-2xl font-bold text-ink hover:text-cobalt transition"
+                    >
                       ${(stack.discountedCents / 100).toFixed(2)}
-                    </p>
+                    </Link>
                     <p className="text-[11px] text-ink-soft">
                       <span className="line-through">${(stack.sumCents / 100).toFixed(2)}</span>
                       {' · '}save {stack.bundleDiscountPct}%
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    className="bg-cobalt text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition"
-                  >
-                    Add stack →
-                  </button>
+                  <PdpStackAddButton stack={stack} />
                 </div>
               </div>
             ))}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
 import { money } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
+import { stackToCartLine } from '@/lib/catalog-meta';
 import type { Family, StackTemplate } from './page';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -92,8 +93,14 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
   const [subscribeMode, setSubscribeMode] = useState(false);
   const [quickViewHandle, setQuickViewHandle] = useState<string | null>(null);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  // Multi-select state — drives the bottom bulk-add FAB.
+  const [selectedHandles, setSelectedHandles] = useState<string[]>([]);
+  // Brief confirmation toast — single-card adds (drawer doesn't auto-open
+  // anymore so the buyer needs *some* signal that the click registered).
+  const [addedFlash, setAddedFlash] = useState<{ title: string; cents: number } | null>(null);
 
-  const addToCart = useCart((s) => s.add);
+  const addToCart  = useCart((s) => s.add);
+  const openDrawer = useCart((s) => s.openDrawer);
 
   // Lock body scroll only when the quick-view modal is open. The cart
   // drawer manages its own scroll lock via the cart store.
@@ -105,6 +112,19 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
       document.body.style.overflow = original;
     };
   }, [quickViewHandle]);
+
+  // Auto-clear the single-add toast after 2s.
+  useEffect(() => {
+    if (!addedFlash) return;
+    const t = setTimeout(() => setAddedFlash(null), 2000);
+    return () => clearTimeout(t);
+  }, [addedFlash]);
+
+  function toggleSelect(handle: string) {
+    setSelectedHandles((curr) =>
+      curr.includes(handle) ? curr.filter((h) => h !== handle) : [...curr, handle],
+    );
+  }
 
   const filtered = useMemo(() => {
     if (selectedFamily === 'all') return products;
@@ -135,11 +155,8 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
     ? products.find((p) => p.product.handle === quickViewHandle)?.product
     : null;
 
-  // Per-card add-to-cart handler. Uses subscribe pricing if the catalog-
-  // level Subscribe toggle is on, otherwise the Single bundle. The cart
-  // store auto-opens the slide-in drawer after every successful add, so
-  // there's no separate toast UI.
-  function handleAddToCart(product: Product) {
+  // Pricing helper — picks bundle + per-unit cents based on Subscribe mode.
+  function priceForProduct(product: Product) {
     const bundle = subscribeMode
       ? product.bundles?.find((b) => b.label.toLowerCase().includes('subscribe'))
         ?? product.bundles?.[0]
@@ -149,15 +166,56 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
     const unitCents = subscribeMode && bundle.vials > 0
       ? Math.round(bundle.priceCents / bundle.vials)
       : bundle.priceCents;
+    return { bundle, unitCents };
+  }
+
+  // Per-card add (single). Flashes a toast for confirmation; does NOT
+  // open the drawer (interrupts browsing if the buyer is still picking).
+  function handleAddToCart(product: Product) {
+    const { bundle, unitCents } = priceForProduct(product);
     addToCart(
       {
         handle: product.handle,
         title: product.title,
         bundleLabel: subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label,
         unitCents,
+        imageUrl: product.imageUrl,
       },
       1,
     );
+    setAddedFlash({ title: product.title, cents: unitCents });
+  }
+
+  // Bulk add — user explicitly chose to commit a multi-select batch.
+  // Opens the drawer after submit so they see the result + can checkout.
+  function handleAddSelected() {
+    if (selectedHandles.length === 0) return;
+    const selectedProducts = selectedHandles
+      .map((h) => products.find((p) => p.product.handle === h)?.product)
+      .filter(Boolean) as Product[];
+    selectedProducts.forEach((product) => {
+      const { bundle, unitCents } = priceForProduct(product);
+      addToCart(
+        {
+          handle: product.handle,
+          title: product.title,
+          bundleLabel: subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label,
+          unitCents,
+          imageUrl: product.imageUrl,
+        },
+        1,
+      );
+    });
+    setSelectedHandles([]);
+    openDrawer();
+  }
+
+  // Stack add — single line item per stack, discounted price preserved.
+  // Used by StacksBreak in the catalog grid + by /stacks/[slug] PDP.
+  function handleAddStack(stack: StackResolved) {
+    const line = stackToCartLine(stack);
+    addToCart(line, 1);
+    setAddedFlash({ title: stack.name, cents: line.unitCents });
   }
 
   return (
@@ -280,7 +338,10 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
           products={sorted}
           stacks={stacks}
           subscribeMode={subscribeMode}
+          selectedHandles={selectedHandles}
+          onToggleSelect={toggleSelect}
           onAddToCart={handleAddToCart}
+          onAddStack={handleAddStack}
           onQuickView={setQuickViewHandle}
           showStacksAt={6}
           showSupportAt={12}
@@ -359,6 +420,68 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
         </div>
       </div>
 
+      {/* ═══════════════ MULTI-SELECT FAB ═══════════════
+          Single-action: "Add N to cart". The user chose to batch, so
+          opening the drawer after submit is the appropriate confirmation. */}
+      {selectedHandles.length > 0 && (
+        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 lg:bottom-6 lg:right-12 z-30 flex items-stretch bg-ink text-white rounded-2xl shadow-2xl overflow-hidden border border-white/10">
+          <div className="flex items-center gap-2 px-4 py-3 border-r border-white/10 whitespace-nowrap">
+            <span className="font-display text-lg font-black leading-none">
+              {selectedHandles.length}
+            </span>
+            <span className="text-[11px] uppercase tracking-[0.14em] text-white/70 font-bold leading-tight">
+              selected
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddSelected}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-cobalt hover:bg-cobalt/85 transition font-bold text-sm whitespace-nowrap"
+            aria-label={`Add ${selectedHandles.length} selected to cart`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            Add all to cart
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedHandles([])}
+            className="px-3 sm:px-4 py-3 hover:bg-white/8 transition font-bold text-[11px] tracking-[0.14em] uppercase text-white/70 hover:text-white border-l border-white/10"
+            aria-label="Clear selection"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
+      {/* ═══════════════ ADD-TO-CART TOAST ═══════════════
+          Brief confirmation for single-card adds. Drawer doesn't open
+          on single add (user is still browsing), so the toast provides
+          the otherwise-missing feedback signal. */}
+      {addedFlash && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-cobalt text-white px-5 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 max-w-[calc(100vw-2rem)]"
+          role="status"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="flex-shrink-0">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span className="truncate">
+            Added {addedFlash.title}
+          </span>
+          <button
+            type="button"
+            onClick={() => { setAddedFlash(null); openDrawer(); }}
+            className="ml-1 text-[11px] tracking-[0.14em] uppercase font-bold text-white/85 hover:text-white underline-offset-2 hover:underline whitespace-nowrap"
+          >
+            View cart →
+          </button>
+        </div>
+      )}
+
       {/* ═══════════════ QUICK VIEW MODAL ═══════════════ */}
       {quickViewProduct && (
         <QuickViewModal
@@ -379,7 +502,10 @@ function ProductGridWithBreaks({
   products,
   stacks,
   subscribeMode,
+  selectedHandles,
+  onToggleSelect,
   onAddToCart,
+  onAddStack,
   onQuickView,
   showStacksAt,
   showSupportAt,
@@ -387,7 +513,10 @@ function ProductGridWithBreaks({
   products: EnrichedProduct[];
   stacks: StackResolved[];
   subscribeMode: boolean;
+  selectedHandles: string[];
+  onToggleSelect: (handle: string) => void;
   onAddToCart: (product: Product) => void;
+  onAddStack: (stack: StackResolved) => void;
   onQuickView: (handle: string) => void;
   showStacksAt: number;
   showSupportAt: number;
@@ -416,6 +545,8 @@ function ProductGridWithBreaks({
               key={`p-${section.data.product.handle}`}
               enriched={section.data}
               subscribeMode={subscribeMode}
+              isSelected={selectedHandles.includes(section.data.product.handle)}
+              onToggleSelect={onToggleSelect}
               onAddToCart={onAddToCart}
               onQuickView={onQuickView}
             />
@@ -427,6 +558,7 @@ function ProductGridWithBreaks({
               key={`stacks-${idx}`}
               stacks={section.data}
               subscribeMode={subscribeMode}
+              onAddStack={onAddStack}
             />
           );
         }
@@ -446,11 +578,15 @@ function ProductGridWithBreaks({
 function ProductCard({
   enriched,
   subscribeMode,
+  isSelected,
+  onToggleSelect,
   onAddToCart,
   onQuickView,
 }: {
   enriched: EnrichedProduct;
   subscribeMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: (handle: string) => void;
   onAddToCart: (product: Product) => void;
   onQuickView: (handle: string) => void;
 }) {
@@ -458,8 +594,42 @@ function ProductCard({
   const displayPrice = subscribeMode ? subscribePrice(p) : p.priceCents;
 
   return (
-    <div className="group relative bg-white rounded-2xl border border-cobalt/8 hover:border-cobalt/30 transition-colors overflow-hidden flex flex-col">
-      {/* Restock signal — top-right corner only */}
+    <div
+      className={`group relative bg-white rounded-2xl border transition-colors overflow-hidden flex flex-col ${
+        isSelected ? 'border-cobalt/60 ring-2 ring-cobalt/15' : 'border-cobalt/8 hover:border-cobalt/30'
+      }`}
+    >
+      {/* Select chip — top-left. Labeled pill so the multi-add flow
+          is discoverable without an explainer banner. */}
+      <label
+        className={`absolute top-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.08em] uppercase transition select-none ${
+          isSelected
+            ? 'bg-cobalt text-white border border-cobalt shadow-sm'
+            : 'bg-white/95 text-ink border border-cobalt/25 hover:border-cobalt/60 hover:bg-white'
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(p.handle)}
+          className="sr-only peer"
+        />
+        <span
+          className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 transition ${
+            isSelected ? 'bg-white border-white' : 'border-cobalt/50 bg-transparent'
+          }`}
+          aria-hidden="true"
+        >
+          {isSelected && (
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#2E4DDB" strokeWidth="4">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+        </span>
+        {isSelected ? 'Selected' : 'Select'}
+      </label>
+
+      {/* Restock signal — top-right corner */}
       {restock && (
         <span
           className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] uppercase px-2 py-1 rounded ${
@@ -567,7 +737,15 @@ function ProductCard({
 // Stacks editorial break — full-width row inside the grid
 // ─────────────────────────────────────────────────────────────────────────
 
-function StacksBreak({ stacks, subscribeMode }: { stacks: StackResolved[]; subscribeMode: boolean }) {
+function StacksBreak({
+  stacks,
+  subscribeMode,
+  onAddStack,
+}: {
+  stacks: StackResolved[];
+  subscribeMode: boolean;
+  onAddStack: (stack: StackResolved) => void;
+}) {
   return (
     <div className="col-span-2 lg:col-span-3 my-4 lg:my-6">
       <div className="bg-ink text-white rounded-2xl p-6 lg:p-8 overflow-hidden">
@@ -599,7 +777,12 @@ function StacksBreak({ stacks, subscribeMode }: { stacks: StackResolved[]; subsc
                 >
                   Stack
                 </span>
-                <h3 className="font-display text-base font-extrabold text-white mb-1">{stack.name}</h3>
+                <Link
+                  href={`/stacks/${stack.slug}`}
+                  className="font-display text-base font-extrabold text-white mb-1 hover:text-cobalt-soft transition"
+                >
+                  {stack.name}
+                </Link>
                 <p className="text-[11px] text-white/60 mb-3">{stack.subtitle}</p>
                 <p className="text-[11.5px] text-white/75 mb-4 leading-snug flex-1">{stack.description}</p>
 
@@ -618,6 +801,7 @@ function StacksBreak({ stacks, subscribeMode }: { stacks: StackResolved[]; subsc
                   </div>
                   <button
                     type="button"
+                    onClick={() => onAddStack(stack)}
                     className="bg-cobalt text-white px-3 py-2 rounded-md text-[10px] font-bold tracking-[0.12em] uppercase hover:opacity-90 transition"
                   >
                     Add stack →

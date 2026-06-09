@@ -28,6 +28,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
   const [addBacWater, setAddBacWater] = useState(false);
   const [freqMenuOpen, setFreqMenuOpen] = useState(false);
   const add = useCart((s) => s.add);
+  const openDrawer = useCart((s) => s.openDrawer);
 
   const selected = bundles[selectedIdx];
   const bacWaterCents = 999;
@@ -46,7 +47,8 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
       : 0;
 
   // Add-to-cart action — used by both the in-page button AND the mobile
-  // sticky bottom bar so they stay in sync.
+  // sticky bottom bar so they stay in sync. Opens the cart drawer after
+  // commit (this is the PDP — the buyer is committing, not browsing).
   const handleAddToCart = () => {
     add(
       {
@@ -54,6 +56,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
         title: product.title,
         bundleLabel: purchaseType === 'subscribe' ? `Subscribe · ${subscriptionFreq}` : selected.label,
         unitCents: effectiveBundle.priceCents,
+        imageUrl: product.imageUrl,
       },
       1,
     );
@@ -68,6 +71,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
         1,
       );
     }
+    openDrawer();
   };
 
   return (

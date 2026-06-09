@@ -4,11 +4,15 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type CartLine = {
-  handle: string;
+  handle: string;          // for stacks: 'stack:recovery-stack'
   title: string;
   bundleLabel: string;
   unitCents: number;
   qty: number;
+  imageUrl?: string;        // thumbnail in cart drawer
+  // For stack line items: the underlying compound handles. Used by
+  // fulfillment + by the drawer to render a "+N more" badge.
+  components?: string[];
 };
 
 type CartState = {
@@ -32,6 +36,10 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       lines: [],
       isDrawerOpen: false,
+      // add() is passive — it does NOT auto-open the drawer. The caller
+      // chooses whether to flash a toast (single add) or open the drawer
+      // explicitly (bulk add / checkout flow). This avoids the "every
+      // add interrupts my browse with a drawer pop-in" UX.
       add: (line, qty = 1) =>
         set((s) => {
           const existing = s.lines.findIndex(
@@ -40,12 +48,9 @@ export const useCart = create<CartState>()(
           if (existing >= 0) {
             const next = [...s.lines];
             next[existing] = { ...next[existing], qty: next[existing].qty + qty };
-            return { lines: next, isDrawerOpen: true };
+            return { lines: next };
           }
-          return {
-            lines: [...s.lines, { ...line, qty }],
-            isDrawerOpen: true, // auto-open drawer on add — instant feedback
-          };
+          return { lines: [...s.lines, { ...line, qty }] };
         }),
       setQty: (handle, bundleLabel, qty) =>
         set((s) => {

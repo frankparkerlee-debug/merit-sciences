@@ -147,3 +147,32 @@ export function familyLabel(f: Family): string {
 export function getFamily(handle: string): Family | null {
   return FAMILY_BY_HANDLE[handle] ?? null;
 }
+
+/**
+ * Build a cart line item for a resolved stack. Single line per stack
+ * (preserves the discount + the stack identity in the cart drawer).
+ * The first component's image becomes the thumbnail; the rest are
+ * surfaced via the `components` metadata + a "+N" badge in the drawer.
+ */
+export function stackToCartLine(stack: StackResolved): {
+  handle: string;
+  title: string;
+  bundleLabel: string;
+  unitCents: number;
+  imageUrl?: string;
+  components: string[];
+} {
+  const componentNames = stack.items.map((p) => p.title).join(' + ');
+  return {
+    handle: `stack:${stack.slug}`,
+    title: stack.name,
+    bundleLabel: `${componentNames} · save ${stack.bundleDiscountPct}%`,
+    unitCents: stack.discountedCents,
+    imageUrl: stack.items[0]?.imageUrl,
+    components: stack.items.map((p) => p.handle),
+  };
+}
+
+export function getStack(slug: string): StackTemplate | null {
+  return STACK_TEMPLATES.find((s) => s.slug === slug) ?? null;
+}
