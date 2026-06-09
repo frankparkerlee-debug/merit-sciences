@@ -428,7 +428,9 @@ function ProductGridWithBreaks({
   });
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+    // 2-up on mobile, 3-up on desktop. 1-up read as oversized for browsing —
+    // 2-up doubles the products-per-fold and feels more intentional.
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-6">
       {sections.map((section, idx) => {
         if (section.type === 'product') {
           return (
@@ -537,43 +539,45 @@ function ProductCard({
             src={p.imageUrl}
             alt={p.title}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-contain p-8 lg:p-10 group-hover:scale-[1.04] transition-transform duration-500"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-contain p-5 sm:p-8 lg:p-10 group-hover:scale-[1.04] transition-transform duration-500"
           />
         )}
-        {/* Hover hint */}
-        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-ink/90 text-white text-[10px] font-bold tracking-[0.16em] uppercase px-3 py-1 rounded-full whitespace-nowrap">
+        {/* Hover hint — desktop only (touch users tap to quick-view) */}
+        <span className="hidden sm:inline-flex absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-ink/90 text-white text-[10px] font-bold tracking-[0.16em] uppercase px-3 py-1 rounded-full whitespace-nowrap">
           Quick view
         </span>
       </button>
 
-      {/* Card body */}
-      <div className="p-5 lg:p-6 flex flex-col flex-1">
+      {/* Card body — tighter padding/type at half-width mobile */}
+      <div className="p-3.5 sm:p-5 lg:p-6 flex flex-col flex-1">
         {/* Family pill */}
-        <span className="inline-block self-start text-[9px] font-bold tracking-[0.16em] uppercase text-cobalt mb-3">
+        <span className="inline-block self-start text-[9px] font-bold tracking-[0.14em] sm:tracking-[0.16em] uppercase text-cobalt mb-2 sm:mb-3">
           {familyLabel(family)}
         </span>
 
         {/* Title + format */}
-        <h3 className="font-display text-lg lg:text-xl font-extrabold text-ink tracking-tight leading-tight mb-1">
+        <h3 className="font-display text-[15px] sm:text-lg lg:text-xl font-extrabold text-ink tracking-tight leading-tight mb-1">
           {p.title}
         </h3>
-        <p className="text-[12px] text-ink-soft mb-3">
+        <p className="text-[11px] sm:text-[12px] text-ink-soft mb-2 sm:mb-3">
           {p.vialSize} · {p.format}
         </p>
 
-        {/* Lot data — the substance */}
+        {/* Lot data — the substance. Compacted on mobile to one short line. */}
         {p.lot.id !== 'TBD' && (
-          <p className="text-[11px] text-ink-soft mb-4 leading-snug">
+          <p className="text-[10.5px] sm:text-[11px] text-ink-soft mb-3 sm:mb-4 leading-snug">
             <span className="text-cobalt font-bold">Lot {p.lot.id}</span>
-            {p.lot.purity && <> · <span>{p.lot.purity}</span></>}
-            {p.lot.testedDate && <> · Tested {p.lot.testedDate.slice(0, 10)}</>}
+            {p.lot.purity && <> · <span className="hidden sm:inline">{p.lot.purity}</span></>}
+            {p.lot.testedDate && (
+              <span className="hidden sm:inline"> · Tested {p.lot.testedDate.slice(0, 10)}</span>
+            )}
           </p>
         )}
 
-        {/* Pharmacist's note */}
+        {/* Pharmacist's note — hidden on mobile (too dense at half-width) */}
         {pharmacistNote && (
-          <div className="mb-4 px-3 py-2 bg-cream/60 border-l-2 border-cobalt/40 rounded-r-md">
+          <div className="hidden sm:block mb-4 px-3 py-2 bg-cream/60 border-l-2 border-cobalt/40 rounded-r-md">
             <p className="text-[10.5px] tracking-[0.18em] uppercase text-cobalt font-bold mb-1">
               The pharmacist
             </p>
@@ -583,34 +587,35 @@ function ProductCard({
           </div>
         )}
 
-        {/* Restock message */}
+        {/* Restock message — desktop only at half-width mobile */}
         {restock && (
-          <p className="text-[11px] text-ink-soft mb-4">
+          <p className="hidden sm:block text-[11px] text-ink-soft mb-4">
             {restock.message}
           </p>
         )}
 
-        {/* Pricing row — bottom */}
-        <div className="mt-auto pt-4 border-t border-cobalt/10">
-          <div className="flex items-baseline justify-between">
+        {/* Pricing row — bottom. Stack on mobile so the price isn't crushed
+            against the "Details →" link at half-width. */}
+        <div className="mt-auto pt-3 sm:pt-4 border-t border-cobalt/10">
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-0">
             <div>
-              <span className="font-display text-xl lg:text-2xl font-bold text-ink">
+              <span className="font-display text-base sm:text-xl lg:text-2xl font-bold text-ink">
                 {money(displayPrice)}
               </span>
               {!subscribeMode && (
-                <span className="text-[11px] text-ink-soft ml-2">
+                <span className="hidden sm:inline text-[11px] text-ink-soft ml-2">
                   or {money(subscribePrice(p))} subscribe
                 </span>
               )}
               {subscribeMode && (
-                <span className="text-[11px] text-ink-muted ml-2 line-through">
+                <span className="text-[10px] sm:text-[11px] text-ink-muted ml-2 line-through">
                   {money(p.priceCents)}
                 </span>
               )}
             </div>
             <Link
               href={`/products/${p.handle}`}
-              className="text-[10px] uppercase tracking-[0.22em] text-cobalt font-bold hover:text-ink transition"
+              className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-cobalt font-bold hover:text-ink transition"
             >
               Details →
             </Link>
@@ -627,7 +632,7 @@ function ProductCard({
 
 function StacksBreak({ stacks, subscribeMode }: { stacks: StackResolved[]; subscribeMode: boolean }) {
   return (
-    <div className="col-span-1 sm:col-span-2 lg:col-span-3 my-4 lg:my-6">
+    <div className="col-span-2 lg:col-span-3 my-4 lg:my-6">
       <div className="bg-ink text-white rounded-2xl p-6 lg:p-8 overflow-hidden">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
@@ -696,7 +701,7 @@ function StacksBreak({ stacks, subscribeMode }: { stacks: StackResolved[]; subsc
 
 function SupportBreak() {
   return (
-    <div className="col-span-1 sm:col-span-2 lg:col-span-3 my-4 lg:my-6">
+    <div className="col-span-2 lg:col-span-3 my-4 lg:my-6">
       <div className="bg-cobalt text-white rounded-2xl p-6 lg:p-8 flex flex-col lg:flex-row items-start lg:items-center gap-5">
         <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white/15 border border-white/25 flex items-center justify-center">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
