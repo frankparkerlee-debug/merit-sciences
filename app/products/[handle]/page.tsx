@@ -106,6 +106,89 @@ export default function ProductPage({ params }: Props) {
         </div>
       </section>
 
+      {/* ═══════════════ WHAT SHIPS — editorial substance below the fold ═══════════════
+          Answers the implicit "what am I actually getting" question that
+          chemistry/specs don't. Three columns: the vial, storage, verification. */}
+      <section className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-12 lg:pt-16 pb-6 lg:pb-8">
+        <div className="max-w-2xl mb-8 lg:mb-10">
+          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+            — What ships
+          </p>
+          <h2
+            className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
+            style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+          >
+            What you actually receive<span className="text-cobalt">.</span>
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+          {/* COL 1 — the vial itself */}
+          <div className="bg-white border border-cobalt/10 rounded-2xl p-6 lg:p-7 flex flex-col">
+            <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center text-cobalt mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <path d="M9 2h6v3h-1v3l3.5 8a3 3 0 0 1-2.8 4.1H7.3A3 3 0 0 1 4.5 16L8 8V5H7V2z" />
+              </svg>
+            </div>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
+              The vial
+            </p>
+            <h3 className="font-display text-lg font-extrabold text-ink mb-2 leading-tight">
+              {product.vialSize} · lyophilized
+            </h3>
+            <p className="text-sm text-ink-soft leading-relaxed">
+              Sealed glass vial, sterile-filled at a 503B outsourcing facility.
+              Lyophilized powder format — significantly longer sealed stability
+              than pre-reconstituted alternatives. Label carries CAS, lot, and
+              tested date.
+            </p>
+          </div>
+
+          {/* COL 2 — storage & shelf life */}
+          <div className="bg-white border border-cobalt/10 rounded-2xl p-6 lg:p-7 flex flex-col">
+            <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center text-cobalt mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <line x1="12" y1="2" x2="12" y2="22" />
+                <path d="M5 8a7 7 0 1 0 14 0" />
+                <path d="M5 16a7 7 0 1 1 14 0" />
+              </svg>
+            </div>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
+              Storage & shelf-life
+            </p>
+            <h3 className="font-display text-lg font-extrabold text-ink mb-2 leading-tight">
+              ≥24 mo. sealed at -20°C
+            </h3>
+            <p className="text-sm text-ink-soft leading-relaxed">
+              Ships at ambient — lyophilized powder is stable in transit and
+              does not require cold-chain shipping. Once reconstituted with
+              bacteriostatic water, refrigerate at 2–8°C; use within 30 days.
+            </p>
+          </div>
+
+          {/* COL 3 — verification trail */}
+          <div className="bg-white border border-cobalt/10 rounded-2xl p-6 lg:p-7 flex flex-col">
+            <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center text-cobalt mb-4">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
+              Verification trail
+            </p>
+            <h3 className="font-display text-lg font-extrabold text-ink mb-2 leading-tight">
+              Lot {product.lot.id !== 'TBD' ? product.lot.id : 'on label'} · COA on demand
+            </h3>
+            <p className="text-sm text-ink-soft leading-relaxed">
+              Every batch HPLC-verified to {product.lot.purity || '≥99% purity'} and
+              signed off by a US-licensed pharmacist before release. Lot number
+              on the label — pull the matching COA anytime from your dashboard.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════ THE CHEMISTRY (spec sheet) ═══════════════ */}
       <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
         <div className="max-w-2xl mb-8 lg:mb-10">
@@ -288,15 +371,14 @@ export default function ProductPage({ params }: Props) {
               </svg>
             </div>
             <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-2">
-              — Talk to a Pharmacist
+              — Talk to a Pharmacologist
             </p>
             <h3 className="font-display text-xl lg:text-2xl font-extrabold mb-3 leading-tight">
               Question we didn&apos;t answer?
             </h3>
             <p className="text-[13px] text-white/80 mb-5 leading-relaxed flex-1">
-              Our US-licensed pharmacy team answers compound questions, lot
-              questions, and protocol questions — same business day. No bots,
-              no tickets.
+              Our team answers compound questions, lot questions, and
+              protocol questions — same business day. No bots, no tickets.
             </p>
             <a
               href={`mailto:rx@meritsciences.com?subject=Question about ${product.title}`}

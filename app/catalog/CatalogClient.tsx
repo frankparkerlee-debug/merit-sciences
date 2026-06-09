@@ -151,18 +151,21 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
 
   return (
     <main className="bg-cream min-h-screen">
-      {/* ═══════════════ PAGE HEADER ═══════════════ */}
-      <div className="px-6 lg:px-12 pt-12 lg:pt-16 pb-8 lg:pb-10 max-w-[1400px] mx-auto">
-        <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-4">
+      {/* ═══════════════ PAGE HEADER ═══════════════
+          Compact on mobile (eyebrow + h1 + 1-line tagline = ~110px)
+          so the filter row + first product land above the fold. */}
+      <div className="px-6 lg:px-12 pt-6 sm:pt-12 lg:pt-16 pb-4 sm:pb-8 lg:pb-10 max-w-[1400px] mx-auto">
+        <p className="text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2 sm:mb-4">
           — The Catalog
         </p>
         <h1
           className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-          style={{ fontSize: 'clamp(40px, 6vw, 88px)' }}
+          style={{ fontSize: 'clamp(28px, 6vw, 88px)' }}
         >
           {totalCount} compounds<span className="text-cobalt">.</span>
         </h1>
-        <p className="mt-5 text-base lg:text-lg text-ink-soft max-w-xl leading-relaxed">
+        {/* Tagline: hidden on mobile to reclaim ~80px. */}
+        <p className="hidden sm:block mt-5 text-base lg:text-lg text-ink-soft max-w-xl leading-relaxed">
           Organized by chemistry, not promise. Every batch pharmacy-verified,
           every shipment lot-documented. Pick a family to narrow it down.
         </p>
@@ -291,10 +294,10 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
         {accessories.length > 0 && (
           <div className="mt-20 lg:mt-24 pt-10 lg:pt-12 border-t border-cobalt/10">
             <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-              — Accessories
+              — Reconstitution
             </p>
             <h2 className="font-display text-2xl lg:text-3xl font-extrabold text-ink tracking-tight mb-6">
-              Reconstitution + handling.
+              Bacteriostatic water<span className="text-cobalt">.</span>
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {accessories.map((p) => (
@@ -333,13 +336,13 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
         <div className="px-6 lg:px-12 py-3 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 text-[12px]">
           <p className="font-semibold flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-            Ships from Dallas in 2 business days · Free shipping over $100
+            Free Shipping Over $100
           </p>
           <Link
             href="mailto:rx@meritsciences.com"
             className="text-cobalt-soft hover:text-white font-semibold tracking-[0.15em] uppercase text-[10px]"
           >
-            Got questions? Talk to a pharmacist →
+            Talk to a Pharmacologist →
           </Link>
         </div>
       </div>
@@ -705,11 +708,11 @@ function SupportBreak() {
             — Editorial Break
           </p>
           <h3 className="font-display text-xl lg:text-2xl font-extrabold mb-1">
-            Got questions? Talk to a pharmacist.
+            Talk to a Pharmacologist.
           </h3>
           <p className="text-[13px] text-white/85 leading-relaxed">
-            Our US-licensed pharmacy team answers compound questions, lot questions,
-            and research-protocol questions — same business day. No bots, no
+            Our team answers compound questions, lot questions, and
+            research-protocol questions — same business day. No bots, no
             tickets, no script.
           </p>
         </div>
@@ -766,28 +769,29 @@ function QuickViewModal({
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-          {/* Image side */}
-          <div className="relative aspect-square bg-gradient-to-br from-white to-cream overflow-hidden">
+          {/* Image side — compact on mobile (~35vh) so the buybox fits
+              alongside without forcing a scroll. Full square on desktop. */}
+          <div className="relative aspect-[5/3] md:aspect-square max-h-[34vh] md:max-h-none bg-gradient-to-br from-white to-cream overflow-hidden">
             {product.imageUrl && (
               <Image
                 src={product.imageUrl}
                 alt={product.title}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-contain p-10"
+                className="object-contain p-6 md:p-10"
               />
             )}
           </div>
 
           {/* Detail side */}
-          <div className="p-6 lg:p-8 flex flex-col">
-            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
+          <div className="p-5 md:p-8 flex flex-col">
+            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1.5">
               {product.eyebrow.split('·')[0].trim()}
             </p>
-            <h2 className="font-display text-2xl lg:text-3xl font-black text-ink tracking-tight mb-2">
+            <h2 className="font-display text-xl md:text-3xl font-black text-ink tracking-tight mb-1">
               {product.title}
             </h2>
-            <p className="text-sm text-ink-soft mb-5">
+            <p className="text-[12px] md:text-sm text-ink-soft mb-4 md:mb-5">
               {product.vialSize} · {product.format}
             </p>
 

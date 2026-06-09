@@ -19,23 +19,24 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
     { label: 'Single', vials: 1, priceCents: product.priceCents },
   ];
 
-  // Default selected: 6-Pack if available (3rd index in 4-bundle layout), else last
-  const defaultIdx = bundles.length >= 3 ? 2 : 0;
-  const [selectedIdx, setSelectedIdx] = useState(defaultIdx);
+  // Default selected: always Single. Anchoring on 6-Pack auto-loaded
+  // a $400+ price into the sticky bar before the buyer engaged with
+  // bundle choice — read as forced upsell on mobile.
+  const [selectedIdx, setSelectedIdx] = useState(0);
   const [purchaseType, setPurchaseType] = useState<'onetime' | 'subscribe'>('onetime');
   const [subscriptionFreq, setSubscriptionFreq] = useState<string>('Every month');
-  const [addReconKit, setAddReconKit] = useState(false);
+  const [addBacWater, setAddBacWater] = useState(false);
   const [freqMenuOpen, setFreqMenuOpen] = useState(false);
   const add = useCart((s) => s.add);
 
   const selected = bundles[selectedIdx];
-  const reconKitCents = 1499;
+  const bacWaterCents = 999;
 
   // If subscribe selected, find subscribe bundle for pricing
   const subscribeBundle = bundles.find((b) => b.label.toLowerCase().includes('subscribe'));
   const effectiveBundle = purchaseType === 'subscribe' && subscribeBundle ? subscribeBundle : selected;
 
-  const subtotalCents = effectiveBundle.priceCents + (addReconKit ? reconKitCents : 0);
+  const subtotalCents = effectiveBundle.priceCents + (addBacWater ? bacWaterCents : 0);
 
   // Compute savings %
   const singleBundle = bundles[0];
@@ -56,13 +57,13 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
       },
       1,
     );
-    if (addReconKit) {
+    if (addBacWater) {
       add(
         {
-          handle: 'recon-kit',
-          title: 'Reconstitution kit',
-          bundleLabel: 'BAC + syringes + swabs',
-          unitCents: reconKitCents,
+          handle: 'bac-water',
+          title: 'BAC Water',
+          bundleLabel: '10mL bacteriostatic',
+          unitCents: bacWaterCents,
         },
         1,
       );
@@ -340,18 +341,19 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
         )}
       </div>
 
-      {/* Reconstitution kit add-on */}
+      {/* BAC Water add-on — bacteriostatic water only.
+          Merit does NOT supply syringes or swabs. */}
       <button
         type="button"
-        onClick={() => setAddReconKit(!addReconKit)}
+        onClick={() => setAddBacWater(!addBacWater)}
         className="flex items-center gap-3 p-3.5 border border-dashed border-cobalt/30 rounded-xl bg-cream/50 hover:bg-cream/80 transition text-left"
       >
         <span
           className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition ${
-            addReconKit ? 'bg-cobalt border-cobalt' : 'border-cobalt/40 bg-white'
+            addBacWater ? 'bg-cobalt border-cobalt' : 'border-cobalt/40 bg-white'
           }`}
         >
-          {addReconKit && (
+          {addBacWater && (
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
               <polyline points="20 6 9 17 4 12" />
             </svg>
@@ -359,14 +361,14 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
         </span>
         <span className="flex-1">
           <span className="block text-sm font-bold text-ink">
-            Add reconstitution kit
+            Add BAC Water
           </span>
           <span className="block text-[12px] text-ink-soft">
-            BAC water (10mL) + 30 insulin syringes + alcohol swabs
+            10mL bacteriostatic water — pharmacy-grade reconstitution carrier
           </span>
         </span>
         <span className="font-display text-sm font-bold text-cobalt">
-          + {money(reconKitCents)}
+          + {money(bacWaterCents)}
         </span>
       </button>
 
@@ -398,7 +400,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
             </p>
             <p className="text-[10px] text-ink-soft truncate">
               {purchaseType === 'subscribe' ? `Subscribe · ${subscriptionFreq}` : selected.label}
-              {addReconKit && ' + kit'}
+              {addBacWater && ' + BAC water'}
             </p>
           </div>
           {/* Add button */}
