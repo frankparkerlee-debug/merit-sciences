@@ -413,10 +413,10 @@ export default function HomePage() {
               {/* Content wrapper — relative + z-10 so it stacks above the
                   bg image and overlay regardless of DOM-order quirks. */}
               <div className="relative z-10 text-white p-8 lg:p-10 flex flex-col flex-1">
-                {/* Meta — top-right */}
-                <div className="absolute top-0 right-0 text-[10px] tracking-[0.22em] uppercase text-white/80 font-semibold">
+                {/* Section tag — small bordered pill, leads the stack */}
+                <span className="inline-flex items-center self-start text-[10px] tracking-[0.22em] uppercase text-white font-bold border border-white/30 px-2 py-1 rounded mb-4">
                   Top Sellers
-                </div>
+                </span>
 
                 {/* Eyebrow */}
                 <p className="text-[10px] tracking-[0.22em] uppercase text-white/80 font-semibold mb-5">

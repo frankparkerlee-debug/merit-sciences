@@ -331,16 +331,18 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
         )}
       </div>
 
-      {/* ═══════════════ STICKY TRUST FOOTER ═══════════════ */}
+      {/* ═══════════════ STICKY TRUST FOOTER ═══════════════
+          Mobile: just the shipping line on one row (~36px tall).
+          Desktop: shipping + Pharmacologist link, two columns. */}
       <div className="sticky bottom-0 z-10 bg-ink text-white border-t border-cobalt/30">
-        <div className="px-6 lg:px-12 py-3 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 text-[12px]">
-          <p className="font-semibold flex items-center gap-2">
+        <div className="px-6 lg:px-12 py-2 lg:py-3 max-w-[1400px] mx-auto flex items-center justify-between gap-3 text-[12px]">
+          <p className="font-semibold flex items-center gap-2 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
             Free Shipping Over $100
           </p>
           <Link
             href="mailto:rx@meritsciences.com"
-            className="text-cobalt-soft hover:text-white font-semibold tracking-[0.15em] uppercase text-[10px]"
+            className="hidden sm:inline-block text-cobalt-soft hover:text-white font-semibold tracking-[0.15em] uppercase text-[10px] whitespace-nowrap"
           >
             Talk to a Pharmacologist →
           </Link>
