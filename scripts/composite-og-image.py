@@ -68,19 +68,13 @@ except Exception:
     except Exception:
         wordmark_font = ImageFont.load_default()
 
-try:
-    subtitle_font = load_font("/System/Library/Fonts/HelveticaNeue.ttc", 28, index=1)  # Bold
-except Exception:
-    subtitle_font = load_font("/System/Library/Fonts/Helvetica.ttc", 28, index=1)
-
 # ─── Draw "MERIT." centered using PIL's anchor="mm" (middle-middle) ────
-# anchor="mm" anchors the text at the given (x,y) point at its
-# horizontal+vertical visual center. Far more reliable than bbox math
-# for condensed-Black faces with non-standard metrics.
+# Wordmark-only treatment per the original brief: blue Merit pattern +
+# wordmark overlaid, no subtitle. Lets the cobalt vial pattern breathe.
 wordmark = "MERIT."
 
 wordmark_cx = OG_W // 2
-wordmark_cy = int(OG_H * 0.44)   # slightly above visual center
+wordmark_cy = OG_H // 2   # dead center
 
 # Soft drop-shadow for depth over the busy vial pattern
 shadow_offset = 5
@@ -89,17 +83,6 @@ draw.text((wordmark_cx + shadow_offset, wordmark_cy + shadow_offset),
           anchor="mm")
 draw.text((wordmark_cx, wordmark_cy),
           wordmark, font=wordmark_font, fill=(255, 255, 255),
-          anchor="mm")
-
-# ─── Draw "RESEARCH-GRADE PEPTIDES" tracked-uppercase below ────────────
-# Loose letter-spacing emulated by interleaving each character with spaces.
-# Sits at 78% of canvas height — well clear of the wordmark's descenders.
-subtitle = "R E S E A R C H - G R A D E   P E P T I D E S"
-sub_cx = OG_W // 2
-sub_cy = int(OG_H * 0.78)
-
-draw.text((sub_cx, sub_cy),
-          subtitle, font=subtitle_font, fill=(255, 255, 255),
           anchor="mm")
 
 # ─── Save as JPEG q88 ──────────────────────────────────────────────────

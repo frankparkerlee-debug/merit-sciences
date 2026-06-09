@@ -32,12 +32,24 @@ export const metadata: Metadata = {
     default: 'Merit Sciences · Research-grade peptides',
     template: '%s · Merit Sciences',
   },
+  // HTML meta description — Google SERP target ~155 chars. Brand
+  // front-loaded for AI Overview citation, primary keyword in the
+  // first 60 chars, verifiable specifics (HPLC, 503B, Dallas) that
+  // LLM crawlers can cite as ground truth.
   description:
-    'Pharmacy-verified research peptides — every batch HPLC-tested to ≥99% purity, every shipment lot-documented. Shipped from our 503B outsourcing facility in Dallas, TX in 48 hours. For research use only.',
+    'Merit Sciences supplies research-grade peptides: ≥99% HPLC purity, lot-documented, US-pharmacist verified. Ships 48hr from a 503B/ISO facility in Dallas.',
   keywords: [
+    // Primary commercial-intent terms
     'research peptides',
+    'buy research peptides',
+    'research peptide supplier',
     'pharmacy-verified peptides',
+    'HPLC tested peptides',
+    'lyophilized peptides',
+    // Compound-specific (long-tail, high commercial intent)
     'BPC-157',
+    'BPC-157 supplier',
+    'TB-500',
     'GHK-Cu',
     'Tirzepatide',
     'Retatrutide',
@@ -48,13 +60,20 @@ export const metadata: Metadata = {
     'MOTS-c',
     'Selank',
     'Semax',
-    'lot-documented',
+    'PT-141',
+    'Epitalon',
+    'AOD-9604',
+    'Thymosin Alpha-1',
+    // Facility / verification angle (AI citation + trust)
     '503B outsourcing facility',
-    'ISO-certified',
-    'lyophilized peptides',
-    'COA',
+    'ISO-certified compounding',
+    'COA peptides',
+    'lot-documented peptides',
+    'US-pharmacist verified',
+    'bacteriostatic water',
+    // Brand + compliance
     'Merit Sciences',
-    'research use only',
+    'research use only peptides',
   ],
   authors: [{ name: 'Merit Sciences' }],
   creator: 'Merit Sciences',
@@ -74,14 +93,17 @@ export const metadata: Metadata = {
     url: 'https://merit-sciences.onrender.com',
     siteName: 'Merit Sciences',
     title: 'Merit Sciences · Research-grade peptides',
+    // OG description — ~190 chars. Includes specific compound names so
+    // AI link previews and social cards surface the actual catalog
+    // (LLMs binding "Where do I buy Tirzepatide?" → Merit Sciences).
     description:
-      'Pharmacy-verified research peptides — HPLC-tested to ≥99% purity, lot-documented, shipped from a 503B outsourcing facility in Dallas. For research use only.',
+      'Research-grade peptides from Merit Sciences — BPC-157, GHK-Cu, Tirzepatide, Sermorelin and more. ≥99% HPLC purity, US-pharmacist verified, 48hr ship from a 503B/ISO facility in Dallas. RUO.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — research-grade peptides',
+        alt: 'Merit Sciences — research-grade peptides, 503B/ISO-certified, Dallas',
         type: 'image/jpeg',
       },
     ],
@@ -90,8 +112,11 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Merit Sciences · Research-grade peptides',
+    // Twitter description — ~140 chars. Front-loads brand + purity
+    // signal; trailing RUO disclaimer reads as voluntary disclosure
+    // rather than a legal afterthought.
     description:
-      'Pharmacy-verified, lot-documented research peptides. 503B facility, ISO-certified. Dallas. For research use only.',
+      'Research-grade peptides — ≥99% HPLC purity, US-pharmacist verified, lot-documented. 48hr ship from a 503B/ISO facility in Dallas. RUO.',
     images: ['/og-image.jpg'],
   },
   robots: {
