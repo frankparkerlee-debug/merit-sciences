@@ -76,3 +76,11 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;                    /* Chrome / Safari / Webkit */
 }
+
+/* Toast slide-down — used by the catalog "added to cart" confirmation.
+   Single-shot 250ms; brief enough that reduced-motion users won't be
+   meaningfully impacted, so no override needed. */
+@keyframes slideDown {
+  0%   { transform: translate(-50%, -120%); opacity: 0; }
+  100% { transform: translate(-50%, 0);     opacity: 1; }
+}

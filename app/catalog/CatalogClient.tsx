@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
 import { money } from '@/lib/product-types';
+import { useCart } from '@/lib/cart';
 import type { Family, StackTemplate } from './page';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -95,6 +96,10 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
   const [compareOpen, setCompareOpen] = useState(false);
   const [quickViewHandle, setQuickViewHandle] = useState<string | null>(null);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  // Brief confirmation flash after bulk-add. Auto-clears after 2s.
+  const [addedFlash, setAddedFlash] = useState<{ count: number; cents: number } | null>(null);
+
+  const addToCart = useCart((s) => s.add);
 
   // Lock body scroll when modal/drawer is open
   useEffect(() => {
@@ -148,6 +153,45 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
       return [...curr, handle];
     });
   }
+
+  // Bulk add: drops every checked product into the cart at its Single
+  // bundle (or subscribe-bundle pricing if Subscribe toggle is on),
+  // qty 1 each. Clears the selection + closes the compare drawer.
+  function handleAddAllToCart() {
+    if (comparedProducts.length === 0) return;
+    let totalCents = 0;
+    comparedProducts.forEach(({ product }) => {
+      const bundle = subscribeMode
+        ? product.bundles?.find((b) => b.label.toLowerCase().includes('subscribe'))
+          ?? product.bundles?.[0]
+          ?? { label: 'Single', vials: 1, priceCents: product.priceCents }
+        : product.bundles?.[0]
+          ?? { label: 'Single', vials: 1, priceCents: product.priceCents };
+      const unitCents = subscribeMode && bundle.vials > 0
+        ? Math.round(bundle.priceCents / bundle.vials)
+        : bundle.priceCents;
+      addToCart(
+        {
+          handle: product.handle,
+          title: product.title,
+          bundleLabel: subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label,
+          unitCents,
+        },
+        1,
+      );
+      totalCents += unitCents;
+    });
+    setAddedFlash({ count: comparedProducts.length, cents: totalCents });
+    setCompareList([]);
+    setCompareOpen(false);
+  }
+
+  // Auto-clear the added-to-cart confirmation flash after 2.5s.
+  useEffect(() => {
+    if (!addedFlash) return;
+    const t = setTimeout(() => setAddedFlash(null), 2500);
+    return () => clearTimeout(t);
+  }, [addedFlash]);
 
   return (
     <main className="bg-cream min-h-screen">
@@ -349,22 +393,80 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
         </div>
       </div>
 
-      {/* ═══════════════ COMPARE FAB ═══════════════ */}
+      {/* ═══════════════ SELECTION FAB — two-action pill ═══════════════
+          Floats above the sticky trust footer. Left section: count.
+          Middle: primary cobalt "Add to cart". Right: outline "Compare".
+          Both actions operate on the same checkbox selection set. */}
       {compareList.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setCompareOpen(true)}
-          className="fixed bottom-16 right-6 lg:bottom-20 lg:right-12 z-30 bg-cobalt text-white px-5 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition"
+        <div
+          className="fixed bottom-16 right-3 left-3 sm:left-auto lg:bottom-20 lg:right-12 z-30 flex items-stretch bg-ink text-white rounded-full shadow-2xl overflow-hidden border border-white/10"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-            <line x1="14" y1="17.5" x2="21" y2="17.5" strokeLinecap="round" />
-            <line x1="17.5" y1="14" x2="17.5" y2="21" strokeLinecap="round" />
+          {/* Count badge */}
+          <div className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 border-r border-white/10 whitespace-nowrap">
+            <span className="font-display text-base sm:text-lg font-black leading-none">
+              {compareList.length}
+            </span>
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-white/70 font-bold leading-tight">
+              selected
+            </span>
+          </div>
+
+          {/* Add to cart — primary action */}
+          <button
+            type="button"
+            onClick={handleAddAllToCart}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 sm:py-3 bg-cobalt hover:bg-cobalt/85 transition font-bold text-[12px] sm:text-sm whitespace-nowrap"
+            aria-label={`Add ${compareList.length} selected to cart`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            Add to cart
+          </button>
+
+          {/* Compare — secondary action */}
+          <button
+            type="button"
+            onClick={() => setCompareOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-white/8 transition font-bold text-[12px] sm:text-sm border-l border-white/10 whitespace-nowrap"
+            aria-label={`Compare ${compareList.length} selected`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <line x1="14" y1="17.5" x2="21" y2="17.5" strokeLinecap="round" />
+              <line x1="17.5" y1="14" x2="17.5" y2="21" strokeLinecap="round" />
+            </svg>
+            Compare
+            <span className="hidden sm:inline text-white/60 font-semibold">
+              {compareList.length}/{MAX_COMPARE}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* ═══════════════ ADDED-TO-CART TOAST ═══════════════
+          Floats top-center for ~2.5s after a bulk add. Cobalt for
+          on-brand confirmation; auto-dismisses via the effect above. */}
+      {addedFlash && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-cobalt text-white px-5 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 animate-[slideDown_0.25s_ease-out]"
+          role="status"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <polyline points="20 6 9 17 4 12" />
           </svg>
-          Compare ({compareList.length}/{MAX_COMPARE})
-        </button>
+          {addedFlash.count} added to cart · {money(addedFlash.cents)}
+          <Link
+            href="/cart"
+            className="ml-2 text-[11px] tracking-[0.14em] uppercase font-bold text-white/85 hover:text-white underline-offset-2 hover:underline"
+          >
+            View cart →
+          </Link>
+        </div>
       )}
 
       {/* ═══════════════ COMPARE DRAWER ═══════════════ */}
@@ -377,6 +479,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
             setCompareOpen(false);
           }}
           onRemove={(handle) => toggleCompare(handle)}
+          onAddAll={handleAddAllToCart}
           subscribeMode={subscribeMode}
         />
       )}
@@ -872,12 +975,14 @@ function CompareDrawer({
   onClose,
   onClear,
   onRemove,
+  onAddAll,
   subscribeMode,
 }: {
   products: EnrichedProduct[];
   onClose: () => void;
   onClear: () => void;
   onRemove: (handle: string) => void;
+  onAddAll: () => void;
   subscribeMode: boolean;
 }) {
   if (products.length === 0) {
@@ -1000,22 +1105,36 @@ function CompareDrawer({
           </div>
         </div>
 
-        {/* Footer with clear */}
-        <div className="sticky bottom-0 bg-white border-t border-cobalt/10 p-4 lg:p-5 flex items-center justify-between">
+        {/* Footer — Clear (left), Close (middle), Add all to cart (right primary) */}
+        <div className="sticky bottom-0 bg-white border-t border-cobalt/10 p-4 lg:p-5 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onClear}
-            className="text-[11px] uppercase tracking-[0.18em] text-ink-soft font-bold hover:text-ink transition"
+            className="text-[11px] uppercase tracking-[0.18em] text-ink-soft font-bold hover:text-ink transition whitespace-nowrap"
           >
             Clear all
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="bg-ink text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition"
-          >
-            Done
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 rounded-lg font-bold text-sm border border-cobalt/20 text-ink hover:bg-cream transition whitespace-nowrap"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={onAddAll}
+              className="bg-cobalt text-white px-4 sm:px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition whitespace-nowrap inline-flex items-center gap-2"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
+              Add all to cart
+            </button>
+          </div>
         </div>
       </div>
     </div>
