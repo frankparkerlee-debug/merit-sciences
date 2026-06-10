@@ -30,23 +30,23 @@ export const metadata: Metadata = {
   // is wired — relative `/og-image.jpg` then works under both.
   metadataBase: new URL('https://merit-sciences.onrender.com'),
   title: {
-    default: 'Merit Sciences · Research-grade peptides',
+    default: 'Merit Sciences · Research-grade compounds',
     template: '%s · Merit Sciences',
   },
-  // HTML meta description — Google SERP target ~155 chars. Brand
-  // front-loaded for AI Overview citation, primary keyword in the
-  // first 60 chars, verifiable specifics (HPLC, 503B, Dallas) that
-  // LLM crawlers can cite as ground truth.
+  // HTML meta description — Google SERP target ~155 chars. PPC-safer
+  // vocabulary: "compounds" (not peptides — auto-flagged by Meta),
+  // no facility/pharmacy practice language, explicit RUO disclaimer
+  // that ad reviewers like to see stated outright.
   description:
-    'Merit Sciences supplies research-grade peptides: ≥99% HPLC purity, lot-documented, US-pharmacist verified. Ships 48hr from a 503B/ISO facility in Dallas.',
+    'Merit Sciences supplies research-grade compounds: ≥99% HPLC purity, lot-documented. Ships 48hr from Dallas, TX. For research use only — not for human or veterinary use.',
   keywords: [
     // Primary commercial-intent terms
-    'research peptides',
-    'buy research peptides',
-    'research peptide supplier',
-    'pharmacy-verified peptides',
-    'HPLC tested peptides',
-    'lyophilized peptides',
+    'research compounds',
+    'buy research compounds',
+    'research compound supplier',
+    'HPLC tested compounds',
+    'lab-tested compounds',
+    'lot-documented research compounds',
     // Compound-specific (long-tail, high commercial intent)
     'BPC-157',
     'BPC-157 supplier',
@@ -65,16 +65,13 @@ export const metadata: Metadata = {
     'Epitalon',
     'AOD-9604',
     'Thymosin Alpha-1',
-    // Facility / verification angle (AI citation + trust)
-    '503B outsourcing facility',
-    'ISO-certified compounding',
-    'COA peptides',
-    'lot-documented peptides',
-    'US-pharmacist verified',
+    // Quality / verification angle (AI citation + trust)
+    'COA',
+    'HPLC verified',
     'bacteriostatic water',
     // Brand + compliance
     'Merit Sciences',
-    'research use only peptides',
+    'research use only',
   ],
   authors: [{ name: 'Merit Sciences' }],
   creator: 'Merit Sciences',
@@ -93,18 +90,18 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://merit-sciences.onrender.com',
     siteName: 'Merit Sciences',
-    title: 'Merit Sciences · Research-grade peptides',
-    // OG description — ~190 chars. Includes specific compound names so
-    // AI link previews and social cards surface the actual catalog
-    // (LLMs binding "Where do I buy Tirzepatide?" → Merit Sciences).
+    title: 'Merit Sciences · Research-grade compounds',
+    // OG description — names compounds in the catalog so AI link
+    // previews and social cards surface the actual offerings. PPC-safer
+    // framing: no facility/pharmacy practice language, explicit RUO.
     description:
-      'Research-grade peptides from Merit Sciences — BPC-157, GHK-Cu, Tirzepatide, Sermorelin and more. ≥99% HPLC purity, US-pharmacist verified, 48hr ship from a 503B/ISO facility in Dallas. RUO.',
+      'Research-grade compounds from Merit Sciences — BPC-157, GHK-Cu, Tirzepatide, Sermorelin and more. ≥99% HPLC purity, lot-documented. Ships 48hr from Dallas. Research use only — not for human or veterinary use.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — research-grade peptides, 503B/ISO-certified, Dallas',
+        alt: 'Merit Sciences — research-grade compounds, lab-verified, Dallas',
         type: 'image/jpeg',
       },
     ],
@@ -112,12 +109,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Merit Sciences · Research-grade peptides',
-    // Twitter description — ~140 chars. Front-loads brand + purity
-    // signal; trailing RUO disclaimer reads as voluntary disclosure
-    // rather than a legal afterthought.
+    title: 'Merit Sciences · Research-grade compounds',
+    // Twitter description — ~140 chars. PPC-safer, RUO explicit.
     description:
-      'Research-grade peptides — ≥99% HPLC purity, US-pharmacist verified, lot-documented. 48hr ship from a 503B/ISO facility in Dallas. RUO.',
+      'Research-grade compounds — ≥99% HPLC purity, lot-documented. Ships 48hr from Dallas. Research use only — not for human or veterinary use.',
     images: ['/og-image.jpg'],
   },
   robots: {

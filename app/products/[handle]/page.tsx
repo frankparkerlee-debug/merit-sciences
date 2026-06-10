@@ -26,7 +26,12 @@ export async function generateMetadata({ params }: Props) {
   const p = getProduct(params.handle);
   return {
     title: p ? `${p.title} · ${p.vialSize} · Merit Sciences` : 'Product',
-    description: p?.oneLiner || `${p?.title} — pharmacy-verified, lot-tested, shipped from Dallas in 48 hours.`,
+    // PPC-safer fallback description — drops "pharmacy-verified" pharma
+    // language; explicit "not for human or veterinary use" satisfies
+    // Meta/Google ad reviewers' RUO documentation expectation.
+    description:
+      p?.oneLiner
+      || `${p?.title}, research compound. HPLC-verified ≥99% purity, lot-documented. Ships 48hr from Dallas. Research use only — not for human or veterinary use.`,
   };
 }
 
