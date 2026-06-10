@@ -441,6 +441,200 @@ export default function ProductPage({ params }: Props) {
         </div>
       </section>
 
+      {/* ═══════════════ HOW A MERIT LOT IS MADE ═══════════════
+          Supply-chain transparency — the conversion lever brands without
+          social proof use to close the trust gap (Allbirds, Patagonia,
+          AG1 patterns). Five documented steps, every one verifiable.
+          Sits after Why Merit (where the buyer has seen "yes, Merit is
+          different") and before References (where they go technical). */}
+      <section className="bg-cream/40 border-y border-cobalt/10">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-12 lg:py-16">
+          {/* Header */}
+          <div className="max-w-2xl mb-10 lg:mb-14">
+            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2.5">
+              — How it&apos;s made
+            </p>
+            <h2
+              className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
+              style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
+            >
+              From compound to your shelf<span className="text-cobalt">.</span>
+            </h2>
+            <p className="mt-3 text-sm text-ink-soft leading-relaxed max-w-xl">
+              Every Merit lot follows the same documented path. Five steps,
+              every one verifiable.
+            </p>
+          </div>
+
+          {/* Steps — vertical sequence with connector line through the
+              numbered badges. ol+li for semantic ordering. */}
+          <ol className="relative space-y-8 lg:space-y-10">
+            {/* Connector line — runs through the centers of the number badges */}
+            <div
+              className="absolute left-[23px] sm:left-[31px] top-12 bottom-12 w-px bg-gradient-to-b from-cobalt/30 via-cobalt/15 to-cobalt/30"
+              aria-hidden="true"
+            />
+
+            {[
+              {
+                num: '01',
+                eyebrow: 'Sourcing',
+                headline: 'Compound starts as a research-grade API.',
+                description:
+                  'Active pharmaceutical ingredient sourced from FDA-registered manufacturers. Identity confirmed against reference standard before any compounding begins.',
+                facts: [
+                  'API from FDA-registered manufacturers',
+                  'Identity verified against reference standard',
+                  'Chain of custody documented',
+                ],
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 2v7.31" />
+                    <path d="M14 9.3V1.99" />
+                    <path d="M8.5 2h7" />
+                    <path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
+                  </svg>
+                ),
+              },
+              {
+                num: '02',
+                eyebrow: 'Compounding',
+                headline: 'Sterile-filled at a 503B facility.',
+                description:
+                  'Lyophilized in a cleanroom at our 503B outsourcing facility. The powder format gives ≥24 months sealed stability — no cold-chain shipping required.',
+                facts: [
+                  '503B outsourcing facility, FDA-registered',
+                  'ISO-certified manufacturing process',
+                  'Lyophilized powder for transit stability',
+                ],
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 2h6v3h-1v3l3.5 8a3 3 0 0 1-2.8 4.1H7.3A3 3 0 0 1 4.5 16L8 8V5H7V2z" />
+                  </svg>
+                ),
+              },
+              {
+                num: '03',
+                eyebrow: 'Verification',
+                headline: 'Every batch HPLC-tested.',
+                description:
+                  'Reverse-phase HPLC-UV (UV/MS for higher-MW peptides) confirms identity and purity for every lot before it leaves the lab. The chromatogram is archived.',
+                facts: [
+                  'Reverse-phase HPLC, per-lot',
+                  '≥99% purity floor — every batch',
+                  'Chromatogram archived for every lot',
+                ],
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 17 9 11 13 15 21 7" />
+                    <polyline points="14 7 21 7 21 14" />
+                  </svg>
+                ),
+              },
+              {
+                num: '04',
+                eyebrow: 'Sign-off',
+                headline: 'A US-licensed pharmacist releases the lot.',
+                description:
+                  'No batch ships without a pharmacist reviewing the chromatogram, identity report, and lot documentation. The pharmacist holds the release authority.',
+                facts: [
+                  'US-licensed pharmacist on every lot',
+                  'Pharmacist holds release authority',
+                  'No batch ships unsigned — ever',
+                ],
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <polyline points="9 15 11 17 15 13" />
+                  </svg>
+                ),
+              },
+              {
+                num: '05',
+                eyebrow: 'Dispatch',
+                headline: 'Ships from Dallas in 48 hours.',
+                description:
+                  'Vials labeled with lot ID, tested date, and CAS. Order before 2pm CT Monday–Thursday for same-day dispatch. UPS Ground, tracked + insured.',
+                facts: [
+                  '48hr dispatch from Dallas, TX',
+                  'Lot ID printed on every vial label',
+                  'UPS Ground, tracked + insured',
+                ],
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="1" y="3" width="15" height="13" />
+                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                    <circle cx="5.5" cy="18.5" r="2.5" />
+                    <circle cx="18.5" cy="18.5" r="2.5" />
+                  </svg>
+                ),
+              },
+            ].map((step) => (
+              <li
+                key={step.num}
+                className="relative grid grid-cols-[48px_1fr] sm:grid-cols-[64px_1fr] gap-4 sm:gap-8 items-start"
+              >
+                {/* Number badge — cobalt circle with white number + icon */}
+                <div className="relative z-10 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-cobalt text-white flex flex-col items-center justify-center shadow-sm ring-4 ring-cream/40">
+                  <span className="font-display font-black text-[11px] sm:text-[12px] tabular-nums tracking-tight leading-none">
+                    {step.num}
+                  </span>
+                  <span className="mt-0.5 sm:mt-1 opacity-80">{step.icon}</span>
+                </div>
+
+                {/* Content */}
+                <div className="pt-1 sm:pt-2 min-w-0">
+                  <p className="text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1.5">
+                    {step.eyebrow}
+                  </p>
+                  <h3 className="font-display text-lg sm:text-xl lg:text-2xl font-extrabold text-ink tracking-tight leading-tight mb-2.5">
+                    {step.headline}
+                  </h3>
+                  <p className="text-[13px] sm:text-sm text-ink-soft leading-relaxed mb-3">
+                    {step.description}
+                  </p>
+                  {/* Concrete-facts list */}
+                  <ul className="space-y-1.5">
+                    {step.facts.map((fact) => (
+                      <li
+                        key={fact}
+                        className="flex items-start gap-2 text-[12px] sm:text-[13px] text-ink leading-snug"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.6"
+                          className="text-cobalt flex-shrink-0 mt-0.5"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>{fact}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          {/* Footnote */}
+          <p className="text-[11px] text-ink-muted italic mt-10 lg:mt-12 max-w-2xl">
+            Every step above can be verified for any specific lot by emailing{' '}
+            <a
+              href="mailto:rx@meritsciences.com"
+              className="text-cobalt font-bold not-italic underline-offset-2 hover:underline"
+            >
+              rx@meritsciences.com
+            </a>{' '}
+            with the lot number from your vial label.
+          </p>
+        </div>
+      </section>
+
       {/* ═══════════════ RESEARCH REFERENCES ═══════════════
           Citation cards with DOI / PubMed links. The verify flag is
           NOT rendered to the buyer — it lives in the data file so the
