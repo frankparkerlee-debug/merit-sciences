@@ -28,22 +28,28 @@ model Affiliate {
   id                   String          @id @default(cuid())
   email                String          @unique
   name                 String
-  // Public slug used in URLs (e.g. meritsciences.com?ref=alice)
-  // Lowercase, alphanumeric + hyphen, 3-30 chars, unique
+  // Public referral slug used in URLs (e.g. meritsciences.com?ref=alice)
+  // Lowercase, alphanumeric + hyphen, 3-30 chars
   slug                 String          @unique
-  // Lifecycle state. Default pending until admin approves
-  status               AffiliateStatus @default(PENDING)
-  // Stripe Connect Express account id — set once they complete onboarding
+  // Custom discount code the affiliate sets at sign-up (e.g. "ParkerLee10",
+  // "Founder"). Buyers type this at checkout to get 10% off; affiliate
+  // earns commission. Lowercase, alphanumeric + hyphen, 3-30 chars.
+  // Mapped to a Stripe Coupon when Stripe Checkout is wired.
+  discountCode         String          @unique
+  // Lifecycle. Open sign-up: ACTIVE by default; SUSPENDED for fraud/TOS.
+  status               AffiliateStatus @default(ACTIVE)
+  // Stripe Connect Express account id — set once payout onboarding done
   stripeAccountId      String?         @unique
   stripeChargesEnabled Boolean         @default(false)
-  // Optional fields collected at signup
-  socialUrl            String?         // primary platform (Instagram, TikTok, YouTube, etc.)
-  audienceSize         Int?            // self-reported, for application review only
-  pitch                String?         @db.Text // why they want to be a Merit affiliate
+  // Optional fields collected at signup — surfaced to admin for fraud
+  // review but no longer a gate to activation
+  socialUrl            String?         // primary platform (Instagram, TikTok, etc.)
+  audienceSize         Int?            // self-reported
+  pitch                String?         @db.Text
   // Audit
   createdAt            DateTime        @default(now())
-  approvedAt           DateTime?
-  approvedBy           String?         // admin user id
+  suspendedAt          DateTime?
+  suspendReason        String?         @db.Text
 
   // Relations
   clicks            Click[]
@@ -56,10 +62,8 @@ model Affiliate {
 }
 
 enum AffiliateStatus {
-  PENDING   // applied, awaiting admin review
-  APPROVED  // active, can earn commissions
-  REJECTED  // application denied
-  SUSPENDED // approved but temporarily paused (fraud, TOS violation)
+  ACTIVE    // can earn commissions, default on sign-up
+  SUSPENDED // admin disabled (fraud, TOS violation)
 
   @@map("affiliate_status")
 }
