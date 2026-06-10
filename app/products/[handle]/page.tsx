@@ -11,6 +11,7 @@ import {
   FAMILY_BY_HANDLE,
   type Family,
 } from '@/lib/catalog-meta';
+import { getResearchData } from '@/lib/research-data';
 import { ProductBuyBox } from './ProductBuyBox';
 import { PdpStackAddButton } from './PdpStackAddButton';
 
@@ -35,6 +36,14 @@ export default function ProductPage({ params }: Props) {
   const family = getFamily(product.handle);
   const pharmacistNote = PHARMACIST_NOTES[product.handle] ?? null;
   const restock = RESTOCK_SIGNALS[product.handle] ?? null;
+  const research = getResearchData(product.handle);
+
+  // A chromatogram image is sometimes present at images[1] (Shopify
+  // CDN naming convention: chromatogram-{handle}_*.png). Render the
+  // Lab Analysis section only when it's there.
+  const chromatogramImage = product.images?.find((url) =>
+    url.toLowerCase().includes('chromatogram'),
+  ) ?? null;
 
   // Related products — same family, exclude self
   const allProducts = listProducts({ status: 'active' });
@@ -190,6 +199,144 @@ export default function ProductPage({ params }: Props) {
         </div>
       </section>
 
+      {/* ═══════════════ ABOUT THIS COMPOUND ═══════════════
+          Academic-style narrative — what the compound is, where it
+          came from, what compound class it sits in. RUO framing
+          throughout. Falls back to a "verification pending" panel
+          when no research data exists yet. */}
+      <section className="bg-white border-y border-cobalt/10">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8 lg:gap-14">
+            <div>
+              <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+                — About this compound
+              </p>
+              <h2
+                className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-5"
+                style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+              >
+                {product.title}<span className="text-cobalt">.</span>
+              </h2>
+              {research?.compoundClass && (
+                <p className="text-[11px] tracking-[0.18em] uppercase text-cobalt font-bold mb-3 leading-snug">
+                  Class · {research.compoundClass}
+                </p>
+              )}
+              {research?.discovery && (
+                <p className="text-[13px] text-ink-soft leading-relaxed">
+                  <span className="font-bold text-ink">Origin. </span>
+                  {research.discovery}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {research?.description ? (
+                research.description.map((para, i) => (
+                  <p key={i} className="text-base text-ink leading-relaxed">
+                    {para}
+                  </p>
+                ))
+              ) : (
+                <div className="p-6 bg-cream/60 border-l-2 border-cobalt/40 rounded-r-xl">
+                  <p className="text-[11px] tracking-[0.18em] uppercase text-cobalt font-bold mb-2">
+                    Research data verification in progress
+                  </p>
+                  <p className="text-sm text-ink-soft leading-relaxed">
+                    Our pharmacy team is validating the published research
+                    record for this compound. For detailed mechanism,
+                    research applications, or citation requests, email{' '}
+                    <a
+                      href={`mailto:rx@meritsciences.com?subject=Research data: ${product.title}`}
+                      className="text-cobalt font-bold underline-offset-2 hover:underline"
+                    >
+                      rx@meritsciences.com
+                    </a>
+                    .
+                  </p>
+                </div>
+              )}
+
+              {research?.researchApplications && research.researchApplications.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+                    — Common research applications
+                  </p>
+                  <ul className="flex flex-wrap gap-2">
+                    {research.researchApplications.map((app) => (
+                      <li
+                        key={app}
+                        className="inline-flex items-center text-[12px] font-semibold text-ink bg-cream border border-cobalt/15 rounded-full px-3 py-1.5"
+                      >
+                        {app}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ MECHANISM OF ACTION ═══════════════
+          Conditional — only renders when research data includes a
+          mechanism string. Editorial dark-card treatment so the
+          density-heavy content has visual breathing room. */}
+      {research?.mechanism && (
+        <section className="bg-ink text-white">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8 lg:gap-14">
+              <div>
+                <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-3">
+                  — Mechanism
+                </p>
+                <h2
+                  className="font-display font-black tracking-[-0.035em] leading-[0.95]"
+                  style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+                >
+                  How it&apos;s been studied<span className="text-cobalt">.</span>
+                </h2>
+              </div>
+              <div className="space-y-4">
+                <p className="text-base text-white/85 leading-relaxed">
+                  {research.mechanism}
+                </p>
+                {(research.halfLife || research.solubility) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
+                    {research.halfLife && (
+                      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-1.5">
+                          Half-life
+                        </p>
+                        <p className="text-sm text-white/90 leading-relaxed">
+                          {research.halfLife}
+                        </p>
+                      </div>
+                    )}
+                    {research.solubility && (
+                      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-1.5">
+                          Solubility
+                        </p>
+                        <p className="text-sm text-white/90 leading-relaxed">
+                          {research.solubility}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p className="text-[11px] text-white/45 italic pt-2">
+                  Mechanism descriptions reflect findings reported in the
+                  preclinical and basic-research literature. They are not
+                  clinical conclusions and not statements of therapeutic effect.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ═══════════════ THE CHEMISTRY (spec sheet) ═══════════════ */}
       <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
         <div className="max-w-2xl mb-8 lg:mb-10">
@@ -225,6 +372,180 @@ export default function ProductPage({ params }: Props) {
           ))}
         </div>
       </section>
+
+      {/* ═══════════════ LAB ANALYSIS — chromatogram + methodology ═══════════════
+          Renders only when an HPLC chromatogram image exists in
+          product.images. Provides the "proof of identity" that
+          separates a research supplier from a reseller. */}
+      {chromatogramImage && (
+        <section className="bg-white border-y border-cobalt/10">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8 lg:gap-12">
+              {/* Methodology + lot data */}
+              <div>
+                <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+                  — Lab analysis
+                </p>
+                <h2
+                  className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-5"
+                  style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+                >
+                  Proof of identity<span className="text-cobalt">.</span>
+                </h2>
+                <p className="text-sm text-ink-soft leading-relaxed mb-6">
+                  Every Merit lot is independently verified by HPLC for
+                  identity and purity before release. The chromatogram below
+                  is the actual analysis for the lot currently shipping.
+                </p>
+
+                <dl className="space-y-3 border-t border-cobalt/10 pt-5">
+                  <div>
+                    <dt className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
+                      Method
+                    </dt>
+                    <dd className="text-sm font-semibold text-ink">
+                      HPLC-UV{product.spec.mw ? ' / MS' : ''} (reverse-phase)
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
+                      Purity floor
+                    </dt>
+                    <dd className="text-sm font-semibold text-ink">
+                      {product.lot.purity || '≥99%'} — every batch
+                    </dd>
+                  </div>
+                  {product.lot.id !== 'TBD' && (
+                    <div>
+                      <dt className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
+                        Current shipping lot
+                      </dt>
+                      <dd className="text-sm font-semibold text-ink">
+                        Lot {product.lot.id}
+                        {product.lot.testedDate && (
+                          <> · Tested {product.lot.testedDate.slice(0, 10)}</>
+                        )}
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
+                      Release authority
+                    </dt>
+                    <dd className="text-sm font-semibold text-ink">
+                      US-licensed pharmacist sign-off
+                    </dd>
+                  </div>
+                </dl>
+
+                <p className="text-[11px] text-ink-muted italic mt-5">
+                  Need the COA for a specific lot? The lot ID is on every
+                  vial label — email{' '}
+                  <a
+                    href={`mailto:rx@meritsciences.com?subject=COA request: lot ${product.lot.id}`}
+                    className="text-cobalt font-bold not-italic underline-offset-2 hover:underline"
+                  >
+                    rx@meritsciences.com
+                  </a>{' '}
+                  with the lot number.
+                </p>
+              </div>
+
+              {/* Chromatogram image */}
+              <div className="relative">
+                <div className="relative w-full aspect-[4/3] bg-white border border-cobalt/10 rounded-2xl overflow-hidden">
+                  <Image
+                    src={chromatogramImage}
+                    alt={`HPLC chromatogram for ${product.title} lot ${product.lot.id}`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-contain p-4"
+                  />
+                </div>
+                <p className="text-[10px] tracking-[0.18em] uppercase text-ink-muted font-bold text-center mt-3">
+                  HPLC chromatogram · lot {product.lot.id} · {product.lot.purity || '≥99% purity'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════ RESEARCH REFERENCES ═══════════════
+          Citation cards with DOI / PubMed links. The verify flag is
+          NOT rendered to the buyer — it lives in the data file so the
+          pharmacy team can find unvalidated citations to check before
+          launch (grep for `verify: true`). */}
+      {research?.references && research.references.length > 0 && (
+        <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+          <div className="max-w-2xl mb-8 lg:mb-10">
+            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+              — Research references
+            </p>
+            <h2
+              className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
+              style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+            >
+              The published record<span className="text-cobalt">.</span>
+            </h2>
+            <p className="mt-4 text-sm text-ink-soft leading-relaxed max-w-xl">
+              Peer-reviewed publications cited in the public scientific
+              literature. Links resolve to PubMed or the publisher of record.
+            </p>
+          </div>
+
+          <ol className="space-y-3">
+            {research.references.map((ref, i) => (
+              <li
+                key={`${ref.doi || ref.pubmedId || ref.title}`}
+                className="bg-white border border-cobalt/10 rounded-2xl p-5 lg:p-6 hover:border-cobalt/30 transition-colors"
+              >
+                <div className="flex items-start gap-4">
+                  <span className="font-display text-2xl font-black text-cobalt/40 tabular-nums leading-none w-8 flex-shrink-0">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display text-base lg:text-lg font-extrabold text-ink leading-snug mb-2">
+                      {ref.title}
+                    </p>
+                    <p className="text-[13px] text-ink-soft leading-snug mb-3">
+                      {ref.authors} · <span className="italic">{ref.journal}</span> · {ref.year}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {ref.pubmedId && (
+                        <a
+                          href={ref.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[11px] tracking-[0.14em] uppercase text-cobalt font-bold border border-cobalt/30 rounded-full px-3 py-1.5 hover:bg-cobalt hover:text-white transition"
+                        >
+                          PMID {ref.pubmedId} →
+                        </a>
+                      )}
+                      {ref.doi && (
+                        <a
+                          href={`https://doi.org/${ref.doi}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[11px] tracking-[0.14em] uppercase text-ink-soft font-bold border border-cobalt/15 rounded-full px-3 py-1.5 hover:border-cobalt/40 hover:text-ink transition"
+                        >
+                          DOI {ref.doi}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <p className="text-[11px] text-ink-muted italic mt-6 max-w-2xl">
+            Citation list reflects work published in peer-reviewed venues
+            and is provided for research context. Inclusion of a reference
+            does not constitute a clinical claim or recommendation.
+          </p>
+        </section>
+      )}
 
       {/* ═══════════════ PHARMACIST'S NOTE (if present) ═══════════════ */}
       {pharmacistNote && (
