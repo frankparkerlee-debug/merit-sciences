@@ -84,3 +84,67 @@ body {
   0%   { transform: translate(-50%, -120%); opacity: 0; }
   100% { transform: translate(-50%, 0);     opacity: 1; }
 }
+
+/* ─── Policy page prose ──────────────────────────────────────────────
+   Editorial typography for /shipping, /returns, /terms, /privacy, and
+   /research-disclosure. Applied via .merit-policy-prose on the article
+   wrapper in PolicyLayout. Designed to look good with both real heading
+   tags AND the pseudo-headings (bare <p>) that Shopify policies use. */
+.merit-policy-prose {
+  color: rgb(11 15 25 / 0.92);
+  font-size: 15px;
+  line-height: 1.75;
+}
+.merit-policy-prose h2 {
+  font-family: var(--font-inter-tight);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: rgb(11 15 25);
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+.merit-policy-prose h3 {
+  font-family: var(--font-inter-tight);
+  font-weight: 700;
+  font-size: 17px;
+  color: rgb(11 15 25);
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+.merit-policy-prose p {
+  margin: 1em 0;
+}
+.merit-policy-prose strong {
+  font-weight: 700;
+  color: rgb(11 15 25);
+}
+.merit-policy-prose ul {
+  margin: 1.1em 0;
+  padding-left: 1.4em;
+  list-style: disc;
+}
+.merit-policy-prose ol {
+  margin: 1.1em 0;
+  padding-left: 1.4em;
+  list-style: decimal;
+}
+.merit-policy-prose li {
+  margin: 0.45em 0;
+}
+.merit-policy-prose a {
+  color: rgb(46 77 219);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+.merit-policy-prose a:hover {
+  text-decoration-thickness: 2px;
+}
+/* Empty <p>&nbsp;</p> paragraphs Shopify uses as spacing — render
+   them as smaller gaps so the page doesn't feel air-locked. */
+.merit-policy-prose p:has(> br:only-child),
+.merit-policy-prose p:empty {
+  margin: 0.5em 0;
+}

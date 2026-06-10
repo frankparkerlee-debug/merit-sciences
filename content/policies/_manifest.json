@@ -1,0 +1,30 @@
+{
+  "privacy": {
+    "title": "Privacy policy",
+    "shopify_url": "https://meritsciences.com/policies/privacy-policy",
+    "updated_at": "2025-09-12T00:10:48-05:00",
+    "char_count": 18307,
+    "swaps_applied": 0
+  },
+  "returns": {
+    "title": "Refund policy",
+    "shopify_url": "https://meritsciences.com/policies/refund-policy",
+    "updated_at": "2026-03-27T22:54:38-05:00",
+    "char_count": 2840,
+    "swaps_applied": 0
+  },
+  "shipping": {
+    "title": "Shipping",
+    "shopify_url": "https://meritsciences.com/policies/shipping-policy",
+    "updated_at": "2026-03-27T22:59:49-05:00",
+    "char_count": 1420,
+    "swaps_applied": 1
+  },
+  "terms": {
+    "title": "Terms of service",
+    "shopify_url": "https://meritsciences.com/policies/terms-of-service",
+    "updated_at": "2026-03-29T14:18:08-05:00",
+    "char_count": 10610,
+    "swaps_applied": 17
+  }
+}
