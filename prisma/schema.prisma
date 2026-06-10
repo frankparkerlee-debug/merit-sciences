@@ -1,0 +1,198 @@
+// Merit Sciences — Affiliate Portal schema
+//
+// Product spec locked 2026-06-10:
+//   - Tiered commission: 15% / 20% / 25% at 0-25 / 26-75 / 75+ orders
+//     in the trailing 30 days, calculated at the moment of each order
+//   - 30-day last-touch cookie attributes the FIRST purchase only
+//   - At first purchase, a permanent customer↔affiliate lock is written
+//   - All subsequent orders by that customer credit the affiliate
+//     forever (evergreen) at the affiliate's CURRENT tier
+//   - Self-purchases earn no commission
+//   - Refunds clawback the commission
+//   - Monthly payouts via Stripe Connect Express, $50 minimum, Net-30
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Affiliate ────────────────────────────────────────────────────────
+// An approved promoter. One row per person/business that drives traffic.
+
+model Affiliate {
+  id                   String          @id @default(cuid())
+  email                String          @unique
+  name                 String
+  // Public slug used in URLs (e.g. meritsciences.com?ref=alice)
+  // Lowercase, alphanumeric + hyphen, 3-30 chars, unique
+  slug                 String          @unique
+  // Lifecycle state. Default pending until admin approves
+  status               AffiliateStatus @default(PENDING)
+  // Stripe Connect Express account id — set once they complete onboarding
+  stripeAccountId      String?         @unique
+  stripeChargesEnabled Boolean         @default(false)
+  // Optional fields collected at signup
+  socialUrl            String?         // primary platform (Instagram, TikTok, YouTube, etc.)
+  audienceSize         Int?            // self-reported, for application review only
+  pitch                String?         @db.Text // why they want to be a Merit affiliate
+  // Audit
+  createdAt            DateTime        @default(now())
+  approvedAt           DateTime?
+  approvedBy           String?         // admin user id
+
+  // Relations
+  clicks            Click[]
+  customerLinks     CustomerAffiliateLink[]
+  orderCommissions  OrderCommission[]
+  payouts           Payout[]
+
+  @@index([status])
+  @@map("affiliates")
+}
+
+enum AffiliateStatus {
+  PENDING   // applied, awaiting admin review
+  APPROVED  // active, can earn commissions
+  REJECTED  // application denied
+  SUSPENDED // approved but temporarily paused (fraud, TOS violation)
+
+  @@map("affiliate_status")
+}
+
+// ─── Click ────────────────────────────────────────────────────────────
+// Logged every time someone hits the storefront with a ?ref= param.
+// One row per click — used for affiliate stats and fraud detection
+// (high click count, zero conversions → flag).
+
+model Click {
+  id          String    @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  // PII collected: IP for fraud, UA for device split, referrer for source
+  ipAddress   String?
+  userAgent   String?   @db.Text
+  referrer    String?   @db.Text
+  landingPath String?   @db.Text // which page they landed on
+  // Cookie identifier — links a click to a subsequent purchase
+  cookieId    String // random uuid set in cookie, persisted here
+  occurredAt  DateTime  @default(now())
+
+  @@index([affiliateId, occurredAt])
+  @@index([cookieId])
+  @@map("clicks")
+}
+
+// ─── CustomerAffiliateLink ────────────────────────────────────────────
+// The PERMANENT customer↔affiliate lock. Written ONCE, on first
+// attributed purchase. Never updated. Every subsequent order by this
+// customer credits the affiliate via this row.
+//
+// This is the evergreen mechanic. The row is the contract.
+
+model CustomerAffiliateLink {
+  id                   String    @id @default(cuid())
+  // External customer identifier — for now, the Stripe customer id
+  // (created on first checkout). Later we may also key on email.
+  customerStripeId     String    @unique
+  customerEmail        String    // copy for searchability + email-based linking
+  affiliateId          String
+  affiliate            Affiliate @relation(fields: [affiliateId], references: [id])
+  // Audit
+  lockedAt             DateTime  @default(now())
+  sourceCookieId       String?   // which click led to the attribution
+  sourceClickAt        DateTime? // when the click happened
+  // Denormalized for fast tier calculation later. Avoids joining
+  // on every commission calc.
+  totalOrders          Int       @default(0)
+  totalCommissionCents BigInt    @default(0)
+
+  orderCommissions OrderCommission[]
+
+  @@index([affiliateId])
+  @@index([customerEmail])
+  @@map("customer_affiliate_links")
+}
+
+// ─── OrderCommission ──────────────────────────────────────────────────
+// One row per order that earns an affiliate commission. Written by the
+// Stripe checkout.session.completed webhook.
+
+model OrderCommission {
+  id               String                @id @default(cuid())
+  // External order identifier — Stripe checkout session id
+  stripeSessionId  String                @unique
+  customerStripeId String
+  // Snapshot the customer link state at the moment of the order
+  customerLinkId   String
+  customerLink     CustomerAffiliateLink @relation(fields: [customerLinkId], references: [id])
+  affiliateId      String
+  affiliate        Affiliate             @relation(fields: [affiliateId], references: [id])
+  // Money — Stripe convention: integer cents
+  orderTotalCents  BigInt // gross order subtotal (commissionable base)
+  commissionRateBp Int    // basis points: 1500 = 15%, 2000 = 20%, 2500 = 25%
+  commissionCents  BigInt // computed at order time, locks in this rate
+  // Status — paid, unpaid, or clawed back
+  status           CommissionStatus      @default(PENDING)
+  // Payout link — set when this commission is included in a payout
+  payoutId         String?
+  payout           Payout?               @relation(fields: [payoutId], references: [id])
+  // Clawback tracking
+  clawedBackAt     DateTime?
+  clawbackReason   String?
+  // Audit
+  occurredAt       DateTime              @default(now())
+
+  @@index([affiliateId, occurredAt])
+  @@index([affiliateId, status])
+  @@index([customerLinkId])
+  @@map("order_commissions")
+}
+
+enum CommissionStatus {
+  PENDING     // earned, not yet eligible for payout (refund window open)
+  PAYABLE     // refund window passed, ready to include in payout batch
+  PAID        // included in a completed payout
+  CLAWED_BACK // order was refunded, commission reversed
+
+  @@map("commission_status")
+}
+
+// ─── Payout ───────────────────────────────────────────────────────────
+// Monthly batch payouts via Stripe Connect Transfers.
+
+model Payout {
+  id               String       @id @default(cuid())
+  affiliateId      String
+  affiliate        Affiliate    @relation(fields: [affiliateId], references: [id])
+  // Period this payout covers (calendar month boundaries)
+  periodStart      DateTime
+  periodEnd        DateTime
+  // Money
+  totalCents       BigInt // sum of included commissions
+  // Status
+  status           PayoutStatus @default(PENDING)
+  stripeTransferId String?      @unique
+  paidAt           DateTime?
+  failureReason    String?      @db.Text
+  // Audit
+  createdAt        DateTime     @default(now())
+
+  orderCommissions OrderCommission[]
+
+  @@index([affiliateId, periodStart])
+  @@map("payouts")
+}
+
+enum PayoutStatus {
+  PENDING    // batch created, not yet sent to Stripe
+  PROCESSING // Stripe Transfer initiated
+  PAID       // Stripe confirmed transfer success
+  FAILED     // Stripe transfer failed — needs admin attention
+
+  @@map("payout_status")
+}

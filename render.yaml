@@ -23,3 +23,14 @@ services:
         sync: false
       - key: SHOPIFY_STOREFRONT_TOKEN
         sync: false           # only needed if we headless the Shopify catalog later
+      # ─── Supabase (affiliate portal) ────────────────────────────────
+      # Project URL + publishable key are safe to expose (RLS protects data).
+      # Secret key + DATABASE_URL contain credentials — populate in dashboard.
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        value: https://jwjxgujqadftwygwkpbp.supabase.co
+      - key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_HrBciWZlXN4v9lIovtgQ9Q_xiasbprA
+      - key: SUPABASE_SECRET_KEY
+        sync: false           # populate in dashboard
+      - key: DATABASE_URL
+        sync: false           # populate in dashboard — full pooler URL w/ password
