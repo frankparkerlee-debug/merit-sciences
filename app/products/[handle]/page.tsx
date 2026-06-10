@@ -116,88 +116,11 @@ export default function ProductPage({ params }: Props) {
         </div>
       </section>
 
-      {/* ═══════════════ WHAT SHIPS — editorial substance below the fold ═══════════════
-          Answers the implicit "what am I actually getting" question that
-          chemistry/specs don't. Three columns: the vial, storage, verification. */}
-      <section className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-12 lg:pt-16 pb-6 lg:pb-8">
-        <div className="max-w-2xl mb-8 lg:mb-10">
-          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-            — What ships
-          </p>
-          <h2
-            className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-            style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
-          >
-            What you actually receive<span className="text-cobalt">.</span>
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
-          {/* COL 1 — the vial itself */}
-          <div className="bg-white border border-cobalt/10 rounded-2xl p-6 lg:p-7 flex flex-col">
-            <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center text-cobalt mb-4">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                <path d="M9 2h6v3h-1v3l3.5 8a3 3 0 0 1-2.8 4.1H7.3A3 3 0 0 1 4.5 16L8 8V5H7V2z" />
-              </svg>
-            </div>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
-              The vial
-            </p>
-            <h3 className="font-display text-lg font-extrabold text-ink mb-2 leading-tight">
-              {product.vialSize} · lyophilized
-            </h3>
-            <p className="text-sm text-ink-soft leading-relaxed">
-              Sealed glass vial, sterile-filled at a 503B outsourcing facility.
-              Lyophilized powder format — significantly longer sealed stability
-              than pre-reconstituted alternatives. Label carries CAS, lot, and
-              tested date.
-            </p>
-          </div>
-
-          {/* COL 2 — storage & shelf life */}
-          <div className="bg-white border border-cobalt/10 rounded-2xl p-6 lg:p-7 flex flex-col">
-            <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center text-cobalt mb-4">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                <line x1="12" y1="2" x2="12" y2="22" />
-                <path d="M5 8a7 7 0 1 0 14 0" />
-                <path d="M5 16a7 7 0 1 1 14 0" />
-              </svg>
-            </div>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
-              Storage & shelf-life
-            </p>
-            <h3 className="font-display text-lg font-extrabold text-ink mb-2 leading-tight">
-              ≥24 mo. sealed at -20°C
-            </h3>
-            <p className="text-sm text-ink-soft leading-relaxed">
-              Ships at ambient — lyophilized powder is stable in transit and
-              does not require cold-chain shipping. Once reconstituted with
-              bacteriostatic water, refrigerate at 2–8°C; use within 30 days.
-            </p>
-          </div>
-
-          {/* COL 3 — verification trail */}
-          <div className="bg-white border border-cobalt/10 rounded-2xl p-6 lg:p-7 flex flex-col">
-            <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center text-cobalt mb-4">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-            </div>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
-              Verification trail
-            </p>
-            <h3 className="font-display text-lg font-extrabold text-ink mb-2 leading-tight">
-              Lot {product.lot.id !== 'TBD' ? product.lot.id : 'on label'} · COA on demand
-            </h3>
-            <p className="text-sm text-ink-soft leading-relaxed">
-              Every batch HPLC-verified to {product.lot.purity || '≥99% purity'} and
-              signed off by a US-licensed pharmacist before release. Lot number
-              on the label — pull the matching COA anytime from your dashboard.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* "What Ships" section removed — its three cards duplicated
+          content shown elsewhere: card 1 (vial format) → The Chemistry
+          spec sheet; card 3 (verification trail) → Lab Analysis. The
+          unique content from card 2 (storage / shelf-life) now lives
+          as rows in The Chemistry table. */}
 
       {/* ═══════════════ ABOUT THIS COMPOUND ═══════════════
           Academic-style narrative — what the compound is, where it
@@ -205,7 +128,7 @@ export default function ProductPage({ params }: Props) {
           throughout. Falls back to a "verification pending" panel
           when no research data exists yet. */}
       <section className="bg-white border-y border-cobalt/10">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8 lg:gap-14">
             <div>
               <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
@@ -213,7 +136,7 @@ export default function ProductPage({ params }: Props) {
               </p>
               <h2
                 className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-5"
-                style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+                style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
               >
                 {product.title}<span className="text-cobalt">.</span>
               </h2>
@@ -285,7 +208,7 @@ export default function ProductPage({ params }: Props) {
           density-heavy content has visual breathing room. */}
       {research?.mechanism && (
         <section className="bg-ink text-white">
-          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+          <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8 lg:gap-14">
               <div>
                 <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-3">
@@ -293,7 +216,7 @@ export default function ProductPage({ params }: Props) {
                 </p>
                 <h2
                   className="font-display font-black tracking-[-0.035em] leading-[0.95]"
-                  style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+                  style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
                 >
                   How it&apos;s been studied<span className="text-cobalt">.</span>
                 </h2>
@@ -302,30 +225,8 @@ export default function ProductPage({ params }: Props) {
                 <p className="text-base text-white/85 leading-relaxed">
                   {research.mechanism}
                 </p>
-                {(research.halfLife || research.solubility) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
-                    {research.halfLife && (
-                      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                        <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-1.5">
-                          Half-life
-                        </p>
-                        <p className="text-sm text-white/90 leading-relaxed">
-                          {research.halfLife}
-                        </p>
-                      </div>
-                    )}
-                    {research.solubility && (
-                      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                        <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-1.5">
-                          Solubility
-                        </p>
-                        <p className="text-sm text-white/90 leading-relaxed">
-                          {research.solubility}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Half-life and solubility moved to the Chemistry table
+                    below — keeps research-handling specs in one place. */}
                 <p className="text-[11px] text-white/45 italic pt-2">
                   Mechanism descriptions reflect findings reported in the
                   preclinical and basic-research literature. They are not
@@ -337,15 +238,19 @@ export default function ProductPage({ params }: Props) {
         </section>
       )}
 
-      {/* ═══════════════ THE CHEMISTRY (spec sheet) ═══════════════ */}
-      <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
-        <div className="max-w-2xl mb-8 lg:mb-10">
-          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+      {/* ═══════════════ THE CHEMISTRY (spec sheet) ═══════════════
+          Single source of truth for handling/chemistry numbers. Pulls
+          half-life + solubility from research-data when present, plus
+          the static spec fields from the product record. Empty cells
+          render as em-dash so the grid stays visually balanced. */}
+      <section className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
+        <div className="max-w-2xl mb-6 lg:mb-8">
+          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2.5">
             — The Chemistry
           </p>
           <h2
             className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-            style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+            style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
           >
             The numbers, plainly<span className="text-cobalt">.</span>
           </h2>
@@ -360,12 +265,14 @@ export default function ProductPage({ params }: Props) {
             ['Vial dose', product.vialSize],
             ['Purity (HPLC)', product.lot.purity],
             ['Amino acids', product.spec.aminoAcids ?? undefined],
+            ['Half-life', research?.halfLife],
+            ['Solubility', research?.solubility],
           ].map(([label, value]) => (
-            <div key={String(label)} className="bg-white p-5 lg:p-6">
+            <div key={String(label)} className="bg-white p-4 lg:p-5">
               <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
                 {label}
               </p>
-              <p className="font-display text-sm lg:text-base font-bold text-ink break-words">
+              <p className="font-display text-sm lg:text-base font-bold text-ink break-words leading-snug">
                 {value ?? '—'}
               </p>
             </div>
@@ -379,75 +286,36 @@ export default function ProductPage({ params }: Props) {
           separates a research supplier from a reseller. */}
       {chromatogramImage && (
         <section className="bg-white border-y border-cobalt/10">
-          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+          <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8 lg:gap-12">
-              {/* Methodology + lot data */}
+              {/* Caption + COA request */}
               <div>
-                <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+                <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2.5">
                   — Lab analysis
                 </p>
                 <h2
-                  className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-5"
-                  style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+                  className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-4"
+                  style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
                 >
                   Proof of identity<span className="text-cobalt">.</span>
                 </h2>
-                <p className="text-sm text-ink-soft leading-relaxed mb-6">
-                  Every Merit lot is independently verified by HPLC for
-                  identity and purity before release. The chromatogram below
-                  is the actual analysis for the lot currently shipping.
+                <p className="text-sm text-ink-soft leading-relaxed mb-5">
+                  Independent HPLC-UV{product.spec.mw ? '/MS' : ''} verification
+                  on every batch. The chromatogram shown is the actual analysis
+                  for the lot currently shipping —
+                  {product.lot.id !== 'TBD' && <> lot <span className="font-bold text-ink">{product.lot.id}</span>,</>}
+                  {' '}{product.lot.purity || '≥99% purity'}, released after
+                  US-pharmacist sign-off.
                 </p>
-
-                <dl className="space-y-3 border-t border-cobalt/10 pt-5">
-                  <div>
-                    <dt className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
-                      Method
-                    </dt>
-                    <dd className="text-sm font-semibold text-ink">
-                      HPLC-UV{product.spec.mw ? ' / MS' : ''} (reverse-phase)
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
-                      Purity floor
-                    </dt>
-                    <dd className="text-sm font-semibold text-ink">
-                      {product.lot.purity || '≥99%'} — every batch
-                    </dd>
-                  </div>
-                  {product.lot.id !== 'TBD' && (
-                    <div>
-                      <dt className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
-                        Current shipping lot
-                      </dt>
-                      <dd className="text-sm font-semibold text-ink">
-                        Lot {product.lot.id}
-                        {product.lot.testedDate && (
-                          <> · Tested {product.lot.testedDate.slice(0, 10)}</>
-                        )}
-                      </dd>
-                    </div>
-                  )}
-                  <div>
-                    <dt className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
-                      Release authority
-                    </dt>
-                    <dd className="text-sm font-semibold text-ink">
-                      US-licensed pharmacist sign-off
-                    </dd>
-                  </div>
-                </dl>
-
-                <p className="text-[11px] text-ink-muted italic mt-5">
-                  Need the COA for a specific lot? The lot ID is on every
-                  vial label — email{' '}
+                <p className="text-[12px] text-ink-muted">
+                  Need the COA for a specific lot? Email{' '}
                   <a
                     href={`mailto:rx@meritsciences.com?subject=COA request: lot ${product.lot.id}`}
-                    className="text-cobalt font-bold not-italic underline-offset-2 hover:underline"
+                    className="text-cobalt font-bold underline-offset-2 hover:underline"
                   >
                     rx@meritsciences.com
                   </a>{' '}
-                  with the lot number.
+                  with the lot number from your vial label.
                 </p>
               </div>
 
@@ -477,47 +345,47 @@ export default function ProductPage({ params }: Props) {
           pharmacy team can find unvalidated citations to check before
           launch (grep for `verify: true`). */}
       {research?.references && research.references.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
-          <div className="max-w-2xl mb-8 lg:mb-10">
-            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+        <section className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
+          <div className="max-w-2xl mb-6 lg:mb-8">
+            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2.5">
               — Research references
             </p>
             <h2
               className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-              style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+              style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
             >
               The published record<span className="text-cobalt">.</span>
             </h2>
-            <p className="mt-4 text-sm text-ink-soft leading-relaxed max-w-xl">
-              Peer-reviewed publications cited in the public scientific
-              literature. Links resolve to PubMed or the publisher of record.
+            <p className="mt-3 text-[13px] text-ink-soft leading-relaxed max-w-xl">
+              Peer-reviewed work cited in the public scientific literature.
+              Links resolve to PubMed or the publisher of record.
             </p>
           </div>
 
-          <ol className="space-y-3">
+          <ol className="space-y-2">
             {research.references.map((ref, i) => (
               <li
                 key={`${ref.doi || ref.pubmedId || ref.title}`}
-                className="bg-white border border-cobalt/10 rounded-2xl p-5 lg:p-6 hover:border-cobalt/30 transition-colors"
+                className="bg-white border border-cobalt/10 rounded-xl p-4 lg:p-5 hover:border-cobalt/30 transition-colors"
               >
-                <div className="flex items-start gap-4">
-                  <span className="font-display text-2xl font-black text-cobalt/40 tabular-nums leading-none w-8 flex-shrink-0">
+                <div className="flex items-start gap-3 lg:gap-4">
+                  <span className="font-display text-base lg:text-lg font-black text-cobalt/40 tabular-nums leading-none w-6 lg:w-7 flex-shrink-0 mt-1">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-display text-base lg:text-lg font-extrabold text-ink leading-snug mb-2">
+                    <p className="font-display text-[14px] lg:text-base font-extrabold text-ink leading-snug mb-1.5">
                       {ref.title}
                     </p>
-                    <p className="text-[13px] text-ink-soft leading-snug mb-3">
+                    <p className="text-[12px] text-ink-soft leading-snug mb-2.5">
                       {ref.authors} · <span className="italic">{ref.journal}</span> · {ref.year}
                     </p>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       {ref.pubmedId && (
                         <a
                           href={ref.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[11px] tracking-[0.14em] uppercase text-cobalt font-bold border border-cobalt/30 rounded-full px-3 py-1.5 hover:bg-cobalt hover:text-white transition"
+                          className="inline-flex items-center gap-1 text-[10px] tracking-[0.12em] uppercase text-cobalt font-bold border border-cobalt/30 rounded-full px-2.5 py-1 hover:bg-cobalt hover:text-white transition"
                         >
                           PMID {ref.pubmedId} →
                         </a>
@@ -527,9 +395,9 @@ export default function ProductPage({ params }: Props) {
                           href={`https://doi.org/${ref.doi}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[11px] tracking-[0.14em] uppercase text-ink-soft font-bold border border-cobalt/15 rounded-full px-3 py-1.5 hover:border-cobalt/40 hover:text-ink transition"
+                          className="inline-flex items-center gap-1 text-[10px] tracking-[0.12em] uppercase text-ink-soft font-bold border border-cobalt/15 rounded-full px-2.5 py-1 hover:border-cobalt/40 hover:text-ink transition"
                         >
-                          DOI {ref.doi}
+                          DOI →
                         </a>
                       )}
                     </div>
@@ -539,10 +407,9 @@ export default function ProductPage({ params }: Props) {
             ))}
           </ol>
 
-          <p className="text-[11px] text-ink-muted italic mt-6 max-w-2xl">
-            Citation list reflects work published in peer-reviewed venues
-            and is provided for research context. Inclusion of a reference
-            does not constitute a clinical claim or recommendation.
+          <p className="text-[11px] text-ink-muted italic mt-4 max-w-2xl">
+            Inclusion of a reference does not constitute a clinical claim or
+            recommendation.
           </p>
         </section>
       )}
@@ -550,7 +417,7 @@ export default function ProductPage({ params }: Props) {
       {/* ═══════════════ PHARMACIST'S NOTE (if present) ═══════════════ */}
       {pharmacistNote && (
         <section className="bg-cream/70 border-y border-cobalt/10">
-          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 lg:py-14">
+          <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
             <div className="max-w-3xl">
               <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
                 — The Pharmacist&apos;s Note
@@ -571,7 +438,7 @@ export default function ProductPage({ params }: Props) {
 
       {/* ═══════════════ PAIRS WELL WITH (stacks) ═══════════════ */}
       {stacks.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+        <section className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
             <div>
               <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
@@ -579,7 +446,7 @@ export default function ProductPage({ params }: Props) {
               </p>
               <h2
                 className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-                style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+                style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
               >
                 Researchers stack this with<span className="text-cobalt">.</span>
               </h2>
@@ -629,14 +496,14 @@ export default function ProductPage({ params }: Props) {
       )}
 
       {/* ═══════════════ FAQ ═══════════════ */}
-      <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16 border-t border-cobalt/10">
+      <section className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14 border-t border-cobalt/10">
         <div className="max-w-2xl mb-8 lg:mb-10">
           <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
             — Common Questions
           </p>
           <h2
             className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-            style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+            style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
           >
             Got questions<span className="text-cobalt">.</span>
           </h2>
@@ -713,7 +580,7 @@ export default function ProductPage({ params }: Props) {
       {/* ═══════════════ RELATED COMPOUNDS ═══════════════ */}
       {related.length > 0 && (
         <section className="bg-white border-t border-cobalt/10">
-          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+          <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
             <div className="flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
               <div>
                 <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
@@ -721,7 +588,7 @@ export default function ProductPage({ params }: Props) {
                 </p>
                 <h2
                   className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-                  style={{ fontSize: 'clamp(26px, 3.5vw, 44px)' }}
+                  style={{ fontSize: 'clamp(22px, 3vw, 38px)' }}
                 >
                   More {family && familyLabel(family).toLowerCase()}<span className="text-cobalt">.</span>
                 </h2>
