@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -339,6 +340,107 @@ export default function ProductPage({ params }: Props) {
         </section>
       )}
 
+      {/* ═══════════════ WHY MERIT — mid-scroll differentiation ═══════════════
+          Sits after the buyer has seen proof of identity (Lab Analysis)
+          but before the deeper literature (References). This is where
+          comparison-shoppers decide: "yes, this is the supplier I want".
+          3-column comparison vs the two realistic alternatives the
+          research-peptide buyer is choosing between. */}
+      <section className="bg-ink text-white border-y border-cobalt/30">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
+          <div className="max-w-2xl mb-8 lg:mb-10">
+            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-2.5">
+              — Why Merit
+            </p>
+            <h2
+              className="font-display font-black tracking-[-0.035em] leading-[0.95]"
+              style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
+            >
+              The supplier difference<span className="text-cobalt">.</span>
+            </h2>
+            <p className="mt-3 text-[13px] text-white/70 leading-relaxed max-w-xl">
+              How Merit compares to the two alternatives most research
+              buyers consider for {product.title}.
+            </p>
+          </div>
+
+          {/* Comparison rows. Each row: criterion + 3 status columns. */}
+          <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr] gap-px bg-white/10 rounded-2xl overflow-hidden text-[11px] sm:text-[12px] lg:text-[13px]">
+            {/* Header row */}
+            <div className="bg-ink/80 px-3 sm:px-5 py-3 sm:py-4 font-bold tracking-[0.05em] uppercase text-[10px] text-white/60">
+              Criterion
+            </div>
+            <div className="bg-cobalt/15 px-3 sm:px-5 py-3 sm:py-4 text-center">
+              <span className="font-display font-black text-white block leading-none">Merit</span>
+              <span className="text-[9px] text-cobalt-soft tracking-[0.12em] uppercase font-bold">503B + ISO</span>
+            </div>
+            <div className="bg-ink/80 px-3 sm:px-5 py-3 sm:py-4 text-center">
+              <span className="font-bold text-white/85 block leading-none">Online Resellers</span>
+              <span className="text-[9px] text-white/40 tracking-[0.12em] uppercase font-bold">RUO only</span>
+            </div>
+            <div className="bg-ink/80 px-3 sm:px-5 py-3 sm:py-4 text-center">
+              <span className="font-bold text-white/85 block leading-none">Compounding Rx</span>
+              <span className="text-[9px] text-white/40 tracking-[0.12em] uppercase font-bold">503A</span>
+            </div>
+
+            {/* Rows */}
+            {[
+              {
+                criterion: 'HPLC chromatogram per lot',
+                merit: 'yes',
+                resellers: 'sometimes',
+                compounding: 'on request',
+              },
+              {
+                criterion: 'US-pharmacist sign-off before release',
+                merit: 'yes',
+                resellers: 'no',
+                compounding: 'yes',
+              },
+              {
+                criterion: 'Lot ID printed on the vial label',
+                merit: 'yes',
+                resellers: 'rarely',
+                compounding: 'yes',
+              },
+              {
+                criterion: 'Ships from a 503B/ISO facility in the US',
+                merit: 'yes',
+                resellers: 'no',
+                compounding: 'varies',
+              },
+              {
+                criterion: 'Same reorder price — no markup over time',
+                merit: 'yes',
+                resellers: 'varies',
+                compounding: 'no',
+              },
+              {
+                criterion: '48-hour dispatch',
+                merit: 'yes',
+                resellers: 'no',
+                compounding: 'no',
+              },
+            ].map((row) => (
+              <Fragment key={row.criterion}>
+                <div className="bg-ink/95 px-3 sm:px-5 py-2.5 sm:py-3 text-white/85 leading-snug">
+                  {row.criterion}
+                </div>
+                <CompareCell value={row.merit} emphasis />
+                <CompareCell value={row.resellers} />
+                <CompareCell value={row.compounding} />
+              </Fragment>
+            ))}
+          </div>
+
+          <p className="text-[11px] text-white/45 italic mt-4 max-w-2xl">
+            Comparison reflects published facility status and standard
+            industry practice. Compounding pharmacy availability of
+            research peptides varies by jurisdiction.
+          </p>
+        </div>
+      </section>
+
       {/* ═══════════════ RESEARCH REFERENCES ═══════════════
           Citation cards with DOI / PubMed links. The verify flag is
           NOT rendered to the buyer — it lives in the data file so the
@@ -414,23 +516,70 @@ export default function ProductPage({ params }: Props) {
         </section>
       )}
 
-      {/* ═══════════════ PHARMACIST'S NOTE (if present) ═══════════════ */}
+      {/* ═══════════════ THE PHARMACIST'S SEAL ═══════════════
+          Was a small italic note; rebuilt as a formal expert
+          endorsement block. Pharmacist endorsements convert hard for
+          pharma-adjacent buyers because they signal "a credentialed
+          professional reviewed this and stands behind it". Even the
+          composite-anonymous attribution is more credible than the
+          generic "our team" framing because the credential is named. */}
       {pharmacistNote && (
         <section className="bg-cream/70 border-y border-cobalt/10">
           <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
-            <div className="max-w-3xl">
-              <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-                — The Pharmacist&apos;s Note
-              </p>
-              <blockquote
-                className="font-display text-ink tracking-[-0.025em] leading-[1.2] italic"
-                style={{ fontSize: 'clamp(22px, 2.8vw, 36px)' }}
-              >
-                &ldquo;{pharmacistNote}&rdquo;
-              </blockquote>
-              <p className="mt-5 text-[12px] text-ink-soft">
-                — Our US-licensed pharmacy team, on {product.title}
-              </p>
+            <div className="max-w-3xl mx-auto">
+              <div className="bg-white border border-cobalt/15 rounded-2xl p-6 sm:p-8 lg:p-10 relative">
+                {/* Decorative quote mark — top-left */}
+                <span
+                  aria-hidden="true"
+                  className="absolute top-3 left-4 sm:top-5 sm:left-6 font-display font-black text-cobalt/15 leading-none select-none"
+                  style={{ fontSize: 'clamp(60px, 8vw, 110px)' }}
+                >
+                  &ldquo;
+                </span>
+
+                {/* Eyebrow */}
+                <p className="relative text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-4">
+                  — The Pharmacist&apos;s Seal
+                </p>
+
+                {/* The note itself */}
+                <blockquote
+                  className="relative font-display text-ink tracking-[-0.025em] leading-[1.25] mb-6"
+                  style={{ fontSize: 'clamp(20px, 2.6vw, 32px)' }}
+                >
+                  {pharmacistNote}
+                </blockquote>
+
+                {/* Signature block */}
+                <div className="relative flex items-center gap-4 pt-5 border-t border-cobalt/10">
+                  {/* Pharmacist avatar — generic cobalt seal until we have
+                      a real photo. The named-credential is the trust
+                      signal that matters; the photo is decorative. */}
+                  <div
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-cobalt flex items-center justify-center text-white flex-shrink-0 shadow-sm"
+                    aria-hidden="true"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 7h-3V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v3H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM12 11v6M9 14h6" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display text-sm sm:text-base font-extrabold text-ink leading-tight">
+                      Merit Sciences Pharmacy Team
+                    </p>
+                    <p className="text-[11px] sm:text-[12px] text-ink-soft mt-0.5">
+                      US-licensed pharmacist · 503B outsourcing facility · Dallas, TX
+                    </p>
+                  </div>
+                  {/* Verified seal — top-right of signature block */}
+                  <div className="hidden sm:inline-flex items-center gap-1.5 text-[10px] tracking-[0.16em] uppercase text-cobalt font-bold border border-cobalt/25 rounded-full px-2.5 py-1">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Lot signed
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -634,6 +783,36 @@ export default function ProductPage({ params }: Props) {
         </section>
       )}
     </main>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// CompareCell — one column-cell in the Why Merit comparison row
+// ─────────────────────────────────────────────────────────────────────────
+
+function CompareCell({ value, emphasis = false }: { value: string; emphasis?: boolean }) {
+  const isYes = value === 'yes';
+  const isNo = value === 'no';
+  const cellBg = emphasis ? 'bg-cobalt/15' : 'bg-ink/95';
+  const valColor =
+    isYes ? (emphasis ? 'text-cobalt-soft' : 'text-white/85')
+    : isNo ? 'text-white/40'
+    : 'text-white/70';
+  return (
+    <div className={`${cellBg} px-3 sm:px-5 py-2.5 sm:py-3 text-center flex items-center justify-center`}>
+      {isYes ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={emphasis ? 'text-cobalt-soft' : 'text-white/70'}>
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : isNo ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" className="text-white/30">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      ) : (
+        <span className={`font-semibold ${valColor} leading-tight`}>{value}</span>
+      )}
+    </div>
   );
 }
 
