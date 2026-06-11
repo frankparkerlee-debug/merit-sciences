@@ -83,11 +83,25 @@ export async function POST(req: Request) {
   // visitor lands with ?ref=SLUG). Will be null for direct buyers.
   const affiliateSlug = (await cookies()).get('merit_ref')?.value ?? null;
 
-  // Build the absolute base URL for redirect targets. Falls back to a
-  // request-origin sniff if NEXT_PUBLIC_SITE_URL isn't set.
+  // Build the absolute base URL for redirect targets.
+  // Priority:
+  //   1. NEXT_PUBLIC_SITE_URL env (explicit override, e.g. custom domain)
+  //   2. x-forwarded-host + x-forwarded-proto (set by Render's edge proxy)
+  //   3. request URL (last resort — would be internal:10000 on Render,
+  //      not a working public URL)
+  //
+  // We use forwarded headers BEFORE req.url because Render terminates
+  // TLS at the edge and forwards plaintext to the Node process — req.url
+  // shows `https://localhost:10000` which is the internal hostname, not
+  // a redirectable public URL.
   const url = new URL(req.url);
+  const forwardedHost = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
+  const forwardedProto = req.headers.get('x-forwarded-proto') ?? 'https';
   const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? `${url.protocol}//${url.host}`;
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
+    ?? (forwardedHost && !forwardedHost.startsWith('localhost')
+        ? `${forwardedProto}://${forwardedHost}`
+        : `${url.protocol}//${url.host}`);
 
   try {
     const session = await stripe().checkout.sessions.create({
@@ -134,9 +148,16 @@ export async function POST(req: Request) {
       ],
       // We ship US-only for now, per the policy
       shipping_address_collection: { allowed_countries: ['US'] },
-      // Let customers paste in a code at checkout (we'll wire affiliate
-      // codes to Stripe Promotion Codes in the next iteration).
+      // Let customers paste in a code at checkout. PromotionCodes
+      // are synced from Affiliate.discountCode by lib/stripe-affiliate-sync
+      // when an affiliate signs up.
       allow_promotion_codes: true,
+      // CRITICAL: force Stripe to create a Customer object for one-time
+      // payment sessions. Without this, session.customer is null in the
+      // webhook, which means we can't write the customer↔affiliate lock
+      // (CustomerAffiliateLink.customerStripeId is required). This is
+      // the foundation of the evergreen attribution mechanic.
+      customer_creation: 'always',
       // Critical — this is how we get the affiliate context back at
       // webhook time. Stripe doesn't carry our cookie to the webhook.
       metadata: {
