@@ -52,16 +52,24 @@ export default function AffiliateLandingPage() {
             Your audience uses your code at checkout and saves <strong className="text-white">{AFFILIATE_PROGRAM.buyerDiscountPct}%</strong> instantly.
           </p>
 
-          <a
-            href="#signup"
-            className="inline-flex items-center gap-2 mt-10 bg-white text-ink px-7 py-4 rounded-xl text-sm sm:text-base font-bold tracking-tight hover:opacity-90 transition shadow-xl"
-          >
-            Get your link in 60 seconds
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          </a>
+          <div className="flex flex-wrap items-center gap-3 mt-10">
+            <a
+              href="#signup"
+              className="inline-flex items-center gap-2 bg-white text-ink px-7 py-4 rounded-xl text-sm sm:text-base font-bold tracking-tight hover:opacity-90 transition shadow-xl"
+            >
+              Get your link in 60 seconds
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </a>
+            <a
+              href="/affiliate/login"
+              className="inline-flex items-center gap-2 text-white/80 px-5 py-4 rounded-xl text-sm font-bold tracking-tight hover:text-white transition border border-white/20 hover:border-white/40"
+            >
+              I already have an account &rarr;
+            </a>
+          </div>
         </div>
       </section>
 
