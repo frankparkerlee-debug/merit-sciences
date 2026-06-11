@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 import { prisma } from '@/lib/db';
 import { stripe } from '@/lib/stripe';
 import { tierForOrderCount } from '@/lib/affiliate';
+import { affiliateForStripePromotionCode } from '@/lib/stripe-affiliate-sync';
 
 export const runtime = 'nodejs';
 
@@ -80,18 +81,15 @@ async function processCompletedCheckout(session: Stripe.Checkout.Session) {
     return;
   }
 
-  const affiliateSlug = session.metadata?.affiliate_slug?.trim() || null;
-  if (!affiliateSlug) {
-    // No affiliate context — direct purchase. Nothing to do for the
-    // affiliate ledger.
-    return;
-  }
-
-  // Resolve affiliate. Only ACTIVE affiliates earn.
-  const affiliate = await prisma.affiliate.findUnique({
-    where: { slug: affiliateSlug },
-    select: { id: true, email: true, status: true },
-  });
+  // ── Attribution resolution ─────────────────────────────────────────
+  // TWO attribution sources, in priority order:
+  //   1. Promotion code used at Stripe Checkout (CODE-based — explicit)
+  //   2. Affiliate slug from metadata (COOKIE-based — passive)
+  //
+  // Code wins because it represents an intentional act by the buyer
+  // (they typed it). The cookie can be stale (set days ago, possibly
+  // by a different affiliate before they shopped your code).
+  const affiliate = await resolveAffiliate(session);
   if (!affiliate || affiliate.status !== 'ACTIVE') {
     return;
   }
@@ -189,4 +187,64 @@ async function processCompletedCheckout(session: Stripe.Checkout.Session) {
     }
     throw err;
   }
+}
+
+type ResolvedAffiliate = {
+  id: string;
+  email: string;
+  status: string;
+  /** How attribution was resolved — useful for analytics later */
+  via: 'promotion_code' | 'cookie_metadata';
+};
+
+/**
+ * Determine which affiliate (if any) should be credited for this order.
+ *
+ * Resolution order:
+ *   1. PROMOTION CODE — if the buyer typed an affiliate's discount code
+ *      at Stripe Checkout, the session has a discount with a Stripe
+ *      PromotionCode id. Look up the Affiliate by stripePromotionCodeId.
+ *   2. COOKIE METADATA — fallback to the affiliate_slug we wrote at
+ *      checkout session creation time (set from the merit_ref cookie).
+ *
+ * Promotion code wins when both are present. Rationale:
+ *   - The customer ACTIVELY typed the code; intent is explicit
+ *   - The cookie may be from an earlier visit via a different affiliate
+ *   - Affiliates expect their code to attribute even when buyers click
+ *     in via someone else's link
+ *
+ * Returns null if no attribution found, or affiliate is missing/suspended.
+ */
+async function resolveAffiliate(
+  session: Stripe.Checkout.Session,
+): Promise<ResolvedAffiliate | null> {
+  // ── 1. Code-based ──────────────────────────────────────────────────
+  // session.discounts is included in the webhook payload by default.
+  // Each entry has `coupon` and `promotion_code` (both string IDs unless
+  // expanded). We only care when promotion_code is set.
+  const discount = session.discounts?.[0];
+  const promoCodeId =
+    typeof discount?.promotion_code === 'string'
+      ? discount.promotion_code
+      : discount?.promotion_code?.id ?? null;
+
+  if (promoCodeId) {
+    const byCode = await affiliateForStripePromotionCode(promoCodeId);
+    if (byCode) {
+      return { ...byCode, via: 'promotion_code' };
+    }
+    // PromoCode exists but doesn't map to any affiliate — e.g. an
+    // operator-only Stripe Dashboard coupon. Fall through to cookie.
+  }
+
+  // ── 2. Cookie-based ────────────────────────────────────────────────
+  const affiliateSlug = session.metadata?.affiliate_slug?.trim() || null;
+  if (!affiliateSlug) return null;
+
+  const bySlug = await prisma.affiliate.findUnique({
+    where: { slug: affiliateSlug },
+    select: { id: true, email: true, status: true },
+  });
+  if (!bySlug) return null;
+  return { ...bySlug, via: 'cookie_metadata' };
 }

@@ -41,6 +41,12 @@ model Affiliate {
   // Stripe Connect Express account id — set once payout onboarding done
   stripeAccountId      String?         @unique
   stripeChargesEnabled Boolean         @default(false)
+  // Stripe Coupon + PromotionCode that back the buyer-facing discount.
+  // Created lazily on affiliate signup (10% off, duration=forever).
+  // Code-based attribution looks up Affiliate by stripePromotionCodeId
+  // when the buyer uses the discount at Stripe Checkout.
+  stripeCouponId          String? @unique
+  stripePromotionCodeId   String? @unique
   // Optional fields collected at signup — surfaced to admin for fraud
   // review but no longer a gate to activation
   socialUrl            String?         // primary platform (Instagram, TikTok, etc.)
