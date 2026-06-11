@@ -138,13 +138,30 @@ export function CheckoutClient() {
     setCodeError(null);
   }
 
+  // Apple Pay requires PayPal domain verification (the
+  // apple-developer-merchantid-domain-association file at /.well-known/
+  // must be reachable from the verified domain). On sandbox today the
+  // only registered domain is meritsciences.com which is still on
+  // Shopify, so we cannot load applepay in the SDK — PayPal returns 400
+  // on the whole SDK script, which takes down Google Pay + PayPal +
+  // Card Fields too. Flip NEXT_PUBLIC_APPLE_PAY_ENABLED=true after
+  // domain cutover + Verify Domain click in PayPal.
+  const applePayEnabled = process.env.NEXT_PUBLIC_APPLE_PAY_ENABLED === 'true';
+
   // PayPal SDK options.
+  const components = applePayEnabled
+    ? 'buttons,card-fields,applepay,googlepay'
+    : 'buttons,card-fields,googlepay';
+  const enableFunding = applePayEnabled
+    ? 'applepay,googlepay'
+    : 'googlepay';
+
   const paypalOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
     currency: 'USD',
     intent: 'capture',
-    components: 'buttons,card-fields,applepay,googlepay',
-    'enable-funding': 'applepay,googlepay',
+    components,
+    'enable-funding': enableFunding,
     'disable-funding': 'paylater,credit,venmo',
   };
 
@@ -266,6 +283,7 @@ export function CheckoutClient() {
                 onApprove={onApprove}
                 onError={onError}
                 onClick={onWalletClick}
+                applePayEnabled={applePayEnabled}
               />
             </PaymentSection>
 
@@ -423,23 +441,29 @@ type WalletHandlers = {
   onApprove: (data: { orderID: string }) => Promise<void>;
   onError: (err: any) => void;
   onClick: (data: any, actions: any) => any;
+  applePayEnabled: boolean;
 };
 
-function WalletTriad({ createOrder, onApprove, onError, onClick }: WalletHandlers) {
+function WalletTriad({
+  createOrder, onApprove, onError, onClick, applePayEnabled,
+}: WalletHandlers) {
+  // When Apple Pay is enabled: AP + GP side-by-side, PayPal full-width below.
+  // When disabled: GP full-width, PayPal full-width below.
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Apple Pay — only renders on Safari/iOS/macOS */}
-        <div className="min-h-[0]">
-          <PayPalButtons
-            fundingSource={'applepay' as any}
-            style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
-            createOrder={createOrder}
-            onApprove={onApprove}
-            onError={onError}
-            onClick={onClick}
-          />
-        </div>
+      <div className={`grid gap-3 ${applePayEnabled ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+        {applePayEnabled && (
+          <div className="min-h-[0]">
+            <PayPalButtons
+              fundingSource={'applepay' as any}
+              style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
+              createOrder={createOrder}
+              onApprove={onApprove}
+              onError={onError}
+              onClick={onClick}
+            />
+          </div>
+        )}
         {/* Google Pay — renders on Chrome / Android-backed browsers */}
         <div className="min-h-[0]">
           <PayPalButtons
@@ -452,7 +476,7 @@ function WalletTriad({ createOrder, onApprove, onError, onClick }: WalletHandler
           />
         </div>
       </div>
-      {/* PayPal — full width of the row above */}
+      {/* PayPal — full width */}
       <div className="min-h-[0]">
         <PayPalButtons
           fundingSource="paypal"
