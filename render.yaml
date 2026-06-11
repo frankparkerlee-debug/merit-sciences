@@ -12,11 +12,20 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # Payment processor keys — populate in Render dashboard, not here
+      # Stripe — populate in Render dashboard before deploy.
+      # STRIPE_SECRET_KEY   — sk_test_… for now, swap to sk_live_… at launch
+      # STRIPE_WEBHOOK_SECRET — set after creating the webhook endpoint
+      #   in Stripe Dashboard (https://dashboard.stripe.com/webhooks).
+      #   The endpoint URL is https://[your-domain]/api/stripe/webhook
+      #   and you'll subscribe to checkout.session.completed.
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
+      # NEXT_PUBLIC_SITE_URL — used to build success/cancel URLs for
+      # Stripe. Defaults to the request origin if not set.
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://merit-sciences.onrender.com
       - key: PAYPAL_CLIENT_ID
         sync: false
       - key: PAYPAL_CLIENT_SECRET

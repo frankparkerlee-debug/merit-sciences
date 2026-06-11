@@ -72,3 +72,26 @@ export const AFFILIATE_PROGRAM = {
   cookieWindowDays: 30,
   payoutMinUsd: 50,
 } as const;
+
+/**
+ * Given the affiliate's order count in the trailing 30 days, return
+ * the tier they belong in + the commission rate in basis points.
+ *
+ * Tier is calculated AT THE MOMENT OF EACH ORDER — so the 26th order
+ * of the month is the first to pay at Partner rate, the 76th at Elite.
+ * Stored as basis points (15% = 1500) on OrderCommission so the rate
+ * paid is permanently locked in even if program rates change later.
+ */
+export function tierForOrderCount(count: number): {
+  tierName: string;
+  rateBp: number;
+} {
+  for (const t of AFFILIATE_PROGRAM.tiers) {
+    if (t.maxOrders === null || count <= t.maxOrders) {
+      return { tierName: t.name, rateBp: t.commissionPct * 100 };
+    }
+  }
+  // Fallback — unreachable given our tier ordering, but typescript-safe
+  const top = AFFILIATE_PROGRAM.tiers[AFFILIATE_PROGRAM.tiers.length - 1];
+  return { tierName: top.name, rateBp: top.commissionPct * 100 };
+}

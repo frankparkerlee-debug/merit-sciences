@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '@/lib/cart';
 import { money } from '@/lib/product-types';
 
@@ -23,6 +23,35 @@ export function CartDrawer() {
   const closeDrawer = useCart((s) => s.closeDrawer);
   const setQty     = useCart((s) => s.setQty);
   const remove     = useCart((s) => s.remove);
+
+  // Checkout flow state — set while we're round-tripping to
+  // /api/checkout/session before Stripe redirects.
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  async function handleCheckout() {
+    if (lines.length === 0 || checkoutLoading) return;
+    setCheckoutError(null);
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch('/api/checkout/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lines }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setCheckoutError(data.error || 'Could not start checkout. Please try again.');
+        setCheckoutLoading(false);
+        return;
+      }
+      // Redirect to Stripe's hosted checkout page
+      window.location.href = data.url;
+    } catch (err) {
+      setCheckoutError('Network error — please try again.');
+      setCheckoutLoading(false);
+    }
+  }
 
   const subtotalCents = lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0);
   const itemCount     = lines.reduce((sum, l) => sum + l.qty, 0);
@@ -175,17 +204,26 @@ export function CartDrawer() {
               </div>
             </dl>
 
-            <Link
-              href="/checkout"
-              onClick={closeDrawer}
-              className="block text-center text-white py-3.5 rounded-xl text-base font-bold shadow-md hover:opacity-95 transition"
+            {/* Checkout button — POSTs cart to /api/checkout/session, which
+                returns the Stripe Checkout URL and we redirect there. */}
+            <button
+              type="button"
+              onClick={handleCheckout}
+              disabled={checkoutLoading}
+              className="block w-full text-center text-white py-3.5 rounded-xl text-base font-bold shadow-md hover:opacity-95 transition disabled:opacity-60 disabled:cursor-wait"
               style={{
                 background:
                   'linear-gradient(135deg, #2E4DDB 0%, #5078FF 50%, #2E4DDB 100%)',
               }}
             >
-              Checkout · {money(grandTotalCents)}
-            </Link>
+              {checkoutLoading ? 'Redirecting to checkout…' : `Checkout · ${money(grandTotalCents)}`}
+            </button>
+
+            {checkoutError && (
+              <p className="mt-2 text-[12px] text-red-600 font-semibold leading-snug">
+                {checkoutError}
+              </p>
+            )}
 
             <button
               type="button"
