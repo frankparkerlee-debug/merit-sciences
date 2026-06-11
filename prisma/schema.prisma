@@ -47,6 +47,12 @@ model Affiliate {
   // when the buyer uses the discount at Stripe Checkout.
   stripeCouponId          String? @unique
   stripePromotionCodeId   String? @unique
+  // Supabase Auth user id (auth.users.id). Set on first sign-in.
+  // Use this — NOT email — as the join key to look up the affiliate
+  // for an authenticated request. Email is mutable and Supabase Auth
+  // is the source of truth for it; using userId means email changes
+  // just work without complex reconciliation.
+  supabaseUserId          String? @unique
   // Optional fields collected at signup — surfaced to admin for fraud
   // review but no longer a gate to activation
   socialUrl            String?         // primary platform (Instagram, TikTok, etc.)

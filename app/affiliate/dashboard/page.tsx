@@ -111,14 +111,22 @@ export default async function AffiliateDashboardPage() {
               Welcome, {affiliate.name.split(' ')[0]}<span className="text-cobalt">.</span>
             </h1>
           </div>
-          <form action="/auth/logout" method="POST">
-            <button
-              type="submit"
+          <div className="flex items-center gap-5">
+            <Link
+              href="/affiliate/dashboard/settings"
               className="text-xs font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition"
             >
-              Sign out
-            </button>
-          </form>
+              Settings
+            </Link>
+            <form action="/auth/logout" method="POST">
+              <button
+                type="submit"
+                className="text-xs font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 

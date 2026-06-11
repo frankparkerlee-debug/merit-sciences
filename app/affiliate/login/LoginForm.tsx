@@ -74,7 +74,7 @@ export function LoginForm({ next }: { next: string }) {
       return;
     }
 
-    router.replace('/affiliate/login?sent=1');
+    router.replace(`/affiliate/login?sent=1&email=${encodeURIComponent(trimmed)}`);
   }
 
   return (
