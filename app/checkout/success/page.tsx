@@ -9,9 +9,10 @@ export const metadata = {
 export default function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string };
+  searchParams: { session_id?: string; order_id?: string };
 }) {
-  const sessionId = searchParams.session_id;
+  // Accept both order_id (PayPal — current) and session_id (Stripe — legacy)
+  const orderRef = searchParams.order_id ?? searchParams.session_id;
   return (
     <main className="bg-cream min-h-screen">
       {/* Client-only effect — clears the persisted Zustand cart on mount */}
@@ -41,9 +42,9 @@ export default function CheckoutSuccessPage({
             Your order ships within 48 hours from our facility in Dallas.
             You&apos;ll receive a tracking number as soon as it leaves.
           </p>
-          {sessionId && (
+          {orderRef && (
             <p className="text-[11px] text-ink-muted font-mono">
-              Order reference: <span className="break-all">{sessionId}</span>
+              Order reference: <span className="break-all">{orderRef}</span>
             </p>
           )}
         </div>

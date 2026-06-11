@@ -24,33 +24,22 @@ export function CartDrawer() {
   const setQty     = useCart((s) => s.setQty);
   const remove     = useCart((s) => s.remove);
 
-  // Checkout flow state — set while we're round-tripping to
-  // /api/checkout/session before Stripe redirects.
+  // Checkout flow — we used to round-trip to /api/checkout/session and
+  // redirect to Stripe. With PayPal as the processor we render PayPal
+  // buttons + Advanced Card Fields on a dedicated /checkout page so
+  // there's room for the order summary + both payment options.
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  async function handleCheckout() {
+  function handleCheckout() {
     if (lines.length === 0 || checkoutLoading) return;
     setCheckoutError(null);
     setCheckoutLoading(true);
-    try {
-      const res = await fetch('/api/checkout/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lines }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        setCheckoutError(data.error || 'Could not start checkout. Please try again.');
-        setCheckoutLoading(false);
-        return;
-      }
-      // Redirect to Stripe's hosted checkout page
-      window.location.href = data.url;
-    } catch (err) {
-      setCheckoutError('Network error — please try again.');
-      setCheckoutLoading(false);
-    }
+    closeDrawer();
+    // Use a router-style push via location to avoid pulling in
+    // useRouter just for this; the drawer is a client component but
+    // navigating with location.href is fine here.
+    window.location.href = '/checkout';
   }
 
   const subtotalCents = lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0);

@@ -112,10 +112,14 @@ model Click {
 
 model CustomerAffiliateLink {
   id                   String    @id @default(cuid())
-  // External customer identifier — for now, the Stripe customer id
-  // (created on first checkout). Later we may also key on email.
-  customerStripeId     String    @unique
-  customerEmail        String    // copy for searchability + email-based linking
+  // EMAIL is the canonical identity. We lock by lowercase email so the
+  // evergreen attribution survives the buyer paying via PayPal one
+  // time and a credit card the next, or moving between processors.
+  customerEmail        String    @unique
+  // External processor IDs are recorded for traceability but no longer
+  // the unique key. Either or both can be set per row.
+  paypalPayerId        String?   // PayPal payer.payer_id (when available)
+  customerStripeId     String?   // Legacy — kept while Stripe path is removed
   affiliateId          String
   affiliate            Affiliate @relation(fields: [affiliateId], references: [id])
   // Audit
@@ -140,9 +144,17 @@ model CustomerAffiliateLink {
 
 model OrderCommission {
   id               String                @id @default(cuid())
-  // External order identifier — Stripe checkout session id
-  stripeSessionId  String                @unique
-  customerStripeId String
+  // External order identifier — PayPal order id (PRIMARY) or Stripe
+  // checkout session id (LEGACY — kept while Stripe path is removed).
+  // Exactly one of these is set per row going forward.
+  paypalOrderId    String?               @unique
+  paypalCaptureId  String?               @unique // PayPal capture (payment) id
+  stripeSessionId  String?               @unique
+  // External customer identifier:
+  //   PayPal: payer_id from the captured order
+  //   Stripe: customer id (legacy)
+  paypalPayerId    String?
+  customerStripeId String?
   // Snapshot the customer link state at the moment of the order
   customerLinkId   String
   customerLink     CustomerAffiliateLink @relation(fields: [customerLinkId], references: [id])
