@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createServerSupabase } from '@/lib/supabase-server';
 import { LoginForm } from './LoginForm';
 
@@ -27,50 +28,19 @@ export default async function AffiliateLoginPage({
   const next = sp.next || '/affiliate/dashboard';
 
   return (
-    <main className="min-h-screen flex flex-col lg:flex-row">
-      {/* ───── LEFT: Editorial brand panel ───── */}
-      <aside className="relative bg-ink text-white lg:w-[42%] lg:min-h-screen px-6 sm:px-10 lg:px-12 xl:px-16 pt-8 lg:pt-10 pb-10 lg:pb-12 flex flex-col">
+    <main className="min-h-screen flex flex-col lg:flex-row bg-cream">
+
+      {/* ───── LEFT: Form panel ───── */}
+      <section className="bg-cream flex-1 flex flex-col px-6 sm:px-10 lg:px-16 xl:px-20 pt-6 lg:pt-10 pb-12 lg:pb-12 lg:min-h-screen order-2 lg:order-1">
         {/* Wordmark */}
-        <Link href="/" className="inline-block">
-          <span className="font-display font-black text-lg tracking-[-0.02em]">
+        <Link href="/" className="inline-block mb-12 lg:mb-0">
+          <span className="font-display font-black text-ink text-lg tracking-[-0.02em]">
             Merit Sciences
           </span>
         </Link>
 
-        {/* Editorial copy */}
-        <div className="flex-1 flex flex-col justify-center max-w-[480px] mx-auto lg:mx-0 mt-12 lg:mt-0 w-full">
-          <p className="text-[10px] tracking-[0.28em] uppercase text-cobalt-soft font-bold mb-5">
-            — Affiliate portal
-          </p>
-          <h1
-            className="font-display font-black tracking-[-0.038em] leading-[0.92] mb-6"
-            style={{ fontSize: 'clamp(36px, 5.5vw, 64px)' }}
-          >
-            Your earnings. <br className="hidden sm:block" />
-            Your customers. <br className="hidden sm:block" />
-            <span className="text-cobalt-soft">For life.</span>
-          </h1>
-          <p className="text-base lg:text-lg text-white/70 leading-relaxed mb-10 max-w-[420px]">
-            Sign in to see your commission ledger, share tools, and the customers locked to you under evergreen attribution.
-          </p>
-
-          {/* Three quick stats */}
-          <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[440px] border-t border-white/10 pt-7">
-            <Stat n="15-25%" label="Tier commission" />
-            <Stat n="∞" label="Evergreen lock" />
-            <Stat n="10%" label="Your customers save" />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <p className="text-[11px] text-white/40 tracking-wide mt-10 lg:mt-12">
-          Pharmacy-grade. Not pharmacy-priced.
-        </p>
-      </aside>
-
-      {/* ───── RIGHT: Form panel ───── */}
-      <section className="bg-cream flex-1 flex items-center justify-center px-6 sm:px-10 py-12 lg:py-0">
-        <div className="w-full max-w-[420px]">
+        {/* Form content vertically centered */}
+        <div className="flex-1 flex flex-col justify-center max-w-[420px] w-full mx-auto lg:mx-0 mt-8 lg:mt-0">
           {sent ? (
             <SentState sentTo={sentTo} />
           ) : (
@@ -78,14 +48,14 @@ export default async function AffiliateLoginPage({
               <p className="text-[10px] tracking-[0.28em] uppercase text-cobalt font-bold mb-3">
                 — Sign in
               </p>
-              <h2
-                className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-3"
-                style={{ fontSize: 'clamp(28px, 4vw, 42px)' }}
+              <h1
+                className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-4"
+                style={{ fontSize: 'clamp(34px, 4.5vw, 52px)' }}
               >
                 Welcome back<span className="text-cobalt">.</span>
-              </h2>
-              <p className="text-sm sm:text-base text-ink-soft leading-relaxed mb-8">
-                Enter the email you used to join. We&rsquo;ll send a one-tap link &mdash; no password.
+              </h1>
+              <p className="text-sm sm:text-base text-ink-soft leading-relaxed mb-8 max-w-[380px]">
+                Sign in to your Merit Sciences affiliate dashboard. We&rsquo;ll email you a one-tap link &mdash; no password needed.
               </p>
 
               {error && (
@@ -104,7 +74,54 @@ export default async function AffiliateLoginPage({
             </>
           )}
         </div>
+
+        {/* Footer pinned bottom on desktop */}
+        <p className="hidden lg:block text-[11px] text-ink-soft/60 tracking-wide mt-10">
+          Pharmacy-grade. Not pharmacy-priced.
+        </p>
       </section>
+
+      {/* ───── RIGHT: Editorial image panel ───── */}
+      <aside className="relative bg-ink lg:w-[52%] lg:min-h-screen overflow-hidden order-1 lg:order-2">
+        {/* Hero vial photo — full bleed */}
+        <Image
+          src="/brand/merit-vial-hero.webp"
+          alt="Merit Sciences vial — pharmacy-grade, lyophilized, 99% HPLC verified"
+          fill
+          priority
+          sizes="(max-width: 1024px) 100vw, 52vw"
+          className="object-cover"
+        />
+
+        {/* Cobalt overlay for type contrast */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-ink/85 via-ink/55 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-ink/70" />
+
+        {/* Editorial overlay copy — bottom-left on desktop, centered on mobile */}
+        <div className="relative h-full min-h-[280px] sm:min-h-[360px] lg:min-h-screen flex flex-col justify-end px-6 sm:px-10 lg:px-12 xl:px-16 py-10 lg:py-12 text-white">
+          <p className="text-[10px] tracking-[0.28em] uppercase text-cobalt-soft font-bold mb-4">
+            — Affiliate portal
+          </p>
+          <h2
+            className="font-display font-black tracking-[-0.038em] leading-[0.92] mb-5 max-w-[520px]"
+            style={{ fontSize: 'clamp(28px, 4.5vw, 56px)' }}
+          >
+            Your earnings. <br className="hidden sm:block" />
+            Your customers. <br className="hidden sm:block" />
+            <span className="text-cobalt-soft">For life.</span>
+          </h2>
+          <p className="text-sm sm:text-base text-white/75 leading-relaxed mb-7 max-w-[420px]">
+            Evergreen commissions. Custom discount codes. Your audience gets 10% off. You earn 15&ndash;25% on every order &mdash; forever.
+          </p>
+
+          {/* Three quick stats */}
+          <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[440px] border-t border-white/10 pt-6">
+            <Stat n="15-25%" label="Tier commission" />
+            <Stat n="∞" label="Evergreen lock" />
+            <Stat n="10%" label="Customers save" />
+          </div>
+        </div>
+      </aside>
     </main>
   );
 }
@@ -112,10 +129,10 @@ export default async function AffiliateLoginPage({
 function Stat({ n, label }: { n: string; label: string }) {
   return (
     <div>
-      <p className="font-display font-black tracking-tight text-2xl lg:text-3xl text-white">
+      <p className="font-display font-black tracking-tight text-xl sm:text-2xl lg:text-3xl text-white">
         {n}
       </p>
-      <p className="text-[10px] tracking-[0.16em] uppercase text-white/50 font-bold mt-1.5 leading-tight">
+      <p className="text-[9px] sm:text-[10px] tracking-[0.16em] uppercase text-white/55 font-bold mt-1.5 leading-tight">
         {label}
       </p>
     </div>
