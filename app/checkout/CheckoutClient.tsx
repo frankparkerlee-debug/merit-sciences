@@ -44,25 +44,19 @@ export function CheckoutClient() {
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeApplying, setCodeApplying] = useState(false);
 
-  // Local subtotal for the order summary tile (before server confirms)
   const subtotalCents = useMemo(
     () => lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0),
     [lines],
   );
-  // Optimistic discount + shipping for the side panel.
-  // The authoritative numbers come from PayPal's createOrder call.
   const localDiscountCents = appliedCode ? Math.floor((subtotalCents * 10) / 100) : 0;
   const localShippingCents =
     subtotalCents - localDiscountCents >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING;
   const localTotalCents = subtotalCents - localDiscountCents + localShippingCents;
 
-  // Empty cart guard
   if (hydrated && lines.length === 0) {
     return (
       <div className="rounded-2xl border border-cobalt/15 bg-white p-10 text-center">
-        <p className="text-base text-ink-soft mb-6">
-          Your cart is empty.
-        </p>
+        <p className="text-base text-ink-soft mb-6">Your cart is empty.</p>
         <button
           type="button"
           onClick={() => router.push('/catalog')}
@@ -79,10 +73,6 @@ export function CheckoutClient() {
     setCodeError(null);
     const code = discountCode.trim();
     if (!code) return;
-    // We don't have a separate validate route — the create-order call
-    // does validation server-side. To pre-check before the buyer hits
-    // a payment button, simulate by calling create-order with the code.
-    // We won't actually use this temp order; PayPal allows abandoning.
     setCodeApplying(true);
     try {
       const res = await fetch('/api/paypal/create-order', {
@@ -110,18 +100,21 @@ export function CheckoutClient() {
     setCodeError(null);
   }
 
-  // PayPal SDK options. Components include the buttons AND the
-  // hosted-fields-style card fields component.
+  // PayPal SDK options.
+  //   - enable-funding includes applepay + googlepay so the SDK loads
+  //     the wallet integrations. Buttons auto-hide on incompatible
+  //     browsers (e.g. Chrome on Mac won't show Apple Pay; Safari
+  //     won't show Google Pay).
+  //   - disable-funding drops the offerings we don't show.
   const paypalOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
     currency: 'USD',
     intent: 'capture',
-    components: 'buttons,card-fields',
-    // Disable funding sources we don't want to show
-    'disable-funding': 'paylater,credit',
+    components: 'buttons,card-fields,applepay,googlepay',
+    'enable-funding': 'applepay,googlepay',
+    'disable-funding': 'paypal,paylater,credit,venmo',
   };
 
-  // ── Create order on demand (called by both PayPal buttons + card fields)
   async function createOrder(): Promise<string> {
     const res = await fetch('/api/paypal/create-order', {
       method: 'POST',
@@ -161,7 +154,7 @@ export function CheckoutClient() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 lg:gap-12 items-start">
       {/* ── Left column: payment ── */}
-      <div className="space-y-8 order-2 lg:order-1">
+      <div className="space-y-5 order-2 lg:order-1">
         {!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
             <p className="text-sm text-amber-900">
@@ -170,28 +163,20 @@ export function CheckoutClient() {
           </div>
         ) : (
           <PayPalScriptProvider options={paypalOptions} deferLoading={false}>
-            {/* ── PayPal-branded button (popup flow) ── */}
+            {/* ── One-tap wallet buttons ─────────────────────────── */}
             <PaymentSection
-              eyebrow="Option 1"
-              title="Pay with PayPal"
-              description="Sign in to your PayPal balance, or pay as a guest with a debit/credit card via PayPal's checkout."
+              eyebrow="Express checkout"
+              title="One-tap pay"
+              description="Fastest way to check out — uses the wallet your device already has set up."
             >
-              <div className="min-h-[55px]">
-                <PayPalButtons
-                  style={{
-                    layout: 'horizontal',
-                    color: 'gold',
-                    shape: 'rect',
-                    label: 'paypal',
-                    height: 48,
-                  }}
-                  createOrder={createOrder}
-                  onApprove={onApprove}
-                  onError={onError}
-                />
-              </div>
+              <WalletButtons
+                createOrder={createOrder}
+                onApprove={onApprove}
+                onError={onError}
+              />
             </PaymentSection>
 
+            {/* ── Divider ─── */}
             <div className="flex items-center gap-3 my-2">
               <div className="flex-1 h-px bg-cobalt/15" />
               <span className="text-[10px] tracking-[0.22em] uppercase font-bold text-ink-soft">
@@ -200,11 +185,11 @@ export function CheckoutClient() {
               <div className="flex-1 h-px bg-cobalt/15" />
             </div>
 
-            {/* ── Advanced Card Fields (native card form, no redirect) ── */}
+            {/* ── Card form (universal fallback) ───────────────────── */}
             <PaymentSection
-              eyebrow="Option 2"
+              eyebrow="All payment methods"
               title="Pay with card"
-              description="Enter your card details below. We never see or store the card number — PayPal handles encryption."
+              description="Visa, Mastercard, Amex, Discover. Card details never touch our servers — PayPal encrypts them end-to-end."
             >
               <PayPalCardFieldsProvider
                 createOrder={createOrder}
@@ -233,7 +218,6 @@ export function CheckoutClient() {
             ))}
           </ul>
 
-          {/* Discount code */}
           <div className="px-5 sm:px-6 py-4 border-t border-cobalt/10 bg-cobalt/5">
             {appliedCode ? (
               <div className="flex items-center justify-between text-sm">
@@ -269,7 +253,6 @@ export function CheckoutClient() {
             {codeError && <p className="text-xs text-rose-700 mt-2">{codeError}</p>}
           </div>
 
-          {/* Totals */}
           <div className="px-5 sm:px-6 py-5 space-y-2 text-sm">
             <Row label="Subtotal" value={fmtMoney(subtotalCents)} />
             {localDiscountCents > 0 && (
@@ -291,9 +274,60 @@ export function CheckoutClient() {
         </div>
 
         <p className="text-[11px] text-ink-soft/70 mt-4 leading-relaxed">
-          Shipping to US addresses only. Free shipping on orders over $100. Card details are encrypted end-to-end by PayPal — we never see or store them.
+          Shipping to US addresses only. Free shipping on orders over $100. Apple Pay / Google Pay / card details are encrypted end-to-end by PayPal — we never see or store them.
         </p>
       </aside>
+    </div>
+  );
+}
+
+/* ─── One-tap wallet buttons (Apple Pay + Google Pay) ─────────────── */
+
+type CommonHandlers = {
+  createOrder: () => Promise<string>;
+  onApprove: (data: { orderID: string }) => Promise<void>;
+  onError: (err: any) => void;
+};
+
+function WalletButtons({ createOrder, onApprove, onError }: CommonHandlers) {
+  // Track which (if any) wallet button actually rendered so we can show
+  // a helpful "no wallets available — use card below" message if neither
+  // fired. (PayPal's Smart Buttons silently render-or-hide based on
+  // browser capability; this just makes the empty state intentional.)
+  const [appleRendered, setAppleRendered] = useState<boolean | null>(null);
+  const [googleRendered, setGoogleRendered] = useState<boolean | null>(null);
+
+  return (
+    <div className="space-y-3">
+      {/* Apple Pay — only renders on Safari/iOS/macOS where Apple Pay session is available */}
+      <div className="min-h-[0]">
+        <PayPalButtons
+          fundingSource={"applepay" as any}
+          style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
+          createOrder={createOrder}
+          onApprove={onApprove}
+          onError={onError}
+          onInit={() => setAppleRendered(true)}
+        />
+      </div>
+
+      {/* Google Pay — renders on Chrome + Android-backed browsers */}
+      <div className="min-h-[0]">
+        <PayPalButtons
+          fundingSource={"googlepay" as any}
+          style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
+          createOrder={createOrder}
+          onApprove={onApprove}
+          onError={onError}
+          onInit={() => setGoogleRendered(true)}
+        />
+      </div>
+
+      {appleRendered === false && googleRendered === false && (
+        <p className="text-xs text-ink-soft text-center pt-2">
+          Apple Pay and Google Pay aren’t available on this device. Pay with card below — it works on every browser.
+        </p>
+      )}
     </div>
   );
 }
@@ -318,7 +352,7 @@ function PaymentSection({
 }
 
 function CardFieldsForm() {
-  const { cardFieldsForm, fields } = usePayPalCardFields();
+  const { cardFieldsForm } = usePayPalCardFields();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
@@ -332,7 +366,6 @@ function CardFieldsForm() {
         return;
       }
       await cardFieldsForm.submit();
-      // onApprove will be invoked by the provider on success
     } catch (err: any) {
       console.error('[paypal/card-fields] submit failed:', err);
       alert('Card submission failed. Double-check your details and try again.');
