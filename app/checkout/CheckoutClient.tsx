@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -13,22 +13,39 @@ import {
   usePayPalCardFields,
 } from '@paypal/react-paypal-js';
 import { useCart, type CartLine } from '@/lib/cart';
+import { US_STATES } from './us-states';
 
 const FREE_SHIPPING_THRESHOLD = 10_000;
 const FLAT_SHIPPING = 999;
+
+const RUO_TEXT =
+  'I attest that I am purchasing this product for research use only (RUO). It is not for human or veterinary consumption, diagnosis, treatment, or prevention of disease. I understand that I assume all responsibility for proper handling, storage, and disposal under federal and state law.';
 
 function fmtMoney(cents: number): string {
   const sign = cents < 0 ? '-' : '';
   return `${sign}$${(Math.abs(cents) / 100).toFixed(2)}`;
 }
 
-type OrderQuote = {
-  orderId: string;
-  subtotalCents: number;
-  shippingCents: number;
-  discountCents: number;
-  totalCents: number;
-  attributionVia: 'discount_code' | 'cookie' | null;
+type AddressState = {
+  fullName: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  zip: string;
+};
+
+const blankAddress: AddressState = {
+  fullName: '', line1: '', line2: '', city: '', state: '', zip: '',
+};
+
+type CheckoutFormState = {
+  ruoAttested: boolean;
+  email: string;
+  phone: string;
+  shipping: AddressState;
+  shipSameAsBilling: boolean;
+  billing: AddressState;
 };
 
 export function CheckoutClient() {
@@ -43,6 +60,24 @@ export function CheckoutClient() {
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeApplying, setCodeApplying] = useState(false);
+
+  const [form, setForm] = useState<CheckoutFormState>({
+    ruoAttested: false,
+    email: '',
+    phone: '',
+    shipping: { ...blankAddress },
+    shipSameAsBilling: true,
+    billing: { ...blankAddress },
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+  const ruoRef = useRef<HTMLDivElement>(null);
+
+  // Keep latest form state in a ref so the callbacks PayPal SDK closes
+  // over don't capture a stale snapshot.
+  const formRef = useRef(form);
+  useEffect(() => { formRef.current = form; }, [form]);
+  const appliedCodeRef = useRef(appliedCode);
+  useEffect(() => { appliedCodeRef.current = appliedCode; }, [appliedCode]);
 
   const subtotalCents = useMemo(
     () => lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0),
@@ -75,10 +110,13 @@ export function CheckoutClient() {
     if (!code) return;
     setCodeApplying(true);
     try {
+      // Use a lightweight discount-only validation flow: call create-order
+      // with ruoAttested=true (we don't actually use the order, we
+      // just want the server to validate the code and report back).
       const res = await fetch('/api/paypal/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lines, discountCode: code }),
+        body: JSON.stringify({ lines, discountCode: code, ruoAttested: true }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -101,34 +139,62 @@ export function CheckoutClient() {
   }
 
   // PayPal SDK options.
-  //   - enable-funding includes applepay + googlepay so the SDK loads
-  //     the wallet integrations. Buttons auto-hide on incompatible
-  //     browsers (e.g. Chrome on Mac won't show Apple Pay; Safari
-  //     won't show Google Pay).
-  //   - disable-funding drops the offerings we don't show.
   const paypalOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
     currency: 'USD',
     intent: 'capture',
     components: 'buttons,card-fields,applepay,googlepay',
     'enable-funding': 'applepay,googlepay',
-    'disable-funding': 'paypal,paylater,credit,venmo',
+    'disable-funding': 'paylater,credit,venmo',
   };
 
-  async function createOrder(): Promise<string> {
+  // ── Wallet flow createOrder: no shipping address; wallet supplies it
+  async function createOrderForWallet(): Promise<string> {
+    if (!formRef.current.ruoAttested) {
+      throw new Error('RUO_NOT_ATTESTED');
+    }
     const res = await fetch('/api/paypal/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         lines,
-        discountCode: appliedCode ?? undefined,
+        discountCode: appliedCodeRef.current ?? undefined,
+        ruoAttested: true,
       }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Could not start payment.');
     }
-    const data: OrderQuote = await res.json();
+    const data = await res.json();
+    return data.orderId;
+  }
+
+  // ── Card flow createOrder: includes full buyer + shipping info
+  async function createOrderForCard(): Promise<string> {
+    if (!formRef.current.ruoAttested) {
+      throw new Error('RUO_NOT_ATTESTED');
+    }
+    const f = formRef.current;
+    const res = await fetch('/api/paypal/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines,
+        discountCode: appliedCodeRef.current ?? undefined,
+        ruoAttested: true,
+        buyer: {
+          email: f.email,
+          phone: f.phone,
+          shipping: f.shipping,
+        },
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Could not start payment.');
+    }
+    const data = await res.json();
     return data.orderId;
   }
 
@@ -148,13 +214,39 @@ export function CheckoutClient() {
 
   function onError(err: any) {
     console.error('[paypal] payment error:', err);
+    if (err?.message === 'RUO_NOT_ATTESTED') {
+      ruoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setFormError('Please confirm the research-use-only attestation before paying.');
+      return;
+    }
     alert('Payment failed. If you were charged, contact support and we’ll verify your order.');
+  }
+
+  // Intercept wallet button clicks before they call createOrder
+  function onWalletClick(_data: any, actions: any) {
+    if (!formRef.current.ruoAttested) {
+      ruoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setFormError('Please confirm the research-use-only attestation before paying.');
+      return actions.reject();
+    }
+    setFormError(null);
+    return actions.resolve();
   }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 lg:gap-12 items-start">
-      {/* ── Left column: payment ── */}
+      {/* ── Left column: payment surface ── */}
       <div className="space-y-5 order-2 lg:order-1">
+
+        {/* RUO Attestation — gates everything */}
+        <div ref={ruoRef}>
+          <RUOAttestation
+            checked={form.ruoAttested}
+            onChange={(v) => { setForm({ ...form, ruoAttested: v }); if (v) setFormError(null); }}
+            error={formError}
+          />
+        </div>
+
         {!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
             <p className="text-sm text-amber-900">
@@ -163,21 +255,22 @@ export function CheckoutClient() {
           </div>
         ) : (
           <PayPalScriptProvider options={paypalOptions} deferLoading={false}>
-            {/* ── One-tap wallet buttons ─────────────────────────── */}
+            {/* ── Express checkout: Apple Pay + Google Pay + PayPal ── */}
             <PaymentSection
               eyebrow="Express checkout"
               title="One-tap pay"
-              description="Fastest way to check out — uses the wallet your device already has set up."
+              description="Fastest way to check out — uses the wallet your device already has. Shipping and contact info pulled from your wallet."
             >
-              <WalletButtons
-                createOrder={createOrder}
+              <WalletTriad
+                createOrder={createOrderForWallet}
                 onApprove={onApprove}
                 onError={onError}
+                onClick={onWalletClick}
               />
             </PaymentSection>
 
-            {/* ── Divider ─── */}
-            <div className="flex items-center gap-3 my-2">
+            {/* ── Divider ── */}
+            <div className="flex items-center gap-3 my-1">
               <div className="flex-1 h-px bg-cobalt/15" />
               <span className="text-[10px] tracking-[0.22em] uppercase font-bold text-ink-soft">
                 or
@@ -185,21 +278,33 @@ export function CheckoutClient() {
               <div className="flex-1 h-px bg-cobalt/15" />
             </div>
 
-            {/* ── Card form (universal fallback) ───────────────────── */}
+            {/* ── Manual card entry with full buyer info ── */}
             <PaymentSection
-              eyebrow="All payment methods"
-              title="Pay with card"
-              description="Visa, Mastercard, Amex, Discover. Card details never touch our servers — PayPal encrypts them end-to-end."
+              eyebrow="Pay with card"
+              title="Card payment"
+              description="Visa, Mastercard, Amex, Discover. We collect shipping + contact info here, then PayPal handles the card encryption."
             >
               <PayPalCardFieldsProvider
-                createOrder={createOrder}
+                createOrder={createOrderForCard}
                 onApprove={onApprove}
                 onError={onError}
               >
-                <CardFieldsForm />
+                <FullCardForm
+                  form={form}
+                  setForm={setForm}
+                  ruoRef={ruoRef}
+                  onValidationError={setFormError}
+                />
               </PayPalCardFieldsProvider>
             </PaymentSection>
           </PayPalScriptProvider>
+        )}
+
+        {/* Form-level error display below the form */}
+        {formError && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <p className="text-sm text-rose-900 leading-relaxed">{formError}</p>
+          </div>
         )}
       </div>
 
@@ -274,65 +379,303 @@ export function CheckoutClient() {
         </div>
 
         <p className="text-[11px] text-ink-soft/70 mt-4 leading-relaxed">
-          Shipping to US addresses only. Free shipping on orders over $100. Apple Pay / Google Pay / card details are encrypted end-to-end by PayPal — we never see or store them.
+          US shipping only. Free over $100. Card details encrypted end-to-end by PayPal — we never see or store them. Wallet payments pull shipping from your device&rsquo;s saved address.
         </p>
       </aside>
     </div>
   );
 }
 
-/* ─── One-tap wallet buttons (Apple Pay + Google Pay) ─────────────── */
+/* ─── RUO Attestation ─── */
 
-type CommonHandlers = {
-  createOrder: () => Promise<string>;
-  onApprove: (data: { orderID: string }) => Promise<void>;
-  onError: (err: any) => void;
-};
-
-function WalletButtons({ createOrder, onApprove, onError }: CommonHandlers) {
-  // Track which (if any) wallet button actually rendered so we can show
-  // a helpful "no wallets available — use card below" message if neither
-  // fired. (PayPal's Smart Buttons silently render-or-hide based on
-  // browser capability; this just makes the empty state intentional.)
-  const [appleRendered, setAppleRendered] = useState<boolean | null>(null);
-  const [googleRendered, setGoogleRendered] = useState<boolean | null>(null);
-
+function RUOAttestation({
+  checked, onChange, error,
+}: { checked: boolean; onChange: (v: boolean) => void; error: string | null }) {
   return (
-    <div className="space-y-3">
-      {/* Apple Pay — only renders on Safari/iOS/macOS where Apple Pay session is available */}
-      <div className="min-h-[0]">
-        <PayPalButtons
-          fundingSource={"applepay" as any}
-          style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
-          createOrder={createOrder}
-          onApprove={onApprove}
-          onError={onError}
-          onInit={() => setAppleRendered(true)}
+    <div className={`rounded-2xl border p-5 sm:p-6 transition ${checked
+      ? 'border-emerald-200 bg-emerald-50/50'
+      : error ? 'border-rose-300 bg-rose-50' : 'border-amber-300 bg-amber-50/60'}`}>
+      <div className="flex gap-4 items-start">
+        <input
+          id="ruo"
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="mt-1 w-5 h-5 rounded border-2 border-ink/40 text-cobalt focus:ring-2 focus:ring-cobalt/20 cursor-pointer shrink-0"
         />
+        <label htmlFor="ruo" className="flex-1 cursor-pointer">
+          <p className="text-[10px] tracking-[0.22em] uppercase text-ink-soft font-bold mb-1">
+            — Required: Research Use Only Attestation
+          </p>
+          <p className="text-sm text-ink leading-relaxed">
+            {RUO_TEXT}
+          </p>
+        </label>
       </div>
-
-      {/* Google Pay — renders on Chrome + Android-backed browsers */}
-      <div className="min-h-[0]">
-        <PayPalButtons
-          fundingSource={"googlepay" as any}
-          style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
-          createOrder={createOrder}
-          onApprove={onApprove}
-          onError={onError}
-          onInit={() => setGoogleRendered(true)}
-        />
-      </div>
-
-      {appleRendered === false && googleRendered === false && (
-        <p className="text-xs text-ink-soft text-center pt-2">
-          Apple Pay and Google Pay aren’t available on this device. Pay with card below — it works on every browser.
-        </p>
-      )}
     </div>
   );
 }
 
-/* ─── Sub-components ─── */
+/* ─── Wallet triad: AP + GP side-by-side, PayPal full-width below ─── */
+
+type WalletHandlers = {
+  createOrder: () => Promise<string>;
+  onApprove: (data: { orderID: string }) => Promise<void>;
+  onError: (err: any) => void;
+  onClick: (data: any, actions: any) => any;
+};
+
+function WalletTriad({ createOrder, onApprove, onError, onClick }: WalletHandlers) {
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Apple Pay — only renders on Safari/iOS/macOS */}
+        <div className="min-h-[0]">
+          <PayPalButtons
+            fundingSource={'applepay' as any}
+            style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
+            createOrder={createOrder}
+            onApprove={onApprove}
+            onError={onError}
+            onClick={onClick}
+          />
+        </div>
+        {/* Google Pay — renders on Chrome / Android-backed browsers */}
+        <div className="min-h-[0]">
+          <PayPalButtons
+            fundingSource={'googlepay' as any}
+            style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
+            createOrder={createOrder}
+            onApprove={onApprove}
+            onError={onError}
+            onClick={onClick}
+          />
+        </div>
+      </div>
+      {/* PayPal — full width of the row above */}
+      <div className="min-h-[0]">
+        <PayPalButtons
+          fundingSource="paypal"
+          style={{ layout: 'horizontal', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
+          createOrder={createOrder}
+          onApprove={onApprove}
+          onError={onError}
+          onClick={onClick}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Full card form (shipping + billing + contact + card fields) ─── */
+
+function FullCardForm({
+  form, setForm, ruoRef, onValidationError,
+}: {
+  form: CheckoutFormState;
+  setForm: (f: CheckoutFormState) => void;
+  ruoRef: React.RefObject<HTMLDivElement>;
+  onValidationError: (msg: string | null) => void;
+}) {
+  const { cardFieldsForm } = usePayPalCardFields();
+  const [submitting, setSubmitting] = useState(false);
+
+  function updateShipping(patch: Partial<AddressState>) {
+    setForm({ ...form, shipping: { ...form.shipping, ...patch } });
+  }
+  function updateBilling(patch: Partial<AddressState>) {
+    setForm({ ...form, billing: { ...form.billing, ...patch } });
+  }
+
+  function validate(): string | null {
+    if (!form.ruoAttested) {
+      ruoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return 'Please confirm the research-use-only attestation before paying.';
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Valid email required.';
+    if (form.phone.replace(/\D/g, '').length < 7) return 'Valid phone number required.';
+    const s = form.shipping;
+    if (s.fullName.trim().length < 2) return 'Full name required.';
+    if (!s.line1.trim()) return 'Shipping address required.';
+    if (!s.city.trim()) return 'Shipping city required.';
+    if (!s.state) return 'Shipping state required.';
+    if (!/^\d{5}(-\d{4})?$/.test(s.zip)) return 'Valid shipping ZIP required.';
+    if (!form.shipSameAsBilling) {
+      const b = form.billing;
+      if (!b.line1.trim()) return 'Billing address required.';
+      if (!b.city.trim()) return 'Billing city required.';
+      if (!b.state) return 'Billing state required.';
+      if (!/^\d{5}(-\d{4})?$/.test(b.zip)) return 'Valid billing ZIP required.';
+    }
+    return null;
+  }
+
+  async function handleSubmit() {
+    onValidationError(null);
+    const err = validate();
+    if (err) { onValidationError(err); return; }
+    if (!cardFieldsForm) return;
+    setSubmitting(true);
+    try {
+      const state = await cardFieldsForm.getState();
+      if (!state.isFormValid) {
+        setSubmitting(false);
+        onValidationError('Please check your card details and try again.');
+        return;
+      }
+      const billing = form.shipSameAsBilling ? form.shipping : form.billing;
+      await cardFieldsForm.submit({
+        billingAddress: {
+          addressLine1: billing.line1,
+          addressLine2: billing.line2 || undefined,
+          adminArea2:   billing.city,
+          adminArea1:   billing.state,
+          postalCode:   billing.zip,
+          countryCode:  'US',
+        },
+      } as any);
+      // onApprove fires via the provider after this
+    } catch (err: any) {
+      console.error('[paypal/card-fields] submit failed:', err);
+      onValidationError('Card submission failed. Double-check your details and try again.');
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Contact */}
+      <FieldGroup title="Contact" eyebrow="1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field
+            label="Email" type="email" inputMode="email" autoComplete="email"
+            value={form.email}
+            onChange={(v) => setForm({ ...form, email: v })}
+            placeholder="you@example.com"
+          />
+          <Field
+            label="Phone" type="tel" inputMode="tel" autoComplete="tel"
+            value={form.phone}
+            onChange={(v) => setForm({ ...form, phone: v })}
+            placeholder="(555) 123-4567"
+          />
+        </div>
+      </FieldGroup>
+
+      {/* Shipping address */}
+      <FieldGroup title="Ship to" eyebrow="2">
+        <Field
+          label="Full name" autoComplete="name"
+          value={form.shipping.fullName}
+          onChange={(v) => updateShipping({ fullName: v })}
+          placeholder="First Last"
+        />
+        <Field
+          label="Street address" autoComplete="address-line1"
+          value={form.shipping.line1}
+          onChange={(v) => updateShipping({ line1: v })}
+          placeholder="123 Main Street"
+        />
+        <Field
+          label="Apt, suite, etc. (optional)" autoComplete="address-line2"
+          value={form.shipping.line2}
+          onChange={(v) => updateShipping({ line2: v })}
+          placeholder="Suite 200"
+        />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <Field
+            label="City" autoComplete="address-level2"
+            value={form.shipping.city}
+            onChange={(v) => updateShipping({ city: v })}
+          />
+          <SelectField
+            label="State"
+            value={form.shipping.state}
+            onChange={(v) => updateShipping({ state: v })}
+            options={US_STATES}
+          />
+          <Field
+            label="ZIP" inputMode="numeric" autoComplete="postal-code"
+            value={form.shipping.zip}
+            onChange={(v) => updateShipping({ zip: v.replace(/[^\d-]/g, '').slice(0, 10) })}
+            placeholder="12345"
+          />
+        </div>
+      </FieldGroup>
+
+      {/* Card */}
+      <FieldGroup title="Card details" eyebrow="3">
+        <FieldShell label="Card number">
+          <PayPalNumberField />
+        </FieldShell>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldShell label="Expiry">
+            <PayPalExpiryField placeholder="MM / YY" />
+          </FieldShell>
+          <FieldShell label="CVC">
+            <PayPalCVVField placeholder="•••" />
+          </FieldShell>
+        </div>
+      </FieldGroup>
+
+      {/* Billing address (collapsible) */}
+      <FieldGroup title="Billing address" eyebrow="4">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.shipSameAsBilling}
+            onChange={(e) => setForm({ ...form, shipSameAsBilling: e.target.checked })}
+            className="w-4 h-4 rounded border-ink/30 text-cobalt focus:ring-2 focus:ring-cobalt/20 cursor-pointer"
+          />
+          <span className="text-sm text-ink">Same as shipping address</span>
+        </label>
+        {!form.shipSameAsBilling && (
+          <div className="space-y-3 pt-3">
+            <Field
+              label="Street address" autoComplete="billing address-line1"
+              value={form.billing.line1}
+              onChange={(v) => updateBilling({ line1: v })}
+            />
+            <Field
+              label="Apt, suite, etc. (optional)" autoComplete="billing address-line2"
+              value={form.billing.line2}
+              onChange={(v) => updateBilling({ line2: v })}
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <Field
+                label="City" autoComplete="billing address-level2"
+                value={form.billing.city}
+                onChange={(v) => updateBilling({ city: v })}
+              />
+              <SelectField
+                label="State"
+                value={form.billing.state}
+                onChange={(v) => updateBilling({ state: v })}
+                options={US_STATES}
+              />
+              <Field
+                label="ZIP" inputMode="numeric" autoComplete="billing postal-code"
+                value={form.billing.zip}
+                onChange={(v) => updateBilling({ zip: v.replace(/[^\d-]/g, '').slice(0, 10) })}
+              />
+            </div>
+          </div>
+        )}
+      </FieldGroup>
+
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={submitting}
+        className="w-full bg-ink text-white px-6 py-4 rounded-xl text-sm font-bold tracking-wide hover:bg-cobalt transition disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {submitting ? 'Processing…' : 'Pay with card'}
+      </button>
+    </div>
+  );
+}
+
+/* ─── Small UI primitives ─── */
 
 function PaymentSection({
   eyebrow, title, description, children,
@@ -351,65 +694,90 @@ function PaymentSection({
   );
 }
 
-function CardFieldsForm() {
-  const { cardFieldsForm } = usePayPalCardFields();
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit() {
-    if (!cardFieldsForm) return;
-    setSubmitting(true);
-    try {
-      const state = await cardFieldsForm.getState();
-      if (!state.isFormValid) {
-        setSubmitting(false);
-        alert('Please check your card details and try again.');
-        return;
-      }
-      await cardFieldsForm.submit();
-    } catch (err: any) {
-      console.error('[paypal/card-fields] submit failed:', err);
-      alert('Card submission failed. Double-check your details and try again.');
-      setSubmitting(false);
-    }
-  }
-
+function FieldGroup({
+  title, eyebrow, children,
+}: { title: string; eyebrow: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3">
-      <label className="block">
-        <span className="text-[11px] tracking-[0.14em] uppercase text-ink-soft font-bold">
-          Card number
+    <div>
+      <div className="flex items-baseline gap-2 mb-3">
+        <span className="font-display font-black text-cobalt text-sm tabular-nums">
+          {eyebrow}
         </span>
-        <div className="mt-1.5 rounded-xl border border-cobalt/20 bg-white px-4 py-3 hover:border-cobalt/40 focus-within:border-cobalt focus-within:ring-2 focus-within:ring-cobalt/10 transition">
-          <PayPalNumberField placeholder="" />
-        </div>
-      </label>
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block">
-          <span className="text-[11px] tracking-[0.14em] uppercase text-ink-soft font-bold">
-            Expiry
-          </span>
-          <div className="mt-1.5 rounded-xl border border-cobalt/20 bg-white px-4 py-3 hover:border-cobalt/40 focus-within:border-cobalt focus-within:ring-2 focus-within:ring-cobalt/10 transition">
-            <PayPalExpiryField placeholder="MM / YY" />
-          </div>
-        </label>
-        <label className="block">
-          <span className="text-[11px] tracking-[0.14em] uppercase text-ink-soft font-bold">
-            CVC
-          </span>
-          <div className="mt-1.5 rounded-xl border border-cobalt/20 bg-white px-4 py-3 hover:border-cobalt/40 focus-within:border-cobalt focus-within:ring-2 focus-within:ring-cobalt/10 transition">
-            <PayPalCVVField placeholder="•••" />
-          </div>
-        </label>
+        <h3 className="font-display font-black text-ink tracking-tight text-sm uppercase tracking-[0.08em]">
+          {title}
+        </h3>
       </div>
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={submitting}
-        className="w-full bg-ink text-white px-6 py-4 rounded-xl text-sm font-bold tracking-wide hover:bg-cobalt transition disabled:opacity-60 disabled:cursor-not-allowed mt-2"
-      >
-        {submitting ? 'Processing…' : 'Pay now'}
-      </button>
+      <div className="space-y-3">{children}</div>
     </div>
+  );
+}
+
+function Field({
+  label, type = 'text', value, onChange, placeholder, autoComplete, inputMode,
+}: {
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  autoComplete?: string;
+  inputMode?: 'text' | 'numeric' | 'tel' | 'email' | 'url';
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] tracking-[0.14em] uppercase text-ink-soft font-bold">
+        {label}
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        className="mt-1.5 block w-full rounded-xl border border-cobalt/20 bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/10 transition"
+      />
+    </label>
+  );
+}
+
+function SelectField({
+  label, value, onChange, options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: ReadonlyArray<{ code: string; name: string }>;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] tracking-[0.14em] uppercase text-ink-soft font-bold">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1.5 block w-full rounded-xl border border-cobalt/20 bg-white px-3 py-3 text-sm text-ink focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/10 transition"
+      >
+        <option value="">—</option>
+        {options.map((o) => (
+          <option key={o.code} value={o.code}>{o.code}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function FieldShell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-[10px] tracking-[0.14em] uppercase text-ink-soft font-bold">
+        {label}
+      </span>
+      <div className="mt-1.5 rounded-xl border border-cobalt/20 bg-white px-4 py-3 hover:border-cobalt/40 focus-within:border-cobalt focus-within:ring-2 focus-within:ring-cobalt/10 transition">
+        {children}
+      </div>
+    </label>
   );
 }
 

@@ -95,6 +95,15 @@ async function paypalFetch(
 }
 
 // ─── Orders API ──────────────────────────────────────────────────────
+export type PayPalAddress = {
+  address_line_1: string;
+  address_line_2?: string;
+  admin_area_1: string;   // state code
+  admin_area_2: string;   // city
+  postal_code: string;
+  country_code: 'US';
+};
+
 export type PayPalOrderRequest = {
   /** Cents → converted to decimal currency string for PayPal. */
   subtotalCents: number;
@@ -117,6 +126,19 @@ export type PayPalOrderRequest = {
   /** Where PayPal sends the buyer after approving (used for Smart Buttons popup return). */
   returnUrl: string;
   cancelUrl: string;
+  /**
+   * Optional buyer + shipping info — set only for the card-flow path
+   * where we collect addresses on our form. When unset, the order
+   * uses shipping_preference=GET_FROM_FILE so the wallet (Apple Pay /
+   * Google Pay / PayPal account) supplies these from the buyer's
+   * saved info.
+   */
+  shippingName?: string;
+  shippingAddress?: PayPalAddress;
+  payerEmail?: string;
+  payerPhone?: string;
+  payerFirstName?: string;
+  payerLastName?: string;
 };
 
 export type PayPalOrderResponse = {
@@ -135,42 +157,71 @@ export async function createPayPalOrder(req: PayPalOrderRequest): Promise<PayPal
     0,
   );
 
-  const body = {
-    intent: 'CAPTURE',
-    purchase_units: [
-      {
-        reference_id: 'default',
-        // custom_id is what we read back in the webhook to find the order
-        custom_id: req.customId,
-        description: req.description?.slice(0, 127),
-        amount: {
-          currency_code: 'USD',
-          value: centsToCurrency(req.totalCents),
-          breakdown: {
-            item_total: { currency_code: 'USD', value: centsToCurrency(itemTotalCents) },
-            shipping:   { currency_code: 'USD', value: centsToCurrency(req.shippingCents) },
-            discount:   { currency_code: 'USD', value: centsToCurrency(req.discountCents ?? 0) },
-          },
-        },
-        items: req.items.map((it) => ({
-          name: it.name.slice(0, 127),
-          description: it.description?.slice(0, 127),
-          quantity: String(it.quantity),
-          unit_amount: { currency_code: 'USD', value: centsToCurrency(it.unitCents) },
-          sku: it.sku?.slice(0, 127),
-          category: 'PHYSICAL_GOODS',
-        })),
+  // Whether the buyer provided shipping (card flow) or wallet should
+  // supply it. Two different shipping_preference values.
+  const buyerProvidedShipping = !!(req.shippingAddress && req.shippingName);
+
+  const purchaseUnit: any = {
+    reference_id: 'default',
+    custom_id: req.customId,
+    description: req.description?.slice(0, 127),
+    amount: {
+      currency_code: 'USD',
+      value: centsToCurrency(req.totalCents),
+      breakdown: {
+        item_total: { currency_code: 'USD', value: centsToCurrency(itemTotalCents) },
+        shipping:   { currency_code: 'USD', value: centsToCurrency(req.shippingCents) },
+        discount:   { currency_code: 'USD', value: centsToCurrency(req.discountCents ?? 0) },
       },
-    ],
+    },
+    items: req.items.map((it) => ({
+      name: it.name.slice(0, 127),
+      description: it.description?.slice(0, 127),
+      quantity: String(it.quantity),
+      unit_amount: { currency_code: 'USD', value: centsToCurrency(it.unitCents) },
+      sku: it.sku?.slice(0, 127),
+      category: 'PHYSICAL_GOODS',
+    })),
+  };
+
+  if (buyerProvidedShipping) {
+    purchaseUnit.shipping = {
+      name: { full_name: req.shippingName!.slice(0, 300) },
+      address: req.shippingAddress!,
+    };
+  }
+
+  const body: any = {
+    intent: 'CAPTURE',
+    purchase_units: [purchaseUnit],
     application_context: {
       brand_name: 'Merit Sciences',
       landing_page: 'NO_PREFERENCE',
-      shipping_preference: 'GET_FROM_FILE',
+      shipping_preference: buyerProvidedShipping ? 'SET_PROVIDED_ADDRESS' : 'GET_FROM_FILE',
       user_action: 'PAY_NOW',
       return_url: req.returnUrl,
       cancel_url: req.cancelUrl,
     },
   };
+
+  // Payer block carries email + phone + name when the buyer typed
+  // them on our form. PayPal uses these for the receipt + as fallback
+  // contact info when the wallet doesn't supply them.
+  if (req.payerEmail || req.payerPhone || req.payerFirstName) {
+    body.payer = {};
+    if (req.payerEmail) body.payer.email_address = req.payerEmail;
+    if (req.payerFirstName || req.payerLastName) {
+      body.payer.name = {
+        given_name: req.payerFirstName?.slice(0, 140),
+        surname:    req.payerLastName?.slice(0, 140),
+      };
+    }
+    if (req.payerPhone) {
+      body.payer.phone = {
+        phone_number: { national_number: req.payerPhone.replace(/\D/g, '').slice(0, 14) },
+      };
+    }
+  }
 
   const res = await paypalFetch('/v2/checkout/orders', {
     method: 'POST',

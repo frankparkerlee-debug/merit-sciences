@@ -1,10 +1,70 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createPayPalOrder } from '@/lib/paypal';
+import { createPayPalOrder, getAccessToken } from '@/lib/paypal';
 import { validateDiscountCode } from '@/lib/discount';
 import { prisma } from '@/lib/db';
 
 export const runtime = 'nodejs';
+
+// US state codes — used to validate buyer-provided addresses for the
+// card flow. The wallet flows (Apple Pay / Google Pay / PayPal) get
+// shipping info directly from the buyer's wallet so we don't validate
+// these for those paths.
+const US_STATE_CODES = new Set([
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN',
+  'IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV',
+  'NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN',
+  'TX','UT','VT','VA','WA','WV','WI','WY','DC','PR',
+]);
+
+type AddressIn = {
+  fullName?: string;
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+};
+
+type CardBuyerIn = {
+  email: string;
+  phone: string;
+  shipping: AddressIn;
+  billing?: AddressIn;
+};
+
+function cleanAddress(a: AddressIn | undefined): {
+  ok: true;
+  address: {
+    address_line_1: string;
+    address_line_2?: string;
+    admin_area_2: string;  // city
+    admin_area_1: string;  // state
+    postal_code: string;
+    country_code: 'US';
+  };
+} | { ok: false; error: string; field?: string } {
+  if (!a) return { ok: false, error: 'Address required' };
+  const line1 = String(a.line1 ?? '').trim();
+  const city = String(a.city ?? '').trim();
+  const state = String(a.state ?? '').trim().toUpperCase();
+  const zip = String(a.zip ?? '').trim();
+  if (!line1) return { ok: false, error: 'Street address required', field: 'line1' };
+  if (!city) return { ok: false, error: 'City required', field: 'city' };
+  if (!US_STATE_CODES.has(state)) return { ok: false, error: 'Choose a valid US state', field: 'state' };
+  if (!/^\d{5}(-\d{4})?$/.test(zip)) return { ok: false, error: 'ZIP must be 5 digits or 5+4', field: 'zip' };
+  return {
+    ok: true,
+    address: {
+      address_line_1: line1.slice(0, 300),
+      address_line_2: a.line2 ? String(a.line2).trim().slice(0, 300) : undefined,
+      admin_area_2: city.slice(0, 120),
+      admin_area_1: state,
+      postal_code: zip,
+      country_code: 'US',
+    },
+  };
+}
 
 /**
  * POST /api/paypal/create-order
@@ -43,8 +103,16 @@ export async function POST(req: Request) {
   }
   const lines: unknown = body.lines;
   const discountCodeInput: string = String(body.discountCode ?? '').trim();
+  const buyer: CardBuyerIn | undefined = body.buyer ?? undefined; // present only for card flow
+  const ruoAttested: boolean = body.ruoAttested === true;
   if (!Array.isArray(lines) || lines.length === 0) {
     return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+  }
+  if (!ruoAttested) {
+    return NextResponse.json(
+      { error: 'You must confirm the research-use-only attestation before paying.', field: 'ruo' },
+      { status: 400 },
+    );
   }
 
   // ── Sanitize cart lines ──────────────────────────────────────────
@@ -136,6 +204,41 @@ export async function POST(req: Request) {
         ? `${forwardedProto}://${forwardedHost}`
         : `${url.protocol}//${url.host}`);
 
+  // ── If card-flow buyer info supplied, validate it ───────────────
+  let shippingName: string | undefined;
+  let shippingAddress: ReturnType<typeof cleanAddress> extends { ok: true; address: infer A } ? A : never | undefined;
+  let payerEmail: string | undefined;
+  let payerPhone: string | undefined;
+  let payerFirstName: string | undefined;
+  let payerLastName: string | undefined;
+
+  if (buyer) {
+    // Contact
+    payerEmail = String(buyer.email ?? '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payerEmail)) {
+      return NextResponse.json({ error: 'Valid email required', field: 'email' }, { status: 400 });
+    }
+    payerPhone = String(buyer.phone ?? '').replace(/\D/g, '');
+    if (payerPhone.length < 7 || payerPhone.length > 14) {
+      return NextResponse.json({ error: 'Valid phone number required', field: 'phone' }, { status: 400 });
+    }
+    // Shipping address + name
+    const fullName = String(buyer.shipping?.fullName ?? '').trim();
+    if (fullName.length < 2) {
+      return NextResponse.json({ error: 'Full name required', field: 'fullName' }, { status: 400 });
+    }
+    const parts = fullName.split(/\s+/);
+    payerFirstName = parts[0];
+    payerLastName = parts.slice(1).join(' ') || parts[0];
+    shippingName = fullName;
+
+    const shipResult = cleanAddress(buyer.shipping);
+    if (!shipResult.ok) {
+      return NextResponse.json({ error: shipResult.error, field: `shipping.${shipResult.field ?? 'address'}` }, { status: 400 });
+    }
+    shippingAddress = shipResult.address as any;
+  }
+
   // ── Create the order on PayPal ───────────────────────────────────
   try {
     const order = await createPayPalOrder({
@@ -154,6 +257,13 @@ export async function POST(req: Request) {
       description: 'Merit Sciences — research compounds',
       returnUrl: `${origin}/checkout/success`,
       cancelUrl: `${origin}/checkout/cancel`,
+      // Card flow only — wallet flows leave these undefined
+      shippingName,
+      shippingAddress: shippingAddress as any,
+      payerEmail,
+      payerPhone,
+      payerFirstName,
+      payerLastName,
     });
 
     return NextResponse.json({
