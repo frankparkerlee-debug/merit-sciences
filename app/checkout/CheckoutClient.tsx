@@ -11,6 +11,7 @@ import {
   PayPalExpiryField,
   PayPalCVVField,
   usePayPalCardFields,
+  usePayPalScriptReducer,
 } from '@paypal/react-paypal-js';
 import { useCart, type CartLine } from '@/lib/cart';
 import { US_STATES } from './us-states';
@@ -450,13 +451,45 @@ type WalletHandlers = {
 function WalletTriad({
   createOrder, onApprove, onError, onClick, applePayEnabled,
 }: WalletHandlers) {
-  // When Apple Pay is enabled: AP + GP side-by-side, PayPal full-width below.
-  // When disabled: GP full-width, PayPal full-width below.
+  const [{ isResolved }] = usePayPalScriptReducer();
+  // Eligibility flags computed once the SDK script resolves.
+  // PayPal's SDK silently hides wallet buttons when the buyer's
+  // browser/device isn't eligible — we surface that as visible status
+  // so it's clear the integration is wired, just not usable here.
+  const [eligibility, setEligibility] = useState<{
+    applepay: boolean | null;
+    googlepay: boolean | null;
+    paypal: boolean | null;
+  }>({ applepay: null, googlepay: null, paypal: null });
+
+  useEffect(() => {
+    if (!isResolved) return;
+    // window.paypal is exposed by the loaded SDK script
+    const pp = (window as any).paypal;
+    if (!pp?.Buttons) return;
+    try {
+      setEligibility({
+        applepay: applePayEnabled
+          ? !!pp.Buttons({ fundingSource: 'applepay' }).isEligible?.()
+          : false,
+        googlepay: !!pp.Buttons({ fundingSource: 'googlepay' }).isEligible?.(),
+        paypal: !!pp.Buttons({ fundingSource: 'paypal' }).isEligible?.(),
+      });
+    } catch (err) {
+      console.error('[paypal] eligibility check failed', err);
+    }
+  }, [isResolved, applePayEnabled]);
+
+  const anyWalletAvailable =
+    eligibility.applepay === true || eligibility.googlepay === true || eligibility.paypal === true;
+
   return (
     <div className="space-y-3">
-      <div className={`grid gap-3 ${applePayEnabled ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-        {applePayEnabled && (
-          <div className="min-h-[0]">
+      {/* When AP is enabled: render Apple Pay; when GP is eligible: render Google Pay.
+          Layout is 2-col when BOTH are present, 1-col otherwise. */}
+      <div className={`grid gap-3 ${applePayEnabled && eligibility.applepay && eligibility.googlepay ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+        {applePayEnabled && eligibility.applepay && (
+          <div>
             <PayPalButtons
               fundingSource={'applepay' as any}
               style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
@@ -467,29 +500,96 @@ function WalletTriad({
             />
           </div>
         )}
-        {/* Google Pay — renders on Chrome / Android-backed browsers */}
-        <div className="min-h-[0]">
+        {eligibility.googlepay && (
+          <div>
+            <PayPalButtons
+              fundingSource={'googlepay' as any}
+              style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
+              createOrder={createOrder}
+              onApprove={onApprove}
+              onError={onError}
+              onClick={onClick}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* PayPal always renders if eligible (basically always) */}
+      {eligibility.paypal !== false && (
+        <div>
           <PayPalButtons
-            fundingSource={'googlepay' as any}
-            style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
+            fundingSource="paypal"
+            style={{ layout: 'horizontal', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
             createOrder={createOrder}
             onApprove={onApprove}
             onError={onError}
             onClick={onClick}
           />
         </div>
-      </div>
-      {/* PayPal — full width */}
-      <div className="min-h-[0]">
-        <PayPalButtons
-          fundingSource="paypal"
-          style={{ layout: 'horizontal', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
-          createOrder={createOrder}
-          onApprove={onApprove}
-          onError={onError}
-          onClick={onClick}
-        />
-      </div>
+      )}
+
+      {/* Status indicators — show which wallets are/aren't available on this device */}
+      {isResolved && (
+        <div className="border-t border-cobalt/10 pt-3 mt-3 space-y-1.5">
+          <EligibilityLine
+            label="Apple Pay"
+            state={
+              !applePayEnabled
+                ? 'pending'
+                : eligibility.applepay
+                ? 'available'
+                : 'unavailable'
+            }
+            unavailableReason="Requires Safari on iOS/iPadOS/macOS"
+            pendingReason="Activates after meritsciences.com cuts over from Shopify to Render"
+          />
+          <EligibilityLine
+            label="Google Pay"
+            state={eligibility.googlepay ? 'available' : 'unavailable'}
+            unavailableReason="Requires Chrome with a saved card in Google Pay"
+          />
+          <EligibilityLine
+            label="PayPal"
+            state={eligibility.paypal === false ? 'unavailable' : 'available'}
+          />
+        </div>
+      )}
+
+      {!anyWalletAvailable && isResolved && (
+        <p className="text-xs text-ink-soft pt-2 leading-relaxed">
+          No express checkout options available on this browser — use <strong className="text-ink">Pay with card</strong> below.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function EligibilityLine({
+  label,
+  state,
+  unavailableReason,
+  pendingReason,
+}: {
+  label: string;
+  state: 'available' | 'unavailable' | 'pending';
+  unavailableReason?: string;
+  pendingReason?: string;
+}) {
+  const icon =
+    state === 'available' ? '✓' : state === 'unavailable' ? '–' : '○';
+  const cls =
+    state === 'available'
+      ? 'text-emerald-700'
+      : state === 'unavailable'
+      ? 'text-ink-soft/60'
+      : 'text-amber-700';
+  const reason =
+    state === 'unavailable' ? unavailableReason : state === 'pending' ? pendingReason : null;
+  return (
+    <div className="flex items-baseline gap-2 text-[11px]">
+      <span className={`font-bold tabular-nums ${cls}`}>{icon}</span>
+      <span className={`font-bold ${cls}`}>{label}</span>
+      {reason && <span className="text-ink-soft/70">— {reason}</span>}
     </div>
   );
 }
