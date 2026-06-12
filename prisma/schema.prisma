@@ -254,9 +254,15 @@ model Customer {
 
 model Order {
   id                String      @id @default(cuid())
-  // External PayPal references — set when PAYMENT.CAPTURE.COMPLETED fires
+  // External PayPal references.
+  // - paypalOrderId is set when /api/paypal/create-order returns (we
+  //   pre-create the Order row so buyer info from the card form is
+  //   preserved — PayPal does NOT include payer.email on the order
+  //   response after Advanced Card Fields capture).
+  // - paypalCaptureId is set later when PAYMENT.CAPTURE.COMPLETED
+  //   webhook fires. Nullable until capture confirmed.
   paypalOrderId     String      @unique
-  paypalCaptureId   String      @unique
+  paypalCaptureId   String?     @unique
   paypalPayerId     String?
 
   // Customer link
@@ -336,6 +342,7 @@ model Order {
 }
 
 enum OrderStatus {
+  PENDING_PAYMENT       // pre-created at checkout, waiting for capture webhook
   PAID                  // money in, not yet picked
   PROCESSING            // picking / fulfilling
   SHIPPED               // tracking number assigned, package out the door

@@ -76,6 +76,98 @@ export function lookupUrlFor(orderId: string, token: string): string {
   return `${siteUrl()}/orders/${orderId}?token=${token}`;
 }
 
+/* ─── Pre-create Order at checkout time (card flow) ─── */
+/**
+ * Called from /api/paypal/create-order RIGHT after PayPal returns a
+ * new order ID, BEFORE capture. We persist a PENDING_PAYMENT row with
+ * all the buyer info typed on our form, because PayPal does NOT
+ * include payer.email_address on the order response after Advanced
+ * Card Fields capture — relying on the webhook to get buyer info
+ * fails for card-flow orders.
+ *
+ * Idempotent on paypalOrderId.
+ */
+export async function preCreateOrder(args: {
+  paypalOrderId: string;
+  customerEmail: string;
+  customerName: string;
+  customerPhone?: string | null;
+  shippingFullName: string;
+  shippingLine1: string;
+  shippingLine2?: string | null;
+  shippingCity: string;
+  shippingState: string;
+  shippingZip: string;
+  shippingCountry?: string;
+  subtotalCents: number;
+  shippingCents: number;
+  discountCents: number;
+  totalCents: number;
+  discountCode?: string | null;
+  affiliateId?: string | null;
+  lines: Array<{
+    handle: string;
+    title: string;
+    bundleLabel: string;
+    unitCents: number;
+    qty: number;
+  }>;
+}): Promise<{ id: string }> {
+  const email = args.customerEmail.toLowerCase();
+
+  // find-or-create Customer first
+  const customer = await prisma.customer.upsert({
+    where: { email },
+    update: { name: args.customerName, phone: args.customerPhone ?? undefined },
+    create: { email, name: args.customerName, phone: args.customerPhone ?? null },
+  });
+
+  // Idempotent on paypalOrderId — if order already pre-created, return it
+  const existing = await prisma.order.findUnique({
+    where: { paypalOrderId: args.paypalOrderId },
+    select: { id: true },
+  });
+  if (existing) return existing;
+
+  const order = await prisma.order.create({
+    data: {
+      paypalOrderId: args.paypalOrderId,
+      customerId: customer.id,
+      customerEmail: email,
+      customerName: args.customerName,
+      status: 'PENDING_PAYMENT',
+      subtotalCents: BigInt(args.subtotalCents),
+      shippingCents: BigInt(args.shippingCents),
+      discountCents: BigInt(args.discountCents),
+      totalCents: BigInt(args.totalCents),
+      discountCode: args.discountCode ?? null,
+      affiliateId: args.affiliateId ?? null,
+      shippingFullName: args.shippingFullName,
+      shippingLine1: args.shippingLine1,
+      shippingLine2: args.shippingLine2,
+      shippingCity: args.shippingCity,
+      shippingState: args.shippingState,
+      shippingZip: args.shippingZip,
+      shippingCountry: args.shippingCountry ?? 'US',
+      shippingPhone: args.customerPhone,
+      shippingEmail: email,
+      ruoAttested: true,
+      ruoAttestedAt: new Date(),
+      lines: {
+        create: args.lines.map((l) => ({
+          handle: l.handle,
+          title: l.title,
+          bundleLabel: l.bundleLabel,
+          unitCents: BigInt(l.unitCents),
+          qty: l.qty,
+        })),
+      },
+    },
+    select: { id: true },
+  });
+  return order;
+}
+
 /* ─── Order creation from PayPal webhook ─── */
 
 export type PayPalOrderShape = {
@@ -142,22 +234,47 @@ function dollarsToCents(s?: string): number {
 export async function createOrderFromPayPal(
   paypalOrder: PayPalOrderShape,
   attribution?: { affiliateId?: string | null; discountCode?: string | null },
-): Promise<{ order: { id: string; paypalOrderId: string; paypalCaptureId: string }; isNew: boolean } | null> {
+): Promise<{ order: { id: string; paypalOrderId: string; paypalCaptureId: string | null }; isNew: boolean } | null> {
   const pu = paypalOrder.purchase_units?.[0];
   const capture = pu?.payments?.captures?.[0];
   if (!pu || !capture?.id) return null;
 
   const captureId = capture.id;
+  const paypalOrderId = paypalOrder.id;
 
-  // Idempotency check FIRST
-  const existing = await prisma.order.findUnique({
+  // 1. Idempotency check by capture ID (webhook retry)
+  const byCaptureId = await prisma.order.findUnique({
     where: { paypalCaptureId: captureId },
     select: { id: true, paypalOrderId: true, paypalCaptureId: true },
   });
-  if (existing) {
-    return { order: existing as any, isNew: false };
+  if (byCaptureId) {
+    return { order: byCaptureId as any, isNew: false };
   }
 
+  // 2. Card-flow path: Order was pre-created at /api/paypal/create-order
+  //    time with full buyer info from our form. Find by paypalOrderId
+  //    and PROMOTE it (PENDING_PAYMENT → PAID + record captureId).
+  const preCreated = await prisma.order.findUnique({
+    where: { paypalOrderId },
+    select: { id: true, status: true },
+  });
+  if (preCreated) {
+    const promoted = await prisma.order.update({
+      where: { id: preCreated.id },
+      data: {
+        status: 'PAID',
+        paypalCaptureId: captureId,
+        paypalPayerId: paypalOrder.payer?.payer_id ?? null,
+        paidAt: new Date(),
+      },
+      select: { id: true, paypalOrderId: true, paypalCaptureId: true },
+    });
+    return { order: promoted as any, isNew: preCreated.status === 'PENDING_PAYMENT' };
+  }
+
+  // 3. Wallet-flow path (PayPal account / Apple Pay / Google Pay) —
+  //    PayPal provides payer.email_address natively in these flows.
+  //    Build the Order from the PayPal response.
   const email = (paypalOrder.payer?.email_address ?? '').toLowerCase();
   if (!email) return null;
 

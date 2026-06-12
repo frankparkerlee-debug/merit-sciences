@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { createPayPalOrder, getAccessToken } from '@/lib/paypal';
 import { validateDiscountCode } from '@/lib/discount';
 import { prisma } from '@/lib/db';
+import { preCreateOrder } from '@/lib/orders';
 
 export const runtime = 'nodejs';
 
@@ -265,6 +266,49 @@ export async function POST(req: Request) {
       payerFirstName,
       payerLastName,
     });
+
+    // ── PRE-CREATE Order row for card flow ─────────────────────────
+    // PayPal does NOT include payer.email_address on the order response
+    // after Advanced Card Fields capture, so the webhook can't build
+    // the order from PayPal alone. We persist a PENDING_PAYMENT row
+    // NOW with all the buyer info from the form. The webhook will
+    // promote it to PAID when the capture completes.
+    // Wallet flows (PayPal account / Apple Pay / Google Pay) skip
+    // this — those flows DO have payer.email on the order response.
+    if (buyer && payerEmail) {
+      try {
+        await preCreateOrder({
+          paypalOrderId: order.id,
+          customerEmail: payerEmail,
+          customerName: shippingName ?? `${payerFirstName ?? ''} ${payerLastName ?? ''}`.trim(),
+          customerPhone: payerPhone ?? null,
+          shippingFullName: shippingName!,
+          shippingLine1: (shippingAddress as any).address_line_1,
+          shippingLine2: (shippingAddress as any).address_line_2 ?? null,
+          shippingCity: (shippingAddress as any).admin_area_2,
+          shippingState: (shippingAddress as any).admin_area_1,
+          shippingZip: (shippingAddress as any).postal_code,
+          shippingCountry: (shippingAddress as any).country_code,
+          subtotalCents,
+          shippingCents,
+          discountCents,
+          totalCents,
+          discountCode: discountCode?.toUpperCase() ?? null,
+          affiliateId,
+          lines: cleanLines.map((l) => ({
+            handle: l.handle,
+            title: l.title,
+            bundleLabel: l.bundleLabel,
+            unitCents: l.unitCents,
+            qty: l.qty,
+          })),
+        });
+      } catch (err) {
+        // Don't block checkout if pre-create fails — the webhook will
+        // still try to create the Order. Just log so we can investigate.
+        console.error('[create-order] preCreateOrder failed', err);
+      }
+    }
 
     return NextResponse.json({
       orderId: order.id,
