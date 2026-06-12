@@ -224,3 +224,172 @@ enum PayoutStatus {
 
   @@map("payout_status")
 }
+
+// ─── Customer ─────────────────────────────────────────────────────────
+// The buyer. ONE row per unique email (lowercase). Built up over time
+// as the same email places more orders. Distinct from
+// CustomerAffiliateLink which tracks the evergreen affiliate lock —
+// the same customer may or may not have an affiliate locked.
+
+model Customer {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String
+  phone           String?
+  // If the customer ever signs into an account, we link via Supabase Auth
+  supabaseUserId  String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([email])
+  @@map("customers")
+}
+
+// ─── Order ────────────────────────────────────────────────────────────
+// One row per checkout that PayPal confirms paid. The PayPal capture
+// is the source of truth for money; this row is OUR source of truth for
+// fulfillment, customer service, and reporting.
+
+model Order {
+  id                String      @id @default(cuid())
+  // External PayPal references — set when PAYMENT.CAPTURE.COMPLETED fires
+  paypalOrderId     String      @unique
+  paypalCaptureId   String      @unique
+  paypalPayerId     String?
+
+  // Customer link
+  customerId        String
+  customer          Customer    @relation(fields: [customerId], references: [id])
+  customerEmail     String      // denormalized for fast filter/search
+  customerName      String      // snapshot at order time
+
+  // Status state machine
+  status            OrderStatus @default(PAID)
+
+  // Money — integer cents (BigInt for safety on Postgres)
+  subtotalCents     BigInt
+  shippingCents     BigInt
+  discountCents     BigInt      @default(0)
+  totalCents        BigInt      // what was charged
+  currency          String      @default("USD")
+
+  // Affiliate context (if any) — denormalized; OrderCommission has the
+  // commission ledger row keyed by paypalCaptureId
+  discountCode      String?     // code typed at checkout (uppercase)
+  affiliateId       String?     // affiliate credited (may differ from
+                                // code if evergreen lock took over)
+
+  // Shipping address (snapshotted JSON — we don't normalize because
+  // each order is a point-in-time record)
+  shippingFullName  String
+  shippingLine1     String
+  shippingLine2     String?
+  shippingCity      String
+  shippingState     String      // 2-char state code
+  shippingZip       String
+  shippingCountry   String      @default("US")
+  shippingPhone     String?
+  shippingEmail     String
+
+  // Billing address (often same as shipping; we still snapshot)
+  billingLine1      String?
+  billingLine2      String?
+  billingCity       String?
+  billingState      String?
+  billingZip        String?
+  billingCountry    String?     @default("US")
+
+  // Tracking — set by admin when order ships
+  shippingCarrier   String?     // 'usps' | 'ups' | 'fedex' | 'dhl' | other
+  trackingNumber   String?
+  trackingUrl       String?     // auto-generated from carrier + number
+  estimatedDeliveryAt DateTime?
+
+  // RUO attestation — always true on our flow (gated by checkout), but
+  // we record the IP + timestamp at the moment for compliance records
+  ruoAttested       Boolean     @default(true)
+  ruoAttestedIp     String?
+  ruoAttestedAt     DateTime?
+
+  // Internal admin notes (not shown to customer)
+  internalNotes     String?     @db.Text
+
+  // Lifecycle timestamps
+  createdAt         DateTime    @default(now())
+  paidAt            DateTime    @default(now())
+  processingAt      DateTime?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  canceledAt        DateTime?
+  refundedAt        DateTime?
+
+  // Relations
+  lines             OrderLine[]
+  lookupTokens      OrderLookupToken[]
+
+  @@index([customerEmail])
+  @@index([status, createdAt])
+  @@index([affiliateId])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PAID                  // money in, not yet picked
+  PROCESSING            // picking / fulfilling
+  SHIPPED               // tracking number assigned, package out the door
+  DELIVERED             // carrier confirmed delivery (manual or webhook)
+  CANCELED              // canceled before shipping
+  REFUNDED              // full refund issued
+  PARTIALLY_REFUNDED    // partial refund issued (rare for this catalog)
+
+  @@map("order_status")
+}
+
+// ─── OrderLine ────────────────────────────────────────────────────────
+// One row per cart line. Snapshots title, bundle label, and unit price
+// at the moment of purchase — does NOT reference live product data
+// because products and prices change but the order doesn't.
+
+model OrderLine {
+  id           String @id @default(cuid())
+  orderId      String
+  order        Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  handle       String // product handle for warehouse pick (e.g. 'bpc-157')
+  title        String // snapshot at purchase
+  bundleLabel  String // e.g. 'Single vial' or 'Subscribe · Every month'
+  unitCents    BigInt
+  qty          Int
+  // Snapshot for fulfillment — components of a stack
+  components   String[] @default([])
+  imageUrl     String?
+
+  @@index([orderId])
+  @@map("order_lines")
+}
+
+// ─── OrderLookupToken ─────────────────────────────────────────────────
+// Magic-link token issued when a customer enters email + order # on
+// the public lookup page. Single-use, 24-hour expiry. Lets them view
+// their order detail page without an account.
+
+model OrderLookupToken {
+  id          String   @id @default(cuid())
+  // The opaque token included in the magic link
+  token       String   @unique
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  // Email the link was sent to — must match Order.customerEmail
+  email       String
+  // Lifecycle
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  usedAt      DateTime?
+  // Where the request came from — useful for fraud / abuse review
+  requestIp   String?
+
+  @@index([orderId])
+  @@index([expiresAt])
+  @@map("order_lookup_tokens")
+}

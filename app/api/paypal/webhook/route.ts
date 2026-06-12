@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyPayPalWebhook, getPayPalOrder } from '@/lib/paypal';
 import { tierForOrderCount } from '@/lib/affiliate';
+import { createOrderFromPayPal, issueOrderConfirmationEmail } from '@/lib/orders';
 
 export const runtime = 'nodejs';
 
@@ -113,20 +114,42 @@ async function handleCaptureCompleted(event: any) {
   const payerEmail: string = (order.payer?.email_address ?? '').toLowerCase();
   const payerId: string | null = order.payer?.payer_id ?? null;
 
-  if (!customIdRaw || !payerEmail) {
-    // Nothing to attribute. Order completed but had no affiliate context.
-    return;
-  }
-
-  // Parse our packed JSON
-  let attribution: { a?: string | null; s?: string | null; v?: string | null; c?: string | null; d?: number };
-  try {
-    attribution = JSON.parse(customIdRaw);
-  } catch {
-    return;
+  // Parse attribution context if present (may be absent for direct buyers)
+  let attribution: { a?: string | null; s?: string | null; v?: string | null; c?: string | null; d?: number } = {};
+  if (customIdRaw) {
+    try { attribution = JSON.parse(customIdRaw); } catch { /* ignore */ }
   }
   const affiliateId = attribution.a ?? null;
-  if (!affiliateId) return;
+  const discountCode = attribution.c ?? null;
+
+  // ── Always persist the Order first ──────────────────────────────
+  // This runs for every paid order regardless of affiliate context.
+  // Idempotent: returns isNew=false on webhook retries.
+  let persistedOrderId: string | null = null;
+  try {
+    const result = await createOrderFromPayPal(order, {
+      affiliateId,
+      discountCode: discountCode?.toUpperCase() ?? null,
+    });
+    if (result) {
+      persistedOrderId = result.order.id;
+      if (result.isNew) {
+        // Fire the branded confirmation email asynchronously. Failures
+        // here don't block webhook ack — we accept some sends may be
+        // lost during outages and retry via admin tooling.
+        issueOrderConfirmationEmail(result.order.id).catch((err) => {
+          console.error('[paypal/webhook] confirmation email failed', err);
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[paypal/webhook] order persistence failed', err);
+    // Continue — we still want to record affiliate commission below
+    // if applicable, and webhook retries will write the order next time.
+  }
+
+  // ── Affiliate commission (only if attribution + payer email exist) ──
+  if (!affiliateId || !payerEmail) return;
 
   // Resolve affiliate and confirm ACTIVE
   const affiliate = await prisma.affiliate.findUnique({
@@ -231,6 +254,12 @@ async function handleCaptureRefunded(event: any) {
     ?? refund?.links?.find((l: any) => l.rel === 'up')?.href?.split('/').pop();
 
   if (!captureId) return;
+
+  // Mark the underlying Order as REFUNDED so admin lists reflect reality
+  await prisma.order.updateMany({
+    where: { paypalCaptureId: captureId, status: { not: 'REFUNDED' } },
+    data: { status: 'REFUNDED', refundedAt: new Date() },
+  });
 
   const existing = await prisma.orderCommission.findUnique({
     where: { paypalCaptureId: captureId },
