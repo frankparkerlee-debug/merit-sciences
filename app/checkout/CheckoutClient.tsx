@@ -140,33 +140,31 @@ export function CheckoutClient() {
 
   // Apple Pay requires PayPal domain verification (the
   // apple-developer-merchantid-domain-association file at /.well-known/
-  // must be reachable from the verified domain). On sandbox today the
-  // only registered domain is meritsciences.com which is still on
-  // Shopify, so we cannot load applepay in the SDK — PayPal returns 400
-  // on the whole SDK script, which takes down Google Pay + PayPal +
-  // Card Fields too.
-  //
-  // HARDCODED FLAG (instead of env-var) so we don't fight Render's env
-  // behavior. Flip to `true` in this file when:
+  // must be reachable from the verified domain). Flip to `true` once:
   //   1. meritsciences.com DNS has cut over from Shopify to Render
   //   2. PayPal Verify Domain has succeeded
-  // Then redeploy.
+  // Then redeploy. (Single-line code change, no env-var dance.)
   const APPLE_PAY_ENABLED = false;
 
   // PayPal SDK options.
+  //
+  // IMPORTANT — applepay + googlepay belong in `components`, NOT in
+  // `enable-funding`. PayPal returns
+  //   "Invalid query value for enable-funding: googlepay"
+  // if you put them in enable-funding. We learned this the hard way.
+  //
+  // `disable-funding` opts OUT of funding sources we don't want to show
+  // (Pay-Later messaging, PayPal Credit, Venmo). PayPal button comes
+  // from the default 'paypal' funding source — implicit.
   const components = APPLE_PAY_ENABLED
     ? 'buttons,card-fields,applepay,googlepay'
     : 'buttons,card-fields,googlepay';
-  const enableFunding = APPLE_PAY_ENABLED
-    ? 'applepay,googlepay'
-    : 'googlepay';
 
   const paypalOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
     currency: 'USD',
     intent: 'capture',
     components,
-    'enable-funding': enableFunding,
     'disable-funding': 'paylater,credit,venmo',
   };
 
