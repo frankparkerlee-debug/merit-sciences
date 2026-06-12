@@ -122,6 +122,7 @@ ${orderXmls}
 
 function serializeOrder(o: any): string {
   const items = o.lines.map((l: any) => `      <Item>
+        <LineItemID>${escapeXml(l.id)}</LineItemID>
         <SKU>${escapeXml(l.handle)}</SKU>
         <Name>${escapeXml(`${l.title} — ${l.bundleLabel}`)}</Name>
         <Quantity>${l.qty}</Quantity>
@@ -137,11 +138,19 @@ function serializeOrder(o: any): string {
     o.affiliateId ? `Aff: ${o.affiliateId}` : null,
   ].filter(Boolean).join(' · ');
 
+  // OrderStatus must be one of ShipStation's four canonical values
+  // (UPPERCASE per production reference): UNPAID, PAID, SHIPPED,
+  // CANCELLED. We never export SHIPPED orders (they're past
+  // ShipStation's import horizon) but include the mapping for safety.
+  let ssStatus = 'PAID';
+  if (o.status === 'CANCELED') ssStatus = 'CANCELLED';
+  else if (o.status === 'SHIPPED') ssStatus = 'SHIPPED';
+
   return `  <Order>
     <OrderID>${escapeXml(o.id)}</OrderID>
     <OrderNumber>${escapeXml(o.paypalOrderId)}</OrderNumber>
     <OrderDate>${fmtDate(o.paidAt ?? o.createdAt)}</OrderDate>
-    <OrderStatus>paid</OrderStatus>
+    <OrderStatus>${ssStatus}</OrderStatus>
     <LastModified>${fmtDate(o.processingAt ?? o.paidAt ?? o.createdAt)}</LastModified>
     <ShippingMethod>Standard Shipping</ShippingMethod>
     <PaymentMethod>PayPal</PaymentMethod>
@@ -151,15 +160,21 @@ function serializeOrder(o: any): string {
     <CustomerNotes></CustomerNotes>
     <InternalNotes>${escapeXml(o.internalNotes ?? '')}</InternalNotes>
     <Gift>false</Gift>
-    ${customField1 ? `<CustomField1>${escapeXml(customField1)}</CustomField1>` : ''}
+    <GiftMessage></GiftMessage>
+    <CustomField1>${escapeXml(customField1)}</CustomField1>
+    <CustomField2></CustomField2>
+    <CustomField3></CustomField3>
     <Customer>
       <CustomerCode>${escapeXml(o.customerEmail)}</CustomerCode>
       <BillTo>
         <Name>${escapeXml(o.customerName)}</Name>
+        <Company></Company>
+        <Phone>${escapeXml(o.shippingPhone ?? '')}</Phone>
         <Email>${escapeXml(o.customerEmail)}</Email>
       </BillTo>
       <ShipTo>
         <Name>${escapeXml(o.shippingFullName)}</Name>
+        <Company></Company>
         <Address1>${escapeXml(o.shippingLine1)}</Address1>
         <Address2>${escapeXml(o.shippingLine2 ?? '')}</Address2>
         <City>${escapeXml(o.shippingCity)}</City>
@@ -178,17 +193,32 @@ ${items}
 // ─── Shipment notification (ShipStation → us) ────────────────────────
 
 /**
- * Process ShipStation's POST when a label gets printed.
- * Form fields: order_number, carrier, service, tracking_number,
- *              notify_customer, notify_other, [xml=<ShipNotice>]
+ * Process ShipStation's shipnotify call when a label gets printed.
+ *
+ * ShipStation sends shipnotify EITHER as:
+ *   - GET with everything in the query string (legacy / some plugins)
+ *   - POST with form-encoded body OR query string
+ *
+ * Fields: order_number, carrier, service, tracking_number,
+ *         notify_customer, notify_other
+ *
+ * Carriers ShipStation may send (string values):
+ *   USPS, UPS, FedEx, DHL, DHLGlobalMail, UPSMI, OnTrac, Newgistics,
+ *   BrokersWorldWide, FedExInternationalMailService, CanadaPost,
+ *   FedExCanada, IFSLOGIX, Other
  *
  * Marks the matching Order as SHIPPED + sets tracking, fires the
  * customer's branded shipment notification email.
  */
-export async function handleShipNotify(formData: FormData): Promise<{ ok: boolean; error?: string }> {
-  const orderNumber = String(formData.get('order_number') ?? '').trim();
-  const carrier = String(formData.get('carrier') ?? '').trim();
-  const trackingNumber = String(formData.get('tracking_number') ?? '').trim();
+export async function handleShipNotify(params: {
+  order_number?: string | null;
+  carrier?: string | null;
+  tracking_number?: string | null;
+  service?: string | null;
+}): Promise<{ ok: boolean; error?: string }> {
+  const orderNumber = String(params.order_number ?? '').trim();
+  const carrier = String(params.carrier ?? '').trim();
+  const trackingNumber = String(params.tracking_number ?? '').trim();
 
   if (!orderNumber) return { ok: false, error: 'order_number required' };
   if (!trackingNumber) return { ok: false, error: 'tracking_number required' };
