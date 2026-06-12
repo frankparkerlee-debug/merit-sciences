@@ -144,15 +144,20 @@ export function CheckoutClient() {
   // only registered domain is meritsciences.com which is still on
   // Shopify, so we cannot load applepay in the SDK — PayPal returns 400
   // on the whole SDK script, which takes down Google Pay + PayPal +
-  // Card Fields too. Flip NEXT_PUBLIC_APPLE_PAY_ENABLED=true after
-  // domain cutover + Verify Domain click in PayPal.
-  const applePayEnabled = process.env.NEXT_PUBLIC_APPLE_PAY_ENABLED === 'true';
+  // Card Fields too.
+  //
+  // HARDCODED FLAG (instead of env-var) so we don't fight Render's env
+  // behavior. Flip to `true` in this file when:
+  //   1. meritsciences.com DNS has cut over from Shopify to Render
+  //   2. PayPal Verify Domain has succeeded
+  // Then redeploy.
+  const APPLE_PAY_ENABLED = false;
 
   // PayPal SDK options.
-  const components = applePayEnabled
+  const components = APPLE_PAY_ENABLED
     ? 'buttons,card-fields,applepay,googlepay'
     : 'buttons,card-fields,googlepay';
-  const enableFunding = applePayEnabled
+  const enableFunding = APPLE_PAY_ENABLED
     ? 'applepay,googlepay'
     : 'googlepay';
 
@@ -283,7 +288,7 @@ export function CheckoutClient() {
                 onApprove={onApprove}
                 onError={onError}
                 onClick={onWalletClick}
-                applePayEnabled={applePayEnabled}
+                applePayEnabled={APPLE_PAY_ENABLED}
               />
             </PaymentSection>
 
