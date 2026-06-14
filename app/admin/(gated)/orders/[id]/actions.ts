@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
-import { normalizeCarrier, trackingUrlFor, issueShipmentEmail } from '@/lib/orders';
+import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail } from '@/lib/orders';
 import { getAccessToken } from '@/lib/paypal';
 
 export type ActionResult =
@@ -149,6 +149,73 @@ export async function refundOrder(_prev: ActionResult | null, formData: FormData
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
   return { ok: true, message: 'Refund issued. Funds return to buyer in 5–10 business days.' };
+}
+
+/* ─── Re-check PayPal capture (escape hatch when webhook hasn't fired) ─── */
+
+export async function recheckPayPalCapture(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+  const orderId = String(formData.get('orderId') ?? '');
+  if (!orderId) return { ok: false, error: 'Missing order ID' };
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return { ok: false, error: 'Order not found' };
+  if (order.status !== 'PENDING_PAYMENT') {
+    return { ok: false, error: `Order is already ${order.status}. Nothing to re-check.` };
+  }
+
+  // Pull PayPal order to see if a capture exists
+  try {
+    const token = await getAccessToken();
+    const base = (process.env.PAYPAL_ENV ?? 'sandbox') === 'live'
+      ? 'https://api-m.paypal.com'
+      : 'https://api-m.sandbox.paypal.com';
+    const res = await fetch(`${base}/v2/checkout/orders/${order.paypalOrderId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('[admin/recheck] PayPal fetch failed', res.status, text);
+      return { ok: false, error: `PayPal lookup failed (${res.status}).` };
+    }
+    const payPalOrder: any = await res.json();
+    const capture = payPalOrder?.purchase_units?.[0]?.payments?.captures?.[0];
+    const captureStatus = capture?.status;
+
+    if (!capture || captureStatus !== 'COMPLETED') {
+      return { ok: false, error: `PayPal status: ${payPalOrder.status ?? 'unknown'} · capture: ${captureStatus ?? 'none'}. Buyer probably abandoned — Cancel order if so.` };
+    }
+
+    // Promote to PAID
+    const captureId = capture.id;
+    const payerId = payPalOrder?.payer?.payer_id ?? null;
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'PAID',
+        paypalCaptureId: captureId,
+        paypalPayerId: payerId,
+        paidAt: new Date(),
+      },
+    });
+
+    // Fire confirmation email (the webhook would have done this)
+    issueOrderConfirmationEmail(orderId).catch((err) => {
+      console.error('[admin/recheck] confirmation email failed', err);
+    });
+
+    revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath('/admin/orders');
+    return { ok: true, message: `Promoted to PAID. Capture: ${captureId}. Customer notified.` };
+  } catch (err: any) {
+    console.error('[admin/recheck] error', err);
+    return { ok: false, error: `Re-check failed: ${err?.message ?? 'unknown'}` };
+  }
 }
 
 /* ─── Add internal note ─── */

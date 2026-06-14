@@ -134,7 +134,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               </div>
               <div>
                 <p className="text-[11px] uppercase tracking-wider text-ink-soft font-bold">Capture ID</p>
-                <p className="font-mono text-xs text-ink break-all">{order.paypalCaptureId}</p>
+                <p className="font-mono text-xs text-ink break-all">{order.paypalCaptureId ?? <span className="text-ink-soft/50">— pending —</span>}</p>
               </div>
               {order.paypalPayerId && (
                 <div>

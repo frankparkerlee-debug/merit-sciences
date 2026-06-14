@@ -8,13 +8,14 @@ export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 50;
 
 const STATUS_FILTERS: Array<{ key: string; label: string; status: OrderStatus | null }> = [
-  { key: 'all',        label: 'All',                 status: null },
+  { key: 'all',        label: 'All',                  status: null },
+  { key: 'pending',    label: 'Pending payment',      status: 'PENDING_PAYMENT' as OrderStatus },
   { key: 'paid',       label: 'Paid · needs picking', status: 'PAID' as OrderStatus },
-  { key: 'processing', label: 'Processing',          status: 'PROCESSING' as OrderStatus },
-  { key: 'shipped',    label: 'Shipped',             status: 'SHIPPED' as OrderStatus },
-  { key: 'delivered',  label: 'Delivered',           status: 'DELIVERED' as OrderStatus },
-  { key: 'canceled',   label: 'Canceled',            status: 'CANCELED' as OrderStatus },
-  { key: 'refunded',   label: 'Refunded',            status: 'REFUNDED' as OrderStatus },
+  { key: 'processing', label: 'Processing',           status: 'PROCESSING' as OrderStatus },
+  { key: 'shipped',    label: 'Shipped',              status: 'SHIPPED' as OrderStatus },
+  { key: 'delivered',  label: 'Delivered',            status: 'DELIVERED' as OrderStatus },
+  { key: 'canceled',   label: 'Canceled',             status: 'CANCELED' as OrderStatus },
+  { key: 'refunded',   label: 'Refunded',             status: 'REFUNDED' as OrderStatus },
 ];
 
 function fmtMoney(cents: bigint | number): string {
@@ -114,48 +115,48 @@ export default async function AdminOrdersPage({
         />
       </form>
 
-      {/* Table */}
+      {/* Order list — div-based grid so each row is a single semantic Link */}
       <div className="rounded-2xl border border-cobalt/15 bg-white overflow-hidden">
         {orders.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="text-sm text-ink-soft">No orders match this filter.</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-cobalt/5 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold">
-              <tr>
-                <th className="px-5 py-3 text-left">Date</th>
-                <th className="px-5 py-3 text-left">Order</th>
-                <th className="px-5 py-3 text-left">Customer</th>
-                <th className="px-5 py-3 text-left">Items</th>
-                <th className="px-5 py-3 text-right">Total</th>
-                <th className="px-5 py-3 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((o) => (
-                <tr key={o.id} className="border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition">
-                  <td className="px-5 py-4 text-ink-soft tabular-nums">{fmtDate(o.createdAt)}</td>
-                  <td className="px-5 py-4">
-                    <Link href={`/admin/orders/${o.id}`} className="font-mono text-xs text-cobalt font-bold hover:underline">
-                      {o.paypalOrderId.slice(0, 12)}…
-                    </Link>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="text-ink font-bold">{o.customerName}</div>
-                    <div className="text-[11px] text-ink-soft">{o.customerEmail}</div>
-                  </td>
-                  <td className="px-5 py-4 text-ink-soft">
-                    {o._count.lines} {o._count.lines === 1 ? 'item' : 'items'}
-                  </td>
-                  <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">{fmtMoney(o.totalCents)}</td>
-                  <td className="px-5 py-4 text-right">
-                    <StatusPill status={o.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div>
+            {/* Header row */}
+            <div className="bg-cobalt/5 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold grid grid-cols-[120px_140px_1fr_90px_110px_130px] gap-4 px-5 py-3">
+              <div>Date</div>
+              <div>Order</div>
+              <div>Customer</div>
+              <div>Items</div>
+              <div className="text-right">Total</div>
+              <div className="text-right">Status</div>
+            </div>
+            {/* Rows — each entire row is a Link */}
+            {orders.map((o) => (
+              <Link
+                key={o.id}
+                href={`/admin/orders/${o.id}`}
+                className="grid grid-cols-[120px_140px_1fr_90px_110px_130px] gap-4 px-5 py-4 border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition items-center text-sm"
+              >
+                <div className="text-ink-soft tabular-nums">{fmtDate(o.createdAt)}</div>
+                <div className="font-mono text-xs text-cobalt font-bold truncate">
+                  {o.paypalOrderId.slice(0, 12)}…
+                </div>
+                <div>
+                  <div className="text-ink font-bold truncate">{o.customerName}</div>
+                  <div className="text-[11px] text-ink-soft truncate">{o.customerEmail}</div>
+                </div>
+                <div className="text-ink-soft">
+                  {o._count.lines} {o._count.lines === 1 ? 'item' : 'items'}
+                </div>
+                <div className="text-right font-bold text-ink tabular-nums">{fmtMoney(o.totalCents)}</div>
+                <div className="text-right">
+                  <StatusPill status={o.status} />
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
 
@@ -191,6 +192,7 @@ export default async function AdminOrdersPage({
 
 function StatusPill({ status }: { status: OrderStatus }) {
   const style: Record<string, string> = {
+    PENDING_PAYMENT: 'bg-yellow-50 text-yellow-900 border-yellow-200',
     PAID: 'bg-amber-50 text-amber-900 border-amber-200',
     PROCESSING: 'bg-cobalt/10 text-cobalt border-cobalt/20',
     SHIPPED: 'bg-blue-50 text-blue-900 border-blue-200',

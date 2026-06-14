@@ -8,6 +8,7 @@ import {
   markCanceled,
   refundOrder,
   updateInternalNote,
+  recheckPayPalCapture,
   type ActionResult,
 } from './actions';
 import type { OrderStatus } from '@/lib/generated/prisma/index.js';
@@ -41,6 +42,7 @@ function StatusPanel({
   const isShipped = status === 'SHIPPED';
   const isProcessing = status === 'PROCESSING';
   const isPaid = status === 'PAID';
+  const isPending = status === 'PENDING_PAYMENT';
   const isTerminal = isRefunded || isCanceled;
 
   return (
@@ -61,7 +63,7 @@ function StatusPanel({
 
       {/* Timeline */}
       <div className="border-t border-cobalt/10 pt-4 space-y-2 text-[11px]">
-        <TimelineRow label="Paid" date={paidAt} active />
+        {paidAt && <TimelineRow label="Paid" date={paidAt} active />}
         {processingAt && <TimelineRow label="Processing" date={processingAt} active />}
         {shippedAt && <TimelineRow label="Shipped" date={shippedAt} active />}
         {deliveredAt && <TimelineRow label="Delivered" date={deliveredAt} active />}
@@ -81,14 +83,28 @@ function StatusPanel({
         </div>
       )}
 
+      {/* Pending-payment banner — webhook hasn't confirmed capture yet */}
+      {isPending && (
+        <div className="border-t border-cobalt/10 pt-4">
+          <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-900 leading-relaxed mb-3">
+            <p className="font-bold mb-1">Awaiting PayPal capture confirmation.</p>
+            <p>This order was pre-created at checkout. PayPal&rsquo;s webhook will promote it to PAID once the capture lands. If it&rsquo;s been more than a minute, click <strong>Re-check capture</strong> below to pull status directly from PayPal.</p>
+          </div>
+        </div>
+      )}
+
       {/* Action buttons by state */}
       {!isTerminal && (
         <div className="border-t border-cobalt/10 pt-4 space-y-2">
+          {isPending && <PrimaryAction action={recheckPayPalCapture} orderId={orderId} label="Re-check PayPal capture" />}
           {isPaid && <PrimaryAction action={markProcessing} orderId={orderId} label="Mark Processing" />}
           {(isPaid || isProcessing) && <ShipForm orderId={orderId} />}
           {isShipped && <PrimaryAction action={markDelivered} orderId={orderId} label="Mark Delivered" />}
           {!isDelivered && !isRefunded && <SecondaryAction action={markCanceled} orderId={orderId} label="Cancel order" destructive />}
-          <SecondaryAction action={refundOrder} orderId={orderId} label="Issue refund (full)" destructive confirm="Refund the full amount to the buyer? This calls PayPal's refund API and cannot be undone." />
+          {/* Refund only makes sense once a capture exists */}
+          {!isPending && (
+            <SecondaryAction action={refundOrder} orderId={orderId} label="Issue refund (full)" destructive confirm="Refund the full amount to the buyer? This calls PayPal's refund API and cannot be undone." />
+          )}
         </div>
       )}
     </section>
