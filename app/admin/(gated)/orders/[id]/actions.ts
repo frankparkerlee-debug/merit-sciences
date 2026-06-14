@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
-import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail } from '@/lib/orders';
+import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issueAdminOrderNotification } from '@/lib/orders';
 import { getAccessToken } from '@/lib/paypal';
 
 export type ActionResult =
@@ -58,14 +58,22 @@ export async function markShipped(_prev: ActionResult | null, formData: FormData
     },
   });
 
-  // Fire shipment notification email (async — don't block on send)
-  issueShipmentEmail(orderId).catch((err) => {
-    console.error('[admin/markShipped] shipment email failed', err);
-  });
+  // Fire shipment notification email + surface success/failure to operator
+  const emailResult = await issueShipmentEmail(orderId);
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
-  return { ok: true, message: `Shipped via ${normalizedCarrier.toUpperCase()} · tracking ${trackingNumber}. Customer notified.` };
+
+  if (!emailResult.ok) {
+    return {
+      ok: true,
+      message: `Shipped via ${normalizedCarrier.toUpperCase()} · tracking ${trackingNumber}. ⚠ Customer email failed: ${emailResult.error}`,
+    };
+  }
+  return {
+    ok: true,
+    message: `Shipped via ${normalizedCarrier.toUpperCase()} · tracking ${trackingNumber}. Customer notified (email id ${emailResult.id}).`,
+  };
 }
 
 /* ─── Mark order as Delivered ─── */
@@ -151,6 +159,91 @@ export async function refundOrder(_prev: ActionResult | null, formData: FormData
   return { ok: true, message: 'Refund issued. Funds return to buyer in 5–10 business days.' };
 }
 
+/* ─── Partial refund ─── */
+
+export async function refundOrderPartial(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+  const orderId = String(formData.get('orderId') ?? '');
+  const amountInput = String(formData.get('amount') ?? '').trim();
+  if (!orderId) return { ok: false, error: 'Missing order ID' };
+  if (!amountInput) return { ok: false, error: 'Amount required (in dollars, e.g. 12.50)' };
+
+  // Parse dollars → cents. Accept "12.50", "12", "$12.50"
+  const cleaned = amountInput.replace(/[$,\s]/g, '');
+  const dollars = parseFloat(cleaned);
+  if (!isFinite(dollars) || dollars <= 0) return { ok: false, error: 'Invalid amount' };
+  const amountCents = Math.round(dollars * 100);
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return { ok: false, error: 'Order not found' };
+  if (!order.paypalCaptureId) return { ok: false, error: 'No PayPal capture to refund (order may still be PENDING_PAYMENT)' };
+  if (order.status === 'REFUNDED') return { ok: false, error: 'Already fully refunded' };
+  if (amountCents > Number(order.totalCents)) {
+    return { ok: false, error: `Amount exceeds order total (${(Number(order.totalCents) / 100).toFixed(2)})` };
+  }
+
+  // Call PayPal partial refund
+  try {
+    const token = await getAccessToken();
+    const base = (process.env.PAYPAL_ENV ?? 'sandbox') === 'live'
+      ? 'https://api-m.paypal.com'
+      : 'https://api-m.sandbox.paypal.com';
+    const res = await fetch(`${base}/v2/payments/captures/${order.paypalCaptureId}/refund`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'PayPal-Request-Id': `merit-refund-${order.id}-${amountCents}`,
+      },
+      body: JSON.stringify({
+        amount: { value: dollars.toFixed(2), currency_code: 'USD' },
+      }),
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('[admin/refundPartial] PayPal partial refund failed', res.status, text);
+      return { ok: false, error: `PayPal partial refund failed (${res.status}): ${text.slice(0, 200)}` };
+    }
+  } catch (err: any) {
+    console.error('[admin/refundPartial] PayPal API error', err);
+    return { ok: false, error: `Partial refund request failed: ${err?.message ?? 'unknown'}` };
+  }
+
+  // Mark the order — webhook would also do this when PARTIALLY_REFUNDED fires
+  const isFullRefund = amountCents === Number(order.totalCents);
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status: isFullRefund ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
+      refundedAt: isFullRefund ? new Date() : undefined,
+    },
+  });
+
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath('/admin/orders');
+  return {
+    ok: true,
+    message: `Refunded $${dollars.toFixed(2)}${isFullRefund ? ' (full)' : ' (partial)'}. Funds return to buyer in 5–10 business days.`,
+  };
+}
+
+/* ─── Force-resend customer confirmation email (testing/recovery) ─── */
+
+export async function forceResendConfirmation(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+  const orderId = String(formData.get('orderId') ?? '');
+  if (!orderId) return { ok: false, error: 'Missing order ID' };
+
+  const result = await issueOrderConfirmationEmail(orderId);
+  if (!result.ok) {
+    return { ok: false, error: `Email send failed: ${result.error}` };
+  }
+  return { ok: true, message: `Confirmation email re-sent (Resend id: ${result.id})` };
+}
+
 /* ─── Re-check PayPal capture (escape hatch when webhook hasn't fired) ─── */
 
 export async function recheckPayPalCapture(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -205,13 +298,22 @@ export async function recheckPayPalCapture(_prev: ActionResult | null, formData:
     });
 
     // Fire confirmation email (the webhook would have done this)
-    issueOrderConfirmationEmail(orderId).catch((err) => {
-      console.error('[admin/recheck] confirmation email failed', err);
-    });
+    // — issueOrderConfirmationEmail() also fires the admin notification
+    const emailResult = await issueOrderConfirmationEmail(orderId);
 
     revalidatePath(`/admin/orders/${orderId}`);
     revalidatePath('/admin/orders');
-    return { ok: true, message: `Promoted to PAID. Capture: ${captureId}. Customer notified.` };
+
+    if (!emailResult.ok) {
+      return {
+        ok: true,
+        message: `Promoted to PAID. Capture: ${captureId}. ⚠ Customer email failed: ${emailResult.error}`,
+      };
+    }
+    return {
+      ok: true,
+      message: `Promoted to PAID. Capture: ${captureId}. Customer notified (email id ${emailResult.id}).`,
+    };
   } catch (err: any) {
     console.error('[admin/recheck] error', err);
     return { ok: false, error: `Re-check failed: ${err?.message ?? 'unknown'}` };

@@ -371,12 +371,19 @@ export async function createOrderFromPayPal(
 
 /* ─── Email triggers ─── */
 
-export async function issueOrderConfirmationEmail(orderId: string): Promise<void> {
+/**
+ * Returns the email send result so callers (server actions) can surface
+ * Resend failures (e.g. "domain not verified") in the UI instead of
+ * silently logging.
+ */
+export async function issueOrderConfirmationEmail(
+  orderId: string,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { lines: true },
   });
-  if (!order) return;
+  if (!order) return { ok: false, error: 'Order not found' };
 
   // Generate a fresh lookup token for the receipt link
   const token = await generateLookupToken(order.id, order.customerEmail);
@@ -406,21 +413,34 @@ export async function issueOrderConfirmationEmail(orderId: string): Promise<void
     lookupUrl,
   });
 
-  await sendEmail({
-    to: order.customerEmail,
-    subject,
-    html,
-    text,
-    tags: [
-      { name: 'type', value: 'order_confirmation' },
-      { name: 'order_id', value: order.id },
-    ],
-  });
+  // Fire customer email + admin notification in parallel
+  const [customerResult] = await Promise.all([
+    sendEmail({
+      to: order.customerEmail,
+      subject,
+      html,
+      text,
+      tags: [
+        { name: 'type', value: 'order_confirmation' },
+        { name: 'order_id', value: order.id },
+      ],
+    }),
+    issueAdminOrderNotification(orderId, 'new_order').catch((err) => {
+      console.error('[email] admin notification failed', err);
+    }),
+  ]);
+
+  return customerResult;
 }
 
-export async function issueShipmentEmail(orderId: string): Promise<void> {
+export async function issueShipmentEmail(
+  orderId: string,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || !order.trackingNumber || !order.shippingCarrier) return;
+  if (!order) return { ok: false, error: 'Order not found' };
+  if (!order.trackingNumber || !order.shippingCarrier) {
+    return { ok: false, error: 'Missing tracking info — set carrier + tracking number first' };
+  }
 
   const token = await generateLookupToken(order.id, order.customerEmail);
   const lookupUrl = lookupUrlFor(order.id, token);
@@ -435,16 +455,146 @@ export async function issueShipmentEmail(orderId: string): Promise<void> {
     lookupUrl,
   });
 
-  await sendEmail({
-    to: order.customerEmail,
+  // Fire customer + admin in parallel
+  const [customerResult] = await Promise.all([
+    sendEmail({
+      to: order.customerEmail,
+      subject,
+      html,
+      text,
+      tags: [
+        { name: 'type', value: 'shipment' },
+        { name: 'order_id', value: order.id },
+      ],
+    }),
+    issueAdminOrderNotification(orderId, 'shipped').catch((err) => {
+      console.error('[email] admin shipment notification failed', err);
+    }),
+  ]);
+  return customerResult;
+}
+
+/* ─── Admin notification ─── */
+
+/**
+ * Notify the operators (ADMIN_EMAILS) about an order event.
+ * Kinds: 'new_order' (paid, ready to fulfill) | 'shipped' (label sent).
+ * No-op if ADMIN_EMAILS is unset.
+ */
+export async function issueAdminOrderNotification(
+  orderId: string,
+  kind: 'new_order' | 'shipped',
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const admins = (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (admins.length === 0) {
+    return { ok: false, error: 'ADMIN_EMAILS not configured' };
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { lines: true },
+  });
+  if (!order) return { ok: false, error: 'Order not found' };
+
+  const dollars = (cents: bigint | number) => {
+    const n = typeof cents === 'bigint' ? Number(cents) : cents;
+    return `$${(n / 100).toFixed(2)}`;
+  };
+
+  const lineRows = order.lines
+    .map(
+      (l) =>
+        `<tr>
+          <td style="padding:6px 0;border-bottom:1px solid #eee">
+            <strong>${escapeHtml(l.title)}</strong><br/>
+            <span style="color:#666;font-size:12px">${escapeHtml(l.bundleLabel || '')}${l.handle ? ` · <code>${escapeHtml(l.handle)}</code>` : ''}</span>
+          </td>
+          <td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right">Qty ${l.qty}</td>
+          <td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right">${dollars(Number(l.unitCents) * l.qty)}</td>
+        </tr>`,
+    )
+    .join('');
+
+  const adminUrl = `${siteOrigin()}/admin/orders/${order.id}`;
+
+  const subject =
+    kind === 'new_order'
+      ? `[Merit] New paid order · ${dollars(order.totalCents)} · ${order.customerName}`
+      : `[Merit] Shipped · ${order.paypalOrderId.slice(0, 10)} · ${order.customerName}`;
+
+  const heading =
+    kind === 'new_order' ? 'New paid order — ready to fulfill' : 'Order marked shipped';
+
+  const trackingBlock =
+    kind === 'shipped' && order.trackingNumber
+      ? `<p style="margin:14px 0 6px;font-size:13px"><strong>Tracking</strong></p>
+         <p style="margin:0;font-family:monospace;font-size:13px">${order.shippingCarrier?.toUpperCase()} · ${escapeHtml(order.trackingNumber)}</p>
+         ${order.trackingUrl ? `<p style="margin:6px 0 0"><a href="${order.trackingUrl}" style="color:#1F4FD8">View carrier page →</a></p>` : ''}`
+      : '';
+
+  const html = `<!doctype html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:#f6f3ec;margin:0;padding:24px">
+    <div style="max-width:600px;margin:0 auto;background:#fff;padding:28px;border-radius:12px">
+      <p style="margin:0 0 4px;color:#1F4FD8;font-weight:bold;font-size:11px;letter-spacing:.18em;text-transform:uppercase">— Merit Admin</p>
+      <h1 style="margin:0 0 16px;color:#0f1419;font-size:20px;font-weight:900;letter-spacing:-.01em">${heading}</h1>
+      <p style="margin:0 0 4px;font-size:13px"><strong>Customer:</strong> ${escapeHtml(order.customerName)} &lt;${escapeHtml(order.customerEmail)}&gt;</p>
+      <p style="margin:0 0 4px;font-size:13px"><strong>PayPal order:</strong> <code>${escapeHtml(order.paypalOrderId)}</code></p>
+      <p style="margin:0 0 12px;font-size:13px"><strong>Ship to:</strong> ${escapeHtml(order.shippingFullName)} · ${escapeHtml(order.shippingLine1)}${order.shippingLine2 ? ', ' + escapeHtml(order.shippingLine2) : ''}, ${escapeHtml(order.shippingCity)}, ${escapeHtml(order.shippingState)} ${escapeHtml(order.shippingZip)}</p>
+
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin:14px 0">
+        <thead><tr style="background:#f6f3ec"><th style="text-align:left;padding:6px 0">Item</th><th style="text-align:right;padding:6px 0">Qty</th><th style="text-align:right;padding:6px 0">Line</th></tr></thead>
+        <tbody>${lineRows}</tbody>
+      </table>
+      <p style="margin:8px 0;font-size:13px;text-align:right"><strong>Total: ${dollars(order.totalCents)}</strong></p>
+
+      ${trackingBlock}
+
+      <p style="margin:20px 0 0">
+        <a href="${adminUrl}" style="display:inline-block;background:#0f1419;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:bold;letter-spacing:.08em;text-transform:uppercase">Open in admin →</a>
+      </p>
+    </div>
+  </body></html>`;
+
+  const textParts = [
+    heading,
+    '',
+    `Customer: ${order.customerName} <${order.customerEmail}>`,
+    `PayPal order: ${order.paypalOrderId}`,
+    `Ship to: ${order.shippingFullName}, ${order.shippingLine1}${order.shippingLine2 ? ', ' + order.shippingLine2 : ''}, ${order.shippingCity}, ${order.shippingState} ${order.shippingZip}`,
+    '',
+    ...order.lines.map((l) => `  · ${l.title} · Qty ${l.qty} · ${dollars(Number(l.unitCents) * l.qty)}`),
+    '',
+    `Total: ${dollars(order.totalCents)}`,
+    kind === 'shipped' && order.trackingNumber ? `\nTracking: ${order.shippingCarrier?.toUpperCase()} ${order.trackingNumber}` : '',
+    '',
+    `Admin: ${adminUrl}`,
+  ];
+
+  return sendEmail({
+    to: admins,
     subject,
     html,
-    text,
+    text: textParts.join('\n'),
     tags: [
-      { name: 'type', value: 'shipment' },
+      { name: 'type', value: kind === 'new_order' ? 'admin_new_order' : 'admin_shipped' },
       { name: 'order_id', value: order.id },
     ],
   });
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function siteOrigin(): string {
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://merit-sciences.onrender.com').replace(/\/$/, '');
 }
 
 export async function issueOrderLookupEmail(

@@ -7,6 +7,8 @@ import {
   markDelivered,
   markCanceled,
   refundOrder,
+  refundOrderPartial,
+  forceResendConfirmation,
   updateInternalNote,
   recheckPayPalCapture,
   type ActionResult,
@@ -24,6 +26,7 @@ function StatusPanel({
   orderId, status,
   paidAt, processingAt, shippedAt, deliveredAt, refundedAt,
   shippingCarrier, trackingNumber, trackingUrl,
+  totalCents, paypalOrderId,
 }: {
   orderId: string;
   status: OrderStatus;
@@ -35,6 +38,8 @@ function StatusPanel({
   shippingCarrier: string | null;
   trackingNumber: string | null;
   trackingUrl: string | null;
+  totalCents: number;
+  paypalOrderId: string;
 }) {
   const isRefunded = status === 'REFUNDED';
   const isCanceled = status === 'CANCELED';
@@ -100,14 +105,76 @@ function StatusPanel({
           {isPaid && <PrimaryAction action={markProcessing} orderId={orderId} label="Mark Processing" />}
           {(isPaid || isProcessing) && <ShipForm orderId={orderId} />}
           {isShipped && <PrimaryAction action={markDelivered} orderId={orderId} label="Mark Delivered" />}
+          {/* Buy label in ShipStation — deep-link by order number */}
+          {(isPaid || isProcessing) && <ShipStationLink paypalOrderId={paypalOrderId} />}
+          {/* Force-resend customer confirmation — testing/recovery */}
+          {!isPending && <SecondaryAction action={forceResendConfirmation} orderId={orderId} label="Re-send confirmation email" />}
           {!isDelivered && !isRefunded && <SecondaryAction action={markCanceled} orderId={orderId} label="Cancel order" destructive />}
           {/* Refund only makes sense once a capture exists */}
           {!isPending && (
-            <SecondaryAction action={refundOrder} orderId={orderId} label="Issue refund (full)" destructive confirm="Refund the full amount to the buyer? This calls PayPal's refund API and cannot be undone." />
+            <>
+              <PartialRefundForm orderId={orderId} totalCents={totalCents} />
+              <SecondaryAction action={refundOrder} orderId={orderId} label="Issue full refund" destructive confirm="Refund the full amount to the buyer? This calls PayPal's refund API and cannot be undone." />
+            </>
           )}
         </div>
       )}
     </section>
+  );
+}
+
+/* ─── Partial refund form (admin enters $ amount) ─── */
+
+function PartialRefundForm({ orderId, totalCents }: { orderId: string; totalCents: number }) {
+  const [result, formAction] = useFormState<ActionResult | null, FormData>(refundOrderPartial, null);
+  const maxDollars = (totalCents / 100).toFixed(2);
+  return (
+    <form
+      action={formAction}
+      className="space-y-2 border border-cobalt/15 rounded-xl p-3"
+      onSubmit={(e) => {
+        const amt = (e.currentTarget.elements.namedItem('amount') as HTMLInputElement)?.value;
+        if (!window.confirm(`Issue a partial refund of $${amt}? This calls PayPal's refund API and cannot be undone.`)) {
+          e.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="orderId" value={orderId} />
+      <p className="text-[11px] tracking-[0.14em] uppercase font-bold text-cobalt">Partial refund</p>
+      <div className="flex gap-2 items-center">
+        <span className="text-sm text-ink-soft">$</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          name="amount"
+          required
+          placeholder={`max ${maxDollars}`}
+          className="flex-1 rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
+        />
+      </div>
+      <SubmitButton label="Refund partial amount" variant="destructive" />
+      {result && <ResultBanner result={result} />}
+    </form>
+  );
+}
+
+/* ─── ShipStation deep-link — "Buy label there" ─── */
+
+function ShipStationLink({ paypalOrderId }: { paypalOrderId: string }) {
+  // ShipStation pulls our orders via the custom-store integration.
+  // The order number ShipStation sees is the PayPal order ID. Deep-link
+  // to their orders view with the order number search query so the
+  // operator lands directly on the right order with the Buy Label button.
+  const url = `https://ship.shipstation.com/orders?orderNumber=${encodeURIComponent(paypalOrderId)}`;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block w-full text-center text-xs font-bold tracking-wide uppercase px-4 py-2.5 rounded-lg bg-cobalt text-white hover:bg-ink transition"
+    >
+      Buy shipping label in ShipStation →
+    </a>
   );
 }
 

@@ -122,6 +122,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             shippingCarrier={order.shippingCarrier}
             trackingNumber={order.trackingNumber}
             trackingUrl={order.trackingUrl}
+            totalCents={Number(order.totalCents)}
+            paypalOrderId={order.paypalOrderId}
           />
 
           {/* PayPal refs */}
