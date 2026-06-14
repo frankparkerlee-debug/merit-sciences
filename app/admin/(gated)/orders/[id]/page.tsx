@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
-import { OrderDetailClient } from './OrderDetailClient';
+import { StatusPanel, NotesForm } from './OrderDetailClient';
 
 export const metadata = { title: 'Order detail — Merit Admin' };
 export const dynamic = 'force-dynamic';
@@ -106,12 +106,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           </section>
 
           {/* Internal notes */}
-          <OrderDetailClient.NotesForm orderId={order.id} initialNote={order.internalNotes ?? ''} />
+          <NotesForm orderId={order.id} initialNote={order.internalNotes ?? ''} />
         </div>
 
         {/* RIGHT — Status + actions */}
         <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
-          <OrderDetailClient.StatusPanel
+          <StatusPanel
             orderId={order.id}
             status={order.status}
             paidAt={order.paidAt}

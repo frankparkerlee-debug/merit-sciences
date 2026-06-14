@@ -224,4 +224,6 @@ function ResultBanner({ result }: { result: ActionResult }) {
   );
 }
 
-export const OrderDetailClient = { StatusPanel, NotesForm };
+// Export directly — Next's client boundary handles named exports
+// reliably. The previous object export caused render issues.
+export { StatusPanel, NotesForm };
