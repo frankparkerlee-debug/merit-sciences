@@ -21,6 +21,12 @@ export async function GET(req: Request) {
   const code = url.searchParams.get('code');
   const next = url.searchParams.get('next') || '/affiliate/dashboard';
 
+  // Route admins back to /admin/login on error, affiliates back to
+  // /affiliate/login. Look at `next` to figure out which portal the
+  // user was trying to reach.
+  const isAdminFlow = next.startsWith('/admin');
+  const loginPath = isAdminFlow ? '/admin/login' : '/affiliate/login';
+
   // Compute the origin for redirects. On Render the request URL is the
   // internal port — use forwarded headers to build the real public URL.
   const forwardedHost = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
@@ -33,7 +39,7 @@ export async function GET(req: Request) {
 
   if (!code) {
     return NextResponse.redirect(
-      `${origin}/affiliate/login?error=${encodeURIComponent('Missing sign-in code. Try requesting another link.')}`,
+      `${origin}${loginPath}?error=${encodeURIComponent('Missing sign-in code. Try requesting another link.')}`,
     );
   }
 
@@ -41,13 +47,13 @@ export async function GET(req: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(
-      `${origin}/affiliate/login?error=${encodeURIComponent('Sign-in link expired or already used. Request a new one.')}`,
+      `${origin}${loginPath}?error=${encodeURIComponent('Sign-in link expired or already used. Request a new one.')}`,
     );
   }
 
   // Honor the `next` param but only if it stays within our site
   // (relative path or matching origin) — defensive against open-redirect.
-  let safeNext = '/affiliate/dashboard';
+  let safeNext = isAdminFlow ? '/admin/orders' : '/affiliate/dashboard';
   if (next.startsWith('/') && !next.startsWith('//')) {
     safeNext = next;
   }
