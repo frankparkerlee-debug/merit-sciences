@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getProduct, listProducts } from '@/lib/catalog';
 import { productImage } from '@/lib/product-types';
+import { getSiblings } from '@/lib/product-siblings';
 import {
   getFamily,
   familyLabel,
@@ -59,6 +60,11 @@ export default async function ProductPage({ params }: Props) {
   const restock = RESTOCK_SIGNALS[product.handle] ?? null;
   const research = getResearchData(product.handle);
 
+  // Sibling sizes — other Product rows sharing this compound. Drives the
+  // size selector pills in the buybox. Returns [] if this is the only
+  // size in the family.
+  const siblings = await getSiblings(product.compound, product.handle);
+
   // A chromatogram image is sometimes present at images[1] (Shopify
   // CDN naming convention: chromatogram-{handle}_*.png). Render the
   // Lab Analysis section only when it's there.
@@ -109,6 +115,7 @@ export default async function ProductPage({ params }: Props) {
             family={family}
             pharmacistNote={pharmacistNote}
             restock={restock}
+            siblings={siblings}
           />
         </div>
       </section>

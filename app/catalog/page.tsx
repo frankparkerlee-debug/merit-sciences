@@ -1,5 +1,6 @@
 import { listProducts } from '@/lib/catalog';
 import type { Product } from '@/lib/product-types';
+import { familyByCompound } from '@/lib/catalog-meta';
 import { CatalogClient } from './CatalogClient';
 
 export const metadata = { title: 'Catalog' };
@@ -119,19 +120,20 @@ const RESTOCK_SIGNALS: Record<string, { status: 'fresh' | 'low' | 'restocking'; 
 export default async function CatalogPage() {
   const products = await listProducts({ status: 'active' });
 
-  // Drop accessories from the main grid. They'll appear in a dedicated
-  // section or live elsewhere (PDP upsell).
-  const main = products.filter(
-    (p) => p.handle in FAMILY_BY_HANDLE,
-  );
-
-  const accessories = products.filter((p) => !(p.handle in FAMILY_BY_HANDLE));
+  // Accessories = bacteriostatic water + anything explicitly tagged.
+  // Everything else goes in the main grid — including newly-imported
+  // drafts that aren't yet hand-mapped in FAMILY_BY_HANDLE. Family is
+  // resolved per-product via getFamilyForProduct() with a compound-
+  // keyword fallback.
+  const isAccessory = (p: Product) => /bacteriostatic|bac-water|bac_water/i.test(p.handle);
+  const main = products.filter((p) => !isAccessory(p));
+  const accessories = products.filter(isAccessory);
 
   // Enrich each product with its family + pharmacist note + restock signal
   // so the client doesn't need to do this lookup work.
   const enriched = main.map((p) => ({
     product: p,
-    family: FAMILY_BY_HANDLE[p.handle],
+    family: FAMILY_BY_HANDLE[p.handle] ?? familyByCompound(p.compound),
     pharmacistNote: PHARMACIST_NOTES[p.handle] ?? null,
     restock: RESTOCK_SIGNALS[p.handle] ?? null,
   }));

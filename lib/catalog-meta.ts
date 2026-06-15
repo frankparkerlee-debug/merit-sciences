@@ -33,6 +33,32 @@ export const FAMILY_LABELS: Record<Family, string> = {
   blends:        'Blends',
 };
 
+/**
+ * Fallback family classifier — used when a new product from the inventory
+ * importer doesn't yet appear in FAMILY_BY_HANDLE. Buckets by compound
+ * name keyword so 50+ new drafts can show on /catalog immediately without
+ * hand-mapping every handle. Specific overrides in FAMILY_BY_HANDLE always
+ * win — this is just the safety net.
+ */
+export function familyByCompound(compound: string): Family {
+  const c = compound.toLowerCase();
+
+  // GLP-1 family — weight-loss / metabolic
+  if (/(retatrutide|tirzepatide|semaglutide|cagrilintide|liraglutide)/.test(c)) return 'glp1';
+
+  // Neuropeptides — brain / mood / sexual function
+  if (/(selank|semax|pt-?141|melanotan|kisspeptin|dsip|oxytocin|vip|pe ?22)/.test(c)) return 'neuropeptides';
+
+  // Blends — multi-peptide formulations
+  if (/(klow|glow|wolverine|\+)/.test(c)) return 'blends';
+
+  // Cofactors — small molecules, regenerative supports
+  if (/(nad|ghk|mots|epitalon|amino|glutathione|5-amino|hcg|foxo)/.test(c)) return 'cofactors';
+
+  // Default — single-target peptides
+  return 'peptides';
+}
+
 export type StackTemplate = {
   slug: string;
   name: string;
@@ -146,6 +172,16 @@ export function familyLabel(f: Family): string {
 
 export function getFamily(handle: string): Family | null {
   return FAMILY_BY_HANDLE[handle] ?? null;
+}
+
+/**
+ * Resolve a product's family — handle-specific override wins, otherwise
+ * fall back to compound-keyword classification. Always returns a value,
+ * so newly-imported drafts show up on the catalog without manual
+ * handle-mapping.
+ */
+export function getFamilyForProduct(p: { handle: string; compound: string }): Family {
+  return FAMILY_BY_HANDLE[p.handle] ?? familyByCompound(p.compound);
 }
 
 /**

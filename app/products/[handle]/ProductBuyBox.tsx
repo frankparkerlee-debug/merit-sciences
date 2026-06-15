@@ -8,14 +8,24 @@ import { useCart } from '@/lib/cart';
 import { familyLabel, type Family, type RestockSignal } from '@/lib/catalog-meta';
 import { DeliveryPromise } from './DeliveryPromise';
 
+type Sibling = {
+  handle: string;
+  title: string;
+  vialSize: string;
+  priceCents: number;
+  stockQty: number;
+  isCurrent: boolean;
+};
+
 type Props = {
   product: Product;
   family: Family | null;
   pharmacistNote: string | null;
   restock: RestockSignal | null;
+  siblings: Sibling[];
 };
 
-export function ProductBuyBox({ product, family, pharmacistNote, restock }: Props) {
+export function ProductBuyBox({ product, family, pharmacistNote, restock, siblings }: Props) {
   const bundles = product.bundles ?? [
     { label: 'Single', vials: 1, priceCents: product.priceCents },
   ];
@@ -128,6 +138,53 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock }: Prop
           {product.spec.aminoAcids ? ` · ${product.spec.aminoAcids} AA` : ''}
         </p>
       </div>
+
+      {/* Size variant selector — only renders when this compound has
+          multiple sibling sizes. Each pill links to that size's PDP so
+          a buyer can switch from Retatrutide 10mg → 30mg without
+          backtracking through the catalog. The active pill is
+          highlighted; out-of-stock siblings show a small badge. */}
+      {siblings.length > 1 && (
+        <div className="-mt-1">
+          <p className="text-[10px] tracking-[0.22em] uppercase font-bold text-cobalt mb-2">
+            — Vial size
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {siblings.map((s) => {
+              const oos = s.stockQty <= 0;
+              if (s.isCurrent) {
+                return (
+                  <span
+                    key={s.handle}
+                    className="inline-flex flex-col items-start gap-0.5 px-3.5 py-2 rounded-lg bg-ink text-white border border-ink min-w-[78px]"
+                  >
+                    <span className="text-[13px] font-bold leading-none">{s.vialSize}</span>
+                    <span className="text-[10px] opacity-70 tabular-nums leading-none">
+                      {money(s.priceCents)}
+                    </span>
+                  </span>
+                );
+              }
+              return (
+                <Link
+                  key={s.handle}
+                  href={`/products/${s.handle}`}
+                  className={`inline-flex flex-col items-start gap-0.5 px-3.5 py-2 rounded-lg border transition-colors min-w-[78px] ${
+                    oos
+                      ? 'border-ink/15 text-ink-soft hover:border-ink/30'
+                      : 'border-cobalt/30 text-ink hover:border-cobalt hover:bg-cobalt/5'
+                  }`}
+                >
+                  <span className="text-[13px] font-bold leading-none">{s.vialSize}</span>
+                  <span className="text-[10px] tabular-nums leading-none opacity-80">
+                    {oos ? 'Sold out' : money(s.priceCents)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Trust badges — horizontal row. Hidden on mobile (info repeats
           in the sticky top-bar trust strip below + the buybox lot strip). */}
