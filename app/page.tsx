@@ -2,6 +2,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getProduct, money } from '@/lib/catalog';
 
+// Force-dynamic until Supabase pooling is moved to transaction mode
+// (port 6543 + ?pgbouncer=true). With session mode capped at 15
+// connections, build-time prerender of 46+ pages exhausts the pool
+// and crashes the deploy. Dynamic rendering queries one request at
+// a time, well under the cap.
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   // Curated picks — drive imagery + featured compounds
   const [wolverine, tirz, reta, nad, klow, selank] = await Promise.all([

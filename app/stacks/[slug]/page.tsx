@@ -13,6 +13,9 @@ import { StackAddButton } from './StackAddButton';
 
 type Props = { params: { slug: string } };
 
+// Force-dynamic — see app/page.tsx for rationale (Supabase pool cap).
+export const dynamic = 'force-dynamic';
+
 export function generateStaticParams() {
   return STACK_TEMPLATES.map((s) => ({ slug: s.slug }));
 }

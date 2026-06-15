@@ -18,6 +18,9 @@ import { PdpStackAddButton } from './PdpStackAddButton';
 
 type Props = { params: { handle: string } };
 
+// Force-dynamic — see app/page.tsx for rationale (Supabase pool cap).
+export const dynamic = 'force-dynamic';
+
 export async function generateStaticParams() {
   // Build-time DB query — guard against the products table not yet
   // existing or being empty (e.g. first deploy before the seed runs).

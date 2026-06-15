@@ -31,16 +31,28 @@ export async function listProducts(filter?: {
       where.channel = 'BOTH';
     }
   }
-  const rows = await prisma.product.findMany({
-    where,
-    orderBy: { createdAt: 'asc' },
-  });
-  return rows.map(dbToProduct);
+  // Resilient — return [] if DB is unavailable (missing table, exhausted
+  // pool, etc) so build-time prerender doesn't crash the entire deploy.
+  try {
+    const rows = await prisma.product.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map(dbToProduct);
+  } catch (err) {
+    console.warn('[catalog] listProducts query failed — returning empty list', err);
+    return [];
+  }
 }
 
 export async function getProduct(handle: string): Promise<Product | null> {
-  const row = await prisma.product.findUnique({ where: { handle } });
-  return row ? dbToProduct(row) : null;
+  try {
+    const row = await prisma.product.findUnique({ where: { handle } });
+    return row ? dbToProduct(row) : null;
+  } catch (err) {
+    console.warn(`[catalog] getProduct("${handle}") query failed — returning null`, err);
+    return null;
+  }
 }
 
 /* ─── DB <-> Product shape conversion ─── */

@@ -3,6 +3,8 @@ import type { Product } from '@/lib/product-types';
 import { CatalogClient } from './CatalogClient';
 
 export const metadata = { title: 'Catalog' };
+// Force-dynamic — see app/page.tsx for rationale (Supabase pool cap).
+export const dynamic = 'force-dynamic';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Family classification — runs server-side once, passed to the client
