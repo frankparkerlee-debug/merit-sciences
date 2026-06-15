@@ -537,8 +537,19 @@ model Product {
   vialSize            String
   format              ProductFormat
   oneLiner            String   @db.Text
+  // Retail price = priceCents (kept as-is for storefront compatibility).
+  // Customers always see this unless they're logged into the physician
+  // portal, in which case they see physicianPriceCents instead.
   priceCents          Int
   compareAtCents      Int?
+  // Physician-channel pricing (wholesale-like). NEVER exposed to retail
+  // customers. Only visible inside the gated /physician portal.
+  physicianPriceCents Int?
+  // Internal margin tracking. NEVER exposed externally.
+  costCents           Int?
+  // On-hand inventory (units in stock with zero lead time). Updated by
+  // the inventory CSV importer + by ShipStation shipment events later.
+  stockQty            Int                  @default(0)
 
   // Bundle SKUs (3-pack, subscribe, etc) — array of { label, vials, priceCents }
   bundles             Json?

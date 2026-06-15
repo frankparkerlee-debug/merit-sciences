@@ -124,6 +124,15 @@ export async function updateProduct(_prev: ActionResult | null, formData: FormDa
     compareAtCents: formData.get('compareAtPrice')
       ? dollarsToCents(String(formData.get('compareAtPrice')))
       : null,
+    physicianPriceCents: formData.get('physicianPrice')
+      ? dollarsToCents(String(formData.get('physicianPrice')))
+      : null,
+    costCents: formData.get('costPrice')
+      ? dollarsToCents(String(formData.get('costPrice')))
+      : null,
+    stockQty: formData.get('stockQty')
+      ? parseInt(String(formData.get('stockQty')), 10) || 0
+      : 0,
     specCas: emptyToNull(String(formData.get('specCas') ?? '')),
     specMw: emptyToNull(String(formData.get('specMw') ?? '')),
     specFormula: emptyToNull(String(formData.get('specFormula') ?? '')),

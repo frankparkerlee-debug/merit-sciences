@@ -73,12 +73,20 @@ export default async function AdminProductsPage({
             <span className="text-cobalt">.</span>
           </h1>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="bg-ink text-white px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-cobalt transition"
-        >
-          + Add product
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/admin/import/inventory"
+            className="bg-white border border-cobalt/20 text-ink px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:border-cobalt/40 transition"
+          >
+            Import inventory CSV
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="bg-ink text-white px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-cobalt transition"
+          >
+            + Add product
+          </Link>
+        </div>
       </div>
 
       {/* Seed banner — only when DB is empty */}

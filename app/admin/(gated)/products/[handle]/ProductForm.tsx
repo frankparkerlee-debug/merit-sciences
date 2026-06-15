@@ -13,6 +13,9 @@ type ProductFormData = {
   oneLiner: string;
   priceCents: number;
   compareAtCents: number | null;
+  physicianPriceCents: number | null;
+  costCents: number | null;
+  stockQty: number;
   bundlesJson: string;
   specCas: string | null;
   specMw: string | null;
@@ -99,7 +102,7 @@ export function ProductForm({ product }: { product: ProductFormData }) {
         {/* Pricing */}
         <Card label="Pricing">
           <Row>
-            <Field label="Price (USD)" required>
+            <Field label="Retail price (USD)" required hint="Public storefront price.">
               <input
                 type="text"
                 inputMode="decimal"
@@ -109,7 +112,7 @@ export function ProductForm({ product }: { product: ProductFormData }) {
                 className={inputCls}
               />
             </Field>
-            <Field label="Compare-at price (optional)">
+            <Field label="Compare-at price (optional)" hint="Strike-through price for sales.">
               <input
                 type="text"
                 inputMode="decimal"
@@ -119,6 +122,38 @@ export function ProductForm({ product }: { product: ProductFormData }) {
               />
             </Field>
           </Row>
+          <Row>
+            <Field
+              label="Physician price (USD)"
+              hint="Gated — only visible inside the /physician portal. NEVER exposed on the public site."
+            >
+              <input
+                type="text"
+                inputMode="decimal"
+                name="physicianPrice"
+                defaultValue={product.physicianPriceCents ? (product.physicianPriceCents / 100).toFixed(2) : ''}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Unit cost (USD)" hint="Internal margin tracking. Never shown to anyone.">
+              <input
+                type="text"
+                inputMode="decimal"
+                name="costPrice"
+                defaultValue={product.costCents ? (product.costCents / 100).toFixed(2) : ''}
+                className={inputCls}
+              />
+            </Field>
+          </Row>
+          <Field label="Stock on hand" hint="Units in inventory with zero lead time.">
+            <input
+              type="number"
+              name="stockQty"
+              min={0}
+              defaultValue={product.stockQty ?? 0}
+              className={`${inputCls} max-w-[160px]`}
+            />
+          </Field>
           <Field
             label="Bundles (JSON)"
             hint='Array of { "label": "3-Pack", "vials": 3, "priceCents": 21375 }. Leave blank for none.'
