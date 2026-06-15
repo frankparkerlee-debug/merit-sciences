@@ -214,11 +214,15 @@ export async function POST(req: Request) {
   const url = new URL(req.url);
   const forwardedHost = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
   const forwardedProto = req.headers.get('x-forwarded-proto') ?? 'https';
-  const origin =
+  // Defensive scheme handling — if NEXT_PUBLIC_SITE_URL is set without
+  // "https://" (operator typo when switching to live domain), add it.
+  // PayPal rejects URLs without a scheme with INVALID_PARAMETER_SYNTAX.
+  const rawOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
     ?? (forwardedHost && !forwardedHost.startsWith('localhost')
         ? `${forwardedProto}://${forwardedHost}`
         : `${url.protocol}//${url.host}`);
+  const origin = /^https?:\/\//.test(rawOrigin) ? rawOrigin : `https://${rawOrigin}`;
 
   // ── If card-flow buyer info supplied, validate it ───────────────
   let shippingName: string | undefined;
