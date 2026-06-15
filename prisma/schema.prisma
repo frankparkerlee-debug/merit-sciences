@@ -455,3 +455,68 @@ enum OrderEventKind {
 
   @@map("order_event_kind")
 }
+
+// ─── Discount ─────────────────────────────────────────────────────────
+// Manual / promo discount codes managed from the admin. Separate from
+// affiliate codes (which live on the Affiliate model) but unified in
+// the admin UI. Lookup at checkout is case-insensitive on `code`.
+
+model Discount {
+  id              String         @id @default(cuid())
+  // Case-insensitive code; stored lowercase, unique
+  code            String         @unique
+  // Display title shown in admin lists; if null fall back to code
+  title           String?
+  type            DiscountType
+  // PERCENT: basis points (10% = 1000, 25% = 2500, max 10000)
+  // FIXED_AMOUNT: cents off the order
+  // FREE_SHIPPING: value not used (set to 0)
+  value           Int
+  method          DiscountMethod @default(CODE)
+  // Eligibility / restrictions
+  minPurchaseCents BigInt?
+  minQuantity      Int?
+  maxUses          Int?           // null = unlimited
+  oncePerCustomer  Boolean        @default(false)
+  // Optional restriction to a single customer email
+  customerEmail    String?
+  // Schedule
+  startsAt        DateTime        @default(now())
+  endsAt          DateTime?
+  // Lifecycle
+  status          DiscountStatus  @default(ACTIVE)
+  // Denormalized usage counter — incremented when an order successfully
+  // applies this code. Authoritative count is COUNT(orders WHERE discountCode=this.code).
+  usedCount       Int             @default(0)
+  // Audit
+  createdAt       DateTime        @default(now())
+  createdByEmail  String?
+
+  @@index([status, startsAt])
+  @@map("discounts")
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED_AMOUNT
+  FREE_SHIPPING
+
+  @@map("discount_type")
+}
+
+enum DiscountMethod {
+  CODE         // customer types code at checkout
+  AUTOMATIC    // applied at checkout when conditions match
+
+  @@map("discount_method")
+}
+
+enum DiscountStatus {
+  ACTIVE
+  DISABLED
+  // EXPIRED is computed (endsAt < now) not stored, but kept here for
+  // tag-based filtering in the admin list query.
+  EXPIRED
+
+  @@map("discount_status")
+}

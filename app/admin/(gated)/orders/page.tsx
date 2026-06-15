@@ -27,6 +27,75 @@ function fmtDate(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+/**
+ * Compute today's KPIs in a single transaction. Returns counts +
+ * averages for the dashboard strip at the top of the orders list.
+ *
+ * "Today" = any timestamp >= startOfDay. Counts use the appropriate
+ * timestamp column for each metric (e.g. shippedAt for "Fulfilled today").
+ */
+async function computeKpis(startOfDay: Date): Promise<{
+  ordersToday: number;
+  itemsToday: number;
+  refundsTodayCents: number;
+  fulfilledToday: number;
+  deliveredToday: number;
+  avgFulfillmentMs: number | null;
+}> {
+  const [
+    ordersToday,
+    itemsAgg,
+    refundedTodayAgg,
+    fulfilledToday,
+    deliveredToday,
+    fulfilledRange,
+  ] = await Promise.all([
+    prisma.order.count({ where: { createdAt: { gte: startOfDay }, status: { not: 'PENDING_PAYMENT' } } }),
+    prisma.orderLine.aggregate({
+      where: { order: { createdAt: { gte: startOfDay }, status: { not: 'PENDING_PAYMENT' } } },
+      _sum: { qty: true },
+    }),
+    prisma.order.aggregate({
+      where: { refundedAt: { gte: startOfDay } },
+      _sum: { refundedCents: true },
+    }),
+    prisma.order.count({ where: { shippedAt: { gte: startOfDay } } }),
+    prisma.order.count({ where: { deliveredAt: { gte: startOfDay } } }),
+    prisma.order.findMany({
+      where: { shippedAt: { gte: startOfDay } },
+      select: { paidAt: true, shippedAt: true },
+    }),
+  ]);
+
+  let avgFulfillmentMs: number | null = null;
+  if (fulfilledRange.length > 0) {
+    const totals = fulfilledRange.reduce((sum, o) => {
+      if (o.paidAt && o.shippedAt) {
+        return sum + (o.shippedAt.getTime() - o.paidAt.getTime());
+      }
+      return sum;
+    }, 0);
+    avgFulfillmentMs = Math.round(totals / fulfilledRange.length);
+  }
+
+  return {
+    ordersToday,
+    itemsToday: itemsAgg._sum.qty ?? 0,
+    refundsTodayCents: Number(refundedTodayAgg._sum.refundedCents ?? 0),
+    fulfilledToday,
+    deliveredToday,
+    avgFulfillmentMs,
+  };
+}
+
+function fmtDuration(ms: number | null): string {
+  if (ms === null) return '—';
+  const hours = ms / (1000 * 60 * 60);
+  if (hours < 1) return `${Math.round(ms / (1000 * 60))}m`;
+  if (hours < 24) return `${hours.toFixed(1)}h`;
+  return `${(hours / 24).toFixed(1)}d`;
+}
+
 export default async function AdminOrdersPage({
   searchParams,
 }: {
@@ -48,7 +117,13 @@ export default async function AdminOrdersPage({
     ];
   }
 
-  const [orders, totalCount, statusCounts] = await Promise.all([
+  // KPI strip — "today" = start of local server day. Render runs UTC,
+  // so this is effectively UTC today. Good enough for a small ops team
+  // until we hook up timezone preferences.
+  const startOfDay = new Date();
+  startOfDay.setUTCHours(0, 0, 0, 0);
+
+  const [orders, totalCount, statusCounts, todayKpis] = await Promise.all([
     prisma.order.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -61,6 +136,7 @@ export default async function AdminOrdersPage({
       by: ['status'],
       _count: { _all: true },
     }),
+    computeKpis(startOfDay),
   ]);
 
   const countMap = new Map(statusCounts.map((s) => [s.status, s._count._all]));
@@ -70,12 +146,27 @@ export default async function AdminOrdersPage({
   return (
     <main className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">— Orders</p>
         <h1 className="font-display font-black text-ink tracking-[-0.025em] text-3xl sm:text-4xl">
           {totalCount.toLocaleString()} {filter.status ? filter.label.toLowerCase() : 'orders'}
           <span className="text-cobalt">.</span>
         </h1>
+      </div>
+
+      {/* KPI strip — today's metrics */}
+      <div className="mb-6 rounded-2xl border border-cobalt/15 bg-white overflow-hidden">
+        <div className="px-5 py-2 bg-cobalt/5 border-b border-cobalt/10 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold flex items-center gap-2">
+          <span>📅</span> Today
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-cobalt/10">
+          <Kpi label="Orders" value={todayKpis.ordersToday.toLocaleString()} />
+          <Kpi label="Items ordered" value={todayKpis.itemsToday.toLocaleString()} />
+          <Kpi label="Returns" value={`$${(todayKpis.refundsTodayCents / 100).toFixed(2)}`} />
+          <Kpi label="Orders fulfilled" value={todayKpis.fulfilledToday.toLocaleString()} />
+          <Kpi label="Orders delivered" value={todayKpis.deliveredToday.toLocaleString()} />
+          <Kpi label="Order → fulfillment" value={fmtDuration(todayKpis.avgFulfillmentMs)} />
+        </div>
       </div>
 
       {/* Filter tabs */}
@@ -122,40 +213,52 @@ export default async function AdminOrdersPage({
             <p className="text-sm text-ink-soft">No orders match this filter.</p>
           </div>
         ) : (
-          <div>
+          <div className="overflow-x-auto">
             {/* Header row */}
-            <div className="bg-cobalt/5 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold grid grid-cols-[120px_140px_1fr_90px_110px_130px] gap-4 px-5 py-3">
+            <div className="bg-cobalt/5 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold grid grid-cols-[110px_130px_1fr_100px_110px_125px_125px] gap-3 px-5 py-3 min-w-[1100px]">
               <div>Date</div>
               <div>Order</div>
               <div>Customer</div>
-              <div>Items</div>
               <div className="text-right">Total</div>
-              <div className="text-right">Status</div>
+              <div>Payment</div>
+              <div>Fulfillment</div>
+              <div className="text-right">Items</div>
             </div>
             {/* Rows — each entire row is a Link */}
-            {orders.map((o) => (
-              <Link
-                key={o.id}
-                href={`/admin/orders/${o.id}`}
-                className="grid grid-cols-[120px_140px_1fr_90px_110px_130px] gap-4 px-5 py-4 border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition items-center text-sm"
-              >
-                <div className="text-ink-soft tabular-nums">{fmtDate(o.createdAt)}</div>
-                <div className="font-mono text-xs text-cobalt font-bold truncate">
-                  {o.paypalOrderId.slice(0, 12)}…
-                </div>
-                <div>
-                  <div className="text-ink font-bold truncate">{o.customerName}</div>
-                  <div className="text-[11px] text-ink-soft truncate">{o.customerEmail}</div>
-                </div>
-                <div className="text-ink-soft">
-                  {o._count.lines} {o._count.lines === 1 ? 'item' : 'items'}
-                </div>
-                <div className="text-right font-bold text-ink tabular-nums">{fmtMoney(o.totalCents)}</div>
-                <div className="text-right">
-                  <StatusPill status={o.status} />
-                </div>
-              </Link>
-            ))}
+            {orders.map((o) => {
+              const pay = paymentLabel(o.status);
+              const ful = fulfillmentLabel(o.status);
+              return (
+                <Link
+                  key={o.id}
+                  href={`/admin/orders/${o.id}`}
+                  className="grid grid-cols-[110px_130px_1fr_100px_110px_125px_125px] gap-3 px-5 py-4 border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition items-center text-sm min-w-[1100px]"
+                >
+                  <div className="text-ink-soft tabular-nums">{fmtDate(o.createdAt)}</div>
+                  <div className="font-mono text-xs text-cobalt font-bold truncate">
+                    {o.paypalOrderId.slice(0, 12)}…
+                  </div>
+                  <div>
+                    <div className="text-ink font-bold truncate">{o.customerName}</div>
+                    <div className="text-[11px] text-ink-soft truncate">{o.customerEmail}</div>
+                  </div>
+                  <div className="text-right font-bold text-ink tabular-nums">{fmtMoney(o.totalCents)}</div>
+                  <div>
+                    <span className={`inline-block text-[10px] tracking-[0.10em] uppercase font-bold px-2 py-1 rounded border ${pay.cls}`}>
+                      ● {pay.label}
+                    </span>
+                  </div>
+                  <div>
+                    <span className={`inline-block text-[10px] tracking-[0.10em] uppercase font-bold px-2 py-1 rounded border ${ful.cls}`}>
+                      ● {ful.label}
+                    </span>
+                  </div>
+                  <div className="text-right text-ink-soft tabular-nums">
+                    {o._count.lines} {o._count.lines === 1 ? 'item' : 'items'}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
@@ -188,6 +291,47 @@ export default async function AdminOrdersPage({
       )}
     </main>
   );
+}
+
+function Kpi({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="px-4 py-3">
+      <p className="text-[10px] tracking-[0.16em] uppercase text-ink-soft font-bold mb-1">{label}</p>
+      <p className="font-display font-black text-ink tabular-nums text-xl tracking-tight">{value}</p>
+    </div>
+  );
+}
+
+/* Derived sub-statuses for the table — Shopify-style payment + fulfillment pills. */
+function paymentLabel(status: OrderStatus): { label: string; cls: string } {
+  switch (status) {
+    case 'PENDING_PAYMENT':
+      return { label: 'Pending', cls: 'bg-yellow-50 text-yellow-900 border-yellow-200' };
+    case 'REFUNDED':
+      return { label: 'Refunded', cls: 'bg-rose-50 text-rose-900 border-rose-200' };
+    case 'PARTIALLY_REFUNDED':
+      return { label: 'Part. refunded', cls: 'bg-rose-50 text-rose-900 border-rose-200' };
+    case 'CANCELED':
+      return { label: 'Canceled', cls: 'bg-gray-50 text-gray-700 border-gray-200' };
+    default:
+      return { label: 'Paid', cls: 'bg-emerald-50 text-emerald-900 border-emerald-200' };
+  }
+}
+
+function fulfillmentLabel(status: OrderStatus): { label: string; cls: string } {
+  switch (status) {
+    case 'PROCESSING':
+      return { label: 'Processing', cls: 'bg-cobalt/10 text-cobalt border-cobalt/20' };
+    case 'SHIPPED':
+      return { label: 'Fulfilled', cls: 'bg-blue-50 text-blue-900 border-blue-200' };
+    case 'DELIVERED':
+      return { label: 'Delivered', cls: 'bg-emerald-50 text-emerald-900 border-emerald-200' };
+    case 'CANCELED':
+    case 'REFUNDED':
+      return { label: '—', cls: 'bg-gray-50 text-gray-500 border-gray-200' };
+    default:
+      return { label: 'Unfulfilled', cls: 'bg-yellow-50 text-yellow-900 border-yellow-200' };
+  }
 }
 
 function StatusPill({ status }: { status: OrderStatus }) {
