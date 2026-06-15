@@ -37,9 +37,11 @@ export function InventoryImportClient() {
     });
   }
 
-  const changedRows = diff?.rows.filter((r) => Object.keys(r.changes).length > 0) ?? [];
+  const updateRows = diff?.rows.filter((r) => r.action === 'update' && Object.keys(r.changes).length > 0) ?? [];
+  const createRows = diff?.rows.filter((r) => r.action === 'create') ?? [];
   const noChangeRows = diff?.rows.filter((r) => r.action === 'update' && Object.keys(r.changes).length === 0) ?? [];
-  const unmatchedRows = diff?.rows.filter((r) => r.action === 'no-match') ?? [];
+  const noDataRows = diff?.rows.filter((r) => r.action === 'no-data') ?? [];
+  const willApplyCount = updateRows.length + createRows.length;
 
   return (
     <div className="space-y-5">
@@ -90,28 +92,44 @@ export function InventoryImportClient() {
         <>
           <div className="rounded-2xl border border-cobalt/15 bg-white p-6">
             <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">— Summary</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
               <Stat label="Total rows" value={diff.totalRows} />
-              <Stat label="Matched" value={diff.matchedCount} accent="emerald" />
-              <Stat label="With changes" value={changedRows.length} accent="cobalt" />
-              <Stat label="Unmatched" value={diff.unmatchedCount} accent="rose" />
+              <Stat label="To update" value={updateRows.length} accent="cobalt" />
+              <Stat label="To create" value={diff.toCreateCount} accent="emerald" />
+              <Stat label="Already in sync" value={noChangeRows.length} accent="emerald" />
+              <Stat label="No data" value={diff.noDataCount} accent="rose" />
             </div>
-            {changedRows.length > 0 && (
+            {willApplyCount > 0 && (
               <button
                 type="button"
                 onClick={handleApply}
                 disabled={pendingApply}
                 className="mt-5 bg-ink text-white px-5 py-3 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-cobalt transition disabled:opacity-60"
               >
-                {pendingApply ? 'Applying…' : `Apply ${changedRows.length} update${changedRows.length === 1 ? '' : 's'}`}
+                {pendingApply
+                  ? 'Applying…'
+                  : `Apply ${updateRows.length} update${updateRows.length === 1 ? '' : 's'} + create ${createRows.length} draft${createRows.length === 1 ? '' : 's'}`}
               </button>
             )}
           </div>
 
           {/* Rows with changes */}
-          {changedRows.length > 0 && (
-            <Section title={`Will update (${changedRows.length})`} tone="cobalt">
-              <DiffTable rows={changedRows} mode="changed" />
+          {updateRows.length > 0 && (
+            <Section title={`Will update (${updateRows.length})`} tone="cobalt">
+              <DiffTable rows={updateRows} mode="changed" />
+            </Section>
+          )}
+
+          {/* Will create as drafts */}
+          {createRows.length > 0 && (
+            <Section title={`Will create as drafts (${createRows.length})`} tone="emerald">
+              <p className="text-xs text-ink-soft mb-3">
+                These SKUs aren&rsquo;t in the catalog yet. They&rsquo;ll be created as{' '}
+                <strong>DRAFT</strong> products with prices + stock from the inventory sheet.
+                <strong> They won&rsquo;t appear on the storefront until you open each one and flip status to ACTIVE</strong> after
+                adding image, eyebrow, one-liner, and lot info.
+              </p>
+              <DiffTable rows={createRows} mode="create" />
             </Section>
           )}
 
@@ -122,15 +140,14 @@ export function InventoryImportClient() {
             </Section>
           )}
 
-          {/* Unmatched */}
-          {unmatchedRows.length > 0 && (
-            <Section title={`No matching product (${unmatchedRows.length})`} tone="rose">
+          {/* No data — rows without a retail price */}
+          {noDataRows.length > 0 && (
+            <Section title={`Skipped — no retail price (${noDataRows.length})`} tone="rose">
               <p className="text-xs text-ink-soft mb-3">
-                These SKUs from the inventory CSV don&rsquo;t correspond to any product currently in
-                the Merit catalog. They&rsquo;ll be skipped &mdash; create the product manually if
-                you want it imported.
+                These SKUs have no retail price in the sheet, so they can&rsquo;t become products yet.
+                Add a retail price to the inventory file and re-upload to bring them in.
               </p>
-              <DiffTable rows={unmatchedRows} mode="unmatched" />
+              <DiffTable rows={noDataRows} mode="unmatched" />
             </Section>
           )}
         </>
@@ -171,8 +188,47 @@ function DiffTable({
   mode,
 }: {
   rows: Diff['rows'];
-  mode: 'changed' | 'no-change' | 'unmatched';
+  mode: 'changed' | 'no-change' | 'create' | 'unmatched';
 }) {
+  if (mode === 'create') {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="text-[10px] tracking-wider uppercase text-ink-soft font-bold">
+            <tr className="border-b border-cobalt/10">
+              <th className="text-left py-2 pr-3">New handle</th>
+              <th className="text-left py-2 pr-3">Product</th>
+              <th className="text-left py-2 pr-3">Vial size</th>
+              <th className="text-right py-2 pr-3">Stock</th>
+              <th className="text-right py-2 pr-3">Retail</th>
+              <th className="text-right py-2">Physician</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className="border-b border-cobalt/5">
+                <td className="py-2 pr-3 font-mono text-cobalt font-bold">/{r.newHandle}</td>
+                <td className="py-2 pr-3 text-ink">{r.row.productName}</td>
+                <td className="py-2 pr-3 text-ink-soft">{r.row.vialSize}</td>
+                <td className="py-2 pr-3 text-right tabular-nums text-ink-soft">{r.row.unitsOnHand}</td>
+                <td className="py-2 pr-3 text-right tabular-nums text-ink font-bold">
+                  {r.row.retailPriceCents !== null
+                    ? `$${(r.row.retailPriceCents / 100).toFixed(2)}`
+                    : '—'}
+                </td>
+                <td className="py-2 text-right tabular-nums text-ink-soft">
+                  {r.row.physicianPriceCents !== null
+                    ? `$${(r.row.physicianPriceCents / 100).toFixed(2)}`
+                    : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   if (mode === 'unmatched') {
     return (
       <div className="overflow-x-auto">

@@ -23,7 +23,9 @@ export type Diff = {
     row: ParsedRow;
     matchedHandle: string | null;
     matchedTitle: string | null;
-    action: 'update' | 'no-match';
+    action: 'update' | 'create' | 'no-data';
+    // For 'create' rows, the handle that will be generated
+    newHandle?: string;
     changes: {
       stockQty?: { from: number; to: number };
       priceCents?: { from: number; to: number };
@@ -33,7 +35,8 @@ export type Diff = {
   }>;
   totalRows: number;
   matchedCount: number;
-  unmatchedCount: number;
+  toCreateCount: number;
+  noDataCount: number;
 };
 
 /**
@@ -146,8 +149,12 @@ export async function parseInventoryCsv(_prev: any, formData: FormData): Promise
     rows: [],
     totalRows: rows.length,
     matchedCount: 0,
-    unmatchedCount: 0,
+    toCreateCount: 0,
+    noDataCount: 0,
   };
+
+  // Track handles we plan to generate so we don't collide across rows
+  const handlesInUseAfterImport = new Set(allProducts.map((p) => p.handle));
 
   for (const row of rows) {
     const matched = findProductMatch(row, allProducts);
@@ -167,20 +174,75 @@ export async function parseInventoryCsv(_prev: any, formData: FormData): Promise
       if (row.unitCostCents !== null && row.unitCostCents !== matched.costCents) {
         changes.costCents = { from: matched.costCents, to: row.unitCostCents };
       }
+      diff.rows.push({
+        row,
+        matchedHandle: matched.handle,
+        matchedTitle: matched.title,
+        action: 'update',
+        changes,
+      });
+    } else if (row.retailPriceCents !== null) {
+      // Rows without a match get CREATED as draft products. Skip rows that
+      // don't have a retail price — those are usually blank stub rows in
+      // the inventory sheet and shouldn't become products.
+      const newHandle = uniqueHandle(slugify(`${row.productName} ${row.vialSize}`), handlesInUseAfterImport);
+      handlesInUseAfterImport.add(newHandle);
+      diff.toCreateCount++;
+      diff.rows.push({
+        row,
+        matchedHandle: null,
+        matchedTitle: null,
+        action: 'create',
+        newHandle,
+        changes: {
+          stockQty: { from: 0, to: row.unitsOnHand },
+          priceCents: { from: 0, to: row.retailPriceCents },
+          ...(row.physicianPriceCents !== null
+            ? { physicianPriceCents: { from: null, to: row.physicianPriceCents } }
+            : {}),
+          ...(row.unitCostCents !== null
+            ? { costCents: { from: null, to: row.unitCostCents } }
+            : {}),
+        },
+      });
     } else {
-      diff.unmatchedCount++;
+      // No match AND no retail price → not enough data to create
+      diff.noDataCount++;
+      diff.rows.push({
+        row,
+        matchedHandle: null,
+        matchedTitle: null,
+        action: 'no-data',
+        changes: {},
+      });
     }
-
-    diff.rows.push({
-      row,
-      matchedHandle: matched?.handle ?? null,
-      matchedTitle: matched?.title ?? null,
-      action: matched ? 'update' : 'no-match',
-      changes,
-    });
   }
 
   return diff;
+}
+
+/* ─── Handle generation ─── */
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[+/&]/g, '-')              // common separators in SKU names
+    .replace(/[()]/g, '')                // strip parens like "(Wolverine)"
+    .replace(/[^a-z0-9\s-]/g, '')        // strip remaining punctuation
+    .replace(/\s+/g, '-')                // spaces → hyphens
+    .replace(/-+/g, '-')                 // collapse consecutive hyphens
+    .replace(/^-|-$/g, '')               // trim leading/trailing hyphens
+    .slice(0, 60);
+}
+
+function uniqueHandle(base: string, taken: Set<string>): string {
+  if (!taken.has(base)) return base;
+  for (let i = 2; i < 100; i++) {
+    const candidate = `${base}-${i}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  // Pathological fallback — shouldn't hit with <100 collisions
+  return `${base}-${Date.now()}`;
 }
 
 /**
@@ -204,30 +266,72 @@ export async function applyInventoryCsv(_prev: ActionResult | null, formData: Fo
   }
 
   let updated = 0;
+  let created = 0;
+  let errors = 0;
+
   for (const r of diff.rows) {
-    if (r.action !== 'update' || !r.matchedHandle) continue;
-    if (Object.keys(r.changes).length === 0) continue;
+    if (r.action === 'update' && r.matchedHandle) {
+      if (Object.keys(r.changes).length === 0) continue;
 
-    const data: any = {};
-    if (r.changes.stockQty) data.stockQty = r.changes.stockQty.to;
-    if (r.changes.priceCents) data.priceCents = r.changes.priceCents.to;
-    if (r.changes.physicianPriceCents) data.physicianPriceCents = r.changes.physicianPriceCents.to;
-    if (r.changes.costCents) data.costCents = r.changes.costCents.to;
+      const data: any = {};
+      if (r.changes.stockQty) data.stockQty = r.changes.stockQty.to;
+      if (r.changes.priceCents) data.priceCents = r.changes.priceCents.to;
+      if (r.changes.physicianPriceCents) data.physicianPriceCents = r.changes.physicianPriceCents.to;
+      if (r.changes.costCents) data.costCents = r.changes.costCents.to;
 
-    try {
-      await prisma.product.update({
-        where: { handle: r.matchedHandle },
-        data,
-      });
-      updated++;
-    } catch (err) {
-      console.error('[inventory-import] update failed', r.matchedHandle, err);
+      try {
+        await prisma.product.update({
+          where: { handle: r.matchedHandle },
+          data,
+        });
+        updated++;
+      } catch (err) {
+        console.error('[inventory-import] update failed', r.matchedHandle, err);
+        errors++;
+      }
+    } else if (r.action === 'create' && r.newHandle) {
+      // Create new draft product. status='DRAFT' so it doesn't go live
+      // on the catalog/storefront until the operator opens it, fills in
+      // eyebrow/oneLiner/imageUrl/lot info, and flips to ACTIVE.
+      try {
+        await prisma.product.create({
+          data: {
+            handle: r.newHandle,
+            title: `${r.row.productName} ${r.row.vialSize}`.trim(),
+            compound: r.row.productName,
+            eyebrow: '',
+            vialSize: r.row.vialSize || 'TBD',
+            format: 'LYOPHILIZED',
+            oneLiner: '',
+            priceCents: r.row.retailPriceCents ?? 0,
+            physicianPriceCents: r.row.physicianPriceCents,
+            costCents: r.row.unitCostCents,
+            stockQty: r.row.unitsOnHand,
+            lotId: 'TBD',
+            lotPurity: '≥99%',
+            lotTestedDate: '',
+            lotBud: '',
+            segment: 'BIOHACKER',
+            channel: 'RUA',
+            status: 'DRAFT',
+            images: [],
+          },
+        });
+        created++;
+      } catch (err) {
+        console.error('[inventory-import] create failed', r.newHandle, err);
+        errors++;
+      }
     }
   }
 
   revalidatePath('/admin/products');
   revalidatePath('/catalog');
-  return { ok: true, message: `Updated ${updated} product(s) from CSV.` };
+  const errorTail = errors > 0 ? ` ⚠ ${errors} failed (see Render logs).` : '';
+  return {
+    ok: true,
+    message: `Updated ${updated} product${updated === 1 ? '' : 's'}, created ${created} draft${created === 1 ? '' : 's'}.${errorTail}`,
+  };
 }
 
 /* ─── Matching logic ─── */
