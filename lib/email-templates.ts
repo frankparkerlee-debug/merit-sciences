@@ -90,11 +90,28 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
         <!-- Footer -->
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="max-width:600px;width:100%;">
           <tr>
-            <td align="center" style="padding:20px 12px 0;">
-              <p style="margin:0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">Merit Sciences &middot; Dallas, TX</p>
-              <p style="margin:5px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};font-style:italic;">Pharmacy-grade. Not pharmacy-priced.</p>
-              <p style="margin:14px 0 0;font-size:10px;line-height:16px;color:${COLOR_TEXT_SOFT};max-width:480px;">
+            <td align="center" style="padding:24px 12px 0;">
+              <p style="margin:0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};letter-spacing:0.02em;">
+                <strong style="color:${COLOR_INK};font-weight:900;letter-spacing:-0.01em;">MERIT SCIENCES</strong>
+              </p>
+              <p style="margin:4px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};font-style:italic;">Pharmacy-grade. Not pharmacy-priced.</p>
+              <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">
+                Dallas, TX &middot; <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;">info@meritsciences.com</a>
+              </p>
+              <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">
+                <a href="https://merit-sciences.onrender.com/catalog" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Catalog</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://merit-sciences.onrender.com/policies/shipping" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Shipping</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://merit-sciences.onrender.com/policies/returns" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Returns</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://merit-sciences.onrender.com/policies/privacy" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Privacy</a>
+              </p>
+              <p style="margin:16px 0 0;font-size:10px;line-height:16px;color:${COLOR_TEXT_SOFT};max-width:480px;">
                 Research compounds for laboratory use only. Not for human or veterinary consumption.
+              </p>
+              <p style="margin:14px 0 0;font-size:10px;line-height:16px;color:${COLOR_TEXT_SOFT};">
+                You received this because you placed an order or signed up at Merit Sciences.
               </p>
             </td>
           </tr>
@@ -350,6 +367,432 @@ Expires in 24 hours.`;
     html: shell({
       preheader: `View order ${d.paypalOrderId}. Link expires in 24 hours.`,
       eyebrow: 'Order lookup',
+      body,
+    }),
+    text,
+  };
+}
+
+/* ─── Refund issued (full or partial) ─── */
+
+export type RefundData = {
+  customerName: string;
+  paypalOrderId: string;
+  refundedCents: number | bigint;
+  totalCents: number | bigint;     // original order total (for context)
+  isFull: boolean;                  // true = full refund, false = partial
+  reason?: string | null;           // optional admin-entered note
+  lookupUrl: string;
+};
+
+export function renderRefundIssued(d: RefundData): { subject: string; html: string; text: string } {
+  const firstName = d.customerName.split(/\s+/)[0] || 'there';
+  const refundedMoney = fmtMoney(d.refundedCents);
+  const totalMoney = fmtMoney(d.totalCents);
+  const eyebrow = d.isFull ? 'Refund issued' : 'Partial refund issued';
+  const headlineText = d.isFull ? 'Refund on its way' : 'Partial refund on its way';
+
+  const body = `
+    ${headline(headlineText)}
+    <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
+      ${firstName}, we issued ${d.isFull ? 'a full refund' : `a partial refund of <strong style="color:${COLOR_INK};">${refundedMoney}</strong>`} on order <span style="font-family:${MONO};color:${COLOR_INK};">${escapeHtml(d.paypalOrderId)}</span>.
+    </p>
+
+    <!-- Amount panel -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:22px;background-color:${COLOR_CREAM};border-radius:10px;">
+      <tr>
+        <td style="padding:20px;">
+          <p style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};">Refund amount</p>
+          <p style="margin:0;font-size:32px;line-height:36px;font-weight:900;letter-spacing:-0.02em;color:${COLOR_INK};font-family:${SANS};">
+            ${refundedMoney}
+          </p>
+          ${!d.isFull ? `<p style="margin:8px 0 0 0;font-size:12px;color:${COLOR_TEXT_SOFT};">of ${totalMoney} order total</p>` : ''}
+        </td>
+      </tr>
+    </table>
+
+    ${d.reason ? `
+      <h3 style="margin:0 0 8px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— Note from Merit</h3>
+      <p style="margin:0 0 22px 0;font-size:14px;line-height:21px;color:${COLOR_INK};">${escapeHtml(d.reason)}</p>
+    ` : ''}
+
+    <!-- What's next -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px;border:1px solid ${COLOR_BORDER};border-radius:10px;">
+      <tr>
+        <td style="padding:18px;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
+          <strong style="color:${COLOR_INK};">Money returns to your original payment method</strong> in 5&ndash;10 business days. The same card or PayPal account used at checkout will receive it.
+        </td>
+      </tr>
+    </table>
+
+    ${ctaButton('View order details', d.lookupUrl)}
+
+    <p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
+      Questions? Reply to this email or write us at <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">info@meritsciences.com</a>.
+    </p>
+  `;
+
+  const text = `${headlineText} — Merit Sciences
+
+Hi ${firstName},
+
+We issued ${d.isFull ? 'a full refund' : `a partial refund of ${refundedMoney}`} on order ${d.paypalOrderId}.
+
+Refund amount: ${refundedMoney}${!d.isFull ? ` (of ${totalMoney} total)` : ''}
+${d.reason ? `Note: ${d.reason}\n` : ''}
+Money returns to your original payment method in 5-10 business days.
+
+Order details: ${d.lookupUrl}
+
+Questions? info@meritsciences.com
+
+— Merit Sciences`;
+
+  return {
+    subject: d.isFull
+      ? `Refund issued — ${refundedMoney} — ${d.paypalOrderId}`
+      : `Partial refund — ${refundedMoney} — ${d.paypalOrderId}`,
+    html: shell({
+      preheader: `${d.isFull ? 'Full' : 'Partial'} refund of ${refundedMoney} on its way. Returns in 5-10 business days.`,
+      eyebrow,
+      body,
+    }),
+    text,
+  };
+}
+
+/* ─── Order canceled ─── */
+
+export type CancellationData = {
+  customerName: string;
+  paypalOrderId: string;
+  reason?: string | null;
+  wasPaid: boolean;                 // true if money was charged + will be refunded
+  lookupUrl: string;
+};
+
+export function renderOrderCanceled(d: CancellationData): { subject: string; html: string; text: string } {
+  const firstName = d.customerName.split(/\s+/)[0] || 'there';
+
+  const body = `
+    ${headline('Order canceled')}
+    <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
+      ${firstName}, we canceled order <span style="font-family:${MONO};color:${COLOR_INK};">${escapeHtml(d.paypalOrderId)}</span>. ${d.wasPaid ? 'A full refund will arrive separately.' : 'No charge was made.'}
+    </p>
+
+    ${d.reason ? `
+      <h3 style="margin:0 0 8px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— Reason</h3>
+      <p style="margin:0 0 22px 0;font-size:14px;line-height:21px;color:${COLOR_INK};">${escapeHtml(d.reason)}</p>
+    ` : ''}
+
+    ${d.wasPaid ? `
+      <!-- Refund context -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px;background-color:${COLOR_CREAM};border-radius:10px;">
+        <tr>
+          <td style="padding:18px;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
+            <strong style="color:${COLOR_INK};">Your refund is on its way.</strong> Money returns to your original payment method in 5&ndash;10 business days &mdash; same card or PayPal account used at checkout.
+          </td>
+        </tr>
+      </table>
+    ` : ''}
+
+    ${ctaButton('Browse the catalog', 'https://merit-sciences.onrender.com/catalog')}
+
+    <p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
+      If this cancellation was unexpected or you&rsquo;d like to place a new order, reply to this email or write us at <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">info@meritsciences.com</a> &mdash; we&rsquo;re happy to help.
+    </p>
+  `;
+
+  const text = `Order canceled — Merit Sciences
+
+Hi ${firstName},
+
+We canceled order ${d.paypalOrderId}.
+${d.wasPaid ? 'A full refund will arrive in 5-10 business days to your original payment method.\n' : 'No charge was made.\n'}
+${d.reason ? `Reason: ${d.reason}\n` : ''}
+Browse the catalog: https://merit-sciences.onrender.com/catalog
+
+Questions? info@meritsciences.com
+
+— Merit Sciences`;
+
+  return {
+    subject: `Order canceled — ${d.paypalOrderId}`,
+    html: shell({
+      preheader: `Order ${d.paypalOrderId} canceled. ${d.wasPaid ? 'Refund in 5-10 days.' : 'No charge made.'}`,
+      eyebrow: 'Order canceled',
+      body,
+    }),
+    text,
+  };
+}
+
+/* ─── Abandoned cart recovery ─── */
+
+export type AbandonedCartData = {
+  customerName: string;             // may be empty; we fall back to "there"
+  lines: Array<{
+    title: string;
+    bundleLabel: string;
+    qty: number;
+    unitCents: number | bigint;
+    imageUrl?: string | null;
+  }>;
+  subtotalCents: number | bigint;
+  recoveryUrl: string;              // back to checkout with cart prefilled
+  discountCode?: string | null;     // optional incentive (e.g. WELCOME10)
+  discountPercent?: number | null;  // 10 for 10%
+};
+
+export function renderAbandonedCart(d: AbandonedCartData): { subject: string; html: string; text: string } {
+  const firstName = (d.customerName || '').split(/\s+/)[0] || 'there';
+
+  const lineRows = d.lines.map((l) => `
+    <tr>
+      <td style="padding:14px 0;border-bottom:1px solid ${COLOR_BORDER};font-size:14px;line-height:20px;color:${COLOR_INK};vertical-align:top;">
+        <strong>${escapeHtml(l.title)}</strong><br />
+        <span style="color:${COLOR_TEXT_SOFT};font-size:12px;">${escapeHtml(l.bundleLabel)} &middot; Qty ${l.qty}</span>
+      </td>
+      <td align="right" style="padding:14px 0;border-bottom:1px solid ${COLOR_BORDER};font-size:14px;color:${COLOR_INK};font-weight:700;white-space:nowrap;vertical-align:top;">
+        ${fmtMoney(Number(l.unitCents) * l.qty)}
+      </td>
+    </tr>
+  `).join('');
+
+  const incentive = d.discountCode && d.discountPercent ? `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px;background-color:${COLOR_INK};border-radius:10px;">
+      <tr>
+        <td style="padding:24px;text-align:center;">
+          <p style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-weight:700;color:${COLOR_COBALT_SOFT};">A small nudge</p>
+          <p style="margin:0 0 8px 0;font-size:24px;line-height:28px;font-weight:900;letter-spacing:-0.02em;color:#ffffff;font-family:${SANS};">${d.discountPercent}% off if you finish today</p>
+          <p style="margin:0 0 4px 0;font-size:11px;color:${COLOR_COBALT_SOFT};">Apply code at checkout</p>
+          <p style="margin:0;font-family:${MONO};font-size:18px;font-weight:700;color:#ffffff;letter-spacing:0.08em;">${escapeHtml(d.discountCode.toUpperCase())}</p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
+
+  const body = `
+    ${headline('Still thinking?', false)}
+    <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
+      ${firstName}, your selections are waiting at Merit. We held them for you &mdash; same lots, same purity, same price${d.discountCode ? '&hellip; plus a small thank-you below' : ''}.
+    </p>
+
+    <h3 style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— Your cart</h3>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      ${lineRows}
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:10px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:10px 0 0 0;font-size:15px;font-weight:900;letter-spacing:-0.01em;color:${COLOR_INK};">Subtotal</td>
+        <td align="right" style="padding:10px 0 0 0;font-size:18px;font-weight:900;color:${COLOR_INK};">${fmtMoney(d.subtotalCents)}</td>
+      </tr>
+    </table>
+
+    ${incentive}
+
+    ${ctaButton('Complete your order', d.recoveryUrl)}
+
+    <!-- Trust block -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:28px;background-color:${COLOR_CREAM};border-radius:10px;">
+      <tr>
+        <td style="padding:18px;font-size:12px;line-height:18px;color:${COLOR_TEXT_SOFT};">
+          <p style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:${COLOR_INK};">— Why Merit</p>
+          &ge;99% HPLC-verified purity &middot; 503B outsourcing facility, ISO-certified &middot; Lot-documented &middot; Ships 48hr from Dallas
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const text = `Still thinking? Your cart is waiting at Merit.
+
+Hi ${firstName},
+
+We held your selections — same lots, same purity, same price.
+
+${d.lines.map((l) => `  · ${l.title} · ${l.bundleLabel} · Qty ${l.qty} · ${fmtMoney(Number(l.unitCents) * l.qty)}`).join('\n')}
+
+Subtotal: ${fmtMoney(d.subtotalCents)}
+
+${d.discountCode && d.discountPercent ? `Use code ${d.discountCode.toUpperCase()} for ${d.discountPercent}% off today.\n` : ''}
+Complete your order: ${d.recoveryUrl}
+
+— Merit Sciences`;
+
+  return {
+    subject: d.discountCode
+      ? `Still thinking? ${d.discountPercent}% off today.`
+      : 'Your selections are still at Merit',
+    html: shell({
+      preheader: `Your cart is waiting. ${d.discountCode ? `${d.discountPercent}% off today with ${d.discountCode.toUpperCase()}.` : 'Same lots, same purity, same price.'}`,
+      eyebrow: 'Cart reminder',
+      body,
+    }),
+    text,
+  };
+}
+
+/* ─── Welcome / newsletter signup ─── */
+
+export type WelcomeData = {
+  firstName?: string | null;
+  discountCode?: string | null;
+  discountPercent?: number | null;
+  catalogUrl: string;
+};
+
+export function renderWelcome(d: WelcomeData): { subject: string; html: string; text: string } {
+  const name = (d.firstName || 'there').trim();
+
+  const incentive = d.discountCode && d.discountPercent ? `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px 0;background-color:${COLOR_INK};border-radius:10px;">
+      <tr>
+        <td style="padding:28px;text-align:center;">
+          <p style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-weight:700;color:${COLOR_COBALT_SOFT};">— Welcome gift</p>
+          <p style="margin:0 0 10px 0;font-size:28px;line-height:32px;font-weight:900;letter-spacing:-0.02em;color:#ffffff;font-family:${SANS};">${d.discountPercent}% off your first order</p>
+          <p style="margin:0 0 4px 0;font-size:11px;color:${COLOR_COBALT_SOFT};">Apply at checkout</p>
+          <p style="margin:0;font-family:${MONO};font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.08em;">${escapeHtml(d.discountCode.toUpperCase())}</p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
+
+  const body = `
+    ${headline(`Welcome, ${name}`)}
+    <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
+      You&rsquo;re in. Merit is built on a simple premise: pharmacy-grade research compounds shouldn&rsquo;t cost pharmacy prices. Every lot we ship is HPLC-verified to &ge;99% purity, compounded in a 503B outsourcing facility with ISO certifications, and signed off by a US-licensed pharmacist before release.
+    </p>
+
+    ${incentive}
+
+    <h3 style="margin:0 0 8px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— Where to start</h3>
+    <p style="margin:0 0 22px 0;font-size:14px;line-height:21px;color:${COLOR_INK};">
+      Browse the catalog, or jump straight to one of our most-shopped lanes:<br />
+      &middot; <a href="https://merit-sciences.onrender.com/catalog?family=peptides" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">Peptides</a> (BPC-157, TB-500, Wolverine Blend)<br />
+      &middot; <a href="https://merit-sciences.onrender.com/catalog?family=glp1" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">GLP-1s</a> (Tirzepatide, Retatrutide)<br />
+      &middot; <a href="https://merit-sciences.onrender.com/catalog?family=growth" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">Growth</a> (IGF-1 LR3, Sermorelin, MOTS-c)
+    </p>
+
+    ${ctaButton('Explore the catalog', d.catalogUrl)}
+
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:28px;background-color:${COLOR_CREAM};border-radius:10px;">
+      <tr>
+        <td style="padding:18px;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
+          <strong style="color:${COLOR_INK};">A note on what we are.</strong> Merit ships research compounds &mdash; intended for laboratory use only, not for human or veterinary consumption. We don&rsquo;t do dosing protocols, medical advice, or human-outcome claims. We just ship clean lots, on time, at fair prices.
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const text = `Welcome to Merit Sciences
+
+Hi ${name},
+
+You're in. Merit is built on a simple premise: pharmacy-grade research compounds shouldn't cost pharmacy prices.
+
+Every lot we ship:
+  · HPLC-verified ≥99% purity
+  · Compounded in a 503B outsourcing facility (ISO-certified)
+  · Signed off by a US-licensed pharmacist
+  · Ships 48hr from Dallas
+
+${d.discountCode && d.discountPercent ? `Welcome gift: ${d.discountPercent}% off your first order with code ${d.discountCode.toUpperCase()}\n` : ''}
+Explore the catalog: ${d.catalogUrl}
+
+— Merit Sciences
+
+Research compounds for laboratory use only. Not for human or veterinary consumption.`;
+
+  return {
+    subject: d.discountCode
+      ? `Welcome to Merit — ${d.discountPercent}% off inside`
+      : 'Welcome to Merit Sciences',
+    html: shell({
+      preheader: d.discountCode
+        ? `${d.discountPercent}% off your first order with code ${d.discountCode.toUpperCase()}.`
+        : 'Pharmacy-grade. Not pharmacy-priced. Welcome to Merit.',
+      eyebrow: 'Welcome',
+      body,
+    }),
+    text,
+  };
+}
+
+/* ─── Post-delivery follow-up ─── */
+
+export type PostDeliveryData = {
+  customerName: string;
+  paypalOrderId: string;
+  primaryProductTitle: string;      // first item in the order, for personalization
+  lookupUrl: string;
+  catalogUrl: string;
+};
+
+export function renderPostDeliveryFollowUp(d: PostDeliveryData): { subject: string; html: string; text: string } {
+  const firstName = d.customerName.split(/\s+/)[0] || 'there';
+
+  const body = `
+    ${headline('Arrived?')}
+    <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
+      ${firstName}, your <strong style="color:${COLOR_INK};">${escapeHtml(d.primaryProductTitle)}</strong> shipment should have landed by now. We wanted to check in.
+    </p>
+
+    <!-- Honest CTA strip -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px;border:1px solid ${COLOR_BORDER};border-radius:10px;">
+      <tr>
+        <td style="padding:20px;font-size:14px;line-height:21px;color:${COLOR_INK};">
+          <p style="margin:0 0 12px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};">— A few things we&rsquo;ll do for you</p>
+          <p style="margin:0 0 8px 0;">
+            &middot; Re-share the <strong>Certificate of Analysis</strong> for this lot &mdash; reply with "CoA" and we&rsquo;ll send the PDF.
+          </p>
+          <p style="margin:0 0 8px 0;">
+            &middot; Help with <strong>reconstitution math</strong> if you&rsquo;re working through it &mdash; reply with your vial size + target.
+          </p>
+          <p style="margin:0;">
+            &middot; Anything looking off? Reply and we&rsquo;ll make it right.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 22px 0;font-size:14px;line-height:21px;color:${COLOR_TEXT_SOFT};">
+      We don&rsquo;t do dosing advice or human-outcome claims &mdash; refer to your own literature. We just make sure the compound itself is exactly what the label says.
+    </p>
+
+    ${ctaButton('Browse related compounds', d.catalogUrl)}
+
+    <p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
+      Order reference: <span style="font-family:${MONO};color:${COLOR_INK};">${escapeHtml(d.paypalOrderId)}</span>
+      &nbsp;&middot;&nbsp;
+      <a href="${escapeHtml(d.lookupUrl)}" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">View details</a>
+    </p>
+  `;
+
+  const text = `How's your Merit lot? — Merit Sciences
+
+Hi ${firstName},
+
+Your ${d.primaryProductTitle} shipment should have arrived. Checking in.
+
+If you need:
+  · The Certificate of Analysis (CoA) re-sent — reply "CoA"
+  · Help with reconstitution math — reply with vial size + target
+  · Anything looking off — reply and we'll make it right
+
+We don't do dosing advice or human-outcome claims. We just ship clean lots.
+
+Order: ${d.paypalOrderId}
+Details: ${d.lookupUrl}
+
+Browse related: ${d.catalogUrl}
+
+— Merit Sciences`;
+
+  return {
+    subject: `How's your ${d.primaryProductTitle} lot?`,
+    html: shell({
+      preheader: `Quick check-in on your ${d.primaryProductTitle} order. Reply if you need CoA, reconstitution help, or anything else.`,
+      eyebrow: 'Follow-up',
       body,
     }),
     text,

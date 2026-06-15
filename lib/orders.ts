@@ -24,6 +24,8 @@ import {
   renderOrderConfirmation,
   renderOrderLookupLink,
   renderShipmentNotification,
+  renderRefundIssued,
+  renderOrderCanceled,
 } from '@/lib/email-templates';
 
 const LOOKUP_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -592,6 +594,106 @@ export async function issueShipmentEmail(
   }
 
   return customerResult;
+}
+
+/* ─── Refund email (full or partial) ─── */
+
+export async function issueRefundEmail(
+  orderId: string,
+  args: { refundCents: number; isFull: boolean; reason?: string | null },
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return { ok: false, error: 'Order not found' };
+
+  const token = await generateLookupToken(order.id, order.customerEmail);
+  const lookupUrl = lookupUrlFor(order.id, token);
+
+  const { subject, html, text } = renderRefundIssued({
+    customerName: order.customerName,
+    paypalOrderId: order.paypalOrderId,
+    refundedCents: args.refundCents,
+    totalCents: Number(order.totalCents),
+    isFull: args.isFull,
+    reason: args.reason ?? null,
+    lookupUrl,
+  });
+
+  const result = await sendEmail({
+    to: order.customerEmail,
+    subject,
+    html,
+    text,
+    tags: [
+      { name: 'type', value: args.isFull ? 'refund_full' : 'refund_partial' },
+      { name: 'order_id', value: order.id },
+    ],
+  });
+
+  if (result.ok) {
+    await recordOrderEvent({
+      orderId,
+      kind: 'CONFIRMATION_EMAIL_SENT',
+      message: `Refund email sent to ${order.customerEmail} (${args.isFull ? 'full' : 'partial'}, $${(args.refundCents / 100).toFixed(2)}).`,
+      metadata: { email_id: result.id, refund_cents: args.refundCents, kind: 'refund' },
+    });
+  } else {
+    await recordOrderEvent({
+      orderId,
+      kind: 'EMAIL_FAILED',
+      message: `Refund email failed: ${result.error}`,
+      metadata: { to: order.customerEmail, error: result.error, kind: 'refund' },
+    });
+  }
+  return result;
+}
+
+/* ─── Cancellation email ─── */
+
+export async function issueCancellationEmail(
+  orderId: string,
+  args: { reason?: string | null; wasPaid: boolean },
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return { ok: false, error: 'Order not found' };
+
+  const token = await generateLookupToken(order.id, order.customerEmail);
+  const lookupUrl = lookupUrlFor(order.id, token);
+
+  const { subject, html, text } = renderOrderCanceled({
+    customerName: order.customerName,
+    paypalOrderId: order.paypalOrderId,
+    reason: args.reason ?? null,
+    wasPaid: args.wasPaid,
+    lookupUrl,
+  });
+
+  const result = await sendEmail({
+    to: order.customerEmail,
+    subject,
+    html,
+    text,
+    tags: [
+      { name: 'type', value: 'order_canceled' },
+      { name: 'order_id', value: order.id },
+    ],
+  });
+
+  if (result.ok) {
+    await recordOrderEvent({
+      orderId,
+      kind: 'CONFIRMATION_EMAIL_SENT',
+      message: `Cancellation email sent to ${order.customerEmail}.`,
+      metadata: { email_id: result.id, kind: 'cancellation' },
+    });
+  } else {
+    await recordOrderEvent({
+      orderId,
+      kind: 'EMAIL_FAILED',
+      message: `Cancellation email failed: ${result.error}`,
+      metadata: { to: order.customerEmail, error: result.error, kind: 'cancellation' },
+    });
+  }
+  return result;
 }
 
 /* ─── Admin notification ─── */

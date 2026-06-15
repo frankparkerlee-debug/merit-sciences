@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
-import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issueAdminOrderNotification, recordOrderEvent } from '@/lib/orders';
+import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issueAdminOrderNotification, issueRefundEmail, issueCancellationEmail, recordOrderEvent } from '@/lib/orders';
 import { getAccessToken } from '@/lib/paypal';
 
 export type ActionResult =
@@ -119,7 +119,16 @@ export async function markCanceled(_prev: ActionResult | null, formData: FormDat
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: 'Unauthorized' };
   const orderId = String(formData.get('orderId') ?? '');
+  const reason = String(formData.get('reason') ?? '').trim() || null;
   if (!orderId) return { ok: false, error: 'Missing order ID' };
+
+  // Figure out whether the buyer was charged — drives the email copy
+  // (refund-coming vs. no-charge messaging).
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { paypalCaptureId: true, refundedCents: true, totalCents: true },
+  });
+  const wasPaid = !!order?.paypalCaptureId && (Number(order.refundedCents) < Number(order.totalCents));
 
   await prisma.order.update({
     where: { id: orderId },
@@ -128,12 +137,20 @@ export async function markCanceled(_prev: ActionResult | null, formData: FormDat
   await recordOrderEvent({
     orderId,
     kind: 'MARKED_CANCELED',
-    message: 'Order canceled. (No refund issued automatically.)',
+    message: reason ? `Order canceled — reason: ${reason}` : 'Order canceled.',
     actorEmail: admin.email,
   });
+
+  // Fire customer cancellation email (records its own event row)
+  const emailResult = await issueCancellationEmail(orderId, { reason, wasPaid });
+
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
-  return { ok: true, message: 'Canceled. (No refund issued — use Refund button if money was charged.)' };
+
+  const tail = emailResult.ok
+    ? ` Customer notified (email id ${emailResult.id}).`
+    : ` ⚠ Customer email failed: ${emailResult.error}`;
+  return { ok: true, message: `Canceled.${tail}` };
 }
 
 /* ─── Refund (calls PayPal refund API) ─── */
@@ -197,9 +214,19 @@ export async function refundOrder(_prev: ActionResult | null, formData: FormData
     actorEmail: admin.email,
   });
 
+  // Fire customer refund email (records its own event row)
+  const emailResult = await issueRefundEmail(orderId, {
+    refundCents,
+    isFull: true,
+    reason: null,
+  });
+
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
-  return { ok: true, message: 'Full refund issued. Funds return to buyer in 5–10 business days. Affiliate commission clawed back.' };
+  const tail = emailResult.ok
+    ? ` Customer notified (email id ${emailResult.id}).`
+    : ` ⚠ Customer email failed: ${emailResult.error}`;
+  return { ok: true, message: `Full refund issued. Funds return to buyer in 5–10 business days. Affiliate commission clawed back.${tail}` };
 }
 
 /* ─── Partial refund ─── */
@@ -281,11 +308,21 @@ export async function refundOrderPartial(_prev: ActionResult | null, formData: F
     actorEmail: admin.email,
   });
 
+  // Fire customer refund email (records its own event row)
+  const emailResult = await issueRefundEmail(orderId, {
+    refundCents: amountCents,
+    isFull: isFullRefund,
+    reason: null,
+  });
+
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
+  const tail = emailResult.ok
+    ? ` Customer notified (email id ${emailResult.id}).`
+    : ` ⚠ Customer email failed: ${emailResult.error}`;
   return {
     ok: true,
-    message: `Refunded $${dollars.toFixed(2)}${isFullRefund ? ' (full)' : ' (partial)'}. Funds return to buyer in 5–10 business days.${isFullRefund ? ' Affiliate commission clawed back.' : ''}`,
+    message: `Refunded $${dollars.toFixed(2)}${isFullRefund ? ' (full)' : ' (partial)'}. Funds return to buyer in 5–10 business days.${isFullRefund ? ' Affiliate commission clawed back.' : ''}${tail}`,
   };
 }
 
