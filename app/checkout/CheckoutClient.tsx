@@ -59,6 +59,15 @@ export function CheckoutClient() {
 
   const [discountCode, setDiscountCode] = useState('');
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  // Server-authoritative discount + shipping + total amounts. Set when a
+  // code is applied via /api/paypal/create-order. Kept here so the cart
+  // summary shows what the SERVER calculated (could be FIXED_AMOUNT,
+  // PERCENT, FREE_SHIPPING, affiliate %, etc) — NOT a client-side guess.
+  const [appliedAmounts, setAppliedAmounts] = useState<{
+    discountCents: number;
+    shippingCents: number;
+    totalCents: number;
+  } | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeApplying, setCodeApplying] = useState(false);
 
@@ -84,10 +93,17 @@ export function CheckoutClient() {
     () => lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0),
     [lines],
   );
-  const localDiscountCents = appliedCode ? Math.floor((subtotalCents * 10) / 100) : 0;
+  // When a code is applied, use the SERVER's authoritative math (which
+  // honors the discount's actual type + value: FIXED_AMOUNT, PERCENT,
+  // FREE_SHIPPING). Fall back to local subtotal-only when no code
+  // is applied.
+  const localDiscountCents = appliedAmounts?.discountCents ?? 0;
   const localShippingCents =
-    subtotalCents - localDiscountCents >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING;
-  const localTotalCents = subtotalCents - localDiscountCents + localShippingCents;
+    appliedAmounts?.shippingCents
+    ?? (subtotalCents - localDiscountCents >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING);
+  const localTotalCents =
+    appliedAmounts?.totalCents
+    ?? (subtotalCents - localDiscountCents + localShippingCents);
 
   if (hydrated && lines.length === 0) {
     return (
@@ -123,9 +139,17 @@ export function CheckoutClient() {
       if (!res.ok) {
         setCodeError(data.error || 'Could not apply code.');
         setAppliedCode(null);
+        setAppliedAmounts(null);
         return;
       }
       setAppliedCode(code.toUpperCase());
+      // Capture the server-authoritative pricing. The cart summary uses
+      // these so what the buyer sees matches what PayPal will charge.
+      setAppliedAmounts({
+        discountCents: Number(data.discountCents ?? 0),
+        shippingCents: Number(data.shippingCents ?? 0),
+        totalCents: Number(data.totalCents ?? 0),
+      });
       setDiscountCode('');
     } catch {
       setCodeError('Network error. Try again.');
@@ -136,6 +160,7 @@ export function CheckoutClient() {
 
   function handleRemoveCode() {
     setAppliedCode(null);
+    setAppliedAmounts(null);
     setCodeError(null);
   }
 
