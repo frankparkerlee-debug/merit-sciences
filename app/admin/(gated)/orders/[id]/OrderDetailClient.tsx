@@ -26,7 +26,7 @@ function StatusPanel({
   orderId, status,
   paidAt, processingAt, shippedAt, deliveredAt, refundedAt,
   shippingCarrier, trackingNumber, trackingUrl,
-  totalCents, paypalOrderId,
+  totalCents, refundedCents, paypalOrderId,
 }: {
   orderId: string;
   status: OrderStatus;
@@ -39,6 +39,7 @@ function StatusPanel({
   trackingNumber: string | null;
   trackingUrl: string | null;
   totalCents: number;
+  refundedCents: number;
   paypalOrderId: string;
 }) {
   const isRefunded = status === 'REFUNDED';
@@ -113,7 +114,7 @@ function StatusPanel({
           {/* Refund only makes sense once a capture exists */}
           {!isPending && (
             <>
-              <PartialRefundForm orderId={orderId} totalCents={totalCents} />
+              <PartialRefundForm orderId={orderId} totalCents={totalCents} refundedCents={refundedCents} />
               <SecondaryAction action={refundOrder} orderId={orderId} label="Issue full refund" destructive confirm="Refund the full amount to the buyer? This calls PayPal's refund API and cannot be undone." />
             </>
           )}
@@ -125,9 +126,12 @@ function StatusPanel({
 
 /* ─── Partial refund form (admin enters $ amount) ─── */
 
-function PartialRefundForm({ orderId, totalCents }: { orderId: string; totalCents: number }) {
+function PartialRefundForm({ orderId, totalCents, refundedCents }: { orderId: string; totalCents: number; refundedCents: number }) {
   const [result, formAction] = useFormState<ActionResult | null, FormData>(refundOrderPartial, null);
-  const maxDollars = (totalCents / 100).toFixed(2);
+  const remainingCents = Math.max(0, totalCents - refundedCents);
+  const remainingDollars = (remainingCents / 100).toFixed(2);
+  const fullyRefunded = remainingCents === 0;
+
   return (
     <form
       action={formAction}
@@ -140,7 +144,14 @@ function PartialRefundForm({ orderId, totalCents }: { orderId: string; totalCent
       }}
     >
       <input type="hidden" name="orderId" value={orderId} />
-      <p className="text-[11px] tracking-[0.14em] uppercase font-bold text-cobalt">Partial refund</p>
+      <div className="flex items-baseline justify-between">
+        <p className="text-[11px] tracking-[0.14em] uppercase font-bold text-cobalt">Partial refund</p>
+        {refundedCents > 0 && (
+          <p className="text-[10px] text-ink-soft tabular-nums">
+            ${remainingDollars} refundable
+          </p>
+        )}
+      </div>
       <div className="flex gap-2 items-center">
         <span className="text-sm text-ink-soft">$</span>
         <input
@@ -148,11 +159,12 @@ function PartialRefundForm({ orderId, totalCents }: { orderId: string; totalCent
           inputMode="decimal"
           name="amount"
           required
-          placeholder={`max ${maxDollars}`}
-          className="flex-1 rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
+          disabled={fullyRefunded}
+          placeholder={fullyRefunded ? 'Fully refunded' : `max ${remainingDollars}`}
+          className="flex-1 rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt disabled:bg-cobalt/5 disabled:cursor-not-allowed"
         />
       </div>
-      <SubmitButton label="Refund partial amount" variant="destructive" />
+      <SubmitButton label={fullyRefunded ? 'Fully refunded' : 'Refund partial amount'} variant="destructive" />
       {result && <ResultBanner result={result} />}
     </form>
   );

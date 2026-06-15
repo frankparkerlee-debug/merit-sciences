@@ -255,11 +255,39 @@ async function handleCaptureRefunded(event: any) {
 
   if (!captureId) return;
 
-  // Mark the underlying Order as REFUNDED so admin lists reflect reality
-  await prisma.order.updateMany({
-    where: { paypalCaptureId: captureId, status: { not: 'REFUNDED' } },
-    data: { status: 'REFUNDED', refundedAt: new Date() },
+  // Parse refund amount from PayPal payload — used to determine if this
+  // is a full or partial refund and to keep our refundedCents ledger
+  // in sync. PayPal sends amount.value as a string like "12.50".
+  const amountStr: string | undefined = refund?.amount?.value;
+  const refundCents = amountStr ? Math.round(parseFloat(amountStr) * 100) : null;
+
+  // Find the order so we can compute whether this brings the running
+  // total up to the full charge (→ REFUNDED) or leaves a balance
+  // (→ PARTIALLY_REFUNDED).
+  const order = await prisma.order.findFirst({
+    where: { paypalCaptureId: captureId },
+    select: { id: true, totalCents: true, refundedCents: true, status: true },
   });
+  if (!order) return;
+
+  if (order.status !== 'REFUNDED' && refundCents !== null) {
+    const newRefundedCents = Number(order.refundedCents) + refundCents;
+    const isFull = newRefundedCents >= Number(order.totalCents);
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: isFull ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
+        refundedAt: isFull ? new Date() : undefined,
+        refundedCents: { increment: BigInt(refundCents) },
+      },
+    });
+  } else if (order.status !== 'REFUNDED') {
+    // Fallback if PayPal didn't include an amount — assume full
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'REFUNDED', refundedAt: new Date() },
+    });
+  }
 
   const existing = await prisma.orderCommission.findUnique({
     where: { paypalCaptureId: captureId },

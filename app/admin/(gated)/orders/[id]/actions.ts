@@ -141,22 +141,30 @@ export async function refundOrder(_prev: ActionResult | null, formData: FormData
     if (!res.ok) {
       const text = await res.text();
       console.error('[admin/refund] PayPal refund failed', res.status, text);
-      return { ok: false, error: `PayPal refund failed (${res.status}). Check Stripe Dashboard.` };
+      return { ok: false, error: `PayPal refund failed (${res.status}): ${text.slice(0, 200)}` };
     }
   } catch (err: any) {
     console.error('[admin/refund] PayPal API error', err);
     return { ok: false, error: `Refund request failed: ${err?.message ?? 'unknown'}` };
   }
 
-  // Mark our Order — webhook will also do this when PAYMENT.CAPTURE.REFUNDED fires
+  // Mark our Order + claw back affiliate commission immediately
+  // (the webhook also does this on PAYMENT.CAPTURE.REFUNDED but we don't
+  // want to depend on it succeeding — clawback should happen synchronously).
+  const refundCents = Number(order.totalCents) - Number(order.refundedCents);
   await prisma.order.update({
     where: { id: orderId },
-    data: { status: 'REFUNDED', refundedAt: new Date() },
+    data: {
+      status: 'REFUNDED',
+      refundedAt: new Date(),
+      refundedCents: { increment: BigInt(Math.max(0, refundCents)) },
+    },
   });
+  await clawBackCommission(order.paypalCaptureId!);
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
-  return { ok: true, message: 'Refund issued. Funds return to buyer in 5–10 business days.' };
+  return { ok: true, message: 'Full refund issued. Funds return to buyer in 5–10 business days. Affiliate commission clawed back.' };
 }
 
 /* ─── Partial refund ─── */
@@ -179,8 +187,9 @@ export async function refundOrderPartial(_prev: ActionResult | null, formData: F
   if (!order) return { ok: false, error: 'Order not found' };
   if (!order.paypalCaptureId) return { ok: false, error: 'No PayPal capture to refund (order may still be PENDING_PAYMENT)' };
   if (order.status === 'REFUNDED') return { ok: false, error: 'Already fully refunded' };
-  if (amountCents > Number(order.totalCents)) {
-    return { ok: false, error: `Amount exceeds order total (${(Number(order.totalCents) / 100).toFixed(2)})` };
+  const remainingCents = Number(order.totalCents) - Number(order.refundedCents);
+  if (amountCents > remainingCents) {
+    return { ok: false, error: `Amount exceeds refundable balance ($${(remainingCents / 100).toFixed(2)} left after prior refunds)` };
   }
 
   // Call PayPal partial refund
@@ -211,22 +220,59 @@ export async function refundOrderPartial(_prev: ActionResult | null, formData: F
     return { ok: false, error: `Partial refund request failed: ${err?.message ?? 'unknown'}` };
   }
 
-  // Mark the order — webhook would also do this when PARTIALLY_REFUNDED fires
-  const isFullRefund = amountCents === Number(order.totalCents);
+  // Mark the order + increment refund ledger
+  // isFullRefund = this refund brings the running total up to the order total
+  const newRefundedCents = Number(order.refundedCents) + amountCents;
+  const isFullRefund = newRefundedCents >= Number(order.totalCents);
   await prisma.order.update({
     where: { id: orderId },
     data: {
       status: isFullRefund ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
       refundedAt: isFullRefund ? new Date() : undefined,
+      refundedCents: { increment: BigInt(amountCents) },
     },
   });
+
+  // Claw back commission only on FULL refund (partials leave the commission)
+  if (isFullRefund) {
+    await clawBackCommission(order.paypalCaptureId!);
+  }
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
   return {
     ok: true,
-    message: `Refunded $${dollars.toFixed(2)}${isFullRefund ? ' (full)' : ' (partial)'}. Funds return to buyer in 5–10 business days.`,
+    message: `Refunded $${dollars.toFixed(2)}${isFullRefund ? ' (full)' : ' (partial)'}. Funds return to buyer in 5–10 business days.${isFullRefund ? ' Affiliate commission clawed back.' : ''}`,
   };
+}
+
+/**
+ * Claw back the affiliate commission tied to a PayPal capture.
+ * Idempotent — webhook calls this same logic; double-call is a no-op.
+ */
+async function clawBackCommission(paypalCaptureId: string): Promise<void> {
+  const commission = await prisma.orderCommission.findUnique({
+    where: { paypalCaptureId },
+  });
+  if (!commission || commission.status === 'CLAWED_BACK') return;
+
+  await prisma.$transaction([
+    prisma.orderCommission.update({
+      where: { id: commission.id },
+      data: {
+        status: 'CLAWED_BACK',
+        clawedBackAt: new Date(),
+        clawbackReason: 'Refund issued via admin',
+      },
+    }),
+    prisma.customerAffiliateLink.update({
+      where: { id: commission.customerLinkId },
+      data: {
+        totalOrders: { decrement: 1 },
+        totalCommissionCents: { decrement: commission.commissionCents },
+      },
+    }),
+  ]);
 }
 
 /* ─── Force-resend customer confirmation email (testing/recovery) ─── */

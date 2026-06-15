@@ -331,6 +331,10 @@ model Order {
   canceledAt        DateTime?
   refundedAt        DateTime?
 
+  // Running total of refunds against this order (in cents). Incremented
+  // on every full or partial refund. Net amount paid = totalCents - refundedCents.
+  refundedCents     BigInt      @default(0)
+
   // Relations
   lines             OrderLine[]
   lookupTokens      OrderLookupToken[]

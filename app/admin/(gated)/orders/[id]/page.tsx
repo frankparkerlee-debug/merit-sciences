@@ -85,9 +85,23 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               )}
               <div className="flex justify-between"><span className="text-ink-soft">Shipping</span><span className="tabular-nums">{Number(order.shippingCents) === 0 ? 'Free' : fmtMoney(order.shippingCents)}</span></div>
               <div className="flex justify-between font-bold pt-2 border-t border-cobalt/10 mt-2">
-                <span>Total paid</span>
+                <span>Total charged</span>
                 <span className="tabular-nums font-display text-lg">{fmtMoney(order.totalCents)}</span>
               </div>
+              {Number(order.refundedCents) > 0 && (
+                <>
+                  <div className="flex justify-between text-rose-800 font-bold">
+                    <span>Refunded</span>
+                    <span className="tabular-nums">-{fmtMoney(order.refundedCents)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold pt-2 border-t border-cobalt/10 mt-2">
+                    <span>Net paid</span>
+                    <span className="tabular-nums font-display text-lg">
+                      {fmtMoney(Number(order.totalCents) - Number(order.refundedCents))}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
@@ -123,6 +137,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             trackingNumber={order.trackingNumber}
             trackingUrl={order.trackingUrl}
             totalCents={Number(order.totalCents)}
+            refundedCents={Number(order.refundedCents)}
             paypalOrderId={order.paypalOrderId}
           />
 
