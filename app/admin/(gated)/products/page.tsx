@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/db';
 import type { ProductStatus, ProductChannel } from '@/lib/generated/prisma/index.js';
+import { productImage } from '@/lib/product-types';
 import { SeedButton } from './SeedButton';
 
 export const metadata = { title: 'Products — Merit Admin' };
@@ -167,18 +168,14 @@ export default async function AdminProductsPage({
                 className="grid grid-cols-[64px_1fr_110px_110px_120px_100px_110px] gap-3 px-5 py-3 border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition items-center text-sm min-w-[980px]"
               >
                 <div className="w-12 h-12 rounded-lg overflow-hidden bg-cream/60 flex items-center justify-center">
-                  {p.imageUrl ? (
-                    <Image
-                      src={p.imageUrl}
-                      alt={p.title}
-                      width={48}
-                      height={48}
-                      className="object-cover w-full h-full"
-                      unoptimized
-                    />
-                  ) : (
-                    <span className="text-[9px] text-ink-soft">no img</span>
-                  )}
+                  <Image
+                    src={productImage(p.imageUrl)}
+                    alt={p.title}
+                    width={48}
+                    height={48}
+                    className={`w-full h-full ${p.imageUrl ? 'object-cover' : 'object-contain p-1'}`}
+                    unoptimized
+                  />
                 </div>
                 <div>
                   <div className="text-ink font-bold truncate">{p.title}</div>

@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { updateProduct, deleteProduct, type ActionResult } from '../actions';
+import { ImageUploader } from './ImageUploader';
 
 type ProductFormData = {
   handle: string;
@@ -253,23 +254,35 @@ export function ProductForm({ product }: { product: ProductFormData }) {
 
         {/* Media */}
         <Card label="Media">
-          <Field label="Primary image URL">
-            <input
-              type="url"
-              name="imageUrl"
-              defaultValue={product.imageUrl ?? ''}
-              className={inputCls}
-              placeholder="https://cdn…/aod-9604_1200x.png"
-            />
-          </Field>
-          <Field label="Gallery image URLs" hint="One URL per line OR comma-separated.">
-            <textarea
-              name="images"
-              rows={4}
-              defaultValue={product.images.join('\n')}
-              className={`${textareaCls} font-mono text-xs`}
-            />
-          </Field>
+          <ImageUploader
+            handle={product.handle}
+            initialPrimary={product.imageUrl}
+            initialGallery={product.images}
+          />
+          <details className="mt-4">
+            <summary className="text-[10px] tracking-[0.18em] uppercase font-bold text-ink-soft cursor-pointer hover:text-ink">
+              Advanced — paste URLs directly
+            </summary>
+            <div className="mt-3 space-y-3">
+              <Field label="Primary image URL">
+                <input
+                  type="url"
+                  name="imageUrl"
+                  defaultValue={product.imageUrl ?? ''}
+                  className={inputCls}
+                  placeholder="https://cdn…/aod-9604_1200x.png"
+                />
+              </Field>
+              <Field label="Gallery image URLs" hint="One URL per line OR comma-separated.">
+                <textarea
+                  name="images"
+                  rows={4}
+                  defaultValue={product.images.join('\n')}
+                  className={`${textareaCls} font-mono text-xs`}
+                />
+              </Field>
+            </div>
+          </details>
         </Card>
       </div>
 

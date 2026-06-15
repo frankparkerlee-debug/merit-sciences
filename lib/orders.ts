@@ -491,16 +491,17 @@ export async function getCrossSellProducts(
         imageUrl: true,
       },
     });
-    return products
-      .filter((p) => p.imageUrl)
-      .map((p) => ({
-        handle: p.handle,
-        title: p.title,
-        oneLiner: p.oneLiner.length > 60 ? p.oneLiner.slice(0, 57) + '...' : p.oneLiner,
-        priceCents: p.priceCents,
-        imageUrl: p.imageUrl!,
-        url: `${siteUrl()}/products/${p.handle}`,
-      }));
+    return products.map((p) => ({
+      handle: p.handle,
+      title: p.title,
+      oneLiner: p.oneLiner.length > 60 ? p.oneLiner.slice(0, 57) + '...' : p.oneLiner,
+      priceCents: p.priceCents,
+      // Emails need absolute URLs — resolve placeholder against siteUrl()
+      // so cross-sell cards never have broken images. Real photos already
+      // come in as absolute URLs from Supabase Storage.
+      imageUrl: p.imageUrl || `${siteUrl()}/products/placeholder-vial.svg`,
+      url: `${siteUrl()}/products/${p.handle}`,
+    }));
   } catch (err) {
     console.warn('[getCrossSellProducts] DB query failed, returning empty', err);
     return [];

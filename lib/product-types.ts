@@ -44,3 +44,19 @@ export type Product = {
 export function money(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
+
+/**
+ * Resolve a product image URL with a Merit-branded placeholder fallback.
+ * Use this everywhere a product image is rendered so newly created
+ * draft products (no imageUrl yet) still show a clean visual instead
+ * of broken-image icons or empty slots.
+ *
+ * The placeholder SVG lives at /public/products/placeholder-vial.svg
+ * and stays consistent across catalog cards, PDPs, cart drawer, emails,
+ * cross-sell modules, etc.
+ */
+export const PRODUCT_PLACEHOLDER_IMAGE = '/products/placeholder-vial.svg';
+
+export function productImage(imageUrl: string | null | undefined): string {
+  return imageUrl || PRODUCT_PLACEHOLDER_IMAGE;
+}

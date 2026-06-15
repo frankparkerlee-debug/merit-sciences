@@ -8,7 +8,7 @@ import {
   familyLabel,
   getFamily,
 } from '@/lib/catalog-meta';
-import { money } from '@/lib/product-types';
+import { money, productImage } from '@/lib/product-types';
 import { StackAddButton } from './StackAddButton';
 
 type Props = { params: { slug: string } };
@@ -99,15 +99,13 @@ export default async function StackPage({ params }: Props) {
               >
                 {resolved.items.map((p) => (
                   <div key={p.handle} className="relative w-full h-full">
-                    {p.imageUrl && (
-                      <Image
-                        src={p.imageUrl}
-                        alt={p.title}
-                        fill
-                        sizes="(max-width: 1024px) 50vw, 25vw"
-                        className="object-contain"
-                      />
-                    )}
+                    <Image
+                      src={productImage(p.imageUrl)}
+                      alt={p.title}
+                      fill
+                      sizes="(max-width: 1024px) 50vw, 25vw"
+                      className="object-contain"
+                    />
                   </div>
                 ))}
               </div>
@@ -244,15 +242,13 @@ export default async function StackPage({ params }: Props) {
               >
                 {/* Thumb */}
                 <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-xl bg-gradient-to-br from-cream to-white border border-cobalt/10 flex-shrink-0 overflow-hidden">
-                  {p.imageUrl && (
-                    <Image
-                      src={p.imageUrl}
-                      alt={p.title}
-                      fill
-                      sizes="120px"
-                      className="object-contain p-3 group-hover:scale-[1.04] transition-transform duration-500"
-                    />
-                  )}
+                  <Image
+                    src={productImage(p.imageUrl)}
+                    alt={p.title}
+                    fill
+                    sizes="120px"
+                    className="object-contain p-3 group-hover:scale-[1.04] transition-transform duration-500"
+                  />
                 </div>
 
                 {/* Info */}

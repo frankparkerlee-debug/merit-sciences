@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import type { Product } from '@/lib/product-types';
-import { money } from '@/lib/product-types';
+import { money, productImage } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
 import Link from 'next/link';
 
@@ -26,24 +26,14 @@ export function BuyBox({ product }: { product: Product }) {
       {/* Gallery */}
       <div>
         <div className="aspect-square rounded-xl border border-border-soft bg-gradient-to-br from-white to-cream relative overflow-hidden">
-          {product.imageUrl ? (
-            <Image
-              src={product.imageUrl}
-              alt={product.title}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-contain p-8"
-            />
-          ) : (
-            <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[22%] aspect-[1/2.6] rounded-lg shadow-xl"
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #F4F1EA 100%)',
-                border: '1px solid rgba(11,15,25,0.08)',
-              }}
-            />
-          )}
+          <Image
+            src={productImage(product.imageUrl)}
+            alt={product.title}
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-contain p-8"
+          />
           {product.shopifySuspended && (
             <span className="absolute top-3 right-3 bg-cobalt text-white text-[10px] font-bold tracking-[0.12em] uppercase px-3 py-1.5 rounded z-10">
               Render-only listing

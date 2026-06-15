@@ -7,6 +7,12 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
     ],
+    // Required for the Merit-branded placeholder vial SVG fallback used
+    // when a product has no imageUrl yet. The SVG is internally authored
+    // — not user-supplied — so the loosening of next/image's default
+    // SVG block is safe.
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async headers() {
     return [

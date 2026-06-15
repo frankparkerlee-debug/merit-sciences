@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export type ActionResult =
   | { ok: true; message: string }
@@ -236,6 +237,101 @@ export async function deleteProduct(_prev: ActionResult | null, formData: FormDa
   revalidatePath('/admin/products');
   revalidatePath('/catalog');
   redirect('/admin/products');
+}
+
+/* ─── Image upload (Supabase Storage) ─── */
+
+export type UploadImageResult =
+  | { ok: true; publicUrl: string; field: 'imageUrl' | 'images' }
+  | { ok: false; error: string };
+
+/**
+ * Upload a product image to Supabase Storage bucket `product-images`,
+ * then immediately persist the resulting public URL onto the product
+ * row. `field` controls whether the upload becomes the primary image
+ * or appends to the gallery.
+ *
+ * The bucket must exist and be public-readable. Create it once in the
+ * Supabase dashboard: Storage → New bucket → name `product-images` →
+ * Public bucket ON.
+ */
+export async function uploadProductImage(formData: FormData): Promise<UploadImageResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const handle = String(formData.get('handle') ?? '').trim();
+  const field = (String(formData.get('field') ?? 'imageUrl') === 'images'
+    ? 'images'
+    : 'imageUrl') as 'imageUrl' | 'images';
+  const file = formData.get('file') as File | null;
+
+  if (!handle) return { ok: false, error: 'Missing handle.' };
+  if (!file) return { ok: false, error: 'No file provided.' };
+  if (file.size === 0) return { ok: false, error: 'Empty file.' };
+  if (file.size > 8 * 1024 * 1024) return { ok: false, error: 'Max file size is 8 MB.' };
+
+  const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+  if (!allowed.includes(file.type)) {
+    return { ok: false, error: `Unsupported type ${file.type}. Use PNG / JPEG / WebP / SVG.` };
+  }
+
+  const ext =
+    file.type === 'image/png'      ? 'png'  :
+    file.type === 'image/jpeg'     ? 'jpg'  :
+    file.type === 'image/webp'     ? 'webp' :
+    file.type === 'image/svg+xml'  ? 'svg'  : 'bin';
+
+  // Filename is `${handle}/${timestamp}-${random}.${ext}` — collision-free
+  // and human-debuggable in the Supabase dashboard.
+  const ts = Date.now();
+  const rand = Math.random().toString(36).slice(2, 8);
+  const objectPath = `${handle}/${ts}-${rand}.${ext}`;
+
+  try {
+    const sb = supabaseAdmin();
+    const buf = Buffer.from(await file.arrayBuffer());
+    const { error: upErr } = await sb.storage
+      .from('product-images')
+      .upload(objectPath, buf, {
+        contentType: file.type,
+        upsert: false,
+      });
+    if (upErr) {
+      console.error('[uploadProductImage] supabase upload failed', upErr);
+      return { ok: false, error: upErr.message || 'Upload failed.' };
+    }
+    const { data: pub } = sb.storage.from('product-images').getPublicUrl(objectPath);
+    const publicUrl = pub.publicUrl;
+    if (!publicUrl) return { ok: false, error: 'Could not resolve public URL.' };
+
+    // Persist onto product row immediately
+    if (field === 'imageUrl') {
+      await prisma.product.update({
+        where: { handle },
+        data: { imageUrl: publicUrl },
+      });
+    } else {
+      const existing = await prisma.product.findUnique({
+        where: { handle },
+        select: { images: true },
+      });
+      const nextImages = [...(existing?.images ?? []), publicUrl];
+      await prisma.product.update({
+        where: { handle },
+        data: { images: nextImages },
+      });
+    }
+
+    revalidatePath('/admin/products');
+    revalidatePath(`/admin/products/${handle}`);
+    revalidatePath(`/products/${handle}`);
+    revalidatePath('/catalog');
+
+    return { ok: true, publicUrl, field };
+  } catch (err: any) {
+    console.error('[uploadProductImage] threw', err);
+    return { ok: false, error: err?.message || 'Upload failed unexpectedly.' };
+  }
 }
 
 /* ─── helpers ─── */

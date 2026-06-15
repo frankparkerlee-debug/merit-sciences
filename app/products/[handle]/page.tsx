@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProduct, listProducts } from '@/lib/catalog';
+import { productImage } from '@/lib/product-types';
 import {
   getFamily,
   familyLabel,
@@ -970,15 +971,13 @@ export default async function ProductPage({ params }: Props) {
                   className="group block bg-cream rounded-2xl overflow-hidden border border-cobalt/8 hover:border-cobalt/30 transition-colors"
                 >
                   <div className="relative aspect-square bg-cream overflow-hidden">
-                    {p.imageUrl && (
-                      <Image
-                        src={p.imageUrl}
-                        alt={p.title}
-                        fill
-                        sizes="(max-width: 640px) 50vw, 25vw"
-                        className="object-contain p-7 group-hover:scale-[1.04] transition-transform duration-500"
-                      />
-                    )}
+                    <Image
+                      src={productImage(p.imageUrl)}
+                      alt={p.title}
+                      fill
+                      sizes="(max-width: 640px) 50vw, 25vw"
+                      className="object-contain p-7 group-hover:scale-[1.04] transition-transform duration-500"
+                    />
                   </div>
                   <div className="p-5">
                     <h3 className="font-display text-base lg:text-lg font-extrabold text-ink mb-1 tracking-tight leading-tight">
@@ -1057,16 +1056,14 @@ function ProductGallery({
               'radial-gradient(ellipse 55% 60% at center, rgba(80,120,255,0.30) 0%, rgba(46,77,219,0.14) 40%, transparent 75%)',
           }}
         />
-        {product.imageUrl && (
-          <Image
-            src={product.imageUrl}
-            alt={product.title}
-            fill
-            priority
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-contain p-5 sm:p-10 lg:p-14 relative z-10"
-          />
-        )}
+        <Image
+          src={productImage(product.imageUrl)}
+          alt={product.title}
+          fill
+          priority
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          className="object-contain p-5 sm:p-10 lg:p-14 relative z-10"
+        />
         {/* On-image badges + "Pharmacy Verified" stamp removed — they were
             competing with the vial. The same trust signals live in:
             - The buybox stars-row + family eyebrow (right column)

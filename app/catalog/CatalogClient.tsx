@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
-import { money } from '@/lib/product-types';
+import { money, productImage } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
 import { stackToCartLine } from '@/lib/catalog-meta';
 import type { Family, StackTemplate } from './page';
@@ -378,15 +378,13 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
                   className="group block bg-white rounded-2xl overflow-hidden border border-cobalt/8 hover:border-cobalt/30 transition-colors"
                 >
                   <div className="relative aspect-[5/3] bg-cream overflow-hidden">
-                    {p.imageUrl && (
-                      <Image
-                        src={p.imageUrl}
-                        alt={p.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 33vw"
-                        className="object-contain p-6 group-hover:scale-[1.04] transition-transform duration-500"
-                      />
-                    )}
+                    <Image
+                      src={productImage(p.imageUrl)}
+                      alt={p.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                      className="object-contain p-6 group-hover:scale-[1.04] transition-transform duration-500"
+                    />
                   </div>
                   <div className="p-5">
                     <h3 className="font-display text-base font-extrabold text-ink mb-1">{p.title}</h3>
@@ -656,15 +654,13 @@ function ProductCard({
         className="relative aspect-square bg-gradient-to-br from-white to-[#EDE8DD]/40 overflow-hidden"
         aria-label={`Quick view ${p.title}`}
       >
-        {p.imageUrl && (
-          <Image
-            src={p.imageUrl}
-            alt={p.title}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-contain p-5 sm:p-8 lg:p-10 group-hover:scale-[1.04] transition-transform duration-500"
-          />
-        )}
+        <Image
+          src={productImage(p.imageUrl)}
+          alt={p.title}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-contain p-5 sm:p-8 lg:p-10 group-hover:scale-[1.04] transition-transform duration-500"
+        />
         <span className="hidden sm:inline-flex absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-ink/90 text-white text-[10px] font-bold tracking-[0.16em] uppercase px-3 py-1 rounded-full whitespace-nowrap">
           Quick view
         </span>
@@ -898,15 +894,13 @@ function QuickViewModal({
           {/* Image side — compact on mobile (~35vh) so the buybox fits
               alongside without forcing a scroll. Full square on desktop. */}
           <div className="relative aspect-[5/3] md:aspect-square max-h-[34vh] md:max-h-none bg-gradient-to-br from-white to-cream overflow-hidden">
-            {product.imageUrl && (
-              <Image
-                src={product.imageUrl}
-                alt={product.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-contain p-6 md:p-10"
-              />
-            )}
+            <Image
+              src={productImage(product.imageUrl)}
+              alt={product.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-contain p-6 md:p-10"
+            />
           </div>
 
           {/* Detail side */}

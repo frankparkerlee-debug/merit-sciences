@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { productImage } from '@/lib/product-types';
 import {
   PayPalScriptProvider,
   PayPalButtons,
@@ -937,13 +938,9 @@ function FieldShell({ label, children }: { label: string; children: React.ReactN
 function CartRow({ line }: { line: CartLine }) {
   return (
     <li className="flex gap-3 px-5 sm:px-6 py-3.5 items-center">
-      {line.imageUrl ? (
-        <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-cobalt/5">
-          <Image src={line.imageUrl} alt="" fill className="object-cover" sizes="48px" />
-        </div>
-      ) : (
-        <div className="w-12 h-12 shrink-0 rounded-lg bg-cobalt/10" />
-      )}
+      <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-cobalt/5">
+        <Image src={productImage(line.imageUrl)} alt="" fill className="object-contain p-1" sizes="48px" />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-ink truncate">{line.title}</p>
         <p className="text-[11px] text-ink-soft truncate">

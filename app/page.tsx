@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProduct, money } from '@/lib/catalog';
+import { productImage } from '@/lib/product-types';
 
 // Force-dynamic until Supabase pooling is moved to transaction mode
 // (port 6543 + ?pgbouncer=true). With session mode capped at 15
@@ -480,15 +481,13 @@ export default async function HomePage() {
                   >
                     {/* Vial image area — cream tile with subtle warmth */}
                     <div className="relative aspect-square bg-gradient-to-br from-white to-[#EDE8DD]/40 overflow-hidden">
-                      {p.imageUrl && (
-                        <Image
-                          src={p.imageUrl}
-                          alt={p.title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                          className="object-contain p-7 lg:p-9 group-hover:scale-[1.04] transition-transform duration-500"
-                        />
-                      )}
+                      <Image
+                        src={productImage(p.imageUrl)}
+                        alt={p.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-contain p-7 lg:p-9 group-hover:scale-[1.04] transition-transform duration-500"
+                      />
                       {/* Pharmacy-verified badge — top-left */}
                       <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-cobalt/20 text-[9px] font-bold tracking-widest uppercase text-cobalt px-2.5 py-1 rounded">
                         <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />

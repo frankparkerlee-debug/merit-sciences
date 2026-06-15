@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useCart } from '@/lib/cart';
-import { money } from '@/lib/product-types';
+import { money, productImage } from '@/lib/product-types';
 
 /**
  * Cart slide-in panel.
@@ -305,21 +305,13 @@ function CartLineRow({
           For stacks: shows the first component's image with a "+N" overlay
           so the multi-compound nature is visible at a glance. */}
       <div className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg bg-gradient-to-br from-cream to-white border border-cobalt/10 flex-shrink-0 overflow-hidden">
-        {line.imageUrl ? (
-          <Image
-            src={line.imageUrl}
-            alt={line.title}
-            fill
-            sizes="80px"
-            className="object-contain p-1.5"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-cobalt/40">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M9 2h6v3h-1v3l3.5 8a3 3 0 0 1-2.8 4.1H7.3A3 3 0 0 1 4.5 16L8 8V5H7V2z" />
-            </svg>
-          </div>
-        )}
+        <Image
+          src={productImage(line.imageUrl)}
+          alt={line.title}
+          fill
+          sizes="80px"
+          className="object-contain p-1.5"
+        />
         {isStack && extraComponents > 0 && (
           <span className="absolute bottom-0.5 right-0.5 px-1.5 py-0.5 rounded-md bg-cobalt text-white text-[9px] font-black leading-none shadow-sm">
             +{extraComponents}
