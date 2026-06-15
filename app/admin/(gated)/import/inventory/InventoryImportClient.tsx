@@ -92,13 +92,22 @@ export function InventoryImportClient() {
         <>
           <div className="rounded-2xl border border-cobalt/15 bg-white p-6">
             <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">— Summary</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
               <Stat label="Total rows" value={diff.totalRows} />
               <Stat label="To update" value={updateRows.length} accent="cobalt" />
-              <Stat label="To create" value={diff.toCreateCount} accent="emerald" />
+              <Stat label="New product" value={diff.toCreateCount} accent="emerald" />
+              <Stat label="New size of existing" value={diff.toCreateAsSizeVariantCount} accent="amber" />
               <Stat label="Already in sync" value={noChangeRows.length} accent="emerald" />
               <Stat label="No data" value={diff.noDataCount} accent="rose" />
             </div>
+            {diff.toCreateAsSizeVariantCount > 0 && (
+              <p className="mt-3 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
+                <strong>Heads up:</strong> {diff.toCreateAsSizeVariantCount} row{diff.toCreateAsSizeVariantCount === 1 ? '' : 's'} look like a different SIZE of an
+                existing product (e.g. Retatrutide 10mg vs the existing Retatrutide 30mg). For now
+                each size becomes its own draft so the importer never overwrites the wrong row. Once
+                the variant data model lands these will merge into one parent product with size variants.
+              </p>
+            )}
             {willApplyCount > 0 && (
               <button
                 type="button"
@@ -156,11 +165,12 @@ export function InventoryImportClient() {
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: number; accent?: 'cobalt' | 'emerald' | 'rose' }) {
+function Stat({ label, value, accent }: { label: string; value: number; accent?: 'cobalt' | 'emerald' | 'rose' | 'amber' }) {
   const cls =
     accent === 'cobalt' ? 'text-cobalt' :
     accent === 'emerald' ? 'text-emerald-700' :
     accent === 'rose' ? 'text-rose-700' :
+    accent === 'amber' ? 'text-amber-700' :
     'text-ink';
   return (
     <div>
@@ -206,8 +216,15 @@ function DiffTable({
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} className="border-b border-cobalt/5">
-                <td className="py-2 pr-3 font-mono text-cobalt font-bold">/{r.newHandle}</td>
+              <tr key={i} className={`border-b border-cobalt/5 ${r.sizeVariantOf ? 'bg-amber-50/40' : ''}`}>
+                <td className="py-2 pr-3 font-mono text-cobalt font-bold">
+                  /{r.newHandle}
+                  {r.sizeVariantOf && (
+                    <div className="text-[10px] text-amber-800 font-normal tracking-wide mt-0.5">
+                      new size of /{r.sizeVariantOf.handle} ({r.sizeVariantOf.vialSize})
+                    </div>
+                  )}
+                </td>
                 <td className="py-2 pr-3 text-ink">{r.row.productName}</td>
                 <td className="py-2 pr-3 text-ink-soft">{r.row.vialSize}</td>
                 <td className="py-2 pr-3 text-right tabular-nums text-ink-soft">{r.row.unitsOnHand}</td>

@@ -26,6 +26,12 @@ export type Diff = {
     action: 'update' | 'create' | 'no-data';
     // For 'create' rows, the handle that will be generated
     newHandle?: string;
+    // For 'create' rows whose compound matches an existing product but
+    // whose vialSize doesn't — the handle of the sibling product. The UI
+    // can label this row as "new SIZE of an existing product" so the
+    // admin doesn't fear a duplicate. Once the ProductVariant model
+    // lands these will collapse to variants of one parent product.
+    sizeVariantOf?: { handle: string; title: string; vialSize: string };
     changes: {
       stockQty?: { from: number; to: number };
       priceCents?: { from: number; to: number };
@@ -36,6 +42,7 @@ export type Diff = {
   totalRows: number;
   matchedCount: number;
   toCreateCount: number;
+  toCreateAsSizeVariantCount: number;
   noDataCount: number;
 };
 
@@ -150,6 +157,7 @@ export async function parseInventoryCsv(_prev: any, formData: FormData): Promise
     totalRows: rows.length,
     matchedCount: 0,
     toCreateCount: 0,
+    toCreateAsSizeVariantCount: 0,
     noDataCount: 0,
   };
 
@@ -187,13 +195,28 @@ export async function parseInventoryCsv(_prev: any, formData: FormData): Promise
       // the inventory sheet and shouldn't become products.
       const newHandle = uniqueHandle(slugify(`${row.productName} ${row.vialSize}`), handlesInUseAfterImport);
       handlesInUseAfterImport.add(newHandle);
-      diff.toCreateCount++;
+
+      // Detect "sibling size" — same compound, different vialSize. The
+      // admin should see "Retatrutide 30mg → new SIZE of existing
+      // Retatrutide (60mg)" rather than fearing a duplicate. Once the
+      // ProductVariant model lands these collapse into variants of one
+      // parent product.
+      const sibling = findSizeSibling(row, allProducts);
+      if (sibling) {
+        diff.toCreateAsSizeVariantCount++;
+      } else {
+        diff.toCreateCount++;
+      }
+
       diff.rows.push({
         row,
         matchedHandle: null,
         matchedTitle: null,
         action: 'create',
         newHandle,
+        sizeVariantOf: sibling
+          ? { handle: sibling.handle, title: sibling.title, vialSize: sibling.vialSize }
+          : undefined,
         changes: {
           stockQty: { from: 0, to: row.unitsOnHand },
           priceCents: { from: 0, to: row.retailPriceCents },
@@ -340,31 +363,34 @@ function findProductMatch<P extends { handle: string; title: string; compound: s
   row: ParsedRow,
   products: P[],
 ): P | null {
-  // Strategy: normalize all candidate strings + score by overlap on compound name
-  // and vial size. Inventory SKU "BPC 10mg + TB 10mg (Wolverine) | 20mg" matches
-  // product handle "bpc-157-tb-500" via the compound name "Wolverine" overlap
-  // (which is what we display: "Wolverine Blend").
+  // Match in two stages so size mismatches never silently overwrite pricing:
+  //
+  //   1. Score products on compound/title/handle overlap.
+  //   2. From scored candidates, require an EXACT vial-size match.
+  //
+  // The inventory sheet has multiple rows per compound (Retatrutide 10mg,
+  // 20mg, 30mg, 60mg) — without strict size enforcement, the importer
+  // collapses them all onto whichever product wins on compound score and
+  // last-write wins on price. That's the bug behind "30mg got 60mg
+  // pricing". A row whose size doesn't match any product is returned as
+  // "no match" so the apply step creates a new draft instead of clobbering.
   const targetCompound = normalize(row.productName);
-  const targetSize = normalize(row.vialSize);
+  const targetSize = normalizeSize(row.vialSize);
 
-  let best: { product: typeof products[number]; score: number } | null = null;
+  type Scored = { product: typeof products[number]; score: number };
+  const scored: Scored[] = [];
 
   for (const p of products) {
     let score = 0;
     const pCompound = normalize(p.compound);
     const pTitle = normalize(p.title);
-    const pSize = normalize(p.vialSize);
 
-    // Compound name match (most reliable)
+    // Compound name match (most reliable signal of "same molecule")
     if (pCompound && targetCompound.includes(pCompound)) score += 10;
     if (pTitle && targetCompound.includes(extractRoot(pTitle))) score += 7;
     if (targetCompound.includes(extractRoot(pCompound))) score += 5;
 
-    // Vial size match
-    if (pSize && targetSize === pSize) score += 5;
-    if (pSize && targetSize.includes(pSize)) score += 3;
-
-    // Special-case Wolverine / KLOW / GLOW blend names
+    // Special-case Wolverine / KLOW blend names
     if (row.productName.toLowerCase().includes('wolverine') && p.handle.includes('bpc-157-tb-500')) {
       score += 15;
     }
@@ -372,16 +398,73 @@ function findProductMatch<P extends { handle: string; title: string; compound: s
       score += 15;
     }
 
-    if (score > 0 && (!best || score > best.score)) {
+    if (score >= 7) scored.push({ product: p, score });
+  }
+
+  if (scored.length === 0) return null;
+
+  // From compound-matching candidates, require exact size equality.
+  // "30mg" === "30 mg" after normalizeSize() strips whitespace.
+  const sizeExact = scored.filter((s) => normalizeSize(s.product.vialSize) === targetSize);
+  if (sizeExact.length === 0) return null;
+
+  // If multiple products share the same compound AND size (shouldn't happen,
+  // but archived duplicates exist in legacy data), pick the highest scorer.
+  sizeExact.sort((a, b) => b.score - a.score);
+  return sizeExact[0].product;
+}
+
+/**
+ * Find an existing product that shares the row's compound but NOT its
+ * vialSize. Used to label new-draft rows as "new SIZE of an existing
+ * product" so the admin understands the relationship at preview time.
+ *
+ * Returns the best compound match (highest score) that has a DIFFERENT
+ * vialSize. Returns null if no compound match exists (truly new product).
+ */
+function findSizeSibling<P extends { handle: string; title: string; compound: string; vialSize: string }>(
+  row: ParsedRow,
+  products: P[],
+): P | null {
+  const targetCompound = normalize(row.productName);
+  const targetSize = normalizeSize(row.vialSize);
+
+  let best: { product: P; score: number } | null = null;
+
+  for (const p of products) {
+    if (normalizeSize(p.vialSize) === targetSize) continue; // not a sibling — same size
+
+    let score = 0;
+    const pCompound = normalize(p.compound);
+    const pTitle = normalize(p.title);
+
+    if (pCompound && targetCompound.includes(pCompound)) score += 10;
+    if (pTitle && targetCompound.includes(extractRoot(pTitle))) score += 7;
+    if (targetCompound.includes(extractRoot(pCompound))) score += 5;
+
+    if (row.productName.toLowerCase().includes('wolverine') && p.handle.includes('bpc-157-tb-500')) {
+      score += 15;
+    }
+    if (row.productName.toLowerCase().includes('klow') && p.handle === 'klow') {
+      score += 15;
+    }
+
+    if (score >= 7 && (!best || score > best.score)) {
       best = { product: p, score };
     }
   }
 
-  return best && best.score >= 7 ? best.product : null;
+  return best?.product ?? null;
 }
 
 function normalize(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function normalizeSize(s: string): string {
+  // "30mg", "30 mg", "30MG", "30 MG" all collapse to "30mg" so the
+  // exact-equality check ignores whitespace and case.
+  return s.toLowerCase().replace(/\s+/g, '').trim();
 }
 
 function extractRoot(s: string): string {
