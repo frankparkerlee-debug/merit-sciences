@@ -164,13 +164,11 @@ export function CheckoutClient() {
     setCodeError(null);
   }
 
-  // Apple Pay requires PayPal domain verification (the
-  // apple-developer-merchantid-domain-association file at /.well-known/
-  // must be reachable from the verified domain). Flip to `true` once:
-  //   1. meritsciences.com DNS has cut over from Shopify to Render
-  //   2. PayPal Verify Domain has succeeded
-  // Then redeploy. (Single-line code change, no env-var dance.)
-  const APPLE_PAY_ENABLED = false;
+  // Apple Pay requires PayPal domain verification.
+  // ✓ meritsciences.com DNS cut over from Shopify to Render
+  // ✓ apple-developer-merchantid-domain-association file hosted at /.well-known/
+  // ✓ PayPal "Verify Domain" succeeded on 2026-06-15
+  const APPLE_PAY_ENABLED = true;
 
   // PayPal SDK options.
   //
