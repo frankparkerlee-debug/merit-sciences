@@ -146,12 +146,20 @@ export default async function AdminOrdersPage({
   return (
     <main className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-6">
-        <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">— Orders</p>
-        <h1 className="font-display font-black text-ink tracking-[-0.025em] text-3xl sm:text-4xl">
-          {totalCount.toLocaleString()} {filter.status ? filter.label.toLowerCase() : 'orders'}
-          <span className="text-cobalt">.</span>
-        </h1>
+      <div className="flex items-baseline justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">— Orders</p>
+          <h1 className="font-display font-black text-ink tracking-[-0.025em] text-3xl sm:text-4xl">
+            {totalCount.toLocaleString()} {filter.status ? filter.label.toLowerCase() : 'orders'}
+            <span className="text-cobalt">.</span>
+          </h1>
+        </div>
+        <Link
+          href="/admin/import/orders"
+          className="bg-white border border-cobalt/20 text-ink px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:border-cobalt/40 transition"
+        >
+          Import CSV
+        </Link>
       </div>
 
       {/* KPI strip — today's metrics */}
