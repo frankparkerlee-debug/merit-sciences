@@ -253,3 +253,80 @@ export async function handleShipNotify(params: {
 
   return { ok: true };
 }
+
+/* ─── Delivery notification handler ─── */
+
+/**
+ * Process a delivery confirmation from ShipStation (or any source).
+ * Lookup by tracking number first (most reliable), fall back to
+ * order number. Idempotent: no-op if already DELIVERED.
+ *
+ * Records a MARKED_DELIVERED event on the order activity timeline so
+ * we have an audit trail of when the carrier confirmed delivery vs
+ * when the admin/system marked it.
+ *
+ * Does NOT fire any customer email — the customer already knows the
+ * package arrived. The post-delivery follow-up email is sent 7 days
+ * later via a separate cron job (Push 4 in the rollout plan).
+ */
+export async function handleDeliveryNotify(params: {
+  order_number?: string | null;
+  tracking_number?: string | null;
+  delivered_at?: string | null;
+}): Promise<{ ok: boolean; error?: string; orderId?: string }> {
+  const orderNumber = String(params.order_number ?? '').trim();
+  const trackingNumber = String(params.tracking_number ?? '').trim();
+  const deliveredAtStr = String(params.delivered_at ?? '').trim();
+
+  if (!orderNumber && !trackingNumber) {
+    return { ok: false, error: 'order_number or tracking_number required' };
+  }
+
+  // Prefer tracking number — more stable across order/shipment splits
+  let order = null;
+  if (trackingNumber) {
+    order = await prisma.order.findFirst({
+      where: { trackingNumber },
+    });
+  }
+  if (!order && orderNumber) {
+    order = await prisma.order.findUnique({
+      where: { paypalOrderId: orderNumber },
+    });
+  }
+  if (!order) {
+    return { ok: false, error: `order not found (tracking: ${trackingNumber}, order: ${orderNumber})` };
+  }
+
+  // Idempotent — ShipStation can re-fire webhooks; don't double-record
+  if (order.status === 'DELIVERED') {
+    return { ok: true, orderId: order.id }; // already delivered
+  }
+  // Don't transition terminal states
+  if (order.status === 'CANCELED' || order.status === 'REFUNDED') {
+    return { ok: true, orderId: order.id }; // no-op
+  }
+
+  const deliveredAt = deliveredAtStr ? parseShipStationDate(deliveredAtStr) ?? new Date() : new Date();
+
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: 'DELIVERED',
+      deliveredAt,
+    },
+  });
+
+  // Record on the timeline — actor is null (system)
+  await prisma.orderEvent.create({
+    data: {
+      orderId: order.id,
+      kind: 'MARKED_DELIVERED',
+      message: `Carrier confirmed delivery via ShipStation. Tracking ${order.trackingNumber ?? '—'}.`,
+      metadata: { source: 'shipstation_webhook', tracking_number: order.trackingNumber },
+      actorEmail: null,
+    },
+  });
+
+  return { ok: true, orderId: order.id };
+}
