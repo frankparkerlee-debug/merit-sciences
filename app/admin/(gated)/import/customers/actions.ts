@@ -32,15 +32,16 @@ export type ParsedCustomer = {
 export type CustomerDiff = {
   rows: Array<{
     row: ParsedCustomer;
-    existingId: string | null;       // existing Customer.id if match found
-    action: 'create' | 'update' | 'skip-affiliate' | 'skip-newsletter';
+    existingId: string | null;       // existing Customer.id if match found OR existing NewsletterSubscriber.id
+    action: 'create' | 'update' | 'subscribe-newsletter' | 'subscribe-update' | 'skip-affiliate';
     reason?: string;
   }>;
   totalRows: number;
-  toCreate: number;
-  toUpdate: number;
+  toCreate: number;          // real Customer rows
+  toUpdate: number;          // real Customer rows
+  toSubscribe: number;       // new NewsletterSubscriber rows
+  toSubscribeUpdate: number; // existing NewsletterSubscriber rows
   skippedAffiliate: number;
-  skippedNewsletter: number;
 };
 
 export async function parseCustomersCsv(_prev: any, formData: FormData): Promise<CustomerDiff | { error: string }> {
@@ -56,11 +57,13 @@ export async function parseCustomersCsv(_prev: any, formData: FormData): Promise
   const rows = parseCsvWithHeaders(text);
   if (rows.length === 0) return { error: 'No data rows found in CSV. Check the column layout.' };
 
-  // Pre-fetch every existing Customer keyed by email for fast match
-  const existing = await prisma.customer.findMany({
-    select: { id: true, email: true },
-  });
-  const existingByEmail = new Map(existing.map((c) => [c.email.toLowerCase(), c.id]));
+  // Pre-fetch existing Customers + NewsletterSubscribers for fast match
+  const [existingCustomers, existingSubscribers] = await Promise.all([
+    prisma.customer.findMany({ select: { id: true, email: true } }),
+    prisma.newsletterSubscriber.findMany({ select: { id: true, email: true } }),
+  ]);
+  const existingCustomerByEmail = new Map(existingCustomers.map((c) => [c.email.toLowerCase(), c.id]));
+  const existingSubscriberByEmail = new Map(existingSubscribers.map((c) => [c.email.toLowerCase(), c.id]));
 
   const parsed: ParsedCustomer[] = [];
   for (const row of rows) {
@@ -99,8 +102,9 @@ export async function parseCustomersCsv(_prev: any, formData: FormData): Promise
     totalRows: parsed.length,
     toCreate: 0,
     toUpdate: 0,
+    toSubscribe: 0,
+    toSubscribeUpdate: 0,
     skippedAffiliate: 0,
-    skippedNewsletter: 0,
   };
 
   for (const row of parsed) {
@@ -110,13 +114,22 @@ export async function parseCustomersCsv(_prev: any, formData: FormData): Promise
       continue;
     }
     if (row.classification === 'newsletter_only') {
-      diff.rows.push({ row, existingId: null, action: 'skip-newsletter', reason: 'Newsletter-only signup (no orders)' });
-      diff.skippedNewsletter++;
+      // Newsletter signups go into NewsletterSubscriber table — separate from
+      // real Customer rows so reporting stays clean. They become customers
+      // automatically if they later place an order.
+      const existingSubId = existingSubscriberByEmail.get(row.email) ?? null;
+      if (existingSubId) {
+        diff.rows.push({ row, existingId: existingSubId, action: 'subscribe-update', reason: 'Already in newsletter list' });
+        diff.toSubscribeUpdate++;
+      } else {
+        diff.rows.push({ row, existingId: null, action: 'subscribe-newsletter' });
+        diff.toSubscribe++;
+      }
       continue;
     }
-    const existingId = existingByEmail.get(row.email) ?? null;
-    if (existingId) {
-      diff.rows.push({ row, existingId, action: 'update' });
+    const existingCustId = existingCustomerByEmail.get(row.email) ?? null;
+    if (existingCustId) {
+      diff.rows.push({ row, existingId: existingCustId, action: 'update' });
       diff.toUpdate++;
     } else {
       diff.rows.push({ row, existingId: null, action: 'create' });
@@ -142,10 +155,11 @@ export async function applyCustomersCsv(_prev: ActionResult | null, formData: Fo
 
   let created = 0;
   let updated = 0;
+  let subscribed = 0;
+  let subscribedUpdated = 0;
   let errors = 0;
 
   for (const r of diff.rows) {
-    if (r.action !== 'create' && r.action !== 'update') continue;
     try {
       if (r.action === 'create') {
         await prisma.customer.create({
@@ -156,7 +170,7 @@ export async function applyCustomersCsv(_prev: ActionResult | null, formData: Fo
           },
         });
         created++;
-      } else if (r.existingId) {
+      } else if (r.action === 'update' && r.existingId) {
         await prisma.customer.update({
           where: { id: r.existingId },
           data: {
@@ -165,6 +179,31 @@ export async function applyCustomersCsv(_prev: ActionResult | null, formData: Fo
           },
         });
         updated++;
+      } else if (r.action === 'subscribe-newsletter') {
+        await prisma.newsletterSubscriber.create({
+          data: {
+            email: r.row.email,
+            firstName: r.row.firstName,
+            lastName: r.row.lastName,
+            tags: r.row.tags,
+            source: 'shopify-import',
+            // Honor Shopify's "Accepts Email Marketing" column — if it's 'no',
+            // we still record them but mark unsubscribed so they don't get sends
+            isSubscribed: r.row.acceptsEmail,
+          },
+        });
+        subscribed++;
+      } else if (r.action === 'subscribe-update' && r.existingId) {
+        await prisma.newsletterSubscriber.update({
+          where: { id: r.existingId },
+          data: {
+            firstName: r.row.firstName ?? undefined,
+            lastName: r.row.lastName ?? undefined,
+            // Merge tags — keep existing + add new (de-dupe)
+            tags: { set: Array.from(new Set([...r.row.tags])) },
+          },
+        });
+        subscribedUpdated++;
       }
     } catch (err) {
       console.error('[customer-import] failed', r.row.email, err);
@@ -173,8 +212,12 @@ export async function applyCustomersCsv(_prev: ActionResult | null, formData: Fo
   }
 
   revalidatePath('/admin/customers');
+  revalidatePath('/admin/newsletter');
   const errorTail = errors > 0 ? ` ⚠ ${errors} failed (see Render logs).` : '';
-  return { ok: true, message: `Created ${created}, updated ${updated} customers.${errorTail}` };
+  return {
+    ok: true,
+    message: `Customers: ${created} created, ${updated} updated. Newsletter: ${subscribed} added, ${subscribedUpdated} updated.${errorTail}`,
+  };
 }
 
 /* ─── Classification logic ─── */

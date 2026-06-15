@@ -39,7 +39,8 @@ export function CustomerImportClient() {
 
   const createRows = diff?.rows.filter((r) => r.action === 'create') ?? [];
   const updateRows = diff?.rows.filter((r) => r.action === 'update') ?? [];
-  const skippedRows = diff?.rows.filter((r) => r.action === 'skip-affiliate' || r.action === 'skip-newsletter') ?? [];
+  const subscribeRows = diff?.rows.filter((r) => r.action === 'subscribe-newsletter' || r.action === 'subscribe-update') ?? [];
+  const skippedRows = diff?.rows.filter((r) => r.action === 'skip-affiliate') ?? [];
 
   return (
     <div className="space-y-5">
@@ -86,21 +87,22 @@ export function CustomerImportClient() {
         <>
           <div className="rounded-2xl border border-cobalt/15 bg-white p-6">
             <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">— Summary</p>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
               <Stat label="Total rows" value={diff.totalRows} />
-              <Stat label="To create" value={diff.toCreate} accent="emerald" />
-              <Stat label="To update" value={diff.toUpdate} accent="cobalt" />
+              <Stat label="Customers create" value={diff.toCreate} accent="emerald" />
+              <Stat label="Customers update" value={diff.toUpdate} accent="cobalt" />
+              <Stat label="Newsletter add" value={diff.toSubscribe} accent="cobalt" />
+              <Stat label="Newsletter update" value={diff.toSubscribeUpdate} accent="cobalt" />
               <Stat label="Affiliates skipped" value={diff.skippedAffiliate} accent="rose" />
-              <Stat label="Newsletter skipped" value={diff.skippedNewsletter} accent="rose" />
             </div>
-            {(diff.toCreate + diff.toUpdate) > 0 && (
+            {(diff.toCreate + diff.toUpdate + diff.toSubscribe + diff.toSubscribeUpdate) > 0 && (
               <button
                 type="button"
                 onClick={handleApply}
                 disabled={pendingApply}
                 className="mt-5 bg-ink text-white px-5 py-3 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-cobalt transition disabled:opacity-60"
               >
-                {pendingApply ? 'Importing…' : `Import ${diff.toCreate + diff.toUpdate} customer${(diff.toCreate + diff.toUpdate) === 1 ? '' : 's'}`}
+                {pendingApply ? 'Importing…' : `Import ${diff.toCreate + diff.toUpdate + diff.toSubscribe + diff.toSubscribeUpdate} record${(diff.toCreate + diff.toUpdate + diff.toSubscribe + diff.toSubscribeUpdate) === 1 ? '' : 's'}`}
               </button>
             )}
           </div>
@@ -111,16 +113,25 @@ export function CustomerImportClient() {
             </Section>
           )}
           {updateRows.length > 0 && (
-            <Section title={`Will update (${updateRows.length})`} tone="cobalt">
+            <Section title={`Will update customers (${updateRows.length})`} tone="cobalt">
               <CustomerTable rows={updateRows} mode="update" />
             </Section>
           )}
-          {skippedRows.length > 0 && (
-            <Section title={`Skipped (${skippedRows.length})`} tone="rose">
+          {subscribeRows.length > 0 && (
+            <Section title={`Newsletter signups (${subscribeRows.length})`} tone="cobalt">
               <p className="text-xs text-ink-soft mb-3">
-                These rows are skipped because they belong elsewhere &mdash; either affiliates
-                (managed in /admin/affiliates) or newsletter-only signups (will be imported when
-                the newsletter table is built in a follow-up push).
+                These rows are signups who haven&rsquo;t bought yet. They land in the
+                <strong> NewsletterSubscriber </strong> table (separate from real customers).
+                Available for marketing campaigns. Manage at <code className="text-cobalt">/admin/newsletter</code>.
+              </p>
+              <CustomerTable rows={subscribeRows} mode="skip" />
+            </Section>
+          )}
+          {skippedRows.length > 0 && (
+            <Section title={`Affiliates skipped (${skippedRows.length})`} tone="rose">
+              <p className="text-xs text-ink-soft mb-3">
+                Bixgrow_affiliate rows belong in <code className="text-cobalt">/admin/affiliates</code>,
+                not in Customers or Newsletter. Skipped here.
               </p>
               <CustomerTable rows={skippedRows} mode="skip" />
             </Section>

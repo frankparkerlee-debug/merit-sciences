@@ -622,3 +622,36 @@ enum ProductStatus {
 
   @@map("product_status")
 }
+
+// ─── NewsletterSubscriber ─────────────────────────────────────────────
+// Leads who joined the email list but haven't (yet) placed an order.
+// Kept SEPARATE from the Customer table because:
+//   1) Reporting clarity — "X customers" shouldn't conflate buyers with
+//      newsletter signups who may never buy.
+//   2) Source attribution — popup signups, footer signups, and Shopify
+//      imports each get tagged so segmentation works later.
+//   3) Easier deletion / unsubscribe flow without touching Order history.
+//
+// If a subscriber later places an order, the import / signup flow can
+// upsert into Customer; the NewsletterSubscriber row stays as the
+// marketing audit trail.
+
+model NewsletterSubscriber {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  firstName       String?
+  lastName        String?
+  // Where they came from: popup, footer, shopify-import, csv-import, manual
+  source          String   @default("manual")
+  // Free-form tags from Shopify imports (newsletter, popup-signup, discount-10, etc.)
+  tags            String[] @default([])
+  // Subscription state
+  isSubscribed    Boolean  @default(true)
+  unsubscribedAt  DateTime?
+  // Audit
+  createdAt       DateTime @default(now())
+
+  @@index([source])
+  @@index([isSubscribed])
+  @@map("newsletter_subscribers")
+}
