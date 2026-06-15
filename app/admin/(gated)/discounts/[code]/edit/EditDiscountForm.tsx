@@ -2,49 +2,41 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { useState } from 'react';
-import { createDiscount, type ActionResult } from '../actions';
+import { updateDiscount, type ActionResult } from '../../actions';
+import type { DiscountType, DiscountMethod } from '@/lib/generated/prisma/index.js';
 
-export function DiscountForm() {
-  const [result, formAction] = useFormState<ActionResult | null, FormData>(createDiscount, null);
-  const [type, setType] = useState<'PERCENT' | 'FIXED_AMOUNT' | 'FREE_SHIPPING'>('PERCENT');
-  const [method, setMethod] = useState<'CODE' | 'AUTOMATIC'>('CODE');
+type EditableDiscount = {
+  code: string;
+  title: string;
+  type: DiscountType;
+  method: DiscountMethod;
+  valueInput: string;            // pre-converted display value (e.g. "100" for 100%, "5.00" for $5)
+  minPurchaseInput: string;
+  minQuantity: number | null;
+  maxUses: number | null;
+  oncePerCustomer: boolean;
+  customerEmail: string;
+  startsAt: Date;
+  endsAt: Date | null;
+};
 
-  function randomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let out = '';
-    for (let i = 0; i < 10; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
-    const el = document.querySelector<HTMLInputElement>('input[name="code"]');
-    if (el) el.value = out;
-  }
+export function EditDiscountForm({ discount }: { discount: EditableDiscount }) {
+  const [result, formAction] = useFormState<ActionResult | null, FormData>(updateDiscount, null);
+  const [type, setType] = useState<DiscountType>(discount.type);
+  const [method, setMethod] = useState<DiscountMethod>(discount.method);
 
   return (
     <form action={formAction} className="space-y-5">
-      {/* Code + title */}
+      <input type="hidden" name="code" value={discount.code} />
+
+      {/* Title only — code itself is immutable */}
       <fieldset className="rounded-2xl border border-cobalt/15 bg-white p-6 space-y-4">
         <legend className="text-[10px] tracking-[0.18em] uppercase font-bold text-cobalt">— Code</legend>
         <div>
-          <div className="flex items-baseline justify-between mb-2">
-            <label htmlFor="code" className="text-xs font-bold tracking-wider uppercase text-ink-soft">
-              Discount code
-            </label>
-            <button
-              type="button"
-              onClick={randomCode}
-              className="text-[11px] font-bold text-cobalt hover:underline"
-            >
-              Generate random
-            </button>
-          </div>
-          <input
-            id="code"
-            type="text"
-            name="code"
-            required
-            placeholder="WELCOME10"
-            className="block w-full rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm uppercase font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
-          />
+          <label className="text-xs font-bold tracking-wider uppercase text-ink-soft">Code</label>
+          <p className="mt-1 font-mono text-base text-ink font-bold uppercase">{discount.code}</p>
           <p className="text-[11px] text-ink-soft mt-1">
-            3–40 chars, letters/numbers/hyphen/underscore. Customers type this at checkout.
+            Code string can&rsquo;t change. To rename, delete this discount and create a new one.
           </p>
         </div>
         <div>
@@ -55,10 +47,10 @@ export function DiscountForm() {
             id="title"
             type="text"
             name="title"
+            defaultValue={discount.title}
             placeholder="Summer launch — 25% off"
             className="block w-full rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
           />
-          <p className="text-[11px] text-ink-soft mt-1">Shown in admin lists. Customers never see this.</p>
         </div>
       </fieldset>
 
@@ -105,6 +97,7 @@ export function DiscountForm() {
                 inputMode="decimal"
                 name="value"
                 required
+                defaultValue={discount.valueInput}
                 placeholder={type === 'PERCENT' ? '10' : '5.00'}
                 className="flex-1 rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
               />
@@ -165,6 +158,7 @@ export function DiscountForm() {
                 type="text"
                 inputMode="decimal"
                 name="minPurchase"
+                defaultValue={discount.minPurchaseInput}
                 placeholder="50.00"
                 className="flex-1 rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
               />
@@ -179,6 +173,7 @@ export function DiscountForm() {
               type="number"
               min={1}
               name="minQuantity"
+              defaultValue={discount.minQuantity ?? ''}
               placeholder="3"
               className="block w-full rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
             />
@@ -192,6 +187,7 @@ export function DiscountForm() {
               type="number"
               min={1}
               name="maxUses"
+              defaultValue={discount.maxUses ?? ''}
               placeholder="Unlimited"
               className="block w-full rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
             />
@@ -204,6 +200,7 @@ export function DiscountForm() {
               id="customerEmail"
               type="email"
               name="customerEmail"
+              defaultValue={discount.customerEmail}
               placeholder="anyone@anyone.com"
               className="block w-full rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
             />
@@ -213,6 +210,7 @@ export function DiscountForm() {
           <input
             type="checkbox"
             name="oncePerCustomer"
+            defaultChecked={discount.oncePerCustomer}
             className="w-4 h-4 rounded border-cobalt/30 text-cobalt focus:ring-cobalt"
           />
           <span className="text-sm text-ink">Limit to one use per customer</span>
@@ -231,9 +229,9 @@ export function DiscountForm() {
               id="startsAt"
               type="datetime-local"
               name="startsAt"
+              defaultValue={toLocalInputValue(discount.startsAt)}
               className="block w-full rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink focus:outline-none focus:border-cobalt"
             />
-            <p className="text-[11px] text-ink-soft mt-1">Default: now (immediately active)</p>
           </div>
           <div>
             <label htmlFor="endsAt" className="block text-xs font-bold tracking-wider uppercase text-ink-soft mb-2">
@@ -243,6 +241,7 @@ export function DiscountForm() {
               id="endsAt"
               type="datetime-local"
               name="endsAt"
+              defaultValue={discount.endsAt ? toLocalInputValue(discount.endsAt) : ''}
               className="block w-full rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink focus:outline-none focus:border-cobalt"
             />
             <p className="text-[11px] text-ink-soft mt-1">Leave blank for no expiry</p>
@@ -251,9 +250,17 @@ export function DiscountForm() {
       </fieldset>
 
       {/* Result + submit */}
-      {result && !result.ok && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
-          <p className="text-sm text-rose-900 leading-relaxed">{result.error}</p>
+      {result && (
+        <div
+          className={`rounded-xl border p-4 ${
+            result.ok
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+              : 'border-rose-200 bg-rose-50 text-rose-900'
+          }`}
+        >
+          <p className="text-sm leading-relaxed">
+            {result.ok ? result.message : result.error}
+          </p>
         </div>
       )}
       <div className="flex justify-end">
@@ -271,7 +278,22 @@ function SubmitButton() {
       disabled={pending}
       className="bg-ink text-white px-6 py-3 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-cobalt transition disabled:opacity-60"
     >
-      {pending ? 'Creating…' : 'Create discount'}
+      {pending ? 'Saving…' : 'Save changes'}
     </button>
   );
+}
+
+/**
+ * Render a Date as a value suitable for <input type="datetime-local">.
+ * The native input expects "YYYY-MM-DDTHH:MM" in the user's local time,
+ * not ISO with timezone — so we format manually.
+ */
+function toLocalInputValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
 }

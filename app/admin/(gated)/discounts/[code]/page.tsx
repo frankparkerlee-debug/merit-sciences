@@ -85,19 +85,27 @@ export default async function DiscountDetailPage({ params }: { params: Promise<{
           </h1>
           {discount.title && <p className="text-base text-ink-soft mt-2">{discount.title}</p>}
         </div>
-        <span
-          className={`inline-block text-[10px] tracking-[0.14em] uppercase font-bold px-3 py-1.5 rounded-lg border ${
-            isDisabled
-              ? 'bg-gray-50 text-gray-700 border-gray-200'
-              : isExpired
-              ? 'bg-rose-50 text-rose-900 border-rose-200'
-              : isScheduled
-              ? 'bg-amber-50 text-amber-900 border-amber-200'
-              : 'bg-emerald-50 text-emerald-900 border-emerald-200'
-          }`}
-        >
-          {isDisabled ? 'Disabled' : isExpired ? 'Expired' : isScheduled ? 'Scheduled' : 'Active'}
-        </span>
+        <div className="flex items-center gap-3">
+          <span
+            className={`inline-block text-[10px] tracking-[0.14em] uppercase font-bold px-3 py-1.5 rounded-lg border ${
+              isDisabled
+                ? 'bg-gray-50 text-gray-700 border-gray-200'
+                : isExpired
+                ? 'bg-rose-50 text-rose-900 border-rose-200'
+                : isScheduled
+                ? 'bg-amber-50 text-amber-900 border-amber-200'
+                : 'bg-emerald-50 text-emerald-900 border-emerald-200'
+            }`}
+          >
+            {isDisabled ? 'Disabled' : isExpired ? 'Expired' : isScheduled ? 'Scheduled' : 'Active'}
+          </span>
+          <Link
+            href={`/admin/discounts/${encodeURIComponent(discount.code)}/edit`}
+            className="bg-ink text-white px-4 py-2 rounded-lg text-xs font-bold tracking-wider uppercase hover:bg-cobalt transition"
+          >
+            Edit
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
