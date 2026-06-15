@@ -478,6 +478,11 @@ model Discount {
   minQuantity      Int?
   maxUses          Int?           // null = unlimited
   oncePerCustomer  Boolean        @default(false)
+  // Bonus: stack free shipping on top of the main discount type. Lets
+  // codes like "WELCOME20" give 20% off subtotal AND zero shipping in
+  // one code, instead of forcing two separate codes. Set independently
+  // of `type` — except FREE_SHIPPING type implies this is true anyway.
+  freeShipping     Boolean        @default(false)
   // Optional restriction to a single customer email
   customerEmail    String?
   // Schedule

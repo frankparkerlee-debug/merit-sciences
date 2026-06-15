@@ -52,6 +52,7 @@ export default async function EditDiscountPage({ params }: { params: Promise<{ c
           minQuantity: discount.minQuantity,
           maxUses: discount.maxUses,
           oncePerCustomer: discount.oncePerCustomer,
+          freeShipping: discount.freeShipping,
           customerEmail: discount.customerEmail ?? '',
           startsAt: discount.startsAt,
           endsAt: discount.endsAt,

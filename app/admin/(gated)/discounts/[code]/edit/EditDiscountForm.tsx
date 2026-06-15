@@ -15,6 +15,7 @@ type EditableDiscount = {
   minQuantity: number | null;
   maxUses: number | null;
   oncePerCustomer: boolean;
+  freeShipping: boolean;
   customerEmail: string;
   startsAt: Date;
   endsAt: Date | null;
@@ -214,6 +215,26 @@ export function EditDiscountForm({ discount }: { discount: EditableDiscount }) {
             className="w-4 h-4 rounded border-cobalt/30 text-cobalt focus:ring-cobalt"
           />
           <span className="text-sm text-ink">Limit to one use per customer</span>
+        </label>
+      </fieldset>
+
+      {/* Stackable bonus — free shipping on top of any discount type */}
+      <fieldset className="rounded-2xl border border-cobalt/15 bg-white p-6 space-y-2">
+        <legend className="text-[10px] tracking-[0.18em] uppercase font-bold text-cobalt">— Stackable bonuses</legend>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name="freeShipping"
+            defaultChecked={discount.freeShipping}
+            className="w-4 h-4 mt-0.5 rounded border-cobalt/30 text-cobalt focus:ring-cobalt"
+          />
+          <div>
+            <p className="text-sm font-bold text-ink">Also free shipping</p>
+            <p className="text-[11px] text-ink-soft">
+              Stacks on top of the discount above. E.g., a 20% off code with this
+              checked gives 20% off the subtotal AND zero shipping.
+            </p>
+          </div>
         </label>
       </fieldset>
 

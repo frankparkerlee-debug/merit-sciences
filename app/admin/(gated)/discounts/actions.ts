@@ -28,6 +28,7 @@ export async function createDiscount(_prev: ActionResult | null, formData: FormD
   const minQuantityInput = String(formData.get('minQuantity') ?? '').trim();
   const maxUsesInput = String(formData.get('maxUses') ?? '').trim();
   const oncePerCustomer = formData.get('oncePerCustomer') === 'on';
+  const freeShipping = formData.get('freeShipping') === 'on';
   const customerEmail = String(formData.get('customerEmail') ?? '').trim().toLowerCase() || null;
   const startsAtInput = String(formData.get('startsAt') ?? '').trim();
   const endsAtInput = String(formData.get('endsAt') ?? '').trim();
@@ -110,6 +111,7 @@ export async function createDiscount(_prev: ActionResult | null, formData: FormD
       minQuantity,
       maxUses,
       oncePerCustomer,
+      freeShipping,
       customerEmail,
       startsAt,
       endsAt,
@@ -145,6 +147,7 @@ export async function updateDiscount(_prev: ActionResult | null, formData: FormD
   const minQuantityInput = String(formData.get('minQuantity') ?? '').trim();
   const maxUsesInput = String(formData.get('maxUses') ?? '').trim();
   const oncePerCustomer = formData.get('oncePerCustomer') === 'on';
+  const freeShipping = formData.get('freeShipping') === 'on';
   const customerEmail = String(formData.get('customerEmail') ?? '').trim().toLowerCase() || null;
   const startsAtInput = String(formData.get('startsAt') ?? '').trim();
   const endsAtInput = String(formData.get('endsAt') ?? '').trim();
@@ -200,6 +203,7 @@ export async function updateDiscount(_prev: ActionResult | null, formData: FormD
       minQuantity,
       maxUses,
       oncePerCustomer,
+      freeShipping,
       customerEmail,
       startsAt,
       endsAt,

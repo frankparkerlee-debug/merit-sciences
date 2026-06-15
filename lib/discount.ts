@@ -159,11 +159,15 @@ export async function validateDiscountCode(
       discountCents = Math.min(manual.value, ctx.subtotalCents);
       break;
     case 'FREE_SHIPPING':
-      // Signals shipping should be free; doesn't reduce subtotal
+      // Type-only — signals shipping should be free, no subtotal reduction
       discountCents = 0;
       freeShipping = true;
       break;
   }
+
+  // freeShipping flag stacks on top of any type. A PERCENT code with the
+  // freeShipping flag set will both give the percent off AND zero shipping.
+  if (manual.freeShipping) freeShipping = true;
 
   return {
     ok: true,

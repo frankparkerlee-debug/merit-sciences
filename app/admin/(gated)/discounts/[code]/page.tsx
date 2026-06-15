@@ -115,7 +115,14 @@ export default async function DiscountDetailPage({ params }: { params: Promise<{
             <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">— Details</p>
             <dl className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
               <dt className="text-ink-soft">Type</dt>
-              <dd className="text-ink font-bold">{fmtValue(discount.type, discount.value)}</dd>
+              <dd className="text-ink font-bold">
+                {fmtValue(discount.type, discount.value)}
+                {discount.freeShipping && discount.type !== 'FREE_SHIPPING' && (
+                  <span className="ml-2 text-[10px] tracking-[0.10em] uppercase font-bold px-2 py-0.5 rounded border bg-emerald-50 text-emerald-900 border-emerald-200">
+                    + free shipping
+                  </span>
+                )}
+              </dd>
               <dt className="text-ink-soft">Method</dt>
               <dd className="text-ink">{methodLabel(discount.method)}</dd>
               <dt className="text-ink-soft">Minimum purchase</dt>
