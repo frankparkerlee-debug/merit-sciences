@@ -56,37 +56,77 @@ export async function parseInventoryCsv(_prev: any, formData: FormData): Promise
   const file = formData.get('csv');
   if (!(file instanceof File)) return { error: 'No file uploaded' };
   if (file.size === 0) return { error: 'File is empty' };
-  if (file.size > 5 * 1024 * 1024) return { error: 'File too large (max 5MB)' };
+  if (file.size > 10 * 1024 * 1024) return { error: 'File too large (max 10MB)' };
 
-  const text = await file.text();
+  // Detect xlsx vs csv from filename. Excel's CSV export mangles special
+  // chars (≥, ², µ, etc) so xlsx is preferred when available.
+  const filename = file.name.toLowerCase();
+  const isXlsx = filename.endsWith('.xlsx') || filename.endsWith('.xls');
+
   const rows: ParsedRow[] = [];
-  const lines = text.split(/\r?\n/);
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    const cells = parseCsvLine(line);
-    if (cells.length < 5) continue;
-    // Skip the header banner row + the column-name row
-    const firstCell = (cells[0] ?? '').trim();
-    if (firstCell.toLowerCase() === 'sku') continue;
-    if (firstCell.toLowerCase().includes('inventory position')) continue;
 
-    const sku = firstCell;
-    const productName = (cells[1] ?? '').trim();
-    const vialSize = (cells[2] ?? '').trim();
-    if (!sku || !productName) continue;
+  if (isXlsx) {
+    // Dynamic import keeps the xlsx package out of the client bundle.
+    const XLSX = await import('xlsx');
+    const buffer = await file.arrayBuffer();
+    const wb = XLSX.read(buffer, { type: 'array' });
+    // Use the first sheet — Merit's inventory file is single-sheet
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    // Convert to 2D array of cell values. defval keeps empty cells as '' so
+    // column indices stay aligned even when a row has trailing blanks.
+    const data: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+    for (const row of data) {
+      if (!row || row.length < 5) continue;
+      const firstCell = String(row[0] ?? '').trim();
+      if (!firstCell) continue;
+      if (firstCell.toLowerCase() === 'sku') continue;
+      if (firstCell.toLowerCase().includes('inventory position')) continue;
 
-    rows.push({
-      sku,
-      productName,
-      vialSize,
-      unitsOnHand: parseIntSafe(cells[5]),
-      unitCostCents: parseDollarsToCents(cells[6]),
-      physicianPriceCents: parseDollarsToCents(cells[8]),
-      retailPriceCents: parseDollarsToCents(cells[10]),
-    });
+      const sku = firstCell;
+      const productName = String(row[1] ?? '').trim();
+      const vialSize = String(row[2] ?? '').trim();
+      if (!sku || !productName) continue;
+
+      rows.push({
+        sku,
+        productName,
+        vialSize,
+        unitsOnHand: parseIntSafe(row[5]),
+        unitCostCents: parseDollarsToCents(row[6]),
+        physicianPriceCents: parseDollarsToCents(row[8]),
+        retailPriceCents: parseDollarsToCents(row[10]),
+      });
+    }
+  } else {
+    // CSV path — preserved for users who still prefer CSV
+    const text = await file.text();
+    const lines = text.split(/\r?\n/);
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const cells = parseCsvLine(line);
+      if (cells.length < 5) continue;
+      const firstCell = (cells[0] ?? '').trim();
+      if (firstCell.toLowerCase() === 'sku') continue;
+      if (firstCell.toLowerCase().includes('inventory position')) continue;
+
+      const sku = firstCell;
+      const productName = (cells[1] ?? '').trim();
+      const vialSize = (cells[2] ?? '').trim();
+      if (!sku || !productName) continue;
+
+      rows.push({
+        sku,
+        productName,
+        vialSize,
+        unitsOnHand: parseIntSafe(cells[5]),
+        unitCostCents: parseDollarsToCents(cells[6]),
+        physicianPriceCents: parseDollarsToCents(cells[8]),
+        retailPriceCents: parseDollarsToCents(cells[10]),
+      });
+    }
   }
 
-  if (rows.length === 0) return { error: 'No data rows found in CSV. Check the column layout.' };
+  if (rows.length === 0) return { error: 'No data rows found in file. Check the column layout (Col A=SKU, B=Product, C=Vial Size, F=Units, G=Cost, I=Physician, K=Retail).' };
 
   // Match each row to an existing Product by SKU/title/handle
   const allProducts = await prisma.product.findMany({

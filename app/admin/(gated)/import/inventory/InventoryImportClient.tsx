@@ -46,16 +46,19 @@ export function InventoryImportClient() {
       {/* Upload form */}
       <form action={handleParse} className="rounded-2xl border border-cobalt/15 bg-white p-6">
         <label htmlFor="csv" className="block text-xs font-bold tracking-wider uppercase text-ink-soft mb-2">
-          Inventory CSV
+          Inventory file (.xlsx or .csv)
         </label>
         <input
           id="csv"
           type="file"
           name="csv"
-          accept=".csv,text/csv"
+          accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
           required
           className="block w-full text-sm text-ink file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-ink file:text-white file:text-xs file:font-bold file:tracking-wider file:uppercase file:cursor-pointer hover:file:bg-cobalt"
         />
+        <p className="text-[11px] text-ink-soft mt-2">
+          Upload the Excel file directly — no need to export to CSV first.
+        </p>
         <button
           type="submit"
           className="mt-4 bg-cobalt text-white px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-ink transition"
