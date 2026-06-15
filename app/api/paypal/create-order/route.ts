@@ -141,24 +141,35 @@ export async function POST(req: Request) {
     0,
   );
 
-  // ── Affiliate resolution: code (explicit) > cookie (implicit) ────
-  // We do this server-side so the buyer can't fake attribution.
+  // ── Discount resolution: typed code first (affiliate OR manual), then cookie ──
+  // We do this server-side so the buyer can't fake attribution or pricing.
   let affiliateId: string | null = null;
   let affiliateSlug: string | null = null;
   let discountCode: string | null = null;
   let discountCents = 0;
+  let freeShipping = false;
   let attributionVia: 'discount_code' | 'cookie' | null = null;
 
   if (discountCodeInput) {
-    const v = await validateDiscountCode(discountCodeInput, subtotalCents);
+    const cartQuantity = cleanLines.reduce((sum, l) => sum + l.qty, 0);
+    const v = await validateDiscountCode(discountCodeInput, {
+      subtotalCents,
+      buyerEmail: buyer?.email ?? null,
+      cartQuantity,
+    });
     if (!v.ok) {
       return NextResponse.json({ error: v.error, field: 'discountCode' }, { status: 400 });
     }
-    affiliateId = v.affiliateId;
-    affiliateSlug = v.affiliateSlug;
     discountCode = v.code;
     discountCents = v.discountCents;
+    freeShipping = v.freeShipping;
     attributionVia = 'discount_code';
+    if (v.source === 'affiliate') {
+      // Affiliate codes carry commission attribution
+      affiliateId = v.affiliateId;
+      affiliateSlug = v.affiliateSlug;
+    }
+    // Manual codes: no affiliate attribution. discountCode + discountCents only.
   } else {
     // Fall back to cookie-based attribution (set by middleware on ?ref=)
     const cookieSlug = (await cookies()).get('merit_ref')?.value ?? null;
@@ -178,9 +189,13 @@ export async function POST(req: Request) {
   }
 
   // ── Pricing ──────────────────────────────────────────────────────
-  const shippingCents = subtotalCents - discountCents >= FREE_SHIPPING_CENTS_THRESHOLD
+  // FREE_SHIPPING manual codes force shippingCents = 0 regardless of
+  // the subtotal threshold.
+  const shippingCents = freeShipping
     ? 0
-    : FLAT_SHIPPING_CENTS;
+    : subtotalCents - discountCents >= FREE_SHIPPING_CENTS_THRESHOLD
+      ? 0
+      : FLAT_SHIPPING_CENTS;
   const totalCents = subtotalCents - discountCents + shippingCents;
 
   // ── Build the custom_id payload — JSON in PayPal's custom field ──
