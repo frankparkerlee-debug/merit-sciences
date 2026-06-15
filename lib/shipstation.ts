@@ -254,6 +254,91 @@ export async function handleShipNotify(params: {
   return { ok: true };
 }
 
+/* ─── ShipStation REST API client ─── */
+
+/**
+ * Fetch a single shipment from ShipStation by tracking number. Returns
+ * null if no match or API error. Used by the delivery-sync cron to
+ * check whether the carrier has marked a package delivered.
+ *
+ * ShipStation V1 REST API endpoint, basic auth with API Key + Secret.
+ * These are SEPARATE from SHIPSTATION_USERNAME/PASSWORD (custom store
+ * pull creds). Get them from Account → API Settings.
+ */
+export type ShipmentRow = {
+  shipmentId: number;
+  orderNumber: string;
+  trackingNumber: string;
+  carrierCode: string;
+  shipDate: string;
+  // ShipStation tags shipment status as 'shipped' or 'delivered' on the row
+  voided?: boolean;
+};
+
+async function shipStationFetch(path: string): Promise<any> {
+  const apiKey = process.env.SHIPSTATION_API_KEY;
+  const apiSecret = process.env.SHIPSTATION_API_SECRET;
+  if (!apiKey || !apiSecret) {
+    throw new Error('SHIPSTATION_API_KEY / SHIPSTATION_API_SECRET not configured');
+  }
+  const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+  const res = await fetch(`https://ssapi.shipstation.com${path}`, {
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`ShipStation API ${res.status}: ${text.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
+/**
+ * Look up a shipment by tracking number. Returns the raw ShipStation
+ * shipment object (we read .voided and tracking events from it).
+ */
+export async function fetchShipmentByTracking(trackingNumber: string): Promise<any | null> {
+  try {
+    const data = await shipStationFetch(`/shipments?trackingNumber=${encodeURIComponent(trackingNumber)}&pageSize=1`);
+    return data?.shipments?.[0] ?? null;
+  } catch (err) {
+    console.error('[shipstation/fetchShipmentByTracking]', trackingNumber, err);
+    return null;
+  }
+}
+
+/**
+ * Pull delivery status for a tracking number. Returns true if the
+ * carrier has confirmed delivery, false otherwise. ShipStation tracks
+ * this via the "trackByCarrier" endpoint which surfaces tracking events
+ * the carrier has reported.
+ */
+export async function checkDeliveryStatus(carrierCode: string, trackingNumber: string): Promise<{
+  delivered: boolean;
+  deliveredAt: Date | null;
+}> {
+  try {
+    // ShipStation V1: GET /carriers/{carrierCode}/tracking?trackingNumber=...
+    const data = await shipStationFetch(
+      `/carriers/${encodeURIComponent(carrierCode)}/tracking?trackingNumber=${encodeURIComponent(trackingNumber)}`,
+    );
+    const status = String(data?.statusCode ?? data?.status ?? '').toUpperCase();
+    if (status.includes('DELIVERED')) {
+      const deliveredAt = data?.actualDeliveryDate
+        ? new Date(data.actualDeliveryDate)
+        : new Date();
+      return { delivered: true, deliveredAt };
+    }
+    return { delivered: false, deliveredAt: null };
+  } catch (err) {
+    console.warn('[shipstation/checkDeliveryStatus]', trackingNumber, err);
+    return { delivered: false, deliveredAt: null };
+  }
+}
+
 /* ─── Delivery notification handler ─── */
 
 /**
