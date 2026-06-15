@@ -454,6 +454,59 @@ export async function createOrderFromPayPal(
   return { order, isNew: true };
 }
 
+/* ─── Cross-sell product picker (used by transactional emails) ─── */
+
+/**
+ * Pull 3 active products from the catalog to render in the cross-sell
+ * grid inside transactional emails. Excludes any handles already in
+ * the buyer's order so we don't recommend what they already bought.
+ *
+ * Strategy is intentionally simple — pick by createdAt order — until
+ * we have purchase signal to do something smarter (e.g. "people who
+ * bought BPC-157 also bought TB-500"). When we add that, swap the
+ * findMany() query here.
+ */
+export async function getCrossSellProducts(
+  excludeHandles: string[] = [],
+  limit = 3,
+): Promise<import('./email-templates').CrossSellProduct[]> {
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        status: 'ACTIVE',
+        // Only show products the customer can actually buy on the
+        // public storefront. Clinic-gated SKUs would surprise buyers.
+        channel: { in: ['RUA', 'BOTH'] },
+        handle: { notIn: excludeHandles },
+        // Skip accessories (no chemistry compound)
+        NOT: { handle: 'bacteriostatic-water' },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+      select: {
+        handle: true,
+        title: true,
+        oneLiner: true,
+        priceCents: true,
+        imageUrl: true,
+      },
+    });
+    return products
+      .filter((p) => p.imageUrl)
+      .map((p) => ({
+        handle: p.handle,
+        title: p.title,
+        oneLiner: p.oneLiner.length > 60 ? p.oneLiner.slice(0, 57) + '...' : p.oneLiner,
+        priceCents: p.priceCents,
+        imageUrl: p.imageUrl!,
+        url: `${siteUrl()}/products/${p.handle}`,
+      }));
+  } catch (err) {
+    console.warn('[getCrossSellProducts] DB query failed, returning empty', err);
+    return [];
+  }
+}
+
 /* ─── Email triggers ─── */
 
 /**
@@ -473,6 +526,10 @@ export async function issueOrderConfirmationEmail(
   // Generate a fresh lookup token for the receipt link
   const token = await generateLookupToken(order.id, order.customerEmail);
   const lookupUrl = lookupUrlFor(order.id, token);
+
+  // Cross-sell — pick 3 products excluding what's already in the order
+  const purchasedHandles = order.lines.map((l) => l.handle);
+  const crossSell = await getCrossSellProducts(purchasedHandles);
 
   const { subject, html, text } = renderOrderConfirmation({
     orderId: order.id,
@@ -496,6 +553,7 @@ export async function issueOrderConfirmationEmail(
     totalCents: Number(order.totalCents),
     discountCode: order.discountCode,
     lookupUrl,
+    crossSell,
   });
 
   // Fire customer email + admin notification in parallel
@@ -537,7 +595,10 @@ export async function issueOrderConfirmationEmail(
 export async function issueShipmentEmail(
   orderId: string,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { lines: { select: { handle: true } } },
+  });
   if (!order) return { ok: false, error: 'Order not found' };
   if (!order.trackingNumber || !order.shippingCarrier) {
     return { ok: false, error: 'Missing tracking info — set carrier + tracking number first' };
@@ -545,6 +606,9 @@ export async function issueShipmentEmail(
 
   const token = await generateLookupToken(order.id, order.customerEmail);
   const lookupUrl = lookupUrlFor(order.id, token);
+
+  const purchasedHandles = order.lines.map((l) => l.handle);
+  const crossSell = await getCrossSellProducts(purchasedHandles);
 
   const { subject, html, text } = renderShipmentNotification({
     customerName: order.customerName,
@@ -554,6 +618,7 @@ export async function issueShipmentEmail(
     trackingUrl: order.trackingUrl,
     estimatedDeliveryAt: order.estimatedDeliveryAt,
     lookupUrl,
+    crossSell,
   });
 
   // Fire customer + admin in parallel

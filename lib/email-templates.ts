@@ -18,6 +18,12 @@ const COLOR_TEXT_SOFT = '#5C6378';
 const SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
 const MONO = 'ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace';
 
+// Absolute origin for all asset URLs inside email HTML. Email clients
+// won't resolve relative paths — every image/link needs to be fully
+// qualified. Override via NEXT_PUBLIC_SITE_URL if the production
+// hostname changes.
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '${SITE_URL}').replace(/\/$/, '');
+
 function fmtMoney(cents: number | bigint): string {
   const n = typeof cents === 'bigint' ? Number(cents) : cents;
   const sign = n < 0 ? '-' : '';
@@ -67,11 +73,22 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
         <!-- Brand bar -->
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="max-width:600px;width:100%;background-color:${COLOR_INK};border-radius:16px 16px 0 0;">
           <tr>
-            <td style="padding:18px 32px;">
+            <td style="padding:20px 32px;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td align="left" style="font-size:15px;font-weight:900;letter-spacing:-0.02em;color:#ffffff;font-family:${SANS};">Merit Sciences</td>
-                  <td align="right" style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;font-weight:700;color:${COLOR_COBALT_SOFT};font-family:${SANS};">${escapeHtml(eyebrow)}</td>
+                  <td align="left" valign="middle" style="vertical-align:middle;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td valign="middle" style="vertical-align:middle;padding-right:12px;">
+                          <img src="${SITE_URL}/icon.png" alt="" width="28" height="28" style="display:block;width:28px;height:28px;border-radius:6px;border:0;" />
+                        </td>
+                        <td valign="middle" style="vertical-align:middle;font-size:13px;font-weight:900;letter-spacing:0.14em;color:#ffffff;font-family:${SANS};text-transform:uppercase;">
+                          MERIT SCIENCES
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td align="right" valign="middle" style="vertical-align:middle;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;font-weight:700;color:${COLOR_COBALT_SOFT};font-family:${SANS};">${escapeHtml(eyebrow)}</td>
                 </tr>
               </table>
             </td>
@@ -99,13 +116,13 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
                 Dallas, TX &middot; <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;">info@meritsciences.com</a>
               </p>
               <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">
-                <a href="https://merit-sciences.onrender.com/catalog" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Catalog</a>
+                <a href="${SITE_URL}/catalog" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Catalog</a>
                 &nbsp;&middot;&nbsp;
-                <a href="https://merit-sciences.onrender.com/policies/shipping" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Shipping</a>
+                <a href="${SITE_URL}/policies/shipping" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Shipping</a>
                 &nbsp;&middot;&nbsp;
-                <a href="https://merit-sciences.onrender.com/policies/returns" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Returns</a>
+                <a href="${SITE_URL}/policies/returns" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Returns</a>
                 &nbsp;&middot;&nbsp;
-                <a href="https://merit-sciences.onrender.com/policies/privacy" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Privacy</a>
+                <a href="${SITE_URL}/policies/privacy" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Privacy</a>
               </p>
               <p style="margin:16px 0 0;font-size:10px;line-height:16px;color:${COLOR_TEXT_SOFT};max-width:480px;">
                 Research compounds for laboratory use only. Not for human or veterinary consumption.
@@ -128,6 +145,61 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
 
 function headline(text: string, accentDot = true): string {
   return `<h1 style="margin:0 0 18px 0;font-size:30px;line-height:34px;font-weight:900;letter-spacing:-0.035em;color:${COLOR_INK};font-family:${SANS};">${escapeHtml(text)}${accentDot ? `<span style="color:${COLOR_COBALT};">.</span>` : ''}</h1>`;
+}
+
+/* ─── Cross-sell product grid ─── */
+
+export type CrossSellProduct = {
+  handle: string;
+  title: string;
+  oneLiner: string;          // short tagline
+  priceCents: number;
+  imageUrl: string;          // absolute URL
+  url: string;               // absolute URL to PDP
+};
+
+/**
+ * Renders a 3-column product grid for cross-sell modules inside emails.
+ * Hard-codes 3-up (works in Outlook/Gmail without flex/grid). Pass an
+ * empty array to render nothing. `eyebrow` is the small label above
+ * (e.g. "You might also like", "Most shopped at Merit").
+ */
+function renderCrossSell(eyebrow: string, products: CrossSellProduct[]): string {
+  if (!products || products.length === 0) return '';
+  // Limit to 3 — fits the 3-column grid cleanly
+  const items = products.slice(0, 3);
+  // If fewer than 3, pad with empty cells so the grid stays balanced
+  while (items.length < 3) items.push(null as any);
+
+  const cells = items.map((p) => {
+    if (!p) {
+      return `<td width="33%" style="width:33.33%;padding:0;"></td>`;
+    }
+    return `<td width="33%" valign="top" style="width:33.33%;padding:0 8px;vertical-align:top;">
+      <a href="${escapeHtml(p.url)}" style="text-decoration:none;color:${COLOR_INK};">
+        <div style="background-color:${COLOR_CREAM};border-radius:10px;padding:12px;text-align:center;">
+          <img src="${escapeHtml(p.imageUrl)}" alt="${escapeHtml(p.title)}" width="140" style="display:block;margin:0 auto 10px;max-width:100%;height:auto;border:0;border-radius:6px;" />
+        </div>
+        <p style="margin:10px 0 2px 0;font-size:13px;line-height:17px;font-weight:700;color:${COLOR_INK};font-family:${SANS};">${escapeHtml(p.title)}</p>
+        <p style="margin:0 0 4px 0;font-size:11px;line-height:15px;color:${COLOR_TEXT_SOFT};font-family:${SANS};">${escapeHtml(p.oneLiner)}</p>
+        <p style="margin:0;font-size:13px;font-weight:900;color:${COLOR_INK};font-family:${SANS};">${fmtMoney(p.priceCents)}</p>
+      </a>
+    </td>`;
+  }).join('');
+
+  return `
+    <div style="margin:32px 0 0 0;">
+      <h3 style="margin:0 0 14px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— ${escapeHtml(eyebrow)}</h3>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:separate;border-spacing:0;">
+        <tr>
+          ${cells}
+        </tr>
+      </table>
+      <p style="margin:18px 0 0 0;text-align:center;">
+        <a href="${SITE_URL}/catalog" style="font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:${COLOR_COBALT};text-decoration:none;">Browse the full catalog &rarr;</a>
+      </p>
+    </div>
+  `;
 }
 
 /* ─── CTA button ─── */
@@ -162,6 +234,7 @@ export type OrderConfirmationData = {
   totalCents: number | bigint;
   discountCode?: string | null;
   lookupUrl: string;           // /orders/[id]?token=... full URL
+  crossSell?: CrossSellProduct[]; // optional 3-product grid below the receipt
 };
 
 export function renderOrderConfirmation(d: OrderConfirmationData): { subject: string; html: string; text: string } {
@@ -234,6 +307,8 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
         </td>
       </tr>
     </table>
+
+    ${renderCrossSell('You might also like', d.crossSell ?? [])}
   `;
 
   const text = `Order confirmed — Merit Sciences
@@ -272,6 +347,7 @@ export type ShipmentData = {
   trackingUrl?: string | null;
   estimatedDeliveryAt?: Date | null;
   lookupUrl: string;
+  crossSell?: CrossSellProduct[];
 };
 
 export function renderShipmentNotification(d: ShipmentData): { subject: string; html: string; text: string } {
@@ -305,6 +381,8 @@ export function renderShipmentNotification(d: ShipmentData): { subject: string; 
     <p style="margin:18px 0 0 0;font-size:13px;color:${COLOR_TEXT_SOFT};">
       <a href="${escapeHtml(d.lookupUrl)}" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">View order details &rarr;</a>
     </p>
+
+    ${renderCrossSell('While you wait', d.crossSell ?? [])}
   `;
 
   const text = `Your order is on the way
@@ -496,7 +574,7 @@ export function renderOrderCanceled(d: CancellationData): { subject: string; htm
       </table>
     ` : ''}
 
-    ${ctaButton('Browse the catalog', 'https://merit-sciences.onrender.com/catalog')}
+    ${ctaButton('Browse the catalog', '${SITE_URL}/catalog')}
 
     <p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
       If this cancellation was unexpected or you&rsquo;d like to place a new order, reply to this email or write us at <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">info@meritsciences.com</a> &mdash; we&rsquo;re happy to help.
@@ -510,7 +588,7 @@ Hi ${firstName},
 We canceled order ${d.paypalOrderId}.
 ${d.wasPaid ? 'A full refund will arrive in 5-10 business days to your original payment method.\n' : 'No charge was made.\n'}
 ${d.reason ? `Reason: ${d.reason}\n` : ''}
-Browse the catalog: https://merit-sciences.onrender.com/catalog
+Browse the catalog: ${SITE_URL}/catalog
 
 Questions? info@meritsciences.com
 
@@ -542,6 +620,7 @@ export type AbandonedCartData = {
   recoveryUrl: string;              // back to checkout with cart prefilled
   discountCode?: string | null;     // optional incentive (e.g. WELCOME10)
   discountPercent?: number | null;  // 10 for 10%
+  crossSell?: CrossSellProduct[];
 };
 
 export function renderAbandonedCart(d: AbandonedCartData): { subject: string; html: string; text: string } {
@@ -602,6 +681,8 @@ export function renderAbandonedCart(d: AbandonedCartData): { subject: string; ht
         </td>
       </tr>
     </table>
+
+    ${renderCrossSell('Or consider these', d.crossSell ?? [])}
   `;
 
   const text = `Still thinking? Your cart is waiting at Merit.
@@ -639,6 +720,7 @@ export type WelcomeData = {
   discountCode?: string | null;
   discountPercent?: number | null;
   catalogUrl: string;
+  crossSell?: CrossSellProduct[];
 };
 
 export function renderWelcome(d: WelcomeData): { subject: string; html: string; text: string } {
@@ -668,12 +750,14 @@ export function renderWelcome(d: WelcomeData): { subject: string; html: string; 
     <h3 style="margin:0 0 8px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— Where to start</h3>
     <p style="margin:0 0 22px 0;font-size:14px;line-height:21px;color:${COLOR_INK};">
       Browse the catalog, or jump straight to one of our most-shopped lanes:<br />
-      &middot; <a href="https://merit-sciences.onrender.com/catalog?family=peptides" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">Peptides</a> (BPC-157, TB-500, Wolverine Blend)<br />
-      &middot; <a href="https://merit-sciences.onrender.com/catalog?family=glp1" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">GLP-1s</a> (Tirzepatide, Retatrutide)<br />
-      &middot; <a href="https://merit-sciences.onrender.com/catalog?family=growth" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">Growth</a> (IGF-1 LR3, Sermorelin, MOTS-c)
+      &middot; <a href="${SITE_URL}/catalog?family=peptides" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">Peptides</a> (BPC-157, TB-500, Wolverine Blend)<br />
+      &middot; <a href="${SITE_URL}/catalog?family=glp1" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">GLP-1s</a> (Tirzepatide, Retatrutide)<br />
+      &middot; <a href="${SITE_URL}/catalog?family=growth" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">Growth</a> (IGF-1 LR3, Sermorelin, MOTS-c)
     </p>
 
     ${ctaButton('Explore the catalog', d.catalogUrl)}
+
+    ${renderCrossSell('Most shopped at Merit', d.crossSell ?? [])}
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:28px;background-color:${COLOR_CREAM};border-radius:10px;">
       <tr>
@@ -726,6 +810,7 @@ export type PostDeliveryData = {
   primaryProductTitle: string;      // first item in the order, for personalization
   lookupUrl: string;
   catalogUrl: string;
+  crossSell?: CrossSellProduct[];
 };
 
 export function renderPostDeliveryFollowUp(d: PostDeliveryData): { subject: string; html: string; text: string } {
@@ -760,6 +845,8 @@ export function renderPostDeliveryFollowUp(d: PostDeliveryData): { subject: stri
     </p>
 
     ${ctaButton('Browse related compounds', d.catalogUrl)}
+
+    ${renderCrossSell('Pair with', d.crossSell ?? [])}
 
     <p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
       Order reference: <span style="font-family:${MONO};color:${COLOR_INK};">${escapeHtml(d.paypalOrderId)}</span>

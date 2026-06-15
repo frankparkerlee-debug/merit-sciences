@@ -91,6 +91,36 @@ const SAMPLE_LINES_ABANDONED = [
   { title: 'Tirzepatide (LY3298176)', bundleLabel: '3-Pack', qty: 1, unitCents: 28500 },
 ];
 
+// Cross-sell sample uses real product handles from the seeded catalog so
+// the preview shows accurate imagery + pricing. In production this is
+// pulled from the live DB via getCrossSellProducts().
+const SAMPLE_CROSS_SELL = [
+  {
+    handle: 'bpc-157-tb-500',
+    title: 'BPC-157 + TB-500',
+    oneLiner: 'Tissue repair blend, lyophilized',
+    priceCents: 9500,
+    imageUrl: 'https://cdn.shopify.com/s/files/1/0665/1661/5279/files/bpc-157-tb-500_1200x.png?v=1780431806',
+    url: 'https://merit-sciences.onrender.com/products/bpc-157-tb-500',
+  },
+  {
+    handle: 'ipamorelin',
+    title: 'Ipamorelin',
+    oneLiner: 'GHRH peptide, 10mg lyophilized vial',
+    priceCents: 6500,
+    imageUrl: 'https://cdn.shopify.com/s/files/1/0665/1661/5279/files/ipamorelin_1200x.png?v=1780431806',
+    url: 'https://merit-sciences.onrender.com/products/ipamorelin',
+  },
+  {
+    handle: 'nad-500mg',
+    title: 'NAD+ 500mg',
+    oneLiner: 'Cellular research, single vial',
+    priceCents: 8500,
+    imageUrl: 'https://cdn.shopify.com/s/files/1/0665/1661/5279/files/nad-500mg_1200x.png?v=1780431806',
+    url: 'https://merit-sciences.onrender.com/products/nad-500mg',
+  },
+];
+
 export function sampleDataFor(key: TemplateKey): Record<string, any> {
   const lookupUrl = 'https://merit-sciences.onrender.com/orders/preview?token=sample';
   const catalogUrl = 'https://merit-sciences.onrender.com/catalog';
@@ -114,6 +144,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
         totalCents: 26887,
         discountCode: 'WELCOME10',
         lookupUrl,
+        crossSell: SAMPLE_CROSS_SELL,
       };
     case 'shipment':
       return {
@@ -124,6 +155,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
         trackingUrl: 'https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=9405511899223197425678',
         estimatedDeliveryAt: new Date(Date.now() + 1000 * 60 * 60 * 48),
         lookupUrl,
+        crossSell: SAMPLE_CROSS_SELL,
       };
     case 'order_lookup':
       return {
@@ -167,6 +199,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
         recoveryUrl: 'https://merit-sciences.onrender.com/checkout?recover=sample',
         discountCode: 'COMEBACK10',
         discountPercent: 10,
+        crossSell: SAMPLE_CROSS_SELL,
       };
     case 'welcome':
       return {
@@ -174,6 +207,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
         discountCode: 'WELCOME10',
         discountPercent: 10,
         catalogUrl,
+        crossSell: SAMPLE_CROSS_SELL,
       };
     case 'post_delivery':
       return {
@@ -182,6 +216,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
         primaryProductTitle: 'Wolverine Blend',
         lookupUrl,
         catalogUrl,
+        crossSell: SAMPLE_CROSS_SELL,
       };
   }
 }
