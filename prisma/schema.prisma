@@ -520,3 +520,89 @@ enum DiscountStatus {
 
   @@map("discount_status")
 }
+
+// ─── Product ──────────────────────────────────────────────────────────
+// Mirrors the storefront Product TS type (lib/product-types.ts). Source
+// of truth for catalog/PDP rendering. Spec + lot fields are flattened
+// from nested JSON so the admin edit form can bind to scalar inputs.
+// `bundles` and `images` stay JSON/string-array because their length
+// is variable.
+
+model Product {
+  // Handle = URL slug = primary key (stable across renames)
+  handle              String   @id
+  title               String
+  compound            String
+  eyebrow             String
+  vialSize            String
+  format              ProductFormat
+  oneLiner            String   @db.Text
+  priceCents          Int
+  compareAtCents      Int?
+
+  // Bundle SKUs (3-pack, subscribe, etc) — array of { label, vials, priceCents }
+  bundles             Json?
+
+  // Spec block (flattened from spec.* in legacy JSON)
+  specCas             String?
+  specMw              String?
+  specFormula         String?
+  specSequence        String?  @db.Text
+  specAminoAcids      Int?
+
+  // Lot info (flattened from lot.* in legacy JSON)
+  lotId               String
+  lotPurity           String
+  lotTestedDate       String   // ISO date string; left as String to match existing
+  lotBud              String
+  lotCoaUrl           String?
+
+  segment             ProductSegment
+  channel             ProductChannel
+  shopifySuspended    Boolean        @default(false)
+  status              ProductStatus  @default(ACTIVE)
+
+  // Primary image + gallery
+  imageUrl            String?
+  images              String[]       @default([])
+
+  // Audit
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([status, channel])
+  @@index([segment])
+  @@map("products")
+}
+
+enum ProductFormat {
+  LYOPHILIZED
+  RECONSTITUTED
+
+  @@map("product_format")
+}
+
+enum ProductSegment {
+  BIOHACKER
+  CLINIC
+  AESTHETIC
+  ATHLETIC
+  RESEARCHER
+
+  @@map("product_segment")
+}
+
+enum ProductChannel {
+  RUA       // research use only — public storefront
+  CLINIC    // clinic-only gated
+  BOTH
+
+  @@map("product_channel")
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+
+  @@map("product_status")
+}

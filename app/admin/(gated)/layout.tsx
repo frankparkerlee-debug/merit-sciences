@@ -21,6 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </Link>
             <nav className="hidden sm:flex items-center gap-5 text-xs font-bold tracking-wider uppercase">
               <Link href="/admin/orders" className="text-ink-soft hover:text-ink transition">Orders</Link>
+              <Link href="/admin/products" className="text-ink-soft hover:text-ink transition">Products</Link>
               <Link href="/admin/customers" className="text-ink-soft hover:text-ink transition">Customers</Link>
               <Link href="/admin/affiliates" className="text-ink-soft hover:text-ink transition">Affiliates</Link>
               <Link href="/admin/discounts" className="text-ink-soft hover:text-ink transition">Discounts</Link>

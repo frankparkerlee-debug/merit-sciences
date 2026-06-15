@@ -19,11 +19,11 @@ import { PdpStackAddButton } from './PdpStackAddButton';
 type Props = { params: { handle: string } };
 
 export async function generateStaticParams() {
-  return listProducts().map((p) => ({ handle: p.handle }));
+  return (await listProducts()).map((p) => ({ handle: p.handle }));
 }
 
 export async function generateMetadata({ params }: Props) {
-  const p = getProduct(params.handle);
+  const p = await getProduct(params.handle);
   return {
     title: p ? `${p.title} · ${p.vialSize} · Merit Sciences` : 'Product',
     // PPC-safer fallback description — drops "pharmacy-verified" pharma
@@ -35,8 +35,8 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default function ProductPage({ params }: Props) {
-  const product = getProduct(params.handle);
+export default async function ProductPage({ params }: Props) {
+  const product = await getProduct(params.handle);
   if (!product) return notFound();
 
   const family = getFamily(product.handle);
@@ -52,7 +52,7 @@ export default function ProductPage({ params }: Props) {
   ) ?? null;
 
   // Related products — same family, exclude self
-  const allProducts = listProducts({ status: 'active' });
+  const allProducts = await listProducts({ status: 'active' });
   const related = family
     ? allProducts
         .filter((p) => p.handle !== product.handle && FAMILY_BY_HANDLE[p.handle] === family)
@@ -1023,7 +1023,7 @@ function ProductGallery({
   product,
   family,
 }: {
-  product: ReturnType<typeof getProduct>;
+  product: Awaited<ReturnType<typeof getProduct>>;
   family: Family | null;
 }) {
   if (!product) return null;

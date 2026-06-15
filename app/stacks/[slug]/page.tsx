@@ -26,12 +26,12 @@ export function generateMetadata({ params }: Props) {
   };
 }
 
-export default function StackPage({ params }: Props) {
+export default async function StackPage({ params }: Props) {
   const stack = getStack(params.slug);
   if (!stack) return notFound();
 
   // Resolve the stack — same logic as catalog/page.tsx server data prep.
-  const allProducts = listProducts({ status: 'active' });
+  const allProducts = await listProducts({ status: 'active' });
   const items = stack.handles
     .map((h) => allProducts.find((p) => p.handle === h))
     .filter(Boolean);

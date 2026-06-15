@@ -2,18 +2,20 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getProduct, money } from '@/lib/catalog';
 
-export default function HomePage() {
+export default async function HomePage() {
   // Curated picks — drive imagery + featured compounds
-  const wolverine = getProduct('bpc-157-tb-500');
-  const tirz      = getProduct('ly3298176');
-  const reta      = getProduct('ly3437943');
-  const nad       = getProduct('nad-500mg');
-  const klow      = getProduct('klow');
-  const selank    = getProduct('selank');
+  const [wolverine, tirz, reta, nad, klow, selank] = await Promise.all([
+    getProduct('bpc-157-tb-500'),
+    getProduct('ly3298176'),
+    getProduct('ly3437943'),
+    getProduct('nad-500mg'),
+    getProduct('klow'),
+    getProduct('selank'),
+  ]);
 
   // §03 featured order: Retatrutide + Wolverine visible first, KLOW + Tirzepatide
   // revealed by horizontal scroll.
-  const featured = [reta, wolverine, klow, tirz].filter(Boolean) as NonNullable<ReturnType<typeof getProduct>>[];
+  const featured = [reta, wolverine, klow, tirz].filter(Boolean) as NonNullable<Awaited<ReturnType<typeof getProduct>>>[];
 
   // Family labels: simple chemistry categories (no human outcomes). Each
   // lane gets its own labeled transparent vial PNG, a per-card tilt angle,

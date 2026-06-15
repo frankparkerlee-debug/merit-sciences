@@ -114,8 +114,8 @@ const RESTOCK_SIGNALS: Record<string, { status: 'fresh' | 'low' | 'restocking'; 
 
 // Server data prep — runs once at request time, hands a single bundle
 // to the client component.
-export default function CatalogPage() {
-  const products = listProducts({ status: 'active' });
+export default async function CatalogPage() {
+  const products = await listProducts({ status: 'active' });
 
   // Drop accessories from the main grid. They'll appear in a dedicated
   // section or live elsewhere (PDP upsell).
