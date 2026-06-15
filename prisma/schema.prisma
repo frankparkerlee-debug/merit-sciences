@@ -338,6 +338,7 @@ model Order {
   // Relations
   lines             OrderLine[]
   lookupTokens      OrderLookupToken[]
+  events            OrderEvent[]
 
   @@index([customerEmail])
   @@index([status, createdAt])
@@ -403,4 +404,54 @@ model OrderLookupToken {
   @@index([orderId])
   @@index([expiresAt])
   @@map("order_lookup_tokens")
+}
+
+// ─── OrderEvent ───────────────────────────────────────────────────────
+// Append-only activity timeline for an order. Every state change writes
+// one row: placed, payment captured, emails sent, status transitions,
+// refunds, admin comments. Renders chronologically on the order detail
+// page (Shopify-style timeline).
+//
+// System events have actorEmail = null. Admin-triggered events store
+// the operator's email so the timeline shows "JP marked as shipped"
+// vs "System captured payment."
+
+model OrderEvent {
+  id          String         @id @default(cuid())
+  orderId     String
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  // What happened
+  kind        OrderEventKind
+  // Human-readable summary rendered in the timeline
+  message     String         @db.Text
+  // Structured payload for richer rendering (tracking #, email id,
+  // refund amount, etc.). Avoids parsing the message string.
+  metadata    Json?
+  // Admin who triggered the event. NULL for system events
+  // (webhook, scheduled email, etc.)
+  actorEmail  String?
+  createdAt   DateTime       @default(now())
+
+  @@index([orderId, createdAt])
+  @@map("order_events")
+}
+
+enum OrderEventKind {
+  ORDER_PLACED             // customer completed checkout
+  PAYMENT_CAPTURED         // PayPal capture confirmed (webhook or recheck)
+  CONFIRMATION_EMAIL_SENT  // customer order confirmation
+  ADMIN_NOTIFIED           // ops team notification email fired
+  MARKED_PROCESSING        // admin clicked Mark Processing
+  LABEL_PURCHASED          // recorded when ShipStation pushes back (future)
+  MARKED_SHIPPED           // admin marked shipped + entered tracking
+  SHIPMENT_EMAIL_SENT      // customer shipment notification
+  MARKED_DELIVERED         // admin marked delivered
+  MARKED_CANCELED          // admin canceled (no money movement)
+  REFUND_FULL              // PayPal full refund issued
+  REFUND_PARTIAL           // PayPal partial refund issued
+  COMMISSION_CLAWED_BACK   // affiliate commission rolled back on refund
+  ADMIN_COMMENT            // free-text note from an admin
+  EMAIL_FAILED             // any email send returned not-ok from Resend
+
+  @@map("order_event_kind")
 }

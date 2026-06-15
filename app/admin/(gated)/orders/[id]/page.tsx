@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { StatusPanel, NotesForm } from './OrderDetailClient';
+import { Timeline } from './Timeline';
+import { CommentForm } from './CommentForm';
 
 export const metadata = { title: 'Order detail — Merit Admin' };
 export const dynamic = 'force-dynamic';
@@ -26,6 +28,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
     },
   });
   if (!order) notFound();
+
+  // Activity timeline — load events newest-first
+  const events = await prisma.orderEvent.findMany({
+    where: { orderId: order.id },
+    orderBy: { createdAt: 'desc' },
+  });
 
   return (
     <main className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
@@ -121,6 +129,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
           {/* Internal notes */}
           <NotesForm orderId={order.id} initialNote={order.internalNotes ?? ''} />
+
+          {/* Activity timeline — chain of custody */}
+          <CommentForm orderId={order.id} />
+          <Timeline events={events} />
         </div>
 
         {/* RIGHT — Status + actions */}

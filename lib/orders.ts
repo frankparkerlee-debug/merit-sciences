@@ -32,6 +32,54 @@ function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'https://merit-sciences.onrender.com').replace(/\/$/, '');
 }
 
+/* ─── Order event recorder (Shopify-style activity timeline) ─── */
+
+/**
+ * Append a row to the order's activity timeline. Every server action
+ * that mutates an Order should call this so the order detail page
+ * shows a chronological audit log.
+ *
+ * Never throws — recording is best-effort. If the DB write fails we
+ * log + continue so the primary action (capture, ship, refund) still
+ * succeeds for the operator.
+ */
+export async function recordOrderEvent(args: {
+  orderId: string;
+  kind:
+    | 'ORDER_PLACED'
+    | 'PAYMENT_CAPTURED'
+    | 'CONFIRMATION_EMAIL_SENT'
+    | 'ADMIN_NOTIFIED'
+    | 'MARKED_PROCESSING'
+    | 'LABEL_PURCHASED'
+    | 'MARKED_SHIPPED'
+    | 'SHIPMENT_EMAIL_SENT'
+    | 'MARKED_DELIVERED'
+    | 'MARKED_CANCELED'
+    | 'REFUND_FULL'
+    | 'REFUND_PARTIAL'
+    | 'COMMISSION_CLAWED_BACK'
+    | 'ADMIN_COMMENT'
+    | 'EMAIL_FAILED';
+  message: string;
+  metadata?: Record<string, any>;
+  actorEmail?: string | null;
+}): Promise<void> {
+  try {
+    await prisma.orderEvent.create({
+      data: {
+        orderId: args.orderId,
+        kind: args.kind,
+        message: args.message,
+        metadata: args.metadata ?? undefined,
+        actorEmail: args.actorEmail ?? null,
+      },
+    });
+  } catch (err) {
+    console.error('[recordOrderEvent] failed to record', args.kind, err);
+  }
+}
+
 /* ─── Carrier tracking URLs ─── */
 
 export function normalizeCarrier(input: string): string {
@@ -165,6 +213,19 @@ export async function preCreateOrder(args: {
     },
     select: { id: true },
   });
+
+  await recordOrderEvent({
+    orderId: order.id,
+    kind: 'ORDER_PLACED',
+    message: `${args.customerName} placed this order via the storefront. Total ${(args.totalCents / 100).toFixed(2)}.`,
+    metadata: {
+      customer_email: email,
+      total_cents: args.totalCents,
+      line_count: args.lines.length,
+      discount_code: args.discountCode ?? null,
+    },
+  });
+
   return order;
 }
 
@@ -269,6 +330,14 @@ export async function createOrderFromPayPal(
       },
       select: { id: true, paypalOrderId: true, paypalCaptureId: true },
     });
+    if (preCreated.status === 'PENDING_PAYMENT') {
+      await recordOrderEvent({
+        orderId: promoted.id,
+        kind: 'PAYMENT_CAPTURED',
+        message: `Payment captured via PayPal webhook. Capture ID ${captureId}.`,
+        metadata: { capture_id: captureId, source: 'webhook' },
+      });
+    }
     return { order: promoted as any, isNew: preCreated.status === 'PENDING_PAYMENT' };
   }
 
@@ -366,6 +435,20 @@ export async function createOrderFromPayPal(
     select: { id: true, paypalOrderId: true, paypalCaptureId: true },
   });
 
+  // Wallet-flow path skips preCreateOrder so we record both events here
+  await recordOrderEvent({
+    orderId: order.id,
+    kind: 'ORDER_PLACED',
+    message: `${payerName} placed this order via PayPal wallet. Total ${(totalCents / 100).toFixed(2)}.`,
+    metadata: { customer_email: email, total_cents: totalCents, source: 'wallet' },
+  });
+  await recordOrderEvent({
+    orderId: order.id,
+    kind: 'PAYMENT_CAPTURED',
+    message: `Payment captured via PayPal webhook. Capture ID ${captureId}.`,
+    metadata: { capture_id: captureId, source: 'webhook' },
+  });
+
   return { order, isNew: true };
 }
 
@@ -430,6 +513,22 @@ export async function issueOrderConfirmationEmail(
     }),
   ]);
 
+  if (customerResult.ok) {
+    await recordOrderEvent({
+      orderId,
+      kind: 'CONFIRMATION_EMAIL_SENT',
+      message: `Order confirmation email sent to ${order.customerEmail}.`,
+      metadata: { email_id: customerResult.id, to: order.customerEmail },
+    });
+  } else {
+    await recordOrderEvent({
+      orderId,
+      kind: 'EMAIL_FAILED',
+      message: `Confirmation email failed: ${customerResult.error}`,
+      metadata: { to: order.customerEmail, error: customerResult.error },
+    });
+  }
+
   return customerResult;
 }
 
@@ -471,6 +570,27 @@ export async function issueShipmentEmail(
       console.error('[email] admin shipment notification failed', err);
     }),
   ]);
+
+  if (customerResult.ok) {
+    await recordOrderEvent({
+      orderId,
+      kind: 'SHIPMENT_EMAIL_SENT',
+      message: `Shipment notification sent to ${order.customerEmail} (${order.shippingCarrier?.toUpperCase()} · ${order.trackingNumber}).`,
+      metadata: {
+        email_id: customerResult.id,
+        carrier: order.shippingCarrier,
+        tracking_number: order.trackingNumber,
+      },
+    });
+  } else {
+    await recordOrderEvent({
+      orderId,
+      kind: 'EMAIL_FAILED',
+      message: `Shipment email failed: ${customerResult.error}`,
+      metadata: { to: order.customerEmail, error: customerResult.error },
+    });
+  }
+
   return customerResult;
 }
 

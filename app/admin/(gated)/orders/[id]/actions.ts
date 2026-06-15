@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
-import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issueAdminOrderNotification } from '@/lib/orders';
+import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issueAdminOrderNotification, recordOrderEvent } from '@/lib/orders';
 import { getAccessToken } from '@/lib/paypal';
 
 export type ActionResult =
@@ -26,6 +26,12 @@ export async function markProcessing(_prev: ActionResult | null, formData: FormD
   await prisma.order.update({
     where: { id: orderId },
     data: { status: 'PROCESSING', processingAt: new Date() },
+  });
+  await recordOrderEvent({
+    orderId,
+    kind: 'MARKED_PROCESSING',
+    message: 'Order marked as Processing.',
+    actorEmail: admin.email,
   });
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
@@ -57,8 +63,16 @@ export async function markShipped(_prev: ActionResult | null, formData: FormData
       shippedAt: new Date(),
     },
   });
+  await recordOrderEvent({
+    orderId,
+    kind: 'MARKED_SHIPPED',
+    message: `Marked Shipped via ${normalizedCarrier.toUpperCase()} · tracking ${trackingNumber}.`,
+    metadata: { carrier: normalizedCarrier, tracking_number: trackingNumber, tracking_url: trackingUrl },
+    actorEmail: admin.email,
+  });
 
   // Fire shipment notification email + surface success/failure to operator
+  // (issueShipmentEmail records its own SHIPMENT_EMAIL_SENT or EMAIL_FAILED event)
   const emailResult = await issueShipmentEmail(orderId);
 
   revalidatePath(`/admin/orders/${orderId}`);
@@ -88,6 +102,12 @@ export async function markDelivered(_prev: ActionResult | null, formData: FormDa
     where: { id: orderId },
     data: { status: 'DELIVERED', deliveredAt: new Date() },
   });
+  await recordOrderEvent({
+    orderId,
+    kind: 'MARKED_DELIVERED',
+    message: 'Order marked as Delivered.',
+    actorEmail: admin.email,
+  });
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
   return { ok: true, message: 'Marked as Delivered.' };
@@ -104,6 +124,12 @@ export async function markCanceled(_prev: ActionResult | null, formData: FormDat
   await prisma.order.update({
     where: { id: orderId },
     data: { status: 'CANCELED', canceledAt: new Date() },
+  });
+  await recordOrderEvent({
+    orderId,
+    kind: 'MARKED_CANCELED',
+    message: 'Order canceled. (No refund issued automatically.)',
+    actorEmail: admin.email,
   });
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
@@ -160,7 +186,16 @@ export async function refundOrder(_prev: ActionResult | null, formData: FormData
       refundedCents: { increment: BigInt(Math.max(0, refundCents)) },
     },
   });
-  await clawBackCommission(order.paypalCaptureId!);
+  await clawBackCommission(order.paypalCaptureId!, orderId);
+
+  const refundDollars = (refundCents / 100).toFixed(2);
+  await recordOrderEvent({
+    orderId,
+    kind: 'REFUND_FULL',
+    message: `Full refund of $${refundDollars} issued via PayPal.`,
+    metadata: { amount_cents: refundCents, capture_id: order.paypalCaptureId },
+    actorEmail: admin.email,
+  });
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
@@ -235,8 +270,16 @@ export async function refundOrderPartial(_prev: ActionResult | null, formData: F
 
   // Claw back commission only on FULL refund (partials leave the commission)
   if (isFullRefund) {
-    await clawBackCommission(order.paypalCaptureId!);
+    await clawBackCommission(order.paypalCaptureId!, orderId);
   }
+
+  await recordOrderEvent({
+    orderId,
+    kind: isFullRefund ? 'REFUND_FULL' : 'REFUND_PARTIAL',
+    message: `${isFullRefund ? 'Full' : 'Partial'} refund of $${dollars.toFixed(2)} issued via PayPal.`,
+    metadata: { amount_cents: amountCents, capture_id: order.paypalCaptureId },
+    actorEmail: admin.email,
+  });
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath('/admin/orders');
@@ -250,7 +293,7 @@ export async function refundOrderPartial(_prev: ActionResult | null, formData: F
  * Claw back the affiliate commission tied to a PayPal capture.
  * Idempotent — webhook calls this same logic; double-call is a no-op.
  */
-async function clawBackCommission(paypalCaptureId: string): Promise<void> {
+async function clawBackCommission(paypalCaptureId: string, orderId: string): Promise<void> {
   const commission = await prisma.orderCommission.findUnique({
     where: { paypalCaptureId },
   });
@@ -273,6 +316,13 @@ async function clawBackCommission(paypalCaptureId: string): Promise<void> {
       },
     }),
   ]);
+
+  await recordOrderEvent({
+    orderId,
+    kind: 'COMMISSION_CLAWED_BACK',
+    message: `Affiliate commission of $${(Number(commission.commissionCents) / 100).toFixed(2)} clawed back due to refund.`,
+    metadata: { commission_cents: Number(commission.commissionCents), affiliate_id: commission.affiliateId },
+  });
 }
 
 /* ─── Force-resend customer confirmation email (testing/recovery) ─── */
@@ -342,6 +392,13 @@ export async function recheckPayPalCapture(_prev: ActionResult | null, formData:
         paidAt: new Date(),
       },
     });
+    await recordOrderEvent({
+      orderId,
+      kind: 'PAYMENT_CAPTURED',
+      message: `Payment captured via admin re-check. Capture ID ${captureId}.`,
+      metadata: { capture_id: captureId, source: 'admin_recheck' },
+      actorEmail: admin.email,
+    });
 
     // Fire confirmation email (the webhook would have done this)
     // — issueOrderConfirmationEmail() also fires the admin notification
@@ -381,4 +438,26 @@ export async function updateInternalNote(_prev: ActionResult | null, formData: F
   });
   revalidatePath(`/admin/orders/${orderId}`);
   return { ok: true, message: 'Note saved.' };
+}
+
+/* ─── Add admin comment to the activity timeline ─── */
+
+export async function addOrderComment(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+  const orderId = String(formData.get('orderId') ?? '');
+  const comment = String(formData.get('comment') ?? '').trim();
+  if (!orderId) return { ok: false, error: 'Missing order ID' };
+  if (!comment) return { ok: false, error: 'Comment is empty' };
+  if (comment.length > 2000) return { ok: false, error: 'Comment too long (max 2000 chars)' };
+
+  await recordOrderEvent({
+    orderId,
+    kind: 'ADMIN_COMMENT',
+    message: comment,
+    actorEmail: admin.email,
+  });
+
+  revalidatePath(`/admin/orders/${orderId}`);
+  return { ok: true, message: 'Comment added to timeline.' };
 }
