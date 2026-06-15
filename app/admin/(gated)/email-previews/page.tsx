@@ -1,6 +1,6 @@
 import { TEMPLATES } from './sample-data';
 import { SendTestButton } from './SendTestButton';
-import { renderTemplate } from './actions';
+import { renderTemplate } from './render-template';
 
 export const metadata = { title: 'Email previews — Merit Admin' };
 export const dynamic = 'force-dynamic';

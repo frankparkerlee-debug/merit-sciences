@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-session';
-import { renderTemplate } from '../../actions';
+import { renderTemplate } from '../../render-template';
 import type { TemplateKey } from '../../sample-data';
 
 export const runtime = 'nodejs';
