@@ -1,18 +1,17 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
-import type { DiscountStatus, DiscountType, DiscountMethod } from '@/lib/generated/prisma/index.js';
+import type { DiscountType, DiscountMethod } from '@/lib/generated/prisma/index.js';
+import { QuickDelete } from './QuickDelete';
 
 export const metadata = { title: 'Discounts — Merit Admin' };
 export const dynamic = 'force-dynamic';
 
-const PAGE_SIZE = 50;
-
 const STATUS_FILTERS: Array<{ key: string; label: string }> = [
-  { key: 'all',      label: 'All' },
-  { key: 'active',   label: 'Active' },
+  { key: 'all',       label: 'All' },
+  { key: 'active',    label: 'Active' },
   { key: 'scheduled', label: 'Scheduled' },
-  { key: 'expired',  label: 'Expired' },
-  { key: 'disabled', label: 'Disabled' },
+  { key: 'expired',   label: 'Expired' },
+  { key: 'disabled',  label: 'Disabled' },
 ];
 
 function fmtDate(d: Date | null): string {
@@ -31,69 +30,107 @@ function fmtValue(type: DiscountType, value: number): string {
   }
 }
 
-function derivedStatus(d: { status: DiscountStatus; startsAt: Date; endsAt: Date | null }): {
-  label: string;
-  cls: string;
-} {
-  const now = new Date();
-  if (d.status === 'DISABLED') return { label: 'Disabled', cls: 'bg-gray-50 text-gray-700 border-gray-200' };
-  if (d.endsAt && d.endsAt < now) return { label: 'Expired', cls: 'bg-rose-50 text-rose-900 border-rose-200' };
-  if (d.startsAt > now) return { label: 'Scheduled', cls: 'bg-amber-50 text-amber-900 border-amber-200' };
-  return { label: 'Active', cls: 'bg-emerald-50 text-emerald-900 border-emerald-200' };
+function methodLabel(m: DiscountMethod): string {
+  return m === 'AUTOMATIC' ? 'Automatic' : 'Code';
 }
+
+type Row = {
+  source: 'manual' | 'affiliate';
+  code: string;
+  title: string;
+  typeLabel: string;
+  methodLabel: string;
+  status: 'active' | 'scheduled' | 'expired' | 'disabled';
+  endsAt: Date | null;
+  // Route the row click. For affiliates, jump to affiliate detail page.
+  href: string;
+  // Manual discount id (or null for affiliate) — controls whether quick-delete is shown
+  manualCode: string | null;
+};
 
 export default async function AdminDiscountsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const statusKey = sp.status || 'all';
   const q = (sp.q || '').trim();
-  const page = Math.max(1, parseInt(sp.page || '1', 10) || 1);
   const now = new Date();
 
-  // We compute "active/scheduled/expired" from dates rather than a stored
-  // value, so the WHERE clause is built per filter rather than a simple
-  // status: filter.
-  let where: any = {};
-  if (statusKey === 'active') {
-    where = { status: 'ACTIVE', startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] };
-  } else if (statusKey === 'scheduled') {
-    where = { status: 'ACTIVE', startsAt: { gt: now } };
-  } else if (statusKey === 'expired') {
-    where = { status: 'ACTIVE', endsAt: { lt: now } };
-  } else if (statusKey === 'disabled') {
-    where = { status: 'DISABLED' };
-  }
-  if (q) {
-    where.OR = [
-      ...(where.OR ?? []),
-      { code: { contains: q.toLowerCase(), mode: 'insensitive' } },
-      { title: { contains: q, mode: 'insensitive' } },
-    ];
-  }
-
-  const [discounts, totalCount, allCount] = await Promise.all([
+  // Pull manual discounts + affiliates in parallel
+  const [discounts, affiliates] = await Promise.all([
     prisma.discount.findMany({
-      where,
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
     }),
-    prisma.discount.count({ where }),
-    prisma.discount.count(),
+    prisma.affiliate.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        discountCode: true,
+        status: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
-  // Authoritative usage count — sum of Order rows that applied this code.
-  // The denormalized usedCount on Discount can drift; this query is the
-  // source of truth.
-  const codes = discounts.map((d) => d.code);
+  // Normalize both into a unified Row array
+  const allRows: Row[] = [
+    ...discounts.map<Row>((d) => {
+      const isExpired = d.endsAt && d.endsAt < now;
+      const isScheduled = d.startsAt > now;
+      const status: Row['status'] =
+        d.status === 'DISABLED'
+          ? 'disabled'
+          : isExpired
+          ? 'expired'
+          : isScheduled
+          ? 'scheduled'
+          : 'active';
+      return {
+        source: 'manual',
+        code: d.code.toUpperCase(),
+        title: d.title || fmtValue(d.type, d.value),
+        typeLabel: fmtValue(d.type, d.value),
+        methodLabel: methodLabel(d.method),
+        status,
+        endsAt: d.endsAt,
+        href: `/admin/discounts/${encodeURIComponent(d.code)}`,
+        manualCode: d.code,
+      };
+    }),
+    ...affiliates
+      .filter((a) => a.discountCode)
+      .map<Row>((a) => ({
+        source: 'affiliate',
+        code: a.discountCode.toUpperCase(),
+        title: `${a.name} · affiliate`,
+        typeLabel: '10% off',
+        methodLabel: 'Code',
+        status: a.status === 'SUSPENDED' ? 'disabled' : 'active',
+        endsAt: null,
+        href: `/admin/affiliates/${a.id}`,
+        manualCode: null,
+      })),
+  ];
+
+  // Apply filter + search
+  let rows = allRows;
+  if (statusKey !== 'all') rows = rows.filter((r) => r.status === statusKey);
+  if (q) {
+    const needle = q.toLowerCase();
+    rows = rows.filter((r) => r.code.toLowerCase().includes(needle) || r.title.toLowerCase().includes(needle));
+  }
+
+  // Authoritative usage (across both sources) — one groupBy on Order
+  const codesLower = allRows.map((r) => r.code.toLowerCase());
   const usageMap = new Map<string, { count: number; revenueCents: number }>();
-  if (codes.length > 0) {
+  if (codesLower.length > 0) {
     const usage = await prisma.order.groupBy({
       by: ['discountCode'],
-      where: { discountCode: { in: codes }, status: { not: 'PENDING_PAYMENT' } },
+      where: { discountCode: { in: codesLower }, status: { not: 'PENDING_PAYMENT' } },
       _count: { _all: true },
       _sum: { totalCents: true },
     });
@@ -107,7 +144,14 @@ export default async function AdminDiscountsPage({
     }
   }
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+  // Tab counts (unfiltered by search; filtered by status only when not "all")
+  const counts = {
+    all: allRows.length,
+    active: allRows.filter((r) => r.status === 'active').length,
+    scheduled: allRows.filter((r) => r.status === 'scheduled').length,
+    expired: allRows.filter((r) => r.status === 'expired').length,
+    disabled: allRows.filter((r) => r.status === 'disabled').length,
+  };
 
   return (
     <main className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
@@ -116,9 +160,12 @@ export default async function AdminDiscountsPage({
         <div>
           <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">— Discounts</p>
           <h1 className="font-display font-black text-ink tracking-[-0.025em] text-3xl sm:text-4xl">
-            {allCount.toLocaleString()} {allCount === 1 ? 'discount' : 'discounts'}
+            {allRows.length.toLocaleString()} {allRows.length === 1 ? 'discount' : 'discounts'}
             <span className="text-cobalt">.</span>
           </h1>
+          <p className="text-xs text-ink-soft mt-1">
+            {discounts.length} manual · {allRows.length - discounts.length} from affiliates
+          </p>
         </div>
         <Link
           href="/admin/discounts/new"
@@ -133,6 +180,7 @@ export default async function AdminDiscountsPage({
         {STATUS_FILTERS.map((f) => {
           const active = f.key === statusKey;
           const href = `/admin/discounts?status=${f.key}${q ? `&q=${encodeURIComponent(q)}` : ''}`;
+          const count = (counts as any)[f.key] ?? 0;
           return (
             <Link
               key={f.key}
@@ -144,6 +192,9 @@ export default async function AdminDiscountsPage({
               }`}
             >
               {f.label}
+              <span className={`ml-2 text-[10px] tabular-nums ${active ? 'text-white/70' : 'text-ink-soft/60'}`}>
+                {count}
+              </span>
             </Link>
           );
         })}
@@ -163,7 +214,7 @@ export default async function AdminDiscountsPage({
 
       {/* Table */}
       <div className="rounded-2xl border border-cobalt/15 bg-white overflow-hidden">
-        {discounts.length === 0 ? (
+        {rows.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="text-sm text-ink-soft mb-3">
               {q ? 'No discounts match this search.' : 'No discounts yet.'}
@@ -176,78 +227,84 @@ export default async function AdminDiscountsPage({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <div className="bg-cobalt/5 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold grid grid-cols-[1fr_120px_120px_110px_110px_110px] gap-3 px-5 py-3 min-w-[900px]">
+            <div className="bg-cobalt/5 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold grid grid-cols-[1fr_110px_110px_100px_100px_100px_60px] gap-3 px-5 py-3 min-w-[920px]">
               <div>Code / title</div>
               <div>Type</div>
-              <div>Method</div>
+              <div>Source</div>
               <div className="text-right">Used</div>
               <div className="text-right">Revenue</div>
               <div className="text-right">Status</div>
+              <div></div>
             </div>
-            {discounts.map((d) => {
-              const status = derivedStatus(d);
-              const usage = usageMap.get(d.code.toLowerCase()) ?? { count: 0, revenueCents: 0 };
+            {rows.map((r) => {
+              const usage = usageMap.get(r.code.toLowerCase()) ?? { count: 0, revenueCents: 0 };
+              const statusCls = statusPill(r.status);
               return (
-                <Link
-                  key={d.id}
-                  href={`/admin/discounts/${encodeURIComponent(d.code)}`}
-                  className="grid grid-cols-[1fr_120px_120px_110px_110px_110px] gap-3 px-5 py-4 border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition items-center text-sm min-w-[900px]"
+                <div
+                  key={r.source + ':' + r.code}
+                  className="relative grid grid-cols-[1fr_110px_110px_100px_100px_100px_60px] gap-3 px-5 py-4 border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition items-center text-sm min-w-[920px]"
                 >
-                  <div>
-                    <div className="font-mono text-cobalt font-bold uppercase">{d.code}</div>
+                  {/* Whole row click target except the delete button */}
+                  <Link
+                    href={r.href}
+                    className="absolute inset-0 z-0"
+                    aria-label={r.title}
+                  />
+                  <div className="relative z-10 pointer-events-none">
+                    <div className="font-mono text-cobalt font-bold uppercase">{r.code}</div>
                     <div className="text-[11px] text-ink-soft truncate">
-                      {d.title || fmtValue(d.type, d.value)}
-                      {d.endsAt && <> · ends {fmtDate(d.endsAt)}</>}
+                      {r.title}
+                      {r.endsAt && <> · ends {fmtDate(r.endsAt)}</>}
                     </div>
                   </div>
-                  <div className="text-ink-soft text-xs">{fmtValue(d.type, d.value)}</div>
-                  <div className="text-ink-soft text-xs">{methodLabel(d.method)}</div>
-                  <div className="text-right text-ink tabular-nums">{usage.count}</div>
-                  <div className="text-right font-bold text-ink tabular-nums">
-                    ${(usage.revenueCents / 100).toFixed(2)}
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-block text-[10px] tracking-[0.10em] uppercase font-bold px-2 py-1 rounded border ${status.cls}`}>
-                      {status.label}
+                  <div className="relative z-10 pointer-events-none text-ink-soft text-xs">{r.typeLabel}</div>
+                  <div className="relative z-10 pointer-events-none">
+                    <span
+                      className={`inline-block text-[10px] tracking-[0.10em] uppercase font-bold px-2 py-0.5 rounded border ${
+                        r.source === 'affiliate'
+                          ? 'bg-cobalt/10 text-cobalt border-cobalt/20'
+                          : 'bg-gray-50 text-gray-700 border-gray-200'
+                      }`}
+                    >
+                      {r.source === 'affiliate' ? 'Affiliate' : 'Manual'}
                     </span>
                   </div>
-                </Link>
+                  <div className="relative z-10 pointer-events-none text-right text-ink tabular-nums">{usage.count}</div>
+                  <div className="relative z-10 pointer-events-none text-right font-bold text-ink tabular-nums">
+                    ${(usage.revenueCents / 100).toFixed(2)}
+                  </div>
+                  <div className="relative z-10 pointer-events-none text-right">
+                    <span className={`inline-block text-[10px] tracking-[0.10em] uppercase font-bold px-2 py-1 rounded border ${statusCls}`}>
+                      {labelFor(r.status)}
+                    </span>
+                  </div>
+                  {/* Quick-delete only for manual discounts */}
+                  <div className="relative z-10 text-right">
+                    {r.manualCode ? <QuickDelete code={r.manualCode} /> : null}
+                  </div>
+                </div>
               );
             })}
           </div>
         )}
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-5 flex items-center justify-between text-sm">
-          <p className="text-ink-soft">
-            Page {page} of {totalPages} · {totalCount.toLocaleString()} {totalCount === 1 ? 'discount' : 'discounts'}
-          </p>
-          <div className="flex gap-2">
-            {page > 1 && (
-              <Link
-                href={`/admin/discounts?status=${statusKey}${q ? `&q=${encodeURIComponent(q)}` : ''}&page=${page - 1}`}
-                className="text-xs font-bold tracking-wider uppercase bg-white border border-cobalt/15 text-ink px-4 py-2 rounded-lg hover:border-cobalt/30 transition"
-              >
-                ← Prev
-              </Link>
-            )}
-            {page < totalPages && (
-              <Link
-                href={`/admin/discounts?status=${statusKey}${q ? `&q=${encodeURIComponent(q)}` : ''}&page=${page + 1}`}
-                className="text-xs font-bold tracking-wider uppercase bg-white border border-cobalt/15 text-ink px-4 py-2 rounded-lg hover:border-cobalt/30 transition"
-              >
-                Next →
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
     </main>
   );
 }
 
-function methodLabel(m: DiscountMethod): string {
-  return m === 'AUTOMATIC' ? 'Automatic' : 'Code';
+function statusPill(s: Row['status']): string {
+  switch (s) {
+    case 'active':
+      return 'bg-emerald-50 text-emerald-900 border-emerald-200';
+    case 'scheduled':
+      return 'bg-amber-50 text-amber-900 border-amber-200';
+    case 'expired':
+      return 'bg-rose-50 text-rose-900 border-rose-200';
+    case 'disabled':
+      return 'bg-gray-50 text-gray-700 border-gray-200';
+  }
+}
+
+function labelFor(s: Row['status']): string {
+  return s === 'active' ? 'Active' : s === 'scheduled' ? 'Scheduled' : s === 'expired' ? 'Expired' : 'Disabled';
 }

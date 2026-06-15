@@ -122,7 +122,7 @@ export default async function AdminAffiliatesPage({
         />
       </form>
 
-      {/* Table */}
+      {/* List — div-grid so each row is a Link to the detail page */}
       <div className="rounded-2xl border border-cobalt/15 bg-white overflow-hidden">
         {affiliates.length === 0 ? (
           <div className="px-6 py-16 text-center">
@@ -131,42 +131,42 @@ export default async function AdminAffiliatesPage({
             </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-cobalt/5 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold">
-              <tr>
-                <th className="px-5 py-3 text-left">Joined</th>
-                <th className="px-5 py-3 text-left">Name</th>
-                <th className="px-5 py-3 text-left">Slug / Code</th>
-                <th className="px-5 py-3 text-right">Customers</th>
-                <th className="px-5 py-3 text-right">Commissions</th>
-                <th className="px-5 py-3 text-right">Earned</th>
-                <th className="px-5 py-3 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {affiliates.map((a) => (
-                <tr key={a.id} className="border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition">
-                  <td className="px-5 py-4 text-ink-soft tabular-nums">{fmtDate(a.createdAt)}</td>
-                  <td className="px-5 py-4">
-                    <div className="text-ink font-bold">{a.name}</div>
-                    <div className="text-[11px] text-ink-soft">{a.email}</div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="text-[11px] text-ink-soft font-mono">/{a.slug}</div>
-                    <div className="text-[11px] text-cobalt font-mono font-bold">{a.discountCode}</div>
-                  </td>
-                  <td className="px-5 py-4 text-right text-ink tabular-nums">{a._count.customerLinks}</td>
-                  <td className="px-5 py-4 text-right text-ink tabular-nums">{a._count.orderCommissions}</td>
-                  <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
-                    {fmtMoney(totalsMap.get(a.id) ?? 0)}
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <AffiliateStatusPill status={a.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <div className="bg-cobalt/5 text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold grid grid-cols-[110px_1fr_140px_90px_90px_100px_110px] gap-3 px-5 py-3 min-w-[1000px]">
+              <div>Joined</div>
+              <div>Name</div>
+              <div>Slug / Code</div>
+              <div className="text-right">Customers</div>
+              <div className="text-right">Commissions</div>
+              <div className="text-right">Earned</div>
+              <div className="text-right">Status</div>
+            </div>
+            {affiliates.map((a) => (
+              <Link
+                key={a.id}
+                href={`/admin/affiliates/${a.id}`}
+                className="grid grid-cols-[110px_1fr_140px_90px_90px_100px_110px] gap-3 px-5 py-4 border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition items-center text-sm min-w-[1000px]"
+              >
+                <div className="text-ink-soft tabular-nums">{fmtDate(a.createdAt)}</div>
+                <div>
+                  <div className="text-ink font-bold truncate">{a.name}</div>
+                  <div className="text-[11px] text-ink-soft truncate">{a.email}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-ink-soft font-mono truncate">/{a.slug}</div>
+                  <div className="text-[11px] text-cobalt font-mono font-bold truncate">{a.discountCode}</div>
+                </div>
+                <div className="text-right text-ink tabular-nums">{a._count.customerLinks}</div>
+                <div className="text-right text-ink tabular-nums">{a._count.orderCommissions}</div>
+                <div className="text-right font-bold text-ink tabular-nums">
+                  {fmtMoney(totalsMap.get(a.id) ?? 0)}
+                </div>
+                <div className="text-right">
+                  <AffiliateStatusPill status={a.status} />
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
 

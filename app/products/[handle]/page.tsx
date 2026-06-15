@@ -19,7 +19,18 @@ import { PdpStackAddButton } from './PdpStackAddButton';
 type Props = { params: { handle: string } };
 
 export async function generateStaticParams() {
-  return (await listProducts()).map((p) => ({ handle: p.handle }));
+  // Build-time DB query — guard against the products table not yet
+  // existing or being empty (e.g. first deploy before the seed runs).
+  // Returning [] means no pages are statically generated; they all
+  // become on-demand SSR, which works without any database queries
+  // having to succeed at build time.
+  try {
+    const products = await listProducts();
+    return products.map((p) => ({ handle: p.handle }));
+  } catch (err) {
+    console.warn('[generateStaticParams] product list query failed — falling back to dynamic rendering', err);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Props) {
