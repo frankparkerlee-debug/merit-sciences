@@ -288,19 +288,46 @@ export async function applyInventoryCsv(_prev: ActionResult | null, formData: Fo
     return { ok: false, error: 'Invalid diff payload' };
   }
 
+  // Resolve per-SKU image URLs from the manifest written by
+  // scripts/gen-sku-vial-images.py. Keyed by (compound, vialSize) so
+  // the importer can pick the right image regardless of whether the
+  // row is a create or an update of an existing handle. Empty if the
+  // manifest is missing or unreadable (resilient to fresh checkouts).
+  const skuImageMap = await loadSkuImageManifest();
+
   let updated = 0;
   let created = 0;
+  let imageSet = 0;
   let errors = 0;
 
   for (const r of diff.rows) {
+    const skuImageUrl = skuImageMap.get(skuKey(r.row.productName, r.row.vialSize)) ?? null;
+
     if (r.action === 'update' && r.matchedHandle) {
-      if (Object.keys(r.changes).length === 0) continue;
+      // Apply the SKU manifest image. The manifest is the canonical
+      // brand default — it replaces stale Shopify CDN URLs from the
+      // legacy seed data. A real Supabase-hosted photo (uploaded by the
+      // admin via /admin/products) is kept; anything else gets the
+      // branded vial.
+      const existing = await prisma.product.findUnique({
+        where: { handle: r.matchedHandle },
+        select: { imageUrl: true },
+      });
+      const existingUrl = existing?.imageUrl ?? '';
+      const isAdminUpload = /supabase\.co\/storage|\/products\/(?!sku-|placeholder)/.test(existingUrl);
+      const shouldSetImage = skuImageUrl && !isAdminUpload && existingUrl !== skuImageUrl;
+
+      if (Object.keys(r.changes).length === 0 && !shouldSetImage) continue;
 
       const data: any = {};
       if (r.changes.stockQty) data.stockQty = r.changes.stockQty.to;
       if (r.changes.priceCents) data.priceCents = r.changes.priceCents.to;
       if (r.changes.physicianPriceCents) data.physicianPriceCents = r.changes.physicianPriceCents.to;
       if (r.changes.costCents) data.costCents = r.changes.costCents.to;
+      if (shouldSetImage) {
+        data.imageUrl = skuImageUrl;
+        imageSet++;
+      }
 
       try {
         await prisma.product.update({
@@ -315,7 +342,10 @@ export async function applyInventoryCsv(_prev: ActionResult | null, formData: Fo
     } else if (r.action === 'create' && r.newHandle) {
       // Create new draft product. status='DRAFT' so it doesn't go live
       // on the catalog/storefront until the operator opens it, fills in
-      // eyebrow/oneLiner/imageUrl/lot info, and flips to ACTIVE.
+      // eyebrow/oneLiner/lot info, and flips to ACTIVE. Image is set
+      // from the SKU manifest so the draft has a real visual from
+      // moment one.
+      if (skuImageUrl) imageSet++;
       try {
         await prisma.product.create({
           data: {
@@ -337,6 +367,7 @@ export async function applyInventoryCsv(_prev: ActionResult | null, formData: Fo
             segment: 'BIOHACKER',
             channel: 'RUA',
             status: 'DRAFT',
+            imageUrl: skuImageUrl,
             images: [],
           },
         });
@@ -351,10 +382,49 @@ export async function applyInventoryCsv(_prev: ActionResult | null, formData: Fo
   revalidatePath('/admin/products');
   revalidatePath('/catalog');
   const errorTail = errors > 0 ? ` ⚠ ${errors} failed (see Render logs).` : '';
+  const imageTail = imageSet > 0 ? ` Linked ${imageSet} SKU image${imageSet === 1 ? '' : 's'}.` : '';
   return {
     ok: true,
-    message: `Updated ${updated} product${updated === 1 ? '' : 's'}, created ${created} draft${created === 1 ? '' : 's'}.${errorTail}`,
+    message: `Updated ${updated} product${updated === 1 ? '' : 's'}, created ${created} draft${created === 1 ? '' : 's'}.${imageTail}${errorTail}`,
   };
+}
+
+/* ─── SKU image manifest ─── */
+
+/**
+ * Loads the manifest produced by scripts/gen-sku-vial-images.py. Returns
+ * a Map keyed by normalized `${compound}|${vialSize}` → `/products/<file>`
+ * imageUrl. The importer consults this map when creating/updating rows
+ * so every SKU gets its branded vial image with no manual upload step.
+ *
+ * Resilient — returns an empty Map if the manifest isn't present (fresh
+ * checkout before the script has been run, or running an old deploy
+ * before per-SKU images were generated).
+ */
+async function loadSkuImageManifest(): Promise<Map<string, string>> {
+  try {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const manifestPath = path.join(process.cwd(), 'public', 'products', 'sku-image-manifest.json');
+    const raw = await fs.readFile(manifestPath, 'utf-8');
+    const entries = JSON.parse(raw) as Array<{
+      compound: string;
+      vialSize: string;
+      imageUrl: string;
+    }>;
+    const map = new Map<string, string>();
+    for (const e of entries) {
+      if (e.imageUrl) map.set(skuKey(e.compound, e.vialSize), e.imageUrl);
+    }
+    return map;
+  } catch (err) {
+    console.warn('[inventory-import] no sku-image-manifest.json — skipping image autolink', err);
+    return new Map();
+  }
+}
+
+function skuKey(compound: string, vialSize: string): string {
+  return `${compound.trim().toLowerCase()}|${vialSize.trim().toLowerCase().replace(/\s+/g, '')}`;
 }
 
 /* ─── Matching logic ─── */

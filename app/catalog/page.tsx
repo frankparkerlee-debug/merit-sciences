@@ -1,6 +1,12 @@
 import { listProducts } from '@/lib/catalog';
 import type { Product } from '@/lib/product-types';
-import { familyByCompound } from '@/lib/catalog-meta';
+import { familyByCompound, familySortRank } from '@/lib/catalog-meta';
+
+/** Numeric weight for sorting "5mg" / "1500mg" / "10000IU" strings. */
+function sizeWeight(s: string): number {
+  const m = String(s).match(/(\d+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1]) : 0;
+}
 import { CatalogClient } from './CatalogClient';
 
 export const metadata = { title: 'Catalog' };
@@ -137,6 +143,18 @@ export default async function CatalogPage() {
     pharmacistNote: PHARMACIST_NOTES[p.handle] ?? null,
     restock: RESTOCK_SIGNALS[p.handle] ?? null,
   }));
+
+  // Best-seller sort: GLP-1 first (Tirzepatide, Semaglutide, Retatrutide),
+  // then healing → aesthetic → GH → longevity → neuro → bioregs → niche.
+  // Within a family, sort by compound name then by numeric vial size
+  // (5mg → 10mg → 30mg) so multi-size families read in ascending order.
+  enriched.sort((a, b) => {
+    const familyDiff = familySortRank(a.family) - familySortRank(b.family);
+    if (familyDiff !== 0) return familyDiff;
+    const compoundDiff = a.product.compound.localeCompare(b.product.compound);
+    if (compoundDiff !== 0) return compoundDiff;
+    return sizeWeight(a.product.vialSize) - sizeWeight(b.product.vialSize);
+  });
 
   // Stack templates resolved to live product data
   const stacksResolved = STACK_TEMPLATES.map((stack) => {

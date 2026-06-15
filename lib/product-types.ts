@@ -55,7 +55,7 @@ export function money(cents: number): string {
  * and stays consistent across catalog cards, PDPs, cart drawer, emails,
  * cross-sell modules, etc.
  */
-export const PRODUCT_PLACEHOLDER_IMAGE = '/products/placeholder-vial.svg';
+export const PRODUCT_PLACEHOLDER_IMAGE = '/products/placeholder-vial.webp';
 
 export function productImage(imageUrl: string | null | undefined): string {
   return imageUrl || PRODUCT_PLACEHOLDER_IMAGE;

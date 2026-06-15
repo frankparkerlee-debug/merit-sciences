@@ -74,12 +74,18 @@ export default async function AdminProductsPage({
             <span className="text-cobalt">.</span>
           </h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/products/bulk"
+            className="bg-cobalt text-white px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-ink transition"
+          >
+            Bulk edit
+          </Link>
           <Link
             href="/admin/import/inventory"
             className="bg-white border border-cobalt/20 text-ink px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:border-cobalt/40 transition"
           >
-            Import inventory CSV
+            Import inventory
           </Link>
           <Link
             href="/admin/products/new"

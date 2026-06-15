@@ -3,7 +3,20 @@
 
 import type { Product } from '@/lib/product-types';
 
-export type Family = 'peptides' | 'glp1' | 'cofactors' | 'neuropeptides' | 'blends';
+export type Family =
+  | 'glp1'           // Tirzepatide, Semaglutide, Retatrutide, Cagrilintide — #1 demand
+  | 'healing'        // BPC-157, TB-500, KPV, Wolverine — recovery / soft tissue
+  | 'aesthetic'      // GHK-Cu, GLOW, KLOW, Melanotan-II — skin / cosmetic
+  | 'gh'             // CJC, Ipamorelin, Tesamorelin, Sermorelin, IGF-1, AOD — GH axis
+  | 'longevity'      // NAD+, Glutathione, Epitalon, MOTS-c, Thymosin Alpha-1
+  | 'neuropeptides'  // Selank, Semax, PT-141, DSIP, Kisspeptin, Oxytocin
+  | 'bioregulators'  // Cardiogen, Cartalax, Prostamax, Pinealon, Thymalin
+  | 'niche'          // FOXO4-DRI, SLU-PP-332, PNC-27, LL-37, VIP, etc.
+  // Legacy values kept so existing FAMILY_BY_HANDLE entries still type-check.
+  // Catalog code maps these to the new families via familyRank/order maps.
+  | 'peptides'
+  | 'cofactors'
+  | 'blends';
 
 export const FAMILY_BY_HANDLE: Record<string, Family> = {
   'bpc-157-tb-500':     'blends',
@@ -26,10 +39,17 @@ export const FAMILY_BY_HANDLE: Record<string, Family> = {
 };
 
 export const FAMILY_LABELS: Record<Family, string> = {
-  peptides:      'Peptides',
   glp1:          'GLP-1',
-  cofactors:     'Cofactors',
+  healing:       'Healing',
+  aesthetic:     'Aesthetic',
+  gh:            'Growth Hormone',
+  longevity:     'Longevity',
   neuropeptides: 'Neuropeptides',
+  bioregulators: 'Bioregulators',
+  niche:         'Research',
+  // Legacy aliases
+  peptides:      'Peptides',
+  cofactors:     'Cofactors',
   blends:        'Blends',
 };
 
@@ -43,20 +63,62 @@ export const FAMILY_LABELS: Record<Family, string> = {
 export function familyByCompound(compound: string): Family {
   const c = compound.toLowerCase();
 
-  // GLP-1 family — weight-loss / metabolic
+  // ── #1 GLP-1 ─────────────────────────────────────────────────
   if (/(retatrutide|tirzepatide|semaglutide|cagrilintide|liraglutide)/.test(c)) return 'glp1';
 
-  // Neuropeptides — brain / mood / sexual function
-  if (/(selank|semax|pt-?141|melanotan|kisspeptin|dsip|oxytocin|vip|pe ?22)/.test(c)) return 'neuropeptides';
+  // ── #2 Healing / recovery (soft tissue, gut, wound) ──────────
+  if (/(wolverine|bpc[\s-]*157|bpc.*tb|tb[\s-]*500|kpv|thymosin\s*b)/.test(c)) return 'healing';
 
-  // Blends — multi-peptide formulations
-  if (/(klow|glow|wolverine|\+)/.test(c)) return 'blends';
+  // ── #3 Aesthetic / cosmetic ──────────────────────────────────
+  // GHK-Cu, GLOW (GHK+BPC+TB), KLOW (GHK+BPC+TB+KPV), Melanotan
+  if (/(klow|glow|ghk[\s-]*cu|melanotan)/.test(c)) return 'aesthetic';
 
-  // Cofactors — small molecules, regenerative supports
-  if (/(nad|ghk|mots|epitalon|amino|glutathione|5-amino|hcg|foxo)/.test(c)) return 'cofactors';
+  // ── #4 Growth hormone axis ───────────────────────────────────
+  if (/(cjc[\s-]*1295|ipamorelin|ipa\b|tesamorelin|sermorelin|igf-?1|aod-?9604|ghrp|mk-?677)/.test(c)) return 'gh';
 
-  // Default — single-target peptides
-  return 'peptides';
+  // ── #5 Longevity / anti-aging cofactors ──────────────────────
+  if (/(nad|glutathione|epitalon|mots|thymosin\s*alpha|thymalin|5-amino-1mq)/.test(c)) return 'longevity';
+
+  // ── #6 Neuropeptides / cognition / sexual function ───────────
+  if (/(selank|semax|pt-?141|kisspeptin|dsip|oxytocin|vip|pe[\s-]*22)/.test(c)) return 'neuropeptides';
+
+  // ── #7 Russian bioregulators (Khavinson peptides) ────────────
+  if (/(cardiogen|cartalax|prostamax|pinealon|chonluten)/.test(c)) return 'bioregulators';
+
+  // ── #8 Niche / research-only ─────────────────────────────────
+  // Fallthrough for FOXO4-DRI, SLU-PP-332, PNC-27, LL-37, PTD-DBM,
+  // Follistatin, HCG, etc. — everything that's still actively researched
+  // but doesn't fit a clear tier.
+  return 'niche';
+}
+
+/**
+ * Best-seller ordering — lower number = shown first on /catalog.
+ * Based on real peptide e-commerce demand patterns (June 2026 baseline):
+ * GLP-1 dominates everything; healing is steady #2; aesthetic and GH
+ * cluster mid-pack; bioregulators and niche bring up the rear.
+ *
+ * Legacy family labels ('peptides', 'cofactors', 'blends') get mapped
+ * to sensible defaults so existing seed data doesn't sink to the bottom.
+ */
+export const FAMILY_SORT_RANK: Record<Family, number> = {
+  glp1:           1,
+  healing:        2,
+  aesthetic:      3,
+  gh:             4,
+  longevity:      5,
+  neuropeptides:  6,
+  bioregulators:  7,
+  niche:          8,
+  // Legacy buckets — placed alongside their nearest new home
+  blends:         2,  // BPC+TB, Wolverine → treat as healing
+  peptides:       4,  // Mostly single-peptide GH axis or healing → GH bucket
+  cofactors:      5,  // Mostly longevity supports
+};
+
+export function familySortRank(f: Family | null | undefined): number {
+  if (!f) return 999;
+  return FAMILY_SORT_RANK[f] ?? 999;
 }
 
 export type StackTemplate = {
