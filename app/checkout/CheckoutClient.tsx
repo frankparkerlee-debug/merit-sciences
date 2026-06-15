@@ -508,10 +508,15 @@ function WalletTriad({
 
   return (
     <div className="space-y-3">
-      {/* When AP is enabled: render Apple Pay; when GP is eligible: render Google Pay.
-          Layout is 2-col when BOTH are present, 1-col otherwise. */}
-      <div className={`grid gap-3 ${applePayEnabled && eligibility.applepay && eligibility.googlepay ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-        {applePayEnabled && eligibility.applepay && (
+      {/* Always render the wallet buttons. PayPal's SDK has its own
+          internal eligibility gate — if the browser/device can't actually
+          process Apple Pay or Google Pay, PayPal returns nothing from
+          the render and the slot stays empty. Our state-based isEligible()
+          check was double-gating and could leave both buttons hidden
+          even on supported devices when the script-resolved race
+          condition went wrong. */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+        {applePayEnabled && (
           <div>
             <PayPalButtons
               fundingSource={'applepay' as any}
@@ -523,18 +528,16 @@ function WalletTriad({
             />
           </div>
         )}
-        {eligibility.googlepay && (
-          <div>
-            <PayPalButtons
-              fundingSource={'googlepay' as any}
-              style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
-              createOrder={createOrder}
-              onApprove={onApprove}
-              onError={onError}
-              onClick={onClick}
-            />
-          </div>
-        )}
+        <div>
+          <PayPalButtons
+            fundingSource={'googlepay' as any}
+            style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
+            createOrder={createOrder}
+            onApprove={onApprove}
+            onError={onError}
+            onClick={onClick}
+          />
+        </div>
       </div>
 
       {/* PayPal always renders if eligible (basically always) */}
