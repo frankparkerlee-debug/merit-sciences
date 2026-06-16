@@ -12,3 +12,8 @@ next-env.d.ts
 
 # Prisma generated client (regenerated on every install)
 lib/generated
+
+# Internal dev artifacts from gen-sku-vials-edit.py — base vial + edit
+# mask are not used at runtime, only as scratch state for the script.
+public/products/_base-vial.png
+public/products/_edit-mask.png

@@ -1,0 +1,596 @@
+[
+  {
+    "sku": "5-Amino-1MQ | 50mg",
+    "compound": "5-Amino-1MQ",
+    "vialSize": "50mg",
+    "slug": "5-amino-1mq-50mg",
+    "family": "cofactors",
+    "filename": "sku-5-amino-1mq-50mg.webp",
+    "imageUrl": "/products/sku-5-amino-1mq-50mg.webp"
+  },
+  {
+    "sku": "AOD-9604 | 5mg",
+    "compound": "AOD-9604",
+    "vialSize": "5mg",
+    "slug": "aod-9604-5mg",
+    "family": "peptides",
+    "filename": "sku-aod-9604-5mg.webp",
+    "imageUrl": "/products/sku-aod-9604-5mg.webp"
+  },
+  {
+    "sku": "AOD-9604 | 10mg",
+    "compound": "AOD-9604",
+    "vialSize": "10mg",
+    "slug": "aod-9604-10mg",
+    "family": "peptides",
+    "filename": "sku-aod-9604-10mg.webp",
+    "imageUrl": "/products/sku-aod-9604-10mg.webp"
+  },
+  {
+    "sku": "BPC 5mg + TB 5mg (Wolverine) | 10mg",
+    "compound": "BPC 5mg + TB 5mg (Wolverine)",
+    "vialSize": "10mg",
+    "slug": "bpc-5mg-tb-5mg-wolverine-10mg",
+    "family": "blends",
+    "filename": "sku-bpc-5mg-tb-5mg-wolverine-10mg.webp",
+    "imageUrl": "/products/sku-bpc-5mg-tb-5mg-wolverine-10mg.webp"
+  },
+  {
+    "sku": "BPC 10mg + TB 10mg (Wolverine) | 20mg",
+    "compound": "BPC 10mg + TB 10mg (Wolverine)",
+    "vialSize": "20mg",
+    "slug": "bpc-10mg-tb-10mg-wolverine-20mg",
+    "family": "blends",
+    "filename": "sku-bpc-10mg-tb-10mg-wolverine-20mg.webp",
+    "imageUrl": "/products/sku-bpc-10mg-tb-10mg-wolverine-20mg.webp"
+  },
+  {
+    "sku": "BPC-157 | 10mg",
+    "compound": "BPC-157",
+    "vialSize": "10mg",
+    "slug": "bpc-157-10mg",
+    "family": "peptides",
+    "filename": "sku-bpc-157-10mg.webp",
+    "imageUrl": "/products/sku-bpc-157-10mg.webp"
+  },
+  {
+    "sku": "BPC157 + GHK-CU 30 + TB500 (Glow) | 50mg",
+    "compound": "BPC157 + GHK-CU 30 + TB500 (Glow)",
+    "vialSize": "50mg",
+    "slug": "bpc157-ghk-cu-30-tb500-glow-50mg",
+    "family": "blends",
+    "filename": "sku-bpc157-ghk-cu-30-tb500-glow-50mg.webp",
+    "imageUrl": "/products/sku-bpc157-ghk-cu-30-tb500-glow-50mg.webp"
+  },
+  {
+    "sku": "BPC157 + GHK-CU 50 + TB500 (Glow) | 70mg",
+    "compound": "BPC157 + GHK-CU 50 + TB500 (Glow)",
+    "vialSize": "70mg",
+    "slug": "bpc157-ghk-cu-50-tb500-glow-70mg",
+    "family": "blends",
+    "filename": "sku-bpc157-ghk-cu-50-tb500-glow-70mg.webp",
+    "imageUrl": "/products/sku-bpc157-ghk-cu-50-tb500-glow-70mg.webp"
+  },
+  {
+    "sku": "BPC157 + GHK-CU 50 + TB500 + KPV (Klow) | 80mg",
+    "compound": "BPC157 + GHK-CU 50 + TB500 + KPV (Klow)",
+    "vialSize": "80mg",
+    "slug": "bpc157-ghk-cu-50-tb500-kpv-klow-80mg",
+    "family": "blends",
+    "filename": "sku-bpc157-ghk-cu-50-tb500-kpv-klow-80mg.webp",
+    "imageUrl": "/products/sku-bpc157-ghk-cu-50-tb500-kpv-klow-80mg.webp"
+  },
+  {
+    "sku": "Cagrilintide | 5mg",
+    "compound": "Cagrilintide",
+    "vialSize": "5mg",
+    "slug": "cagrilintide-5mg",
+    "family": "glp1",
+    "filename": "sku-cagrilintide-5mg.webp",
+    "imageUrl": "/products/sku-cagrilintide-5mg.webp"
+  },
+  {
+    "sku": "Cardiogen | 20mg",
+    "compound": "Cardiogen",
+    "vialSize": "20mg",
+    "slug": "cardiogen-20mg",
+    "family": "peptides",
+    "filename": "sku-cardiogen-20mg.webp",
+    "imageUrl": "/products/sku-cardiogen-20mg.webp"
+  },
+  {
+    "sku": "Cartalax | 20mg",
+    "compound": "Cartalax",
+    "vialSize": "20mg",
+    "slug": "cartalax-20mg",
+    "family": "peptides",
+    "filename": "sku-cartalax-20mg.webp",
+    "imageUrl": "/products/sku-cartalax-20mg.webp"
+  },
+  {
+    "sku": "CJC-1295 With DAC | 5mg",
+    "compound": "CJC-1295 With DAC",
+    "vialSize": "5mg",
+    "slug": "cjc-1295-with-dac-5mg",
+    "family": "peptides",
+    "filename": "sku-cjc-1295-with-dac-5mg.webp",
+    "imageUrl": "/products/sku-cjc-1295-with-dac-5mg.webp"
+  },
+  {
+    "sku": "CJC-1295 Without DAC | 5mg",
+    "compound": "CJC-1295 Without DAC",
+    "vialSize": "5mg",
+    "slug": "cjc-1295-without-dac-5mg",
+    "family": "peptides",
+    "filename": "sku-cjc-1295-without-dac-5mg.webp",
+    "imageUrl": "/products/sku-cjc-1295-without-dac-5mg.webp"
+  },
+  {
+    "sku": "CJC-1295 Without DAC | 10mg",
+    "compound": "CJC-1295 Without DAC",
+    "vialSize": "10mg",
+    "slug": "cjc-1295-without-dac-10mg",
+    "family": "peptides",
+    "filename": "sku-cjc-1295-without-dac-10mg.webp",
+    "imageUrl": "/products/sku-cjc-1295-without-dac-10mg.webp"
+  },
+  {
+    "sku": "CJC-1295 w/o DAC 5 + IPA 5 | 10mg",
+    "compound": "CJC-1295 w/o DAC 5 + IPA 5",
+    "vialSize": "10mg",
+    "slug": "cjc-1295-w-o-dac-5-ipa-5-10mg",
+    "family": "blends",
+    "filename": "sku-cjc-1295-w-o-dac-5-ipa-5-10mg.webp",
+    "imageUrl": "/products/sku-cjc-1295-w-o-dac-5-ipa-5-10mg.webp"
+  },
+  {
+    "sku": "CJC-1295 w/o DAC 10 + IPA 10 | 20mg",
+    "compound": "CJC-1295 w/o DAC 10 + IPA 10",
+    "vialSize": "20mg",
+    "slug": "cjc-1295-w-o-dac-10-ipa-10-20mg",
+    "family": "blends",
+    "filename": "sku-cjc-1295-w-o-dac-10-ipa-10-20mg.webp",
+    "imageUrl": "/products/sku-cjc-1295-w-o-dac-10-ipa-10-20mg.webp"
+  },
+  {
+    "sku": "DSIP | 5mg",
+    "compound": "DSIP",
+    "vialSize": "5mg",
+    "slug": "dsip-5mg",
+    "family": "neuropeptides",
+    "filename": "sku-dsip-5mg.webp",
+    "imageUrl": "/products/sku-dsip-5mg.webp"
+  },
+  {
+    "sku": "Epitalon | 20mg",
+    "compound": "Epitalon",
+    "vialSize": "20mg",
+    "slug": "epitalon-20mg",
+    "family": "cofactors",
+    "filename": "sku-epitalon-20mg.webp",
+    "imageUrl": "/products/sku-epitalon-20mg.webp"
+  },
+  {
+    "sku": "Epitalon | 50mg",
+    "compound": "Epitalon",
+    "vialSize": "50mg",
+    "slug": "epitalon-50mg",
+    "family": "cofactors",
+    "filename": "sku-epitalon-50mg.webp",
+    "imageUrl": "/products/sku-epitalon-50mg.webp"
+  },
+  {
+    "sku": "Epitalon Amidate | 50mg",
+    "compound": "Epitalon Amidate",
+    "vialSize": "50mg",
+    "slug": "epitalon-amidate-50mg",
+    "family": "cofactors",
+    "filename": "sku-epitalon-amidate-50mg.webp",
+    "imageUrl": "/products/sku-epitalon-amidate-50mg.webp"
+  },
+  {
+    "sku": "Follistatin 344 | 1mg",
+    "compound": "Follistatin 344",
+    "vialSize": "1mg",
+    "slug": "follistatin-344-1mg",
+    "family": "peptides",
+    "filename": "sku-follistatin-344-1mg.webp",
+    "imageUrl": "/products/sku-follistatin-344-1mg.webp"
+  },
+  {
+    "sku": "FOXO4-DRI | 10mg",
+    "compound": "FOXO4-DRI",
+    "vialSize": "10mg",
+    "slug": "foxo4-dri-10mg",
+    "family": "cofactors",
+    "filename": "sku-foxo4-dri-10mg.webp",
+    "imageUrl": "/products/sku-foxo4-dri-10mg.webp"
+  },
+  {
+    "sku": "GHK-Cu | 100mg",
+    "compound": "GHK-Cu",
+    "vialSize": "100mg",
+    "slug": "ghk-cu-100mg",
+    "family": "cofactors",
+    "filename": "sku-ghk-cu-100mg.webp",
+    "imageUrl": "/products/sku-ghk-cu-100mg.webp"
+  },
+  {
+    "sku": "GHRP-2 Acetate | 10mg",
+    "compound": "GHRP-2 Acetate",
+    "vialSize": "10mg",
+    "slug": "ghrp-2-acetate-10mg",
+    "family": "peptides",
+    "filename": "sku-ghrp-2-acetate-10mg.webp",
+    "imageUrl": "/products/sku-ghrp-2-acetate-10mg.webp"
+  },
+  {
+    "sku": "Glutathione | 1500mg",
+    "compound": "Glutathione",
+    "vialSize": "1500mg",
+    "slug": "glutathione-1500mg",
+    "family": "cofactors",
+    "filename": "sku-glutathione-1500mg.webp",
+    "imageUrl": "/products/sku-glutathione-1500mg.webp"
+  },
+  {
+    "sku": "HCG | 10000IU",
+    "compound": "HCG",
+    "vialSize": "10000IU",
+    "slug": "hcg-10000iu",
+    "family": "cofactors",
+    "filename": "sku-hcg-10000iu.webp",
+    "imageUrl": "/products/sku-hcg-10000iu.webp"
+  },
+  {
+    "sku": "IGF-1 LR3 | 1mg",
+    "compound": "IGF-1 LR3",
+    "vialSize": "1mg",
+    "slug": "igf-1-lr3-1mg",
+    "family": "peptides",
+    "filename": "sku-igf-1-lr3-1mg.webp",
+    "imageUrl": "/products/sku-igf-1-lr3-1mg.webp"
+  },
+  {
+    "sku": "Ipamorelin | 10mg",
+    "compound": "Ipamorelin",
+    "vialSize": "10mg",
+    "slug": "ipamorelin-10mg",
+    "family": "peptides",
+    "filename": "sku-ipamorelin-10mg.webp",
+    "imageUrl": "/products/sku-ipamorelin-10mg.webp"
+  },
+  {
+    "sku": "Kisspeptin-10 | 10mg",
+    "compound": "Kisspeptin-10",
+    "vialSize": "10mg",
+    "slug": "kisspeptin-10-10mg",
+    "family": "neuropeptides",
+    "filename": "sku-kisspeptin-10-10mg.webp",
+    "imageUrl": "/products/sku-kisspeptin-10-10mg.webp"
+  },
+  {
+    "sku": "LL-37 | 10mg",
+    "compound": "LL-37",
+    "vialSize": "10mg",
+    "slug": "ll-37-10mg",
+    "family": "peptides",
+    "filename": "sku-ll-37-10mg.webp",
+    "imageUrl": "/products/sku-ll-37-10mg.webp"
+  },
+  {
+    "sku": "Melanotan-II | 10mg",
+    "compound": "Melanotan-II",
+    "vialSize": "10mg",
+    "slug": "melanotan-ii-10mg",
+    "family": "neuropeptides",
+    "filename": "sku-melanotan-ii-10mg.webp",
+    "imageUrl": "/products/sku-melanotan-ii-10mg.webp"
+  },
+  {
+    "sku": "MOTS-C | 40mg",
+    "compound": "MOTS-C",
+    "vialSize": "40mg",
+    "slug": "mots-c-40mg",
+    "family": "cofactors",
+    "filename": "sku-mots-c-40mg.webp",
+    "imageUrl": "/products/sku-mots-c-40mg.webp"
+  },
+  {
+    "sku": "NAD+ | 500mg",
+    "compound": "NAD+",
+    "vialSize": "500mg",
+    "slug": "nad-500mg",
+    "family": "cofactors",
+    "filename": "sku-nad-500mg.webp",
+    "imageUrl": "/products/sku-nad-500mg.webp"
+  },
+  {
+    "sku": "Oxytocin Acetate | 2mg",
+    "compound": "Oxytocin Acetate",
+    "vialSize": "2mg",
+    "slug": "oxytocin-acetate-2mg",
+    "family": "neuropeptides",
+    "filename": "sku-oxytocin-acetate-2mg.webp",
+    "imageUrl": "/products/sku-oxytocin-acetate-2mg.webp"
+  },
+  {
+    "sku": "Oxytocin Acetate | 5mg",
+    "compound": "Oxytocin Acetate",
+    "vialSize": "5mg",
+    "slug": "oxytocin-acetate-5mg",
+    "family": "neuropeptides",
+    "filename": "sku-oxytocin-acetate-5mg.webp",
+    "imageUrl": "/products/sku-oxytocin-acetate-5mg.webp"
+  },
+  {
+    "sku": "PE 22-28 | 10mg",
+    "compound": "PE 22-28",
+    "vialSize": "10mg",
+    "slug": "pe-22-28-10mg",
+    "family": "neuropeptides",
+    "filename": "sku-pe-22-28-10mg.webp",
+    "imageUrl": "/products/sku-pe-22-28-10mg.webp"
+  },
+  {
+    "sku": "Pinealon | 20mg",
+    "compound": "Pinealon",
+    "vialSize": "20mg",
+    "slug": "pinealon-20mg",
+    "family": "peptides",
+    "filename": "sku-pinealon-20mg.webp",
+    "imageUrl": "/products/sku-pinealon-20mg.webp"
+  },
+  {
+    "sku": "PNC-27 | 10mg",
+    "compound": "PNC-27",
+    "vialSize": "10mg",
+    "slug": "pnc-27-10mg",
+    "family": "peptides",
+    "filename": "sku-pnc-27-10mg.webp",
+    "imageUrl": "/products/sku-pnc-27-10mg.webp"
+  },
+  {
+    "sku": "Prostamax | 20mg",
+    "compound": "Prostamax",
+    "vialSize": "20mg",
+    "slug": "prostamax-20mg",
+    "family": "peptides",
+    "filename": "sku-prostamax-20mg.webp",
+    "imageUrl": "/products/sku-prostamax-20mg.webp"
+  },
+  {
+    "sku": "PT-141 | 10mg",
+    "compound": "PT-141",
+    "vialSize": "10mg",
+    "slug": "pt-141-10mg",
+    "family": "neuropeptides",
+    "filename": "sku-pt-141-10mg.webp",
+    "imageUrl": "/products/sku-pt-141-10mg.webp"
+  },
+  {
+    "sku": "PTD-DBM | 10mg",
+    "compound": "PTD-DBM",
+    "vialSize": "10mg",
+    "slug": "ptd-dbm-10mg",
+    "family": "peptides",
+    "filename": "sku-ptd-dbm-10mg.webp",
+    "imageUrl": "/products/sku-ptd-dbm-10mg.webp"
+  },
+  {
+    "sku": "Retatrutide | 10mg",
+    "compound": "Retatrutide",
+    "vialSize": "10mg",
+    "slug": "retatrutide-10mg",
+    "family": "glp1",
+    "filename": "sku-retatrutide-10mg.webp",
+    "imageUrl": "/products/sku-retatrutide-10mg.webp"
+  },
+  {
+    "sku": "Retatrutide | 20mg",
+    "compound": "Retatrutide",
+    "vialSize": "20mg",
+    "slug": "retatrutide-20mg",
+    "family": "glp1",
+    "filename": "sku-retatrutide-20mg.webp",
+    "imageUrl": "/products/sku-retatrutide-20mg.webp"
+  },
+  {
+    "sku": "Retatrutide | 30mg",
+    "compound": "Retatrutide",
+    "vialSize": "30mg",
+    "slug": "retatrutide-30mg",
+    "family": "glp1",
+    "filename": "sku-retatrutide-30mg.webp",
+    "imageUrl": "/products/sku-retatrutide-30mg.webp"
+  },
+  {
+    "sku": "Retatrutide | 60mg",
+    "compound": "Retatrutide",
+    "vialSize": "60mg",
+    "slug": "retatrutide-60mg",
+    "family": "glp1",
+    "filename": "sku-retatrutide-60mg.webp",
+    "imageUrl": "/products/sku-retatrutide-60mg.webp"
+  },
+  {
+    "sku": "Selank | 10mg",
+    "compound": "Selank",
+    "vialSize": "10mg",
+    "slug": "selank-10mg",
+    "family": "neuropeptides",
+    "filename": "sku-selank-10mg.webp",
+    "imageUrl": "/products/sku-selank-10mg.webp"
+  },
+  {
+    "sku": "Selank Amidate | 30mg",
+    "compound": "Selank Amidate",
+    "vialSize": "30mg",
+    "slug": "selank-amidate-30mg",
+    "family": "neuropeptides",
+    "filename": "sku-selank-amidate-30mg.webp",
+    "imageUrl": "/products/sku-selank-amidate-30mg.webp"
+  },
+  {
+    "sku": "Semaglutide | 5mg",
+    "compound": "Semaglutide",
+    "vialSize": "5mg",
+    "slug": "semaglutide-5mg",
+    "family": "glp1",
+    "filename": "sku-semaglutide-5mg.webp",
+    "imageUrl": "/products/sku-semaglutide-5mg.webp"
+  },
+  {
+    "sku": "Semaglutide | 10mg",
+    "compound": "Semaglutide",
+    "vialSize": "10mg",
+    "slug": "semaglutide-10mg",
+    "family": "glp1",
+    "filename": "sku-semaglutide-10mg.webp",
+    "imageUrl": "/products/sku-semaglutide-10mg.webp"
+  },
+  {
+    "sku": "Semaglutide | 20mg",
+    "compound": "Semaglutide",
+    "vialSize": "20mg",
+    "slug": "semaglutide-20mg",
+    "family": "glp1",
+    "filename": "sku-semaglutide-20mg.webp",
+    "imageUrl": "/products/sku-semaglutide-20mg.webp"
+  },
+  {
+    "sku": "Semax | 10mg",
+    "compound": "Semax",
+    "vialSize": "10mg",
+    "slug": "semax-10mg",
+    "family": "neuropeptides",
+    "filename": "sku-semax-10mg.webp",
+    "imageUrl": "/products/sku-semax-10mg.webp"
+  },
+  {
+    "sku": "Semax | 30mg",
+    "compound": "Semax",
+    "vialSize": "30mg",
+    "slug": "semax-30mg",
+    "family": "neuropeptides",
+    "filename": "sku-semax-30mg.webp",
+    "imageUrl": "/products/sku-semax-30mg.webp"
+  },
+  {
+    "sku": "Semax Amidate | 10mg",
+    "compound": "Semax Amidate",
+    "vialSize": "10mg",
+    "slug": "semax-amidate-10mg",
+    "family": "neuropeptides",
+    "filename": "sku-semax-amidate-10mg.webp",
+    "imageUrl": "/products/sku-semax-amidate-10mg.webp"
+  },
+  {
+    "sku": "Sermorelin Acetate | 10mg",
+    "compound": "Sermorelin Acetate",
+    "vialSize": "10mg",
+    "slug": "sermorelin-acetate-10mg",
+    "family": "peptides",
+    "filename": "sku-sermorelin-acetate-10mg.webp",
+    "imageUrl": "/products/sku-sermorelin-acetate-10mg.webp"
+  },
+  {
+    "sku": "SLU-PP-332 (injectable) | 5mg",
+    "compound": "SLU-PP-332 (injectable)",
+    "vialSize": "5mg",
+    "slug": "slu-pp-332-injectable-5mg",
+    "family": "peptides",
+    "filename": "sku-slu-pp-332-injectable-5mg.webp",
+    "imageUrl": "/products/sku-slu-pp-332-injectable-5mg.webp"
+  },
+  {
+    "sku": "TB-500 (Thymosin B4 Acetate) | 10mg",
+    "compound": "TB-500 (Thymosin B4 Acetate)",
+    "vialSize": "10mg",
+    "slug": "tb-500-thymosin-b4-acetate-10mg",
+    "family": "peptides",
+    "filename": "sku-tb-500-thymosin-b4-acetate-10mg.webp",
+    "imageUrl": "/products/sku-tb-500-thymosin-b4-acetate-10mg.webp"
+  },
+  {
+    "sku": "Tesamorelin | 10mg",
+    "compound": "Tesamorelin",
+    "vialSize": "10mg",
+    "slug": "tesamorelin-10mg",
+    "family": "peptides",
+    "filename": "sku-tesamorelin-10mg.webp",
+    "imageUrl": "/products/sku-tesamorelin-10mg.webp"
+  },
+  {
+    "sku": "Tesamorelin | 20mg",
+    "compound": "Tesamorelin",
+    "vialSize": "20mg",
+    "slug": "tesamorelin-20mg",
+    "family": "peptides",
+    "filename": "sku-tesamorelin-20mg.webp",
+    "imageUrl": "/products/sku-tesamorelin-20mg.webp"
+  },
+  {
+    "sku": "Thymalin | 10mg",
+    "compound": "Thymalin",
+    "vialSize": "10mg",
+    "slug": "thymalin-10mg",
+    "family": "peptides",
+    "filename": "sku-thymalin-10mg.webp",
+    "imageUrl": "/products/sku-thymalin-10mg.webp"
+  },
+  {
+    "sku": "Thymosin Alpha-1 | 10mg",
+    "compound": "Thymosin Alpha-1",
+    "vialSize": "10mg",
+    "slug": "thymosin-alpha-1-10mg",
+    "family": "peptides",
+    "filename": "sku-thymosin-alpha-1-10mg.webp",
+    "imageUrl": "/products/sku-thymosin-alpha-1-10mg.webp"
+  },
+  {
+    "sku": "Tirzepatide | 10mg",
+    "compound": "Tirzepatide",
+    "vialSize": "10mg",
+    "slug": "tirzepatide-10mg",
+    "family": "glp1",
+    "filename": "sku-tirzepatide-10mg.webp",
+    "imageUrl": "/products/sku-tirzepatide-10mg.webp"
+  },
+  {
+    "sku": "Tirzepatide | 30mg",
+    "compound": "Tirzepatide",
+    "vialSize": "30mg",
+    "slug": "tirzepatide-30mg",
+    "family": "glp1",
+    "filename": "sku-tirzepatide-30mg.webp",
+    "imageUrl": "/products/sku-tirzepatide-30mg.webp"
+  },
+  {
+    "sku": "Tirzepatide | 60mg",
+    "compound": "Tirzepatide",
+    "vialSize": "60mg",
+    "slug": "tirzepatide-60mg",
+    "family": "glp1",
+    "filename": "sku-tirzepatide-60mg.webp",
+    "imageUrl": "/products/sku-tirzepatide-60mg.webp"
+  },
+  {
+    "sku": "Tirzepatide | 100mg",
+    "compound": "Tirzepatide",
+    "vialSize": "100mg",
+    "slug": "tirzepatide-100mg",
+    "family": "glp1",
+    "filename": "sku-tirzepatide-100mg.webp",
+    "imageUrl": "/products/sku-tirzepatide-100mg.webp"
+  },
+  {
+    "sku": "VIP | 5mg",
+    "compound": "VIP",
+    "vialSize": "5mg",
+    "slug": "vip-5mg",
+    "family": "neuropeptides",
+    "filename": "sku-vip-5mg.webp",
+    "imageUrl": "/products/sku-vip-5mg.webp"
+  }
+]
