@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { PractitionerApplicationForm } from './PractitionerApplicationForm';
+import { LeadCaptureForm } from './LeadCaptureForm';
 
 export const metadata = {
   title: 'Practitioner Program — Merit Sciences',
@@ -70,6 +71,27 @@ export default function PractitionersPage() {
             >
               Browse the public catalog
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ LEAD CAPTURE — soft entry for prospects not ready to apply ═══════════ */}
+      <section className="bg-white border-t border-cobalt/10 py-10">
+        <div className="max-w-[860px] mx-auto px-6 lg:px-10">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+            <div className="flex-1">
+              <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
+                — Not ready to apply yet?
+              </p>
+              <p className="text-[15px] text-ink leading-relaxed">
+                Get the <strong>practitioner brief</strong> &mdash; a short series on how Merit
+                lots get released, the chemistry behind acetate vs TFA, and what changes after
+                approval. Unsubscribe anytime.
+              </p>
+            </div>
+            <div className="flex-1">
+              <LeadCaptureForm />
+            </div>
           </div>
         </div>
       </section>

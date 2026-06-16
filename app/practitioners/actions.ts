@@ -2,6 +2,7 @@
 
 import { sendEmail } from '@/lib/email';
 import { prisma } from '@/lib/db';
+import { onApplicationSubmitted } from '@/lib/practitioner-journey';
 
 export type PractitionerApplicationInput = {
   practiceName: string;
@@ -101,6 +102,11 @@ export async function submitPractitionerApplication(
       select: { id: true },
     });
     appId = created.id;
+    // Pause any in-flight PROSPECT sequence — the application + admin
+    // emails take over from here.
+    await onApplicationSubmitted(data.email).catch((err) =>
+      console.warn('[practitioner-apply] journey pause failed (non-fatal)', err),
+    );
   } catch (err) {
     console.error('[practitioner-apply] DB persist failed', err);
     // Don't fail the submission on DB error — still try to email so we

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { requireAdmin } from '@/lib/admin-session';
+import { onApplicationApproved } from '@/lib/practitioner-journey';
 
 export type ReviewResult =
   | { ok: true; message: string }
@@ -40,6 +41,16 @@ export async function approveApplication(
       reviewerNote: note,
     },
   });
+
+  // Start the ONBOARDING email sequence — Day 1 begins tomorrow; today's
+  // approval email is the "Day 0" of the relationship.
+  await onApplicationApproved({
+    email: app.email,
+    firstName: app.providerName.split(' ')[0],
+    practiceName: app.practiceName,
+  }).catch((err) =>
+    console.warn('[practitioner-approve] onboarding sequence start failed', err),
+  );
 
   try {
     await sendEmail({

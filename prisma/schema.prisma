@@ -686,3 +686,48 @@ model PractitionerApplication {
   @@index([createdAt])
   @@map("practitioner_applications")
 }
+
+// Practitioner email journey — tracks which sequence + how far through.
+// Daily cron processes all rows with nextDueAt <= now, sends the email,
+// advances to the next email in the phase, sets a new nextDueAt.
+//
+// Phase exit triggers (handled by application code, not the cron):
+//   • PROSPECT exits when a PractitionerApplication is submitted with
+//     the same email → phase flips to AWAITING_APPROVAL, sequence stops.
+//   • Application APPROVED → phase flips to ONBOARDING, sequence resumes.
+//   • First Order placed with the same email → exits ONBOARDING, enters
+//     RETENTION.
+//   • status COMPLETED when RETENTION sequence finishes (last email
+//     sent). Or PAUSED if the practitioner unsubscribes.
+model PractitionerJourney {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  // What we know about them — populated from the lead form or, once
+  // they apply, from the PractitionerApplication.
+  firstName       String?
+  practiceName    String?
+  // Current phase + position
+  phase           String    @default("PROSPECT") // PROSPECT | AWAITING_APPROVAL | ONBOARDING | RETENTION | COMPLETED | PAUSED
+  // Which email in the current phase to send next (0-indexed). Resets
+  // to 0 when phase changes.
+  nextEmailIndex  Int       @default(0)
+  // When the current phase started — used to compute dayOffset
+  phaseStartedAt  DateTime  @default(now())
+  // When the next email is due to send
+  nextDueAt       DateTime  @default(now())
+  // Last email key actually sent + when
+  lastSentKey     String?
+  lastSentAt      DateTime?
+  // Free-text context for the templates (first compound ordered, etc.)
+  firstCompound   String?
+  // Unsubscribe token (random) for one-click unsubscribe links
+  unsubToken      String    @unique @default(cuid())
+  // Audit
+  source          String    @default("lead-form") // lead-form | application | approval | first-order | manual
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([phase, nextDueAt])
+  @@index([email])
+  @@map("practitioner_journeys")
+}
