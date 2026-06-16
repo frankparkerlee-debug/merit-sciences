@@ -21,11 +21,15 @@ export async function GET(req: Request) {
   const code = url.searchParams.get('code');
   const next = url.searchParams.get('next') || '/affiliate/dashboard';
 
-  // Route admins back to /admin/login on error, affiliates back to
-  // /affiliate/login. Look at `next` to figure out which portal the
-  // user was trying to reach.
+  // Route admins back to /admin/login on error, practitioners back to
+  // /practitioners/login, affiliates back to /affiliate/login.
   const isAdminFlow = next.startsWith('/admin');
-  const loginPath = isAdminFlow ? '/admin/login' : '/affiliate/login';
+  const isPractitionerFlow = next.startsWith('/practitioners');
+  const loginPath = isAdminFlow
+    ? '/admin/login'
+    : isPractitionerFlow
+      ? '/practitioners/login'
+      : '/affiliate/login';
 
   // Compute the origin for redirects. On Render the request URL is the
   // internal port — use forwarded headers to build the real public URL.

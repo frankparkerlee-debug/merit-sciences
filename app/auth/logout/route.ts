@@ -4,11 +4,11 @@ import { createServerSupabase } from '@/lib/supabase-server';
 export const runtime = 'nodejs';
 
 /**
- * POST /auth/logout
+ * POST /auth/logout?next=…
  *
  * Tears down the Supabase Auth session — clears the cookies and
- * invalidates the refresh token server-side. Redirects to the
- * affiliate landing page.
+ * invalidates the refresh token server-side. Redirects to `next` if
+ * safe, else falls back to /affiliate (legacy default).
  */
 export async function POST(req: Request) {
   const supabase = await createServerSupabase();
@@ -24,5 +24,9 @@ export async function POST(req: Request) {
         ? `${forwardedProto}://${forwardedHost}`
         : url.origin);
 
-  return NextResponse.redirect(`${origin}/affiliate`, { status: 303 });
+  // Honor ?next= only if it's a same-site relative path. Practitioners
+  // land back on /practitioners; affiliates stay on /affiliate.
+  const next = url.searchParams.get('next') ?? '/affiliate';
+  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/affiliate';
+  return NextResponse.redirect(`${origin}${safeNext}`, { status: 303 });
 }

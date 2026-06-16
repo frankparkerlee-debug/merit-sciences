@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { requireAdmin } from '@/lib/admin-session';
 import { onApplicationApproved } from '@/lib/practitioner-journey';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export type ReviewResult =
   | { ok: true; message: string }
@@ -52,6 +53,28 @@ export async function approveApplication(
     console.warn('[practitioner-approve] onboarding sequence start failed', err),
   );
 
+  // Mint a one-click magic-link via Supabase Admin so the approval email
+  // is sign-in-ready. If link generation fails (transient Supabase issue)
+  // we fall back to the plain login URL — they can still type their
+  // email and request a fresh link from /practitioners/login.
+  let signInUrl = `${SITE_URL}/practitioners/login?email=${encodeURIComponent(app.email)}`;
+  try {
+    const { data: linkData, error: linkErr } = await supabaseAdmin().auth.admin.generateLink({
+      type: 'magiclink',
+      email: app.email,
+      options: {
+        redirectTo: `${SITE_URL}/auth/callback?next=/practitioners/portal`,
+      },
+    });
+    if (!linkErr && linkData?.properties?.action_link) {
+      signInUrl = linkData.properties.action_link;
+    } else if (linkErr) {
+      console.warn('[practitioner-approve] magic-link mint failed, using fallback', linkErr);
+    }
+  } catch (err) {
+    console.warn('[practitioner-approve] magic-link mint threw, using fallback', err);
+  }
+
   try {
     await sendEmail({
       to: app.email,
@@ -59,7 +82,7 @@ export async function approveApplication(
       html: approvalEmailHtml({
         firstName: app.providerName.split(' ')[0],
         practiceName: app.practiceName,
-        portalUrl: `${SITE_URL}/orders/lookup`,
+        portalUrl: signInUrl,
         catalogUrl: `${SITE_URL}/catalog`,
       }),
     });
@@ -129,6 +152,7 @@ export async function rejectApplication(
 function approvalEmailHtml(d: {
   firstName: string;
   practiceName: string;
+  /** Either a Supabase magic-link (one-click sign-in) or fallback to /practitioners/login */
   portalUrl: string;
   catalogUrl: string;
 }): string {
@@ -142,17 +166,21 @@ function approvalEmailHtml(d: {
       </h2>
       <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
         Your Practitioner Program account for <strong>${escapeHtml(d.practiceName)}</strong> is
-        active. Your account-tier pricing is applied automatically when you sign in.
+        active. The link below signs you straight into your portal &mdash; no password.
+        Account-tier pricing applies the moment you&rsquo;re signed in.
       </p>
       <p style="margin:24px 0;">
         <a href="${d.portalUrl}" style="display:inline-block;background:#2E4DDB;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:700;letter-spacing:0.06em;font-size:13px;">
-          Sign in to your account →
+          Sign in to your portal →
         </a>
       </p>
+      <p style="font-size:12px;line-height:18px;color:#5C6378;margin:0 0 16px;">
+        The link expires in 60 minutes. If it&rsquo;s expired by the time you click, request a new
+        one any time at <a href="https://meritsciences.com/practitioners/login" style="color:#2E4DDB;">meritsciences.com/practitioners/login</a>.
+      </p>
       <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        Browse the full catalog at
+        Once signed in, browse the catalog at
         <a href="${d.catalogUrl}" style="color:#2E4DDB;">meritsciences.com/catalog</a>.
-        Practitioner pricing displays once you&rsquo;re signed in.
       </p>
       <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
         Questions? Reply to this email &mdash; you&rsquo;ll reach the pharmacy team directly.

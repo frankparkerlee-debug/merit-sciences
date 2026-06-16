@@ -15,6 +15,12 @@ export function Nav() {
           <Link href="/practitioners" className="hover:text-cobalt transition">Practitioner Program</Link>
         </div>
         <div className="flex items-center gap-4">
+          <Link
+            href="/practitioners/login"
+            className="hidden sm:inline-flex text-[11px] tracking-[0.12em] uppercase font-bold text-ink-soft hover:text-cobalt transition"
+          >
+            Sign in
+          </Link>
           <CartIcon />
         </div>
       </div>
