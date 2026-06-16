@@ -35,7 +35,7 @@ export default async function HomePage() {
       title: 'BPC + TB',
       compounds: ['BPC-157', 'TB-500', 'Wolverine'],
       desc: 'The pentadecapeptide-class compounds.',
-      img: '/brand/lane-bpc-transparent.webp',
+      img: '/brand/merit-vial-canonical-transparent.webp',
       alt: 'Merit BPC + TB vial — transparent label, lyophilized',
       tiltDeg: -6,
       // Cobalt (Merit core)
@@ -50,7 +50,7 @@ export default async function HomePage() {
       title: 'NAD+ Family',
       compounds: ['NAD⁺', 'GHK-Cu', 'MOTS-c'],
       desc: 'Coenzymes and signaling peptides.',
-      img: '/brand/lane-nad-transparent.webp',
+      img: '/brand/merit-vial-canonical-transparent.webp',
       alt: 'Merit NAD+ vial — transparent label, lyophilized',
       tiltDeg: 5,
       // Amber (metabolic warmth)
@@ -65,7 +65,7 @@ export default async function HomePage() {
       title: 'Selank + Semax',
       compounds: ['Selank', 'Semax'],
       desc: 'Russian-derived synthetic neuropeptides.',
-      img: '/brand/lane-selank-transparent.webp',
+      img: '/brand/merit-vial-canonical-transparent.webp',
       alt: 'Merit Selank vial — transparent label, lyophilized',
       tiltDeg: -8,
       // Violet (cognitive)
@@ -80,7 +80,7 @@ export default async function HomePage() {
       title: 'Multi-Compound Vials',
       compounds: ['KLOW', 'GLOW', 'CJC + Ipa'],
       desc: 'Multiple molecules co-formulated in one vial.',
-      img: '/brand/lane-blends-transparent.webp',
+      img: '/brand/merit-vial-canonical-transparent.webp',
       alt: 'Merit KLOW vial — transparent label, lyophilized',
       tiltDeg: 7,
       // Emerald (multi-pathway)
@@ -104,14 +104,101 @@ export default async function HomePage() {
       {/* CSS COMPOSITE HERO — content-height + padding (no forced 70vh).
           Section is as tall as content needs, so the lanes section peeks
           through naturally below without artificial empty space. */}
-      <section id="hero" className="relative bg-cream overflow-hidden">
-        <div className="max-w-[1400px] mx-auto w-full px-6 lg:px-12 pt-8 lg:pt-10 pb-12 lg:pb-16">
+      <section
+        id="hero"
+        className="relative overflow-hidden"
+        style={{
+          background:
+            // Cream → soft cobalt diagonal gradient — Merit's two brand
+            // colors meeting. Keeps cream warmth dominant (top-left)
+            // while cobalt energy creeps in from bottom-right.
+            'linear-gradient(135deg, #F4F1EA 0%, #F0EDE5 35%, #DFE3F2 70%, #BFC9EB 100%)',
+        }}
+      >
+        {/* ── Floating vials — 3 instances of the canonical Merit vial
+            at different scales/rotations/positions. The vial is the
+            brand mark. Compositionally they cluster around the headline
+            without obscuring it, mirroring the "63 mugs" reference.
+            Hidden on mobile (< sm) to keep type the focus on small screens. */}
+        <div aria-hidden="true" className="absolute inset-0 pointer-events-none hidden sm:block">
+          {/* Vial #1 — large, foreground-LEFT, cropped off the bottom-left.
+              Slight CCW tilt + gentle float. Reads as the hero specimen. */}
+          <div
+            className="absolute animate-float-vial"
+            style={{
+              left: 'clamp(-160px, -8vw, -80px)',
+              bottom: 'clamp(-220px, -18vw, -120px)',
+              width: 'clamp(420px, 42vw, 720px)',
+              aspectRatio: '1',
+              transform: 'rotate(-14deg)',
+              transformOrigin: 'center center',
+            }}
+          >
+            <Image
+              src="/brand/merit-vial-canonical-transparent.webp"
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 1400px) 42vw, 720px"
+              className="object-contain"
+            />
+          </div>
+
+          {/* Vial #2 — small, upper-RIGHT, sharp CW tilt. The "satellite"
+              specimen — fills negative space above the headline's right edge. */}
+          <div
+            className="absolute animate-float-vial-slow"
+            style={{
+              right: 'clamp(-40px, 2vw, 80px)',
+              top: 'clamp(-40px, -2vw, 24px)',
+              width: 'clamp(180px, 18vw, 300px)',
+              aspectRatio: '1',
+              transform: 'rotate(22deg)',
+              transformOrigin: 'center center',
+            }}
+          >
+            <Image
+              src="/brand/merit-vial-canonical-transparent.webp"
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 1400px) 18vw, 300px"
+              className="object-contain"
+            />
+          </div>
+
+          {/* Vial #3 — medium, lower-RIGHT, dramatic CW tilt. Balances
+              the large left vial across the diagonal. Cropped slightly
+              off the right edge for that "endless brand world" feel. */}
+          <div
+            className="absolute animate-float-vial-reverse"
+            style={{
+              right: 'clamp(-120px, -6vw, -40px)',
+              bottom: 'clamp(-100px, -6vw, -20px)',
+              width: 'clamp(280px, 28vw, 480px)',
+              aspectRatio: '1',
+              transform: 'rotate(34deg)',
+              transformOrigin: 'center center',
+            }}
+          >
+            <Image
+              src="/brand/merit-vial-canonical-transparent.webp"
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 1400px) 28vw, 480px"
+              className="object-contain"
+            />
+          </div>
+        </div>
+
+        {/* ── Content — sits above the vial layer via z-10 */}
+        <div className="relative z-10 max-w-[1400px] mx-auto w-full px-6 lg:px-12 pt-8 lg:pt-10 pb-12 lg:pb-16">
           {/* Eyebrow */}
           <p className="text-[10px] lg:text-[11px] tracking-[0.22em] uppercase text-cobalt font-semibold mb-6 lg:mb-8">
             Merit Sciences · Dallas, TX
           </p>
 
-          {/* Type + vial composition. */}
           <div className="relative">
             <h1
               className="font-display font-black text-ink leading-[0.88] tracking-[-0.04em] relative z-0"
@@ -121,49 +208,6 @@ export default async function HomePage() {
               <br />
               Better Source<span className="text-cobalt">.</span>
             </h1>
-
-            {/* Vial composition — tilted + cobalt halo behind for a
-                "spotlit specimen" feel instead of just floating product.
-                Outer container handles positioning. Halo sits behind via
-                z-0, vial on top via z-10 with rotation. */}
-            <div
-              className="absolute pointer-events-none hidden sm:block"
-              style={{
-                right: '4%',
-                top: '-4%',
-                width: 'clamp(240px, 25vw, 400px)',
-                aspectRatio: '1',
-              }}
-            >
-              {/* Cobalt radial halo — brighter brand-color spotlight behind
-                  the vial. Inner core uses a brighter electric-blue tint
-                  (#5078FF) that fades through Merit cobalt out to transparent
-                  cream. Scaled 1.5× so the glow bleeds past the vial. */}
-              <div
-                className="absolute inset-0 z-0"
-                style={{
-                  background:
-                    'radial-gradient(ellipse 55% 60% at center, rgba(80,120,255,0.40) 0%, rgba(46,77,219,0.22) 40%, rgba(46,77,219,0.08) 65%, transparent 80%)',
-                  transform: 'scale(1.5)',
-                }}
-              />
-              {/* Vial tilted slightly counterclockwise + subtle float animation.
-                  Reads as an editorial specimen breathing in place, not a
-                  static catalog product. */}
-              <div
-                className="absolute inset-0 z-10 animate-float-vial"
-                style={{ transformOrigin: 'center center' }}
-              >
-                <Image
-                  src="/brand/merit-vial-transparent.webp"
-                  alt=""
-                  fill
-                  priority
-                  sizes="(max-width: 1400px) 25vw, 400px"
-                  className="object-contain object-center"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Paragraph + CTA — inline flex */}
@@ -174,7 +218,7 @@ export default async function HomePage() {
             </p>
             <Link
               href="/catalog"
-              className="inline-flex items-center justify-center px-7 py-3.5 bg-cobalt text-white font-semibold rounded-lg text-sm hover:opacity-90 transition whitespace-nowrap self-start md:self-auto"
+              className="inline-flex items-center justify-center px-7 py-3.5 bg-cobalt text-white font-semibold rounded-lg text-sm hover:opacity-90 transition whitespace-nowrap self-start md:self-auto shadow-lg shadow-cobalt/30"
             >
               Shop the catalog →
             </Link>

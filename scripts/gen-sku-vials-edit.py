@@ -261,6 +261,50 @@ def gen_base(client, quality: str) -> Path:
     return BASE_PATH
 
 
+def display_compound(compound: str) -> str:
+    """Transform raw inventory compound names to a display-friendly form:
+      • "TB-500 (Thymosin B4 Acetate)" → "TB-500"
+      • "SLU-PP-332 (injectable)"       → "SLU-PP-332"
+      • "BPC 10mg + TB 10mg (Wolverine)"→ "Wolverine"  (blends use brand)
+      • "BPC157 + GHK-CU 50 + TB500 + KPV (Klow)" → "Klow"
+      • "Selank Amidate"                → "Selank Amidate" (unchanged)
+    Rule: strip trailing parenthetical. If the pre-paren text contains
+    a '+' (multi-peptide formulation), the parenthetical IS the brand
+    name and gets used instead.
+    """
+    m = re.match(r"(.+?)\s*\(([^)]+)\)\s*$", compound)
+    if m:
+        main, paren = m.group(1).strip(), m.group(2).strip()
+        return paren if "+" in main else main
+    return compound.strip()
+
+
+def wrap_to_fit(text: str, font, draw, max_width: int) -> list[str]:
+    """Try to fit `text` in at most 2 lines without shrinking the font:
+      1. Single line if it fits
+      2. Two lines — try every space as the split point, pick the split
+         that minimizes the longer line's width while keeping both ≤ max
+      3. If no 2-line split fits either, return single-line and let the
+         caller decide to shrink as a fallback
+    """
+    if draw.textbbox((0, 0), text, font=font)[2] <= max_width:
+        return [text]
+    if " " not in text:
+        return [text]
+    words = text.split(" ")
+    best = None
+    for i in range(1, len(words)):
+        l1 = " ".join(words[:i])
+        l2 = " ".join(words[i:])
+        w1 = draw.textbbox((0, 0), l1, font=font)[2]
+        w2 = draw.textbbox((0, 0), l2, font=font)[2]
+        if w1 <= max_width and w2 <= max_width:
+            longest = max(w1, w2)
+            if best is None or longest < best[1]:
+                best = ([l1, l2], longest)
+    return best[0] if best else [text]
+
+
 def edit_for_sku(client, base_path: Path, compound: str, vial_size: str,
                  slug: str, quality: str) -> Path:
     """PIL-composite compound name + vial size onto the SHARED canonical
@@ -268,9 +312,11 @@ def edit_for_sku(client, base_path: Path, compound: str, vial_size: str,
     with RUO pill + M monogram + cobalt dot + blank text area). Every
     SKU inherits the identical vial — only the two text lines change.
 
-    This is the user-requested layout: pixel-identical bottle across all
-    SKUs, only medication name and dose differ. Cost: $0 per SKU after
-    the one-time base render."""
+    Compound name uses display_compound() to strip parenthetical
+    descriptors (TB-500, SLU-PP-332) or to surface blend brand names
+    (Wolverine, Klow, Glow). Long multi-word names wrap to 2 lines at
+    the full font size instead of shrinking — only fall back to shrink
+    if a single word is too wide."""
     from PIL import Image, ImageDraw, ImageFont
 
     dest_png = OUTPUT_DIR / f"sku-{slug}.png"
@@ -284,29 +330,40 @@ def edit_for_sku(client, base_path: Path, compound: str, vial_size: str,
     SOFT = (110, 116, 130)
     HELVETICA = "/System/Library/Fonts/Helvetica.ttc"
 
-    # Calibrated to where the base's blank left-half of label sits.
-    # These coords are tuned to the canonical base produced by --base
-    # mode. Re-tune if you regenerate the base with a different prompt.
+    # Calibrated to the canonical base's blank label region.
     TEXT_LEFT = 360
-    TEXT_TOP = 590
-    MAX_WIDTH = 280  # text must not encroach on the M watermark
+    TEXT_TOP = 580
+    MAX_WIDTH = 280       # don't encroach on the M watermark
+    DEFAULT_TITLE_PT = 52  # full-size compound name
+    LINE_GAP = 4           # tight gap between wrapped compound lines
 
-    # ── Compound name — auto-fit ─────────────────────────────────
-    title_size = 56
+    display = display_compound(compound)
+
+    # Try the full-size font with 1- or 2-line wrap first
+    title_size = DEFAULT_TITLE_PT
     font_bold = ImageFont.truetype(HELVETICA, size=title_size, index=1)
-    bbox = draw.textbbox((0, 0), compound, font=font_bold)
-    while (bbox[2] - bbox[0]) > MAX_WIDTH and title_size > 22:
+    lines = wrap_to_fit(display, font_bold, draw, MAX_WIDTH)
+
+    # If even the wrapped form still has any line too wide (a single
+    # unbreakable word), shrink as a last resort.
+    while any(draw.textbbox((0, 0), l, font=font_bold)[2] > MAX_WIDTH
+              for l in lines) and title_size > 22:
         title_size -= 3
         font_bold = ImageFont.truetype(HELVETICA, size=title_size, index=1)
-        bbox = draw.textbbox((0, 0), compound, font=font_bold)
-    draw.text((TEXT_LEFT, TEXT_TOP), compound, fill=(*INK, 255), font=font_bold)
+        lines = wrap_to_fit(display, font_bold, draw, MAX_WIDTH)
 
-    # ── Vial size line ──────────────────────────────────────────
-    size_pt = max(22, int(title_size * 0.55))
+    # Render the compound name
+    line_h = draw.textbbox((0, 0), "Mg", font=font_bold)[3]
+    cursor_y = TEXT_TOP
+    for line in lines:
+        draw.text((TEXT_LEFT, cursor_y), line, fill=(*INK, 255), font=font_bold)
+        cursor_y += line_h + LINE_GAP
+
+    # Vial size — same scale regardless of wrap count
+    size_pt = max(22, int(DEFAULT_TITLE_PT * 0.55))
     font_size = ImageFont.truetype(HELVETICA, size=size_pt, index=0)
-    title_h = bbox[3] - bbox[1]
     draw.text(
-        (TEXT_LEFT, TEXT_TOP + title_h + 14),
+        (TEXT_LEFT, cursor_y + 8),
         vial_size,
         fill=(*SOFT, 255),
         font=font_size,
