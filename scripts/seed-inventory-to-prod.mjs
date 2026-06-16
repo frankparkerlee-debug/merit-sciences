@@ -179,6 +179,7 @@ async function main() {
       }
     } else if (row.retailPriceCents !== null) {
       const handle = slugify(`${row.compound} ${row.vialSize}`);
+      const now = new Date().toISOString();
       creates.push({
         handle,
         title: `${row.compound} ${row.vialSize}`.trim(),
@@ -200,6 +201,10 @@ async function main() {
         status: 'DRAFT',
         imageUrl: skuImage,
         images: [],
+        // PostgREST doesn't trigger Prisma's @default(now()) / @updatedAt,
+        // so we have to set both explicitly.
+        createdAt: now,
+        updatedAt: now,
       });
     } else {
       skipped++;

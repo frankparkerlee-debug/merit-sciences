@@ -21,16 +21,18 @@ export const dynamic = 'force-dynamic';
 export type Family = 'peptides' | 'glp1' | 'cofactors' | 'neuropeptides' | 'blends';
 
 const FAMILY_BY_HANDLE: Record<string, Family> = {
-  // Single peptides — repair / growth / signaling
-  'bpc-157-tb-500':     'blends',         // BPC + TB co-formulated, actually a blend
-  'thymosin-alpha-1':   'peptides',
-  'aod-9604':           'peptides',
-  'igf-1-lr3':          'peptides',
-  'sermorelin':         'peptides',
-  'th9507':             'peptides',       // Tesamorelin — GHRH analog
-  // GLP-1 / metabolic
+  // GLPs — weight-loss / metabolic / body-comp (top sellers)
   'ly3298176':          'glp1',           // Tirzepatide
   'ly3437943':          'glp1',           // Retatrutide
+  'th9507':             'glp1',           // Tesamorelin — lumped into GLPs per market positioning
+  'aod-9604':           'glp1',           // Lipolytic GH fragment
+  // Healing / blends
+  'bpc-157-tb-500':     'blends',         // BPC + TB co-formulated, actually a blend
+  'klow':               'blends',
+  // Single peptides — repair / growth / signaling
+  'thymosin-alpha-1':   'peptides',
+  'igf-1-lr3':          'peptides',
+  'sermorelin':         'peptides',
   // Cofactors / cellular
   'nad-500mg':          'cofactors',
   'ghk-cu':             'cofactors',
@@ -41,8 +43,6 @@ const FAMILY_BY_HANDLE: Record<string, Family> = {
   'semax':              'neuropeptides',
   'pt-141':             'neuropeptides',
   'melanotan-ii':       'neuropeptides',
-  // Blends
-  'klow':               'blends',
 };
 
 // Stack templates — pre-built bundles named for common research use cases.

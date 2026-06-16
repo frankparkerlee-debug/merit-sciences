@@ -39,7 +39,7 @@ export const FAMILY_BY_HANDLE: Record<string, Family> = {
 };
 
 export const FAMILY_LABELS: Record<Family, string> = {
-  glp1:          'GLP-1',
+  glp1:          'GLPs',
   healing:       'Healing',
   aesthetic:     'Aesthetic',
   gh:            'Growth Hormone',
@@ -63,8 +63,12 @@ export const FAMILY_LABELS: Record<Family, string> = {
 export function familyByCompound(compound: string): Family {
   const c = compound.toLowerCase();
 
-  // ── #1 GLP-1 ─────────────────────────────────────────────────
-  if (/(retatrutide|tirzepatide|semaglutide|cagrilintide|liraglutide)/.test(c)) return 'glp1';
+  // ── #1 GLPs (metabolic / weight-loss / body-comp) ────────────
+  // Includes the GLP-1/2 agonists proper plus the broader fat-loss
+  // family the peptide market lumps with them: Tesamorelin (GHRH for
+  // visceral fat), AOD-9604 (GH lipolytic fragment), 5-Amino-1MQ
+  // (NNMT inhibitor). All sold under the "GLPs" header.
+  if (/(retatrutide|tirzepatide|semaglutide|cagrilintide|liraglutide|tesamorelin|aod-?9604|5-amino-?1mq)/.test(c)) return 'glp1';
 
   // ── #2 Healing / recovery (soft tissue, gut, wound) ──────────
   if (/(wolverine|bpc[\s-]*157|bpc.*tb|tb[\s-]*500|kpv|thymosin\s*b)/.test(c)) return 'healing';
@@ -73,8 +77,9 @@ export function familyByCompound(compound: string): Family {
   // GHK-Cu, GLOW (GHK+BPC+TB), KLOW (GHK+BPC+TB+KPV), Melanotan
   if (/(klow|glow|ghk[\s-]*cu|melanotan)/.test(c)) return 'aesthetic';
 
-  // ── #4 Growth hormone axis ───────────────────────────────────
-  if (/(cjc[\s-]*1295|ipamorelin|ipa\b|tesamorelin|sermorelin|igf-?1|aod-?9604|ghrp|mk-?677)/.test(c)) return 'gh';
+  // ── #4 Growth hormone axis (muscle / recovery, NOT fat loss) ─
+  // Tesamorelin + AOD-9604 are in the GLPs bucket above, not here.
+  if (/(cjc[\s-]*1295|ipamorelin|ipa\b|sermorelin|igf-?1|ghrp|mk-?677)/.test(c)) return 'gh';
 
   // ── #5 Longevity / anti-aging cofactors ──────────────────────
   if (/(nad|glutathione|epitalon|mots|thymosin\s*alpha|thymalin|5-amino-1mq)/.test(c)) return 'longevity';

@@ -43,7 +43,7 @@ type Props = {
 const FAMILY_PILLS: { id: Family | 'all'; label: string }[] = [
   { id: 'all',           label: 'All compounds' },
   { id: 'peptides',      label: 'Peptides' },
-  { id: 'glp1',          label: 'GLP-1' },
+  { id: 'glp1',          label: 'GLPs' },
   { id: 'cofactors',     label: 'Cofactors' },
   { id: 'neuropeptides', label: 'Neuropeptides' },
   { id: 'blends',        label: 'Blends' },

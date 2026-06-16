@@ -751,7 +751,7 @@ export function renderWelcome(d: WelcomeData): { subject: string; html: string; 
     <p style="margin:0 0 22px 0;font-size:14px;line-height:21px;color:${COLOR_INK};">
       Browse the catalog, or jump straight to one of our most-shopped lanes:<br />
       &middot; <a href="${SITE_URL}/catalog?family=peptides" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">Peptides</a> (BPC-157, TB-500, Wolverine Blend)<br />
-      &middot; <a href="${SITE_URL}/catalog?family=glp1" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">GLP-1s</a> (Tirzepatide, Retatrutide)<br />
+      &middot; <a href="${SITE_URL}/catalog?family=glp1" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">GLPs</a> (Tirzepatide, Retatrutide, Tesamorelin)<br />
       &middot; <a href="${SITE_URL}/catalog?family=growth" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">Growth</a> (IGF-1 LR3, Sermorelin, MOTS-c)
     </p>
 

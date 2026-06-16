@@ -118,8 +118,29 @@ def per_sku_prompt(compound: str, vial_size: str) -> str:
 
 BASE_PROMPT = (
     "Photorealistic studio product photograph of a single pharmaceutical "
-    "peptide vial — DEPRECATED, kept for the --base mode. Use "
-    "per_sku_prompt() for per-SKU single-shot renders."
+    "peptide vial, centered, square 1:1 framing. Cobalt-blue aluminum "
+    "crimp cap (#2E4DDB) with slight metallic sheen and silver collar. "
+    "Clear glass body. Lyophilized white powder fills the bottom one "
+    "third of the vial. "
+    "Wrapped around the lower half of the vial is a clean white landscape "
+    "rectangular label. The label has EXACTLY THREE elements: "
+    "(1) UPPER-LEFT of the label: a small cobalt blue pill-shaped badge "
+    "reading 'RESEARCH USE ONLY' in tiny white all-caps sans-serif text. "
+    "(2) RIGHT side of the label: a LARGE pale beige-grey letter 'M' "
+    "followed by a period, rendered in modern geometric SANS-SERIF "
+    "(Inter Black, Helvetica Black) with clean uniform strokes, NO "
+    "serifs. The M is roughly the full height of the label, soft "
+    "beige-grey #D8D5CD, occupying the right 30% of the label as a "
+    "watermark. Immediately to the right of the M's period, vertically "
+    "centered, a small solid cobalt blue circle (brand dot). "
+    "(3) The LEFT-CENTER portion of the label is completely EMPTY white "
+    "space — no text, no marks, no logos. Reserved for product text "
+    "added later. "
+    "Soft warm studio lighting, gentle shadow under the vial, shallow "
+    "depth of field. Background is a smooth warm cream off-white "
+    "seamless studio sweep (#F4F1EA). No props, no documents, no "
+    "humans, no hands. Editorial pharma-brand quality, Apple product "
+    "photography. Absolutely photoreal."
 )
 
 
@@ -242,26 +263,57 @@ def gen_base(client, quality: str) -> Path:
 
 def edit_for_sku(client, base_path: Path, compound: str, vial_size: str,
                  slug: str, quality: str) -> Path:
-    """Single-shot gpt-image-1.generate per SKU with the full Merit label
-    spec baked into the prompt. No flat overlay, no edit endpoint.
-    Each SKU is its own AI render so the label conforms to the vial's
-    curve and lighting naturally instead of looking pasted on.
+    """PIL-composite compound name + vial size onto the SHARED canonical
+    base. The base is generated ONCE by --base mode (vial + cap + label
+    with RUO pill + M monogram + cobalt dot + blank text area). Every
+    SKU inherits the identical vial — only the two text lines change.
 
-    Cost: $0.04 (medium) or $0.19 (high) per SKU."""
+    This is the user-requested layout: pixel-identical bottle across all
+    SKUs, only medication name and dose differ. Cost: $0 per SKU after
+    the one-time base render."""
+    from PIL import Image, ImageDraw, ImageFont
+
     dest_png = OUTPUT_DIR / f"sku-{slug}.png"
     dest_webp = OUTPUT_DIR / f"sku-{slug}.webp"
-    prompt = per_sku_prompt(compound, vial_size)
-    result = client.images.generate(
-        model="gpt-image-1",
-        prompt=prompt,
-        size="1024x1024",
-        quality=quality,
-        n=1,
+
+    img = Image.open(base_path).convert("RGB").copy()
+    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+
+    INK = (12, 16, 26)
+    SOFT = (110, 116, 130)
+    HELVETICA = "/System/Library/Fonts/Helvetica.ttc"
+
+    # Calibrated to where the base's blank left-half of label sits.
+    # These coords are tuned to the canonical base produced by --base
+    # mode. Re-tune if you regenerate the base with a different prompt.
+    TEXT_LEFT = 360
+    TEXT_TOP = 590
+    MAX_WIDTH = 280  # text must not encroach on the M watermark
+
+    # ── Compound name — auto-fit ─────────────────────────────────
+    title_size = 56
+    font_bold = ImageFont.truetype(HELVETICA, size=title_size, index=1)
+    bbox = draw.textbbox((0, 0), compound, font=font_bold)
+    while (bbox[2] - bbox[0]) > MAX_WIDTH and title_size > 22:
+        title_size -= 3
+        font_bold = ImageFont.truetype(HELVETICA, size=title_size, index=1)
+        bbox = draw.textbbox((0, 0), compound, font=font_bold)
+    draw.text((TEXT_LEFT, TEXT_TOP), compound, fill=(*INK, 255), font=font_bold)
+
+    # ── Vial size line ──────────────────────────────────────────
+    size_pt = max(22, int(title_size * 0.55))
+    font_size = ImageFont.truetype(HELVETICA, size=size_pt, index=0)
+    title_h = bbox[3] - bbox[1]
+    draw.text(
+        (TEXT_LEFT, TEXT_TOP + title_h + 14),
+        vial_size,
+        fill=(*SOFT, 255),
+        font=font_size,
     )
-    b64 = result.data[0].b64_json
-    if not b64:
-        raise RuntimeError(f"gpt-image-1 returned no data for {slug}")
-    dest_png.write_bytes(base64.b64decode(b64))
+
+    final = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+    final.save(dest_png, "PNG", optimize=True)
     to_webp(dest_png, dest_webp)
     return dest_webp if dest_webp.exists() else dest_png
 
@@ -409,12 +461,14 @@ def main():
     from openai import OpenAI
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-    # NOTE: --base mode is now a no-op. Each SKU is a single-shot AI
-    # render with the full Merit label spec baked into the prompt — no
-    # shared base file is needed.
-    if base_only:
-        print("--base mode retired. Single-shot per-SKU prompts now bake the label spec directly. Use --example <slug> or --all.")
-        return
+    # Canonical base — generated ONCE, then PIL-overlaid for every SKU.
+    if base_only or not BASE_PATH.exists():
+        gen_base(client, quality)
+        if base_only:
+            print(f"\n[BASE] done. Review {BASE_PATH.relative_to(REPO_ROOT)} before running --example or --all.")
+            return
+    else:
+        print(f"[BASE] using existing {BASE_PATH.relative_to(REPO_ROOT)}")
 
     # Parse inventory
     rows = parse_inventory()
