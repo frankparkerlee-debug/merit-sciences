@@ -20,6 +20,7 @@ import 'server-only';
 import { randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { onFirstOrder } from '@/lib/practitioner-journey';
 import {
   renderOrderConfirmation,
   renderOrderLookupLink,
@@ -330,7 +331,13 @@ export async function createOrderFromPayPal(
         paypalPayerId: paypalOrder.payer?.payer_id ?? null,
         paidAt: new Date(),
       },
-      select: { id: true, paypalOrderId: true, paypalCaptureId: true },
+      select: {
+        id: true,
+        paypalOrderId: true,
+        paypalCaptureId: true,
+        customerEmail: true,
+        lines: { select: { title: true }, take: 1 },
+      },
     });
     if (preCreated.status === 'PENDING_PAYMENT') {
       await recordOrderEvent({
@@ -339,6 +346,14 @@ export async function createOrderFromPayPal(
         message: `Payment captured via PayPal webhook. Capture ID ${captureId}.`,
         metadata: { capture_id: captureId, source: 'webhook' },
       });
+      // Practitioner journey: if this email is in an ONBOARDING journey,
+      // exit it and start RETENTION. No-op for non-practitioner buyers.
+      await onFirstOrder({
+        email: promoted.customerEmail,
+        firstCompound: promoted.lines[0]?.title,
+      }).catch((err) =>
+        console.warn('[orders] onFirstOrder hook failed (non-fatal)', err),
+      );
     }
     return { order: promoted as any, isNew: preCreated.status === 'PENDING_PAYMENT' };
   }
@@ -450,6 +465,16 @@ export async function createOrderFromPayPal(
     message: `Payment captured via PayPal webhook. Capture ID ${captureId}.`,
     metadata: { capture_id: captureId, source: 'webhook' },
   });
+
+  // Practitioner journey — same hook as the card-flow path. No-op for
+  // non-practitioner buyers; transitions ONBOARDING → RETENTION for
+  // practitioners placing their first order.
+  await onFirstOrder({
+    email,
+    firstCompound: items[0]?.name,
+  }).catch((err) =>
+    console.warn('[orders] onFirstOrder hook failed (non-fatal)', err),
+  );
 
   return { order, isNew: true };
 }
