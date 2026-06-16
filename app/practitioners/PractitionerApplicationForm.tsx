@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { submitClinicApplication, type SubmitResult } from './actions';
+import { submitPractitionerApplication, type SubmitResult } from './actions';
 
 const CREDENTIALS = ['MD', 'DO', 'NP', 'PA', 'DC', 'PharmD', 'ND', 'DMD/DDS', 'Other'];
 const VOLUMES = [
@@ -12,9 +12,9 @@ const VOLUMES = [
   '$15,000+ / mo',
 ];
 
-export function ClinicApplicationForm() {
+export function PractitionerApplicationForm() {
   const [result, formAction] = useFormState<SubmitResult | null, FormData>(
-    submitClinicApplication,
+    submitPractitionerApplication,
     null,
   );
 

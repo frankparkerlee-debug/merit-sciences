@@ -2,7 +2,7 @@
 
 import { sendEmail } from '@/lib/email';
 
-export type ClinicApplicationInput = {
+export type PractitionerApplicationInput = {
   practiceName: string;
   providerName: string;
   credentials: string;
@@ -23,15 +23,18 @@ export type SubmitResult =
 const ADMIN_EMAIL = 'info@meritpeptides.com';
 
 /**
- * Submit a clinic-account application. Stores nothing to DB yet — emails
- * the admin who reviews + approves manually. Confirmation goes back to
- * the applicant so they know it landed.
+ * Submit a Practitioner Program application. Stores nothing to DB yet —
+ * emails the admin who reviews + approves manually. Confirmation goes
+ * back to the applicant so they know it landed.
+ *
+ * Pricing is never quoted in the confirmation — account-tier pricing is
+ * applied inside the portal after approval (standard or custom).
  */
-export async function submitClinicApplication(
+export async function submitPractitionerApplication(
   _prev: SubmitResult | null,
   formData: FormData,
 ): Promise<SubmitResult> {
-  const data: ClinicApplicationInput = {
+  const data: PractitionerApplicationInput = {
     practiceName: String(formData.get('practiceName') ?? '').trim(),
     providerName: String(formData.get('providerName') ?? '').trim(),
     credentials: String(formData.get('credentials') ?? '').trim(),
@@ -55,7 +58,7 @@ export async function submitClinicApplication(
 
   const html = `
     <div style="font-family:system-ui,sans-serif;color:#0B0F1A;max-width:560px;margin:0 auto;">
-      <h2 style="margin:0 0 16px;font-size:18px;color:#2E4DDB;">New clinic account application</h2>
+      <h2 style="margin:0 0 16px;font-size:18px;color:#2E4DDB;">New Practitioner Program application</h2>
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <tbody>
           ${row('Practice', data.practiceName)}
@@ -70,7 +73,7 @@ export async function submitClinicApplication(
         </tbody>
       </table>
       <p style="margin-top:24px;font-size:12px;color:#5C6378;">
-        Submitted via meritsciences.com/clinic. Reply to <a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a> to approve.
+        Submitted via meritsciences.com/practitioners. Reply to <a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a> to approve and set portal pricing tier.
       </p>
     </div>
   `;
@@ -78,31 +81,31 @@ export async function submitClinicApplication(
   try {
     await sendEmail({
       to: ADMIN_EMAIL,
-      subject: `Clinic application — ${data.practiceName} (${data.credentials})`,
+      subject: `Practitioner Program — ${data.practiceName} (${data.credentials})`,
       html,
     });
   } catch (err) {
-    console.error('[clinic-apply] admin email failed', err);
+    console.error('[practitioner-apply] admin email failed', err);
     return { ok: false, error: 'Could not submit application. Please email info@meritpeptides.com directly.' };
   }
 
-  // Confirmation to applicant
+  // Confirmation to applicant — no pricing quoted, no "savings" language
   try {
     await sendEmail({
       to: data.email,
-      subject: 'Your Merit Sciences clinic application',
+      subject: 'Your Merit Sciences Practitioner Program application',
       html: `
         <div style="font-family:system-ui,sans-serif;color:#0B0F1A;max-width:560px;margin:0 auto;">
           <h2 style="margin:0 0 12px;font-size:18px;">Thanks, ${escapeHtml(data.providerName.split(' ')[0])}.</h2>
           <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-            We received your clinic-account application for <strong>${escapeHtml(data.practiceName)}</strong>.
-            Our pharmacy team verifies license + NPI within one business day; you'll get a follow-up
-            with clinic pricing access and a portal login.
+            We received your Practitioner Program application for
+            <strong>${escapeHtml(data.practiceName)}</strong>. Our pharmacy team verifies
+            license + NPI within one business day; you&rsquo;ll get a follow-up with portal
+            access and your account pricing tier.
           </p>
           <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-            In the meantime, browse the catalog at
-            <a href="https://meritsciences.com/catalog" style="color:#2E4DDB;">meritsciences.com/catalog</a>
-            — the prices you see are retail; your clinic rate will apply after approval.
+            In the meantime, browse the public catalog at
+            <a href="https://meritsciences.com/catalog" style="color:#2E4DDB;">meritsciences.com/catalog</a>.
           </p>
           <p style="font-size:12px;color:#5C6378;margin-top:24px;">
             Merit Sciences · Dallas, TX · 503B outsourcing facility · ISO certified
@@ -112,7 +115,7 @@ export async function submitClinicApplication(
     });
   } catch (err) {
     // Confirmation failure is not fatal — admin still got the application
-    console.warn('[clinic-apply] confirmation email failed (non-fatal)', err);
+    console.warn('[practitioner-apply] confirmation email failed (non-fatal)', err);
   }
 
   return {

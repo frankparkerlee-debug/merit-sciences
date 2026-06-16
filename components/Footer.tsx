@@ -25,7 +25,7 @@ export function Footer() {
             <li><a href="/catalog" className="hover:text-white transition">Catalog</a></li>
             <li><a href="/catalog#stacks" className="hover:text-white transition">Stacks</a></li>
             <li><a href="/about" className="hover:text-white transition">About</a></li>
-            <li><a href="/clinic" className="hover:text-white transition">For Clinics</a></li>
+            <li><a href="/practitioners" className="hover:text-white transition">Practitioner Program</a></li>
           </ul>
         </div>
 

@@ -12,7 +12,7 @@ export function Nav() {
           <Link href="/catalog" className="hover:text-cobalt transition">Catalog</Link>
           <Link href="/catalog#blends" className="hover:text-cobalt transition">Blends</Link>
           <Link href="/about" className="hover:text-cobalt transition">About</Link>
-          <Link href="/clinic" className="hover:text-cobalt transition">For Clinics</Link>
+          <Link href="/practitioners" className="hover:text-cobalt transition">Practitioner Program</Link>
         </div>
         <div className="flex items-center gap-4">
           <CartIcon />
