@@ -655,3 +655,34 @@ model NewsletterSubscriber {
   @@index([isSubscribed])
   @@map("newsletter_subscribers")
 }
+
+// Practitioner Program applications — submitted from /practitioners.
+// Admin reviews via /admin/practitioners, then approves (which sends an
+// approval email + grants portal pricing access) or rejects. Stored
+// so we have an audit log even if the Resend admin notification fails.
+model PractitionerApplication {
+  id              String    @id @default(cuid())
+  practiceName    String
+  providerName    String
+  credentials     String    // MD, DO, NP, PA, DC, PharmD, ND, DMD/DDS, Other
+  state           String
+  licenseNumber   String
+  npi             String
+  email           String
+  phone           String?
+  specialty       String?
+  monthlyVolume   String?
+  notes           String?
+  // Workflow
+  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedAt      DateTime?
+  reviewerEmail   String?
+  reviewerNote    String?
+  // Audit
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("practitioner_applications")
+}

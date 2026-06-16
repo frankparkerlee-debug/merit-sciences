@@ -1,6 +1,7 @@
 'use server';
 
 import { sendEmail } from '@/lib/email';
+import { prisma } from '@/lib/db';
 
 export type PractitionerApplicationInput = {
   practiceName: string;
@@ -78,6 +79,34 @@ export async function submitPractitionerApplication(
     </div>
   `;
 
+  // Persist BEFORE sending emails so we have a record even if Resend
+  // fails. Admin can still triage from /admin/practitioners.
+  let appId: string | null = null;
+  try {
+    const created = await prisma.practitionerApplication.create({
+      data: {
+        practiceName: data.practiceName,
+        providerName: data.providerName,
+        credentials: data.credentials,
+        state: data.state.toUpperCase(),
+        licenseNumber: data.licenseNumber,
+        npi: data.npi,
+        email: data.email.toLowerCase(),
+        phone: data.phone || null,
+        specialty: data.specialty || null,
+        monthlyVolume: data.monthlyVolume || null,
+        notes: data.notes || null,
+        status: 'PENDING',
+      },
+      select: { id: true },
+    });
+    appId = created.id;
+  } catch (err) {
+    console.error('[practitioner-apply] DB persist failed', err);
+    // Don't fail the submission on DB error — still try to email so we
+    // don't lose the lead. The admin email is the fallback record.
+  }
+
   try {
     await sendEmail({
       to: ADMIN_EMAIL,
@@ -86,7 +115,11 @@ export async function submitPractitionerApplication(
     });
   } catch (err) {
     console.error('[practitioner-apply] admin email failed', err);
-    return { ok: false, error: 'Could not submit application. Please email info@meritpeptides.com directly.' };
+    // If both DB AND admin email failed, surface the error so the user
+    // knows to reach out directly.
+    if (!appId) {
+      return { ok: false, error: 'Could not submit application. Please email info@meritpeptides.com directly.' };
+    }
   }
 
   // Confirmation to applicant — no pricing quoted, no "savings" language
