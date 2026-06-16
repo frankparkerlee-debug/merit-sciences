@@ -103,11 +103,11 @@ export default function PractitionersPage() {
               }
             />
             <Pillar
-              tag="Compliance trail"
+              tag="Documentation"
               title="COA with every order"
               body={
                 <>
-                  Every shipment includes the lot Certificate of Analysis. Chart it, post it to
+                  Every shipment includes the lot Certificate of Analysis. Save it, post it to
                   your portal, file it. <strong>Lot # on every label.</strong>
                 </>
               }
@@ -197,54 +197,53 @@ export default function PractitionersPage() {
         </div>
       </section>
 
-      {/* ═══════════ §03 — WHAT IT MEANS FOR YOUR PRACTICE ═══════════ */}
+      {/* ═══════════ §03 — WHY A MERIT ACCOUNT MATTERS ═══════════ */}
       <section className="py-16 lg:py-24 border-t border-cobalt/10">
         <div className="max-w-[1240px] mx-auto px-6 lg:px-10">
           <div className="max-w-2xl mb-12">
             <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-              — 03 · What this means for your practice
+              — 03 · Why a Merit account matters
             </p>
             <h2
               className="font-display font-black tracking-[-0.025em] leading-[0.98]"
               style={{ fontSize: 'clamp(32px, 4.5vw, 60px)' }}
             >
-              The kind of sourcing
+              Sourcing that holds up
               <br />
-              that doesn&rsquo;t haunt you<span className="text-cobalt">.</span>
+              to whoever asks<span className="text-cobalt">.</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <Pillar
               tag="Reputation"
-              title="The answer to 'where does this come from?'"
+              title="A supplier you can name"
               body={
                 <>
-                  US-licensed pharmacy team. 503B + ISO certified facility in Dallas. <strong>You
-                  can name the chain.</strong> Patients who ask the question are the ones who tell
-                  their friends.
+                  US-licensed pharmacy team. 503B + ISO certified facility in Dallas. <strong>The
+                  chain of custody is named, registered, and inspectable.</strong> The kind of
+                  sourcing that holds up to questions.
                 </>
               }
             />
             <Pillar
-              tag="Liability"
-              title="Lot documentation built in"
+              tag="Documentation"
+              title="Records follow the vial"
               body={
                 <>
-                  Every vial carries a lot #. Every shipment includes the COA. <strong>Chart it,
-                  defend it.</strong> The 503B + USP characterization chain is the same one used
-                  by hospital pharmacies.
+                  Every vial carries a lot #. Every shipment includes the COA. The
+                  <strong> 503B + USP characterization chain</strong> mirrors the one used by
+                  hospital pharmacies.
                 </>
               }
             />
             <Pillar
               tag="Predictability"
-              title="One supplier, one quality bar"
+              title="One supplier, one bar"
               body={
                 <>
                   Same pharmacist sign-off across every order. Same purity floor across every lot.
-                  Same vial across every patient. <strong>Sourcing variance off your worry
-                  list.</strong>
+                  Same vial every shipment. <strong>Sourcing variance off your worry list.</strong>
                 </>
               }
             />
