@@ -106,7 +106,23 @@ export function BulkProductTable({ products }: { products: Row[] }) {
   }
 
   function handleSave() {
-    const rows: BulkRow[] = products.map((p) => {
+    // ONLY send rows the user actually modified. Otherwise stale form
+    // state at page-load time can overwrite values that were updated
+    // elsewhere between the load and Save (e.g. another tab, direct DB
+    // patch, or the inventory importer running in parallel).
+    const dirtyProducts = products.filter((p) => {
+      const e = edits[p.handle];
+      const base = toEditable(p);
+      return (
+        e.status !== base.status ||
+        e.stockQty !== base.stockQty ||
+        e.retailDollars !== base.retailDollars ||
+        e.physicianDollars !== base.physicianDollars ||
+        e.costDollars !== base.costDollars ||
+        e.imageUrl !== base.imageUrl
+      );
+    });
+    const rows: BulkRow[] = dirtyProducts.map((p) => {
       const e = edits[p.handle];
       return {
         handle: p.handle,
