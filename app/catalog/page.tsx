@@ -1,6 +1,7 @@
 import { listProducts } from '@/lib/catalog';
 import type { Product } from '@/lib/product-types';
 import { familyByCompound, familySortRank } from '@/lib/catalog-meta';
+import { withPricingMany } from '@/lib/pricing';
 
 /** Numeric weight for sorting "5mg" / "1500mg" / "10000IU" strings. */
 function sizeWeight(s: string): number {
@@ -124,7 +125,12 @@ const RESTOCK_SIGNALS: Record<string, { status: 'fresh' | 'low' | 'restocking'; 
 // Server data prep — runs once at request time, hands a single bundle
 // to the client component.
 export default async function CatalogPage() {
-  const products = await listProducts({ status: 'active' });
+  const rawProducts = await listProducts({ status: 'active' });
+  // Decorate with effective pricing — practitioner price replaces
+  // priceCents in-place when a signed-in practitioner is browsing,
+  // retail stays for non-practitioners + the strikethrough comparison.
+  const products = await withPricingMany(rawProducts);
+  const isPractitionerPricing = products[0]?.isPractitionerPricing ?? false;
 
   // Accessories = bacteriostatic water + anything explicitly tagged.
   // Everything else goes in the main grid — including newly-imported
@@ -184,6 +190,7 @@ export default async function CatalogPage() {
       stacks={stacksResolved}
       accessories={accessories}
       totalCount={products.length}
+      isPractitionerPricing={isPractitionerPricing}
     />
   );
 }

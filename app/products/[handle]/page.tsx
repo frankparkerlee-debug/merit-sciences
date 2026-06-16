@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getProduct, listProducts } from '@/lib/catalog';
 import { productImage } from '@/lib/product-types';
 import { getSiblings } from '@/lib/product-siblings';
+import { withPricing } from '@/lib/pricing';
 import {
   getFamily,
   familyLabel,
@@ -52,8 +53,13 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function ProductPage({ params }: Props) {
-  const product = await getProduct(params.handle);
-  if (!product) return notFound();
+  const raw = await getProduct(params.handle);
+  if (!raw) return notFound();
+  // Decorate with effective pricing — practitioner pricing replaces
+  // priceCents in-place, retail stays available on retailPriceCents for
+  // strikethrough comparison.
+  const product = await withPricing(raw);
+  const isPractitionerPricing = product.isPractitionerPricing;
 
   const family = getFamily(product.handle);
   const pharmacistNote = PHARMACIST_NOTES[product.handle] ?? null;
@@ -86,6 +92,22 @@ export default async function ProductPage({ params }: Props) {
   return (
     // Bottom padding on mobile reserves space for the sticky add-to-cart bar
     <main className="bg-cream min-h-screen pb-24 lg:pb-0">
+      {/* Practitioner pricing banner — shown only when signed in as approved practitioner */}
+      {isPractitionerPricing && (
+        <div className="bg-ink text-white">
+          <div className="px-6 lg:px-12 py-3 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] tracking-[0.16em] uppercase font-bold">
+            <span>
+              <span style={{ color: '#7B96FF' }}>○</span> Practitioner pricing applied
+            </span>
+            <a
+              href="/practitioners/portal"
+              className="text-white/80 hover:text-white normal-case tracking-normal text-[12px] font-normal"
+            >
+              Account &rarr;
+            </a>
+          </div>
+        </div>
+      )}
       {/* Breadcrumbs */}
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-4 pb-2 text-xs text-ink-muted overflow-x-auto whitespace-nowrap">
         <Link href="/" className="hover:text-ink transition">Home</Link>

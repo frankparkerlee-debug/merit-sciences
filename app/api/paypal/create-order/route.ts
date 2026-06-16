@@ -4,6 +4,7 @@ import { createPayPalOrder, getAccessToken } from '@/lib/paypal';
 import { validateDiscountCode } from '@/lib/discount';
 import { prisma } from '@/lib/db';
 import { preCreateOrder } from '@/lib/orders';
+import { getPractitionerSession } from '@/lib/practitioner-session';
 
 export const runtime = 'nodejs';
 
@@ -134,6 +135,31 @@ export async function POST(req: Request) {
       qty: Math.min(Math.round(raw.qty), 99),
       imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : undefined,
     });
+  }
+
+  // ── Practitioner pricing override ────────────────────────────────
+  // Server-authoritative: if the buyer is a signed-in approved
+  // practitioner, override the client-supplied unitCents using the
+  // physicianPriceCents-to-priceCents ratio from the DB. Preserves
+  // bundle/subscribe discounts proportionally. No-op if not signed in,
+  // if the product handle isn't in our DB, or if no practitioner price
+  // is configured for that SKU.
+  const practitionerSession = await getPractitionerSession();
+  if (practitionerSession) {
+    const handles = [...new Set(cleanLines.map((l) => l.handle).filter(Boolean))];
+    if (handles.length > 0) {
+      const refs = await prisma.product.findMany({
+        where: { handle: { in: handles } },
+        select: { handle: true, priceCents: true, physicianPriceCents: true },
+      });
+      const refMap = new Map(refs.map((r) => [r.handle, r]));
+      for (const line of cleanLines) {
+        const ref = refMap.get(line.handle);
+        if (!ref || !ref.physicianPriceCents || ref.priceCents <= 0) continue;
+        const ratio = ref.physicianPriceCents / ref.priceCents;
+        line.unitCents = Math.max(1, Math.round(line.unitCents * ratio));
+      }
+    }
   }
 
   const subtotalCents = cleanLines.reduce(

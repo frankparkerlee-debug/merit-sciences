@@ -34,6 +34,9 @@ type Props = {
   stacks: StackResolved[];
   accessories: Product[];
   totalCount: number;
+  /** True when the signed-in user is an approved practitioner — used to
+   *  surface a "practitioner pricing applied" banner above the grid. */
+  isPractitionerPricing?: boolean;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -87,7 +90,7 @@ function familyLabel(f: Family): string {
 // Component
 // ─────────────────────────────────────────────────────────────────────────
 
-export function CatalogClient({ products, stacks, accessories, totalCount }: Props) {
+export function CatalogClient({ products, stacks, accessories, totalCount, isPractitionerPricing = false }: Props) {
   const [selectedFamily, setSelectedFamily] = useState<Family | 'all'>('all');
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [subscribeMode, setSubscribeMode] = useState(false);
@@ -220,6 +223,26 @@ export function CatalogClient({ products, stacks, accessories, totalCount }: Pro
 
   return (
     <main className="bg-cream min-h-screen">
+      {/* ═══════════════ PRACTITIONER PRICING BANNER ═══════════════
+          Only renders when an approved practitioner is signed in.
+          Sits above the page header so it reads as account status,
+          not a marketing pop-in. */}
+      {isPractitionerPricing && (
+        <div className="bg-ink text-white">
+          <div className="px-6 lg:px-12 py-3 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 text-[11px] tracking-[0.16em] uppercase font-bold">
+            <span>
+              <span style={{ color: '#7B96FF' }}>○</span> Practitioner pricing applied
+            </span>
+            <a
+              href="/practitioners/portal"
+              className="text-white/80 hover:text-white normal-case tracking-normal text-[12px] font-normal"
+            >
+              Account &rarr;
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* ═══════════════ PAGE HEADER ═══════════════
           Compact on mobile (eyebrow + h1 + 1-line tagline = ~110px)
           so the filter row + first product land above the fold. */}
