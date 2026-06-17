@@ -33,7 +33,7 @@ export default async function PractitionerPortalPage() {
               Catalog
             </Link>
             <Link
-              href="/orders/lookup"
+              href="/practitioners/portal/orders"
               className="text-ink-soft hover:text-ink transition font-bold tracking-wide text-[11px] uppercase"
             >
               Orders

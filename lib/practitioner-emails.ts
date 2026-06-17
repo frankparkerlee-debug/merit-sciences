@@ -322,7 +322,7 @@ const ONBOARDING: EmailDefinition[] = [
     body: (ctx) => `
       <p>A few compounds aren&rsquo;t listed on the public catalog — they&rsquo;re available to practitioner accounts only.</p>
       <p>When you sign in, anything portal-only in our inventory shows up automatically alongside the public catalog. Worth a look before your first order.</p>
-      ${btn('Sign in to your portal →', `${ctx.siteUrl}/orders/lookup`)}
+      ${btn('Sign in to your portal →', `${ctx.siteUrl}/practitioners/portal`)}
     `,
   },
   {
@@ -376,7 +376,7 @@ const RETENTION: EmailDefinition[] = [
         <li><strong>Reorder same SKU</strong> — keeps lot continuity for your records</li>
         <li><strong>Expand to a second compound</strong> — your pricing applies across the catalog</li>
       </ul>
-      ${btn('View order history →', `${ctx.siteUrl}/orders/lookup`)}
+      ${btn('View order history →', `${ctx.siteUrl}/practitioners/portal`)}
     `,
   },
   {
@@ -462,7 +462,7 @@ const RETENTION: EmailDefinition[] = [
         <li><strong>Practice ordering</strong> — multiple providers, one account</li>
         <li><strong>Export</strong> — download order history as CSV</li>
       </ul>
-      ${btn('Sign in →', `${ctx.siteUrl}/orders/lookup`)}
+      ${btn('Sign in →', `${ctx.siteUrl}/practitioners/portal`)}
     `,
   },
   {

@@ -57,9 +57,45 @@ export async function GET(req: Request) {
 
   // Honor the `next` param but only if it stays within our site
   // (relative path or matching origin) — defensive against open-redirect.
-  let safeNext = isAdminFlow ? '/admin/orders' : '/affiliate/dashboard';
+  let safeNext = isAdminFlow
+    ? '/admin/orders'
+    : isPractitionerFlow
+      ? '/practitioners/portal'
+      : '/affiliate/dashboard';
   if (next.startsWith('/') && !next.startsWith('//')) {
     safeNext = next;
   }
+
+  // Defense in depth: if `next` was stripped en route (e.g. Supabase Auth
+  // overriding redirect_to from the Site URL allowlist), check the
+  // signed-in user's role and route them to the right portal anyway.
+  // Without this, practitioners would land at the affiliate dashboard
+  // and have to navigate manually.
+  if (safeNext === '/affiliate/dashboard' || !next) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        const email = user.email.toLowerCase();
+        // Admin override
+        const adminList = (process.env.ADMIN_EMAILS ?? '')
+          .split(',')
+          .map((e) => e.trim().toLowerCase())
+          .filter(Boolean);
+        if (adminList.includes(email)) {
+          safeNext = '/admin/orders';
+        } else {
+          // Practitioner override — direct DB read to avoid a tight
+          // coupling to prisma/db on the auth path
+          const { isApprovedPractitioner } = await import('@/lib/practitioner-session');
+          if (await isApprovedPractitioner(email)) {
+            safeNext = '/practitioners/portal';
+          }
+        }
+      }
+    } catch {
+      // Best-effort routing fallback — never block auth on a lookup failure
+    }
+  }
+
   return NextResponse.redirect(`${origin}${safeNext}`);
 }
