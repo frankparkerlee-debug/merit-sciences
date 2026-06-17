@@ -5,10 +5,11 @@ export const metadata = { title: 'Practitioner applications — Merit Admin' };
 export const dynamic = 'force-dynamic';
 
 const STATUS_TABS = [
-  { key: 'pending',  label: 'Pending',  filter: 'PENDING' },
-  { key: 'approved', label: 'Approved', filter: 'APPROVED' },
-  { key: 'rejected', label: 'Rejected', filter: 'REJECTED' },
-  { key: 'all',      label: 'All',      filter: null },
+  { key: 'pending',     label: 'Pending',     filter: 'PENDING' },
+  { key: 'approved',    label: 'Approved',    filter: 'APPROVED' },
+  { key: 'deactivated', label: 'Deactivated', filter: 'DEACTIVATED' },
+  { key: 'rejected',    label: 'Rejected',    filter: 'REJECTED' },
+  { key: 'all',         label: 'All',         filter: null },
 ] as const;
 
 type Tab = typeof STATUS_TABS[number]['key'];
@@ -141,7 +142,9 @@ function StatusPill({ status }: { status: string }) {
       ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
       : status === 'REJECTED'
         ? 'bg-rose-50 border-rose-300 text-rose-800'
-        : 'bg-amber-50 border-amber-300 text-amber-800';
+        : status === 'DEACTIVATED'
+          ? 'bg-ink/5 border-ink/20 text-ink-soft'
+          : 'bg-amber-50 border-amber-300 text-amber-800';
   return (
     <span
       className={`inline-block text-[10px] tracking-[0.16em] uppercase font-bold px-2 py-0.5 rounded border ${styles}`}

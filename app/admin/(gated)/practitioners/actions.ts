@@ -100,6 +100,145 @@ export async function approveApplication(
 }
 
 /**
+ * Deactivate an approved practitioner. Their portal access is revoked
+ * (getPractitionerSession returns null for non-APPROVED statuses), so
+ * subsequent page loads show retail pricing and the portal redirects to
+ * login. Past orders stay intact for audit. Optionally notifies them.
+ */
+export async function deactivateApplication(
+  _prev: ReviewResult | null,
+  formData: FormData,
+): Promise<ReviewResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  const note = String(formData.get('note') ?? '').trim() || null;
+  const notify = formData.get('notify') === 'on';
+  if (!id) return { ok: false, error: 'Missing application id' };
+
+  const app = await prisma.practitionerApplication.findUnique({ where: { id } });
+  if (!app) return { ok: false, error: 'Application not found' };
+  if (app.status !== 'APPROVED') {
+    return { ok: false, error: `Can only deactivate APPROVED accounts (current: ${app.status})` };
+  }
+
+  await prisma.practitionerApplication.update({
+    where: { id },
+    data: {
+      status: 'DEACTIVATED',
+      reviewedAt: new Date(),
+      reviewerEmail: admin.email,
+      reviewerNote: note,
+    },
+  });
+
+  if (notify) {
+    try {
+      await sendEmail({
+        to: app.email,
+        subject: 'Your Merit Sciences Practitioner Account has been deactivated',
+        html: deactivationEmailHtml({
+          firstName: app.providerName.split(' ')[0],
+          note,
+        }),
+      });
+    } catch (err) {
+      console.error('[practitioner-deactivate] notification email failed', err);
+    }
+  }
+
+  revalidatePath('/admin/practitioners');
+  revalidatePath(`/admin/practitioners/${id}`);
+  return { ok: true, message: notify ? 'Deactivated + notification sent.' : 'Deactivated.' };
+}
+
+/**
+ * Reactivate a previously-deactivated account. Flips status back to
+ * APPROVED. Optionally sends a welcome-back email. Doesn't generate a
+ * new magic-link (use /practitioners/login or generate one manually
+ * via the approve flow if needed).
+ */
+export async function reactivateApplication(
+  _prev: ReviewResult | null,
+  formData: FormData,
+): Promise<ReviewResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return { ok: false, error: 'Missing application id' };
+
+  const app = await prisma.practitionerApplication.findUnique({ where: { id } });
+  if (!app) return { ok: false, error: 'Application not found' };
+  if (app.status !== 'DEACTIVATED') {
+    return { ok: false, error: `Can only reactivate DEACTIVATED accounts (current: ${app.status})` };
+  }
+
+  await prisma.practitionerApplication.update({
+    where: { id },
+    data: {
+      status: 'APPROVED',
+      reviewedAt: new Date(),
+      reviewerEmail: admin.email,
+      reviewerNote: null,
+    },
+  });
+
+  revalidatePath('/admin/practitioners');
+  revalidatePath(`/admin/practitioners/${id}`);
+  return { ok: true, message: 'Reactivated.' };
+}
+
+/**
+ * Hard-delete a practitioner application. Removes:
+ *   • The PractitionerApplication row
+ *   • The PractitionerJourney email-sequence state (if any)
+ *   • The Supabase Auth user (kills active sessions + sign-in)
+ *
+ * Past orders are NOT deleted — they belong to the order record, not
+ * the practitioner, and stay as audit trail. Use sparingly; for most
+ * cases prefer deactivateApplication so the audit trail stays.
+ */
+export async function deleteApplication(
+  _prev: ReviewResult | null,
+  formData: FormData,
+): Promise<ReviewResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return { ok: false, error: 'Missing application id' };
+
+  const app = await prisma.practitionerApplication.findUnique({ where: { id } });
+  if (!app) return { ok: false, error: 'Application not found' };
+
+  // 1. Email sequence state — delete by email (no FK so we have to look up)
+  await prisma.practitionerJourney.deleteMany({ where: { email: app.email } });
+
+  // 2. Supabase Auth user — look up by email, delete if found. Doing this
+  //    BEFORE the application row delete so a partial failure leaves the
+  //    DB record intact to retry from.
+  try {
+    const sb = supabaseAdmin();
+    // listUsers paginates; with our scale a single page is fine.
+    const { data: list } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
+    const user = list?.users.find((u) => u.email?.toLowerCase() === app.email.toLowerCase());
+    if (user) {
+      await sb.auth.admin.deleteUser(user.id);
+    }
+  } catch (err) {
+    console.warn('[practitioner-delete] supabase user delete failed (continuing)', err);
+  }
+
+  // 3. The application itself
+  await prisma.practitionerApplication.delete({ where: { id } });
+
+  revalidatePath('/admin/practitioners');
+  return { ok: true, message: 'Deleted. Past orders preserved as audit trail.' };
+}
+
+/**
  * Reject an application. Sends a polite decline via Resend.
  */
 export async function rejectApplication(
@@ -187,6 +326,30 @@ function approvalEmailHtml(d: {
       </p>
       <p style="font-size:11px;color:#5C6378;margin-top:28px;padding-top:16px;border-top:1px solid #E5E1D6;">
         Merit Sciences &middot; Dallas, TX &middot; 503B outsourcing facility &middot; ISO certified
+      </p>
+    </div>
+  `;
+}
+
+function deactivationEmailHtml(d: { firstName: string; note: string | null }): string {
+  return `
+    <div style="font-family:system-ui,sans-serif;color:#0B0F1A;max-width:560px;margin:0 auto;padding:24px 0;">
+      <p style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#2E4DDB;font-weight:700;margin:0 0 8px;">
+        — Practitioner Program · Account update
+      </p>
+      <h2 style="margin:0 0 12px;font-size:20px;line-height:1.2;letter-spacing:-0.02em;">
+        ${escapeHtml(d.firstName)}, your account has been deactivated.
+      </h2>
+      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
+        Your Merit Sciences Practitioner Account has been deactivated. You&rsquo;ll no longer see
+        practitioner pricing inside the portal. Past orders remain in your records.
+        ${d.note ? `<br /><br /><em>${escapeHtml(d.note)}</em>` : ''}
+      </p>
+      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
+        If this is in error, reply directly to this email and we&rsquo;ll review.
+      </p>
+      <p style="font-size:11px;color:#5C6378;margin-top:28px;padding-top:16px;border-top:1px solid #E5E1D6;">
+        Merit Sciences &middot; Dallas, TX
       </p>
     </div>
   `;

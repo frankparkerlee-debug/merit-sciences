@@ -81,14 +81,13 @@ export default async function PractitionerApplicationDetail({
         </section>
       )}
 
-      {/* Review actions — only if PENDING */}
-      {app.status === 'PENDING' && (
-        <ReviewActions
-          id={app.id}
-          providerFirst={app.providerName.split(' ')[0]}
-          practiceName={app.practiceName}
-        />
-      )}
+      {/* Review actions — buttons available depend on current status */}
+      <ReviewActions
+        id={app.id}
+        status={app.status}
+        providerFirst={app.providerName.split(' ')[0]}
+        practiceName={app.practiceName}
+      />
     </main>
   );
 }
@@ -110,7 +109,9 @@ function StatusPill({ status }: { status: string }) {
       ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
       : status === 'REJECTED'
         ? 'bg-rose-50 border-rose-300 text-rose-800'
-        : 'bg-amber-50 border-amber-300 text-amber-800';
+        : status === 'DEACTIVATED'
+          ? 'bg-ink/5 border-ink/20 text-ink-soft'
+          : 'bg-amber-50 border-amber-300 text-amber-800';
   return (
     <span
       className={`inline-block text-[11px] tracking-[0.18em] uppercase font-bold px-3 py-1 rounded border ${styles}`}
