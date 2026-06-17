@@ -35,6 +35,29 @@ function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'https://merit-sciences.onrender.com').replace(/\/$/, '');
 }
 
+/**
+ * Resolve a Product.imageUrl (or any imageUrl) to an absolute URL safe
+ * for use inside a transactional email. Rules:
+ *
+ *   • Absolute (http/https) → returned as-is.
+ *   • Site-relative ("/products/..." etc.) → prepended with siteUrl().
+ *   • Empty / null / undefined → canonical placeholder webp at siteUrl().
+ *
+ * Most products now store relative `/products/sku-*.webp` paths after
+ * the canonical-vial migration, so this function is the boundary that
+ * converts them for email rendering.
+ */
+function absoluteImageUrl(url: string | null | undefined): string {
+  const placeholder = `${siteUrl()}/products/placeholder-vial.webp`;
+  if (!url) return placeholder;
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('/')) return `${siteUrl()}${url}`;
+  // Anything else (relative paths missing the leading slash, data: URIs,
+  // etc.) — fall back to the placeholder rather than rendering a broken
+  // <img>.
+  return placeholder;
+}
+
 /* ─── Order event recorder (Shopify-style activity timeline) ─── */
 
 /**
@@ -521,10 +544,12 @@ export async function getCrossSellProducts(
       title: p.title,
       oneLiner: p.oneLiner.length > 60 ? p.oneLiner.slice(0, 57) + '...' : p.oneLiner,
       priceCents: p.priceCents,
-      // Emails need absolute URLs — resolve placeholder against siteUrl()
-      // so cross-sell cards never have broken images. Real photos already
-      // come in as absolute URLs from Supabase Storage.
-      imageUrl: p.imageUrl || `${siteUrl()}/products/placeholder-vial.svg`,
+      // Emails need ABSOLUTE URLs (relative paths don't render in inboxes).
+      // Most products now store relative paths like /products/sku-*.webp,
+      // so we always run them through absoluteImageUrl() to prepend the
+      // site origin. Falls back to the canonical .webp placeholder when
+      // the DB row has no imageUrl.
+      imageUrl: absoluteImageUrl(p.imageUrl),
       url: `${siteUrl()}/products/${p.handle}`,
     }));
   } catch (err) {

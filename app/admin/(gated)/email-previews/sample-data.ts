@@ -94,13 +94,16 @@ const SAMPLE_LINES_ABANDONED = [
 // Cross-sell sample uses real product handles from the seeded catalog so
 // the preview shows accurate imagery + pricing. In production this is
 // pulled from the live DB via getCrossSellProducts().
+// Image URLs use the new canonical Merit-branded vial assets. These are
+// served from /public/products/ so the admin preview matches what real
+// emails render in customer inboxes.
 const SAMPLE_CROSS_SELL = [
   {
     handle: 'bpc-157-tb-500',
-    title: 'BPC-157 + TB-500',
+    title: 'Wolverine Blend',
     oneLiner: 'Tissue repair blend, lyophilized',
     priceCents: 9500,
-    imageUrl: 'https://cdn.shopify.com/s/files/1/0665/1661/5279/files/bpc-157-tb-500_1200x.png?v=1780431806',
+    imageUrl: 'https://merit-sciences.onrender.com/products/sku-bpc-10mg-tb-10mg-wolverine-20mg.webp',
     url: 'https://merit-sciences.onrender.com/products/bpc-157-tb-500',
   },
   {
@@ -108,7 +111,7 @@ const SAMPLE_CROSS_SELL = [
     title: 'Ipamorelin',
     oneLiner: 'GHRH peptide, 10mg lyophilized vial',
     priceCents: 6500,
-    imageUrl: 'https://cdn.shopify.com/s/files/1/0665/1661/5279/files/ipamorelin_1200x.png?v=1780431806',
+    imageUrl: 'https://merit-sciences.onrender.com/products/sku-ipamorelin-10mg.webp',
     url: 'https://merit-sciences.onrender.com/products/ipamorelin',
   },
   {
@@ -116,7 +119,7 @@ const SAMPLE_CROSS_SELL = [
     title: 'NAD+ 500mg',
     oneLiner: 'Cellular research, single vial',
     priceCents: 8500,
-    imageUrl: 'https://cdn.shopify.com/s/files/1/0665/1661/5279/files/nad-500mg_1200x.png?v=1780431806',
+    imageUrl: 'https://merit-sciences.onrender.com/products/sku-nad-500mg.webp',
     url: 'https://merit-sciences.onrender.com/products/nad-500mg',
   },
 ];
