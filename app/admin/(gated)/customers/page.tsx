@@ -119,12 +119,25 @@ export default async function AdminCustomersPage({
                 <tr key={c.id} className="border-t border-cobalt/5 hover:bg-cobalt/[0.02] transition">
                   <td className="px-5 py-4 text-ink-soft tabular-nums">{fmtDate(c.createdAt)}</td>
                   <td className="px-5 py-4">
-                    <Link
-                      href={`/admin/orders?q=${encodeURIComponent(c.email)}`}
-                      className="text-cobalt font-bold hover:underline underline-offset-4"
-                    >
-                      {c.email}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/admin/orders?q=${encodeURIComponent(c.email)}`}
+                        className="text-cobalt font-bold hover:underline underline-offset-4"
+                      >
+                        {c.email}
+                      </Link>
+                      <a
+                        href={`mailto:${c.email}`}
+                        title="Email this customer"
+                        aria-label="Email this customer"
+                        className="inline-flex items-center justify-center w-6 h-6 rounded text-ink-soft hover:text-cobalt hover:bg-cobalt/5 transition"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="3" y="5" width="18" height="14" rx="2" />
+                          <polyline points="3 7 12 13 21 7" />
+                        </svg>
+                      </a>
+                    </div>
                   </td>
                   <td className="px-5 py-4 text-ink">{c.name}</td>
                   <td className="px-5 py-4 text-ink-soft tabular-nums">{c.phone || '—'}</td>
