@@ -6,6 +6,7 @@ import { sendEmail } from '@/lib/email';
 import { requireAdmin } from '@/lib/admin-session';
 import { onApplicationApproved } from '@/lib/practitioner-journey';
 import { supabaseAdmin } from '@/lib/supabase';
+import { wrapPractitionerEmail, btn, heading, p, note, link } from '@/lib/practitioner-email-shell';
 
 export type ReviewResult =
   | { ok: true; message: string }
@@ -288,6 +289,10 @@ export async function rejectApplication(
 }
 
 // ── Email templates ──────────────────────────────────────────────────────
+// All three wrap their body in the shared practitioner shell so the inbox
+// impression matches the rest of the brand (Merit logo strip, cream
+// background, cobalt eyebrow, "Reply directly" footer).
+
 function approvalEmailHtml(d: {
   firstName: string;
   practiceName: string;
@@ -295,89 +300,54 @@ function approvalEmailHtml(d: {
   portalUrl: string;
   catalogUrl: string;
 }): string {
-  return `
-    <div style="font-family:system-ui,sans-serif;color:#0B0F1A;max-width:560px;margin:0 auto;padding:24px 0;">
-      <p style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#2E4DDB;font-weight:700;margin:0 0 8px;">
-        — Practitioner Program · Approved
-      </p>
-      <h2 style="margin:0 0 16px;font-size:24px;line-height:1.15;letter-spacing:-0.02em;">
-        Welcome to Merit Sciences, ${escapeHtml(d.firstName)}.
-      </h2>
-      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        Your Practitioner Program account for <strong>${escapeHtml(d.practiceName)}</strong> is
-        active. The link below signs you straight into your portal &mdash; no password.
-        Account-tier pricing applies the moment you&rsquo;re signed in.
-      </p>
-      <p style="margin:24px 0;">
-        <a href="${d.portalUrl}" style="display:inline-block;background:#2E4DDB;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:700;letter-spacing:0.06em;font-size:13px;">
-          Sign in to your portal →
-        </a>
-      </p>
-      <p style="font-size:12px;line-height:18px;color:#5C6378;margin:0 0 16px;">
-        The link expires in 60 minutes. If it&rsquo;s expired by the time you click, request a new
-        one any time at <a href="https://meritsciences.com/practitioners/login" style="color:#2E4DDB;">meritsciences.com/practitioners/login</a>.
-      </p>
-      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        Once signed in, browse the catalog at
-        <a href="${d.catalogUrl}" style="color:#2E4DDB;">meritsciences.com/catalog</a>.
-      </p>
-      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        Questions? Reply to this email &mdash; you&rsquo;ll reach the pharmacy team directly.
-      </p>
-      <p style="font-size:11px;color:#5C6378;margin-top:28px;padding-top:16px;border-top:1px solid #E5E1D6;">
-        Merit Sciences &middot; Dallas, TX &middot; 503B outsourcing facility &middot; ISO certified
-      </p>
-    </div>
-  `;
+  const body =
+    heading(`Welcome to Merit Sciences, ${escapeHtml(d.firstName)}.`) +
+    p(`Your Practitioner Program account for <strong>${escapeHtml(d.practiceName)}</strong> is active. The button below signs you straight into your portal — no password. Account-tier pricing applies the moment you’re signed in.`) +
+    btn('Sign in to your portal →', d.portalUrl) +
+    note(`The link expires in 60 minutes. If it’s expired by the time you click, request a new one any time at ${link('meritsciences.com/practitioners/login', 'https://meritsciences.com/practitioners/login')}.`) +
+    p(`Once signed in, browse the catalog at ${link('meritsciences.com/catalog', d.catalogUrl)}.`) +
+    p(`Questions? Reply to this email — you’ll reach the pharmacy team directly.`);
+
+  return wrapPractitionerEmail({
+    subject: 'Your Merit Sciences Practitioner Account is active',
+    eyebrow: 'Practitioner Program · Approved',
+    bodyHtml: body,
+  });
 }
 
 function deactivationEmailHtml(d: { firstName: string; note: string | null }): string {
-  return `
-    <div style="font-family:system-ui,sans-serif;color:#0B0F1A;max-width:560px;margin:0 auto;padding:24px 0;">
-      <p style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#2E4DDB;font-weight:700;margin:0 0 8px;">
-        — Practitioner Program · Account update
-      </p>
-      <h2 style="margin:0 0 12px;font-size:20px;line-height:1.2;letter-spacing:-0.02em;">
-        ${escapeHtml(d.firstName)}, your account has been deactivated.
-      </h2>
-      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        Your Merit Sciences Practitioner Account has been deactivated. You&rsquo;ll no longer see
-        practitioner pricing inside the portal. Past orders remain in your records.
-        ${d.note ? `<br /><br /><em>${escapeHtml(d.note)}</em>` : ''}
-      </p>
-      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        If this is in error, reply directly to this email and we&rsquo;ll review.
-      </p>
-      <p style="font-size:11px;color:#5C6378;margin-top:28px;padding-top:16px;border-top:1px solid #E5E1D6;">
-        Merit Sciences &middot; Dallas, TX
-      </p>
-    </div>
-  `;
+  const noteBlock = d.note
+    ? p(`<em style="color:#5C6378;">${escapeHtml(d.note)}</em>`)
+    : '';
+  const body =
+    heading(`${escapeHtml(d.firstName)}, your account has been deactivated.`) +
+    p(`Your Merit Sciences Practitioner Account has been deactivated. You’ll no longer see practitioner pricing inside the portal. Past orders remain in your records.`) +
+    noteBlock +
+    p(`If this is in error, reply directly to this email and we’ll review.`);
+
+  return wrapPractitionerEmail({
+    subject: 'Your Merit Sciences Practitioner Account has been deactivated',
+    eyebrow: 'Practitioner Program · Account update',
+    bodyHtml: body,
+  });
 }
 
 function rejectionEmailHtml(d: { firstName: string; note: string | null }): string {
-  return `
-    <div style="font-family:system-ui,sans-serif;color:#0B0F1A;max-width:560px;margin:0 auto;padding:24px 0;">
-      <h2 style="margin:0 0 12px;font-size:20px;line-height:1.2;letter-spacing:-0.02em;">
-        Thanks for applying, ${escapeHtml(d.firstName)}.
-      </h2>
-      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        We weren&rsquo;t able to approve your Practitioner Program application at this time.
-        ${d.note ? `<br /><br /><em>${escapeHtml(d.note)}</em>` : ''}
-      </p>
-      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        If you think this was a mistake or you&rsquo;d like to provide additional information,
-        reply directly to this email and we&rsquo;ll re-review.
-      </p>
-      <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
-        In the meantime, you&rsquo;re welcome to order at retail through our public catalog at
-        <a href="https://meritsciences.com/catalog" style="color:#2E4DDB;">meritsciences.com/catalog</a>.
-      </p>
-      <p style="font-size:11px;color:#5C6378;margin-top:28px;padding-top:16px;border-top:1px solid #E5E1D6;">
-        Merit Sciences &middot; Dallas, TX
-      </p>
-    </div>
-  `;
+  const noteBlock = d.note
+    ? p(`<em style="color:#5C6378;">${escapeHtml(d.note)}</em>`)
+    : '';
+  const body =
+    heading(`Thanks for applying, ${escapeHtml(d.firstName)}.`) +
+    p(`We weren’t able to approve your Practitioner Program application at this time.`) +
+    noteBlock +
+    p(`If you think this was a mistake or you’d like to provide additional information, reply directly to this email and we’ll re-review.`) +
+    p(`In the meantime, you’re welcome to order at retail through our public catalog at ${link('meritsciences.com/catalog', 'https://meritsciences.com/catalog')}.`);
+
+  return wrapPractitionerEmail({
+    subject: 'Re: Your Merit Sciences Practitioner Program application',
+    eyebrow: 'Practitioner Program · Application update',
+    bodyHtml: body,
+  });
 }
 
 function escapeHtml(s: string): string {

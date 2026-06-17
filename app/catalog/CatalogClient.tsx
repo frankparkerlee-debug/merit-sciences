@@ -707,8 +707,15 @@ function ProductCard({
               {p.title}
             </Link>
           </h3>
-          <span className="font-display text-[15px] sm:text-lg lg:text-xl font-black text-ink tracking-tight leading-tight whitespace-nowrap">
-            {money(displayPrice)}
+          <span className="font-display font-black text-ink tracking-tight leading-tight whitespace-nowrap flex items-baseline gap-1.5">
+            <span className="text-[15px] sm:text-lg lg:text-xl">{money(displayPrice)}</span>
+            {/* Strikethrough retail when practitioner pricing is in effect.
+                Skipped when subscribe mode is on (already discounted layer). */}
+            {p.isPractitionerPricing && p.retailPriceCents != null && p.retailPriceCents > p.priceCents && !subscribeMode && (
+              <span className="text-[12px] sm:text-[13px] text-ink-soft/60 line-through font-medium">
+                {money(p.retailPriceCents)}
+              </span>
+            )}
           </span>
         </div>
 

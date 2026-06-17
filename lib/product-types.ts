@@ -12,7 +12,15 @@ export type Product = {
   // Price stored in cents to avoid float math at the cart layer.
   priceCents: number;
   compareAtCents?: number;
-  bundles?: { label: string; vials: number; priceCents: number }[];
+  // ── Decorated by lib/pricing.ts at render time ───────────────────
+  // When a signed-in approved practitioner is browsing, lib/pricing
+  // overwrites `priceCents` with the practitioner-tier price and
+  // preserves the original retail value on `retailPriceCents` for
+  // strikethrough rendering. Both fields are undefined for non-
+  // practitioner traffic.
+  retailPriceCents?: number;
+  isPractitionerPricing?: boolean;
+  bundles?: { label: string; vials: number; priceCents: number; retailPriceCents?: number }[];
   // Chemistry metafields surfaced on PDP spec block
   spec: {
     cas?: string;

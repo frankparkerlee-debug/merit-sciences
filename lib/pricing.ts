@@ -74,7 +74,10 @@ export function bundlesFor(
     // ratio is somehow off.
     const retailRatio = retailPerVial > 0 ? b.priceCents / (b.vials * retailPerVial) : 1;
     const practitionerCents = Math.round(b.vials * effectivePerVial * retailRatio);
-    return { ...b, priceCents: practitionerCents };
+    // Preserve the original retail price on `retailPriceCents` so the
+    // PDP buybox can render a strikethrough across all pack sizes
+    // without recomputing.
+    return { ...b, priceCents: practitionerCents, retailPriceCents: b.priceCents };
   });
 }
 

@@ -266,6 +266,8 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           <span className="font-display text-3xl lg:text-4xl font-black text-ink">
             {money(effectiveBundle.priceCents)}
           </span>
+          {/* Bundle savings strikethrough (existing) — applies to 3-pack /
+              6-pack vs Single, on either tier. */}
           {savingsPct > 0 && selectedIdx > 0 && purchaseType === 'onetime' && (
             <>
               <span className="text-lg text-ink-muted line-through font-semibold">
@@ -277,6 +279,20 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
                 Save {money(singleBundle.priceCents * selected.vials - effectiveBundle.priceCents)}
               </span>
             </>
+          )}
+          {/* Practitioner-tier strikethrough — shows the retail equivalent
+              of the currently-selected bundle. Only renders when an
+              approved practitioner is signed in AND we have a retail
+              value to compare against. Skipped on Subscribe (different
+              discount layer) and on bundles where the retail value is
+              missing (legacy products from before Phase B). */}
+          {product.isPractitionerPricing && purchaseType === 'onetime' &&
+           effectiveBundle.retailPriceCents != null &&
+           effectiveBundle.retailPriceCents > effectiveBundle.priceCents && (
+            <span className="text-base text-ink-muted line-through font-semibold">
+              {money(effectiveBundle.retailPriceCents)}
+              <span className="text-[10px] tracking-[0.12em] uppercase font-bold text-ink-soft/70 not-italic ml-1.5">retail</span>
+            </span>
           )}
         </div>
         <p className="text-[12px] text-ink-soft mt-1">
