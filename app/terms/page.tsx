@@ -17,7 +17,7 @@ export default function TermsPage() {
     <PolicyLayout
       title="Terms of Service"
       subtitle="The conditions under which Merit Sciences offers research compounds."
-      lastUpdated="Jun 2026"
+      lastUpdated="June 17, 2026"
     >
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </PolicyLayout>

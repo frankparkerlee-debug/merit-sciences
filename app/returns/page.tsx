@@ -17,7 +17,7 @@ export default function ReturnsPage() {
     <PolicyLayout
       title="Returns & Refunds"
       subtitle="Our refund and replacement policy for research compounds."
-      lastUpdated="Jun 2026"
+      lastUpdated="June 17, 2026"
     >
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </PolicyLayout>

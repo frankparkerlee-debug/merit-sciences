@@ -17,7 +17,7 @@ export default function PrivacyPage() {
     <PolicyLayout
       title="Privacy Policy"
       subtitle="How we handle the personal information you provide when you order from us."
-      lastUpdated="Jun 2026"
+      lastUpdated="June 17, 2026"
     >
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </PolicyLayout>

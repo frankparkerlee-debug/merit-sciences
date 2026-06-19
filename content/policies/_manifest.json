@@ -1,30 +1,26 @@
 {
   "privacy": {
     "title": "Privacy policy",
-    "shopify_url": "https://meritsciences.com/policies/privacy-policy",
-    "updated_at": "2025-09-12T00:10:48-05:00",
-    "char_count": 18307,
-    "swaps_applied": 0
+    "updated_at": "2026-06-17",
+    "source": "merit-authored",
+    "note": "Replaces former Shopify boilerplate. Liquid template syntax removed; references to Shopify hosting removed; data-handling describes Merit's actual stack (PayPal, ShipStation, Render, Supabase, Resend) by category."
   },
   "returns": {
-    "title": "Refund policy",
-    "shopify_url": "https://meritsciences.com/policies/refund-policy",
-    "updated_at": "2026-03-27T22:54:38-05:00",
-    "char_count": 2840,
-    "swaps_applied": 0
+    "title": "Returns & refunds",
+    "updated_at": "2026-06-17",
+    "source": "merit-authored",
+    "note": "Replaces generic e-comm boilerplate. Specific to sealed sterile vials shipped from a 503B facility — no general change-of-mind returns, 7-day claim window for damaged/wrong/lost/defective."
   },
   "shipping": {
     "title": "Shipping",
-    "shopify_url": "https://meritsciences.com/policies/shipping-policy",
-    "updated_at": "2026-03-27T22:59:49-05:00",
-    "char_count": 1420,
-    "swaps_applied": 1
+    "updated_at": "2026-06-17",
+    "source": "merit-authored",
+    "note": "US-only, ships from Dallas 503B partner facility, ambient lyophilized stable, USPS/UPS, $100 free-shipping threshold."
   },
   "terms": {
     "title": "Terms of service",
-    "shopify_url": "https://meritsciences.com/policies/terms-of-service",
-    "updated_at": "2026-03-29T14:18:08-05:00",
-    "char_count": 10610,
-    "swaps_applied": 17
+    "updated_at": "2026-06-17",
+    "source": "merit-authored",
+    "note": "Replaces Shopify boilerplate. RUO posture made explicit. Governing law Texas. Practitioner Program clause, IP, limitation of liability, indemnification, dispute resolution."
   }
 }
