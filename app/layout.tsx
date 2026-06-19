@@ -30,23 +30,24 @@ export const metadata: Metadata = {
   // is wired — relative `/og-image.jpg` then works under both.
   metadataBase: new URL('https://merit-sciences.onrender.com'),
   title: {
-    default: 'Merit Sciences · Research-grade compounds',
+    default: 'Merit Sciences · Pharmacy-grade compounds',
     template: '%s · Merit Sciences',
   },
   // HTML meta description — Google SERP target ~155 chars. PPC-safer
-  // vocabulary: "compounds" (not peptides — auto-flagged by Meta),
-  // no facility/pharmacy practice language, explicit RUO disclaimer
-  // that ad reviewers like to see stated outright.
+  // vocabulary: "compounds" (not peptides — auto-flagged by Meta).
+  // RUO compliance lives in the top steel banner + Footer + Terms —
+  // we don't repeat it in the SERP impression so the brand reads as a
+  // 503B-sourced pharmaceutical supplier, not a research-chem shop.
   description:
-    'Merit Sciences supplies research-grade compounds: ≥99% HPLC purity, lot-documented. Ships 48hr from Dallas, TX. For research use only — not for human or veterinary use.',
+    'Pharmacy-grade compounds from an ISO-certified US 503B outsourcing facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from Dallas.',
   keywords: [
     // Primary commercial-intent terms
-    'research compounds',
-    'buy research compounds',
-    'research compound supplier',
+    'pharmacy-grade compounds',
+    '503B compounds',
+    'lot-documented compounds',
     'HPLC tested compounds',
-    'lab-tested compounds',
-    'lot-documented research compounds',
+    'sealed sterile compounds',
+    'ISO-certified compounds',
     // Compound-specific (long-tail, high commercial intent)
     'BPC-157',
     'BPC-157 supplier',
@@ -90,18 +91,18 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://merit-sciences.onrender.com',
     siteName: 'Merit Sciences',
-    title: 'Merit Sciences · Research-grade compounds',
+    title: 'Merit Sciences · Pharmacy-grade compounds',
     // OG description — names compounds in the catalog so AI link
     // previews and social cards surface the actual offerings. PPC-safer
-    // framing: no facility/pharmacy practice language, explicit RUO.
+    // framing leads with the 503B / ISO / sealed sterile channel proof.
     description:
-      'Research-grade compounds from Merit Sciences — BPC-157, GHK-Cu, Tirzepatide, Sermorelin and more. ≥99% HPLC purity, lot-documented. Ships 48hr from Dallas. Research use only — not for human or veterinary use.',
+      'Pharmacy-grade compounds from an ISO-certified US 503B outsourcing facility — BPC-157, GHK-Cu, Tirzepatide, Sermorelin and more. Sealed sterile vials, lot COA on every batch. Ships 48hr from Dallas.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — research-grade compounds, lab-verified, Dallas',
+        alt: 'Merit Sciences — pharmacy-grade compounds, 503B-sourced, Dallas',
         type: 'image/jpeg',
       },
     ],
@@ -109,10 +110,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Merit Sciences · Research-grade compounds',
-    // Twitter description — ~140 chars. PPC-safer, RUO explicit.
+    title: 'Merit Sciences · Pharmacy-grade compounds',
+    // Twitter description — ~140 chars. 503B channel framing.
     description:
-      'Research-grade compounds — ≥99% HPLC purity, lot-documented. Ships 48hr from Dallas. Research use only — not for human or veterinary use.',
+      'Pharmacy-grade compounds from a US 503B outsourcing facility. Sealed sterile vials, lot COA, ≥99% HPLC purity. Ships 48hr from Dallas.',
     images: ['/og-image.jpg'],
   },
   robots: {
