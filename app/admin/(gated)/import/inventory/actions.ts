@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 
@@ -380,7 +380,7 @@ export async function applyInventoryCsv(_prev: ActionResult | null, formData: Fo
   }
 
   revalidatePath('/admin/products');
-  revalidatePath('/catalog');
+  revalidatePath('/catalog'); revalidateTag('products');
   const errorTail = errors > 0 ? ` ⚠ ${errors} failed (see Render logs).` : '';
   const imageTail = imageSet > 0 ? ` Linked ${imageSet} SKU image${imageSet === 1 ? '' : 's'}.` : '';
   return {

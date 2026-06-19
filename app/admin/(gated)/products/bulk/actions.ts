@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 
@@ -79,6 +79,6 @@ export async function saveBulkProductChanges(rows: BulkRow[]): Promise<BulkSaveR
 
   revalidatePath('/admin/products');
   revalidatePath('/admin/products/bulk');
-  revalidatePath('/catalog');
+  revalidatePath('/catalog'); revalidateTag('products');
   return { ok: true, updated, skipped };
 }

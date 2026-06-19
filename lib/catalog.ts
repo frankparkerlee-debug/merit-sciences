@@ -1,7 +1,17 @@
 import 'server-only';
+import { unstable_cache } from 'next/cache';
 import { prisma } from './db';
 import type { Product } from './product-types';
 import type { Product as DbProduct } from './generated/prisma/index.js';
+
+// Product data is identical for every visitor and changes rarely, but
+// the storefront pages are force-dynamic (per-user pricing) so they
+// re-query the (cross-region) DB on every hit. Cache the raw product
+// reads in Next's data cache so anonymous traffic serves from memory
+// instead of a ~70ms cross-country round-trip per request. Admin
+// product mutations call revalidateTag('products') to bust instantly.
+const PRODUCTS_TAG = 'products';
+const PRODUCTS_REVALIDATE_SECONDS = 300;
 
 // Re-export the shared type + utilities so existing server-side imports
 // from '@/lib/catalog' keep working.
@@ -33,22 +43,38 @@ export async function listProducts(filter?: {
   }
   // Resilient — return [] if DB is unavailable (missing table, exhausted
   // pool, etc) so build-time prerender doesn't crash the entire deploy.
+  // The cache only stores SUCCESSFUL results: a thrown error propagates
+  // out of unstable_cache (not cached) and is caught here, so a transient
+  // DB blip can't pin an empty list for the whole revalidate window.
   try {
-    const rows = await prisma.product.findMany({
-      where,
-      orderBy: { createdAt: 'asc' },
-    });
-    return rows.map(dbToProduct);
+    return await cachedFindProducts(where);
   } catch (err) {
     console.warn('[catalog] listProducts query failed — returning empty list', err);
     return [];
   }
 }
 
-export async function getProduct(handle: string): Promise<Product | null> {
-  try {
+const cachedFindProducts = unstable_cache(
+  async (where: any): Promise<Product[]> => {
+    const rows = await prisma.product.findMany({ where, orderBy: { createdAt: 'asc' } });
+    return rows.map(dbToProduct);
+  },
+  ['catalog-list-products'],
+  { revalidate: PRODUCTS_REVALIDATE_SECONDS, tags: [PRODUCTS_TAG] },
+);
+
+const cachedFindProduct = unstable_cache(
+  async (handle: string): Promise<Product | null> => {
     const row = await prisma.product.findUnique({ where: { handle } });
     return row ? dbToProduct(row) : null;
+  },
+  ['catalog-get-product'],
+  { revalidate: PRODUCTS_REVALIDATE_SECONDS, tags: [PRODUCTS_TAG] },
+);
+
+export async function getProduct(handle: string): Promise<Product | null> {
+  try {
+    return await cachedFindProduct(handle);
   } catch (err) {
     console.warn(`[catalog] getProduct("${handle}") query failed — returning null`, err);
     return null;

@@ -2,7 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
@@ -101,7 +101,7 @@ export async function seedProductsFromJson(): Promise<ActionResult> {
   }
 
   revalidatePath('/admin/products');
-  revalidatePath('/catalog');
+  revalidatePath('/catalog'); revalidateTag('products');
   return { ok: true, message: `Seeded ${count} of ${files.length} products from JSON.` };
 }
 
@@ -181,7 +181,7 @@ export async function updateProduct(_prev: ActionResult | null, formData: FormDa
   revalidatePath('/admin/products');
   revalidatePath(`/admin/products/${handle}`);
   revalidatePath(`/products/${handle}`);
-  revalidatePath('/catalog');
+  revalidatePath('/catalog'); revalidateTag('products');
   return { ok: true, message: 'Product saved.' };
 }
 
@@ -235,7 +235,7 @@ export async function deleteProduct(_prev: ActionResult | null, formData: FormDa
   await prisma.product.delete({ where: { handle } });
 
   revalidatePath('/admin/products');
-  revalidatePath('/catalog');
+  revalidatePath('/catalog'); revalidateTag('products');
   redirect('/admin/products');
 }
 
@@ -325,7 +325,7 @@ export async function uploadProductImage(formData: FormData): Promise<UploadImag
     revalidatePath('/admin/products');
     revalidatePath(`/admin/products/${handle}`);
     revalidatePath(`/products/${handle}`);
-    revalidatePath('/catalog');
+    revalidatePath('/catalog'); revalidateTag('products');
 
     return { ok: true, publicUrl, field };
   } catch (err: any) {
