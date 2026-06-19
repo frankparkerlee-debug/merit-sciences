@@ -44,6 +44,12 @@ export function PractitionerApplicationForm() {
         </div>
       )}
 
+      <p className="rounded-lg bg-cobalt/5 border border-cobalt/15 px-4 py-3 text-[12px] text-ink-soft leading-relaxed">
+        <strong className="text-ink">Your credentials stay internal.</strong> License + NPI are used
+        only to verify eligibility &mdash; never sold, never added to a marketing list. Verification
+        within 1 business day.
+      </p>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field label="Practice / clinic name" required>
           <input name="practiceName" type="text" required className={inputCls} />
@@ -105,7 +111,7 @@ export function PractitionerApplicationForm() {
         <input name="specialty" type="text" className={inputCls} />
       </Field>
 
-      <Field label="Estimated monthly peptide spend">
+      <Field label="Estimated monthly order volume">
         <select name="monthlyVolume" className={inputCls} defaultValue="">
           <option value="" disabled>Select…</option>
           {VOLUMES.map((v) => (
@@ -121,9 +127,8 @@ export function PractitionerApplicationForm() {
       <SubmitButton />
 
       <p className="text-[11px] text-ink-soft leading-relaxed">
-        We verify license + NPI within 1 business day. Approved accounts get clinic pricing on every
-        SKU and access to clinic-only compounds. Information stays internal &mdash; no marketing
-        lists, no resale.
+        Approved accounts get account pricing on every SKU the moment they&rsquo;re live &mdash; no
+        commitments, no activation fees.
       </p>
     </form>
   );
