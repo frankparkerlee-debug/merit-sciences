@@ -275,9 +275,9 @@ function SuccessState({ data }: { data: SuccessResult }) {
         </div>
 
         <p className="text-[11px] text-ink-muted leading-relaxed">
-          The dashboard and Stripe Connect onboarding are coming next.
-          You&apos;ll get an email when they&apos;re live — payments start
-          flowing the 1st of next month for orders placed before then.
+          Set your PayPal payout email in your dashboard settings so we can
+          pay you. Commissions clear a 30-day refund window, then pay out by
+          PayPal once you reach the ${'$'}50 minimum.
         </p>
       </div>
     </div>

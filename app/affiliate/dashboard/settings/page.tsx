@@ -42,7 +42,7 @@ export default async function AffiliateSettingsPage() {
 
       <section className="max-w-[820px] mx-auto px-5 sm:px-6 lg:px-8 pt-10">
         <p className="text-sm text-ink-soft mb-10 leading-relaxed max-w-[620px]">
-          Update your profile, change your discount code, or swap the email you use to sign in. Each section saves independently &mdash; changes to your discount code sync to Stripe in real-time.
+          Update your profile, change your discount code, set your PayPal payout email, or swap the email you use to sign in. Each section saves independently &mdash; changes take effect immediately.
         </p>
         <SettingsForms affiliate={affiliate} />
       </section>

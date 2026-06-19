@@ -19,7 +19,6 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
-import { stripe } from '@/lib/stripe';
 import { getCurrentAffiliate } from '@/lib/affiliate-session';
 import { createServerSupabase } from '@/lib/supabase-server';
 import {
@@ -33,9 +32,6 @@ import {
 export type ActionResult =
   | { ok: true; message: string }
   | { ok: false; error: string; field?: string };
-
-// Same legacy API pin as stripe-affiliate-sync
-const LEGACY_COUPON_API: { apiVersion: any } = { apiVersion: '2024-06-20' };
 
 // ─── Update profile (name, social URL, audience size) ───────────────
 export async function updateProfile(
@@ -106,7 +102,7 @@ export async function updateSlug(
   return { ok: true, message: `Handle updated. Old links with ?ref=${affiliate.slug} still work for 30 days while the cookie expires.` };
 }
 
-// ─── Update discount code (Stripe sync required) ────────────────────
+// ─── Update discount code ───────────────────────────────────────────
 export async function updateDiscountCode(
   _prev: ActionResult | null,
   formData: FormData,
@@ -125,66 +121,13 @@ export async function updateDiscountCode(
     return { ok: false, error: 'Discount code must be different from your referral handle.', field: 'discountCode' };
   }
 
-  // Pre-check DB uniqueness so we don't burn a Stripe API call
-  const taken = await prisma.affiliate.findFirst({
-    where: { discountCode: newCode, NOT: { id: affiliate.id } },
-    select: { id: true },
-  });
-  if (taken) return { ok: false, error: `Code "${newCode}" is taken — try another.`, field: 'discountCode' };
-
-  // ─── Stripe sync: create new PromotionCode, deactivate old ──────
-  const s = stripe();
-  const codeValueUpper = newCode.toUpperCase();
-  let newPromoId: string | null = null;
-  try {
-    // Coupon stays the same (still 10% off forever); we just point a
-    // new PromotionCode at it. Stripe doesn't allow editing promo codes
-    // — you create new + deactivate old.
-    if (!affiliate.stripeCouponId) {
-      return { ok: false, error: 'Your Stripe coupon is missing. Contact support.', field: 'discountCode' };
-    }
-    const promo: any = await s.promotionCodes.create(
-      {
-        coupon: affiliate.stripeCouponId,
-        code: codeValueUpper,
-        active: true,
-        metadata: {
-          affiliate_id: affiliate.id,
-          affiliate_slug: affiliate.slug,
-          source: 'merit-affiliate-program',
-        },
-      } as any,
-      LEGACY_COUPON_API,
-    );
-    newPromoId = promo.id;
-
-    // Deactivate the old PromotionCode (Stripe doesn't allow deletion)
-    if (affiliate.stripePromotionCodeId) {
-      await s.promotionCodes.update(
-        affiliate.stripePromotionCodeId,
-        { active: false } as any,
-        LEGACY_COUPON_API,
-      ).catch(() => {
-        // Old code already deleted/missing — ignore. The new one is what counts.
-      });
-    }
-  } catch (err: any) {
-    const msg = err?.raw?.message ?? err?.message ?? '';
-    if (/already exists|code.*taken/i.test(msg)) {
-      return { ok: false, error: `Code "${newCode}" is already used in Stripe — pick another.`, field: 'discountCode' };
-    }
-    console.error('updateDiscountCode Stripe sync failed:', err);
-    return { ok: false, error: 'Couldn\'t update the code on Stripe right now. Try again.', field: 'discountCode' };
-  }
-
-  // ─── Persist to our DB ──────────────────────────────────────────
+  // Discount codes are validated server-side from our DB at checkout
+  // (lib/discount.ts + the PayPal create-order route), so updating the
+  // code is a single DB write — no external sync.
   try {
     await prisma.affiliate.update({
       where: { id: affiliate.id },
-      data: {
-        discountCode: newCode,
-        stripePromotionCodeId: newPromoId,
-      },
+      data: { discountCode: newCode },
     });
   } catch (e: any) {
     if (e?.code === 'P2002') {
@@ -195,7 +138,27 @@ export async function updateDiscountCode(
 
   revalidatePath('/affiliate/dashboard/settings');
   revalidatePath('/affiliate/dashboard');
-  return { ok: true, message: `Code updated to ${codeValueUpper}. The old code stops working immediately.` };
+  return { ok: true, message: `Code updated to ${newCode.toUpperCase()}. The old code stops working immediately.` };
+}
+
+// ─── Update PayPal payout email ──────────────────────────────────────
+export async function updatePaypalEmail(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const affiliate = await getCurrentAffiliate();
+  if (!affiliate) return { ok: false, error: 'Not signed in.' };
+
+  const paypalEmail = String(formData.get('paypalEmail') ?? '').trim().toLowerCase();
+  const check = validateEmail(paypalEmail);
+  if (!check.ok) return { ok: false, error: check.reason, field: 'paypalEmail' };
+
+  await prisma.affiliate.update({
+    where: { id: affiliate.id },
+    data: { paypalEmail },
+  });
+  revalidatePath('/affiliate/dashboard/settings');
+  return { ok: true, message: 'PayPal payout email saved. Commission payouts will go here.' };
 }
 
 // ─── Request email change (Supabase confirmation flow) ──────────────

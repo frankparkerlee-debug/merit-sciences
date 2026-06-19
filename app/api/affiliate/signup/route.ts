@@ -6,7 +6,6 @@ import {
   validateIdentifier,
   validateName,
 } from '@/lib/affiliate';
-import { syncAffiliateDiscountCode } from '@/lib/stripe-affiliate-sync';
 
 export const runtime = 'nodejs';
 
@@ -82,24 +81,9 @@ export async function POST(req: Request) {
       select: { id: true, name: true, slug: true, discountCode: true, email: true },
     });
 
-    // Sync to Stripe — create Coupon + PromotionCode so the code works
-    // at checkout immediately. We DO NOT fail signup on Stripe error:
-    //   - The affiliate row is already written
-    //   - Admin can retry via /api/affiliate/[id]/resync
-    //   - The cookie-based attribution path still works without a code
-    // The most common failure here is a duplicate `code` value in Stripe
-    // (e.g. someone manually created a coupon with the same code in the
-    // Stripe Dashboard). We log + report so the affiliate sees a warning
-    // alongside their referral link.
-    const syncResult = await syncAffiliateDiscountCode(affiliate.id);
-    const stripeWarning = syncResult.ok
-      ? null
-      : `Discount code couldn't sync to Stripe yet (${syncResult.error}). Your referral link works — contact support to enable the code.`;
-
-    return NextResponse.json(
-      { ok: true, affiliate, stripeWarning },
-      { status: 201 },
-    );
+    // Discount code is live immediately — it's validated server-side from
+    // our DB at checkout (lib/discount.ts), no external sync needed.
+    return NextResponse.json({ ok: true, affiliate }, { status: 201 });
   } catch (e: any) {
     // P2002 = unique constraint violation. e.meta.target tells us which.
     if (e?.code === 'P2002') {

@@ -5,7 +5,7 @@ import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
 export const metadata = {
   title: 'Become a Merit Sciences Affiliate',
   description:
-    'Earn up to 25% on every order — forever. Your audience saves 10%. Open sign-up, monthly Stripe payouts, no approval queue.',
+    'Earn up to 25% on every order — forever. Your audience saves 10%. Open sign-up, monthly PayPal payouts, no approval queue.',
 };
 
 export default function AffiliateLandingPage() {
@@ -221,7 +221,7 @@ export default function AffiliateLandingPage() {
             <Differentiator
               eyebrow="Industry standard"
               headline="Quarterly or annual payouts"
-              ours={`Monthly payouts · $${AFFILIATE_PROGRAM.payoutMinUsd} min · Stripe Connect`}
+              ours={`Monthly payouts · $${AFFILIATE_PROGRAM.payoutMinUsd} min · PayPal`}
             />
           </div>
 

@@ -77,12 +77,20 @@ export default async function AdminAffiliatesPage({
   return (
     <main className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">— Affiliates</p>
-        <h1 className="font-display font-black text-ink tracking-[-0.025em] text-3xl sm:text-4xl">
-          {totalCount.toLocaleString()} {filter.status ? filter.label.toLowerCase() : 'affiliates'}
-          <span className="text-cobalt">.</span>
-        </h1>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">— Affiliates</p>
+          <h1 className="font-display font-black text-ink tracking-[-0.025em] text-3xl sm:text-4xl">
+            {totalCount.toLocaleString()} {filter.status ? filter.label.toLowerCase() : 'affiliates'}
+            <span className="text-cobalt">.</span>
+          </h1>
+        </div>
+        <Link
+          href="/admin/affiliates/payouts"
+          className="flex-none mt-1 inline-flex items-center bg-cobalt text-white font-bold tracking-[0.12em] uppercase text-[11px] px-4 py-2.5 rounded-lg hover:bg-ink transition-colors"
+        >
+          Payouts →
+        </Link>
       </div>
 
       {/* Filter tabs */}

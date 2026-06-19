@@ -5,6 +5,7 @@ import {
   updateProfile,
   updateSlug,
   updateDiscountCode,
+  updatePaypalEmail,
   requestEmailChange,
   type ActionResult,
 } from './actions';
@@ -18,6 +19,7 @@ export function SettingsForms({ affiliate }: { affiliate: CurrentAffiliate }) {
       <ProfileSection affiliate={affiliate} />
       <SlugSection affiliate={affiliate} />
       <DiscountCodeSection affiliate={affiliate} />
+      <PayoutSection affiliate={affiliate} />
       <EmailSection affiliate={affiliate} />
     </div>
   );
@@ -190,7 +192,7 @@ function DiscountCodeSection({ affiliate }: { affiliate: CurrentAffiliate }) {
     <SectionCard
       eyebrow="Discount code"
       title="What your audience types at checkout"
-      description="When customers type this at Stripe Checkout, they save 10% and we credit you with the commission. Changing it syncs to Stripe instantly — the old code stops working the moment you save."
+      description="When customers type this at checkout, they save 10% and we credit you with the commission. Changing it takes effect immediately — the old code stops working the moment you save."
       result={result}
     >
       <form action={action}>
@@ -206,7 +208,35 @@ function DiscountCodeSection({ affiliate }: { affiliate: CurrentAffiliate }) {
   );
 }
 
-/* ─── 4. Email ─── */
+/* ─── 4. Payout (PayPal) ─── */
+
+function PayoutSection({ affiliate }: { affiliate: CurrentAffiliate }) {
+  const [result, action] = useFormState<ActionResult | null, FormData>(
+    updatePaypalEmail, null,
+  );
+  return (
+    <SectionCard
+      eyebrow="Payouts"
+      title="Where your commissions are paid"
+      description="Commissions are paid by PayPal once your cleared balance reaches $50. Enter the PayPal email that should receive your payouts — it can be different from your sign-in email."
+      result={result}
+    >
+      <form action={action}>
+        <Field
+          label="PayPal email"
+          name="paypalEmail"
+          type="email"
+          defaultValue={affiliate.paypalEmail ?? ''}
+          placeholder="you@paypal.com"
+          hint="Must match a PayPal account that can receive payments. Without it, we can't pay you."
+        />
+        <SubmitButton>Save payout email</SubmitButton>
+      </form>
+    </SectionCard>
+  );
+}
+
+/* ─── 5. Email ─── */
 
 function EmailSection({ affiliate }: { affiliate: CurrentAffiliate }) {
   const [result, action] = useFormState<ActionResult | null, FormData>(

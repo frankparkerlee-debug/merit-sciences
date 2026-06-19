@@ -24,8 +24,7 @@ export type CurrentAffiliate = {
   slug: string;
   discountCode: string;
   status: 'ACTIVE' | 'SUSPENDED';
-  stripeCouponId: string | null;
-  stripePromotionCodeId: string | null;
+  paypalEmail: string | null;
   socialUrl: string | null;
   audienceSize: number | null;
 };
@@ -37,8 +36,7 @@ const SELECT_FIELDS = {
   slug: true,
   discountCode: true,
   status: true,
-  stripeCouponId: true,
-  stripePromotionCodeId: true,
+  paypalEmail: true,
   socialUrl: true,
   audienceSize: true,
 } as const;

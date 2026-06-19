@@ -38,7 +38,12 @@ model Affiliate {
   discountCode         String          @unique
   // Lifecycle. Open sign-up: ACTIVE by default; SUSPENDED for fraud/TOS.
   status               AffiliateStatus @default(ACTIVE)
-  // Stripe Connect Express account id — set once payout onboarding done
+  // PayPal payout destination — the email the affiliate's commission
+  // checks are sent to via PayPal Payouts. Set on the affiliate
+  // settings page; required before they can be paid.
+  paypalEmail          String?
+  // LEGACY Stripe Connect fields — unused since the PayPal payout
+  // migration. Kept nullable so the column drop isn't a breaking change.
   stripeAccountId      String?         @unique
   stripeChargesEnabled Boolean         @default(false)
   // Stripe Coupon + PromotionCode that back the buyer-facing discount.
@@ -204,7 +209,11 @@ model Payout {
   totalCents       BigInt // sum of included commissions
   // Status
   status           PayoutStatus @default(PENDING)
-  stripeTransferId String?      @unique
+  // PayPal Payouts identifiers — the batch and item ids returned by
+  // POST /v1/payments/payouts. Used to reconcile + look up status.
+  paypalBatchId    String?      @unique
+  paypalItemId     String?      @unique
+  stripeTransferId String?      @unique // LEGACY — unused post-migration
   paidAt           DateTime?
   failureReason    String?      @db.Text
   // Audit

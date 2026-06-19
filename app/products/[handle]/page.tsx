@@ -919,7 +919,7 @@ export default async function ProductPage({ params }: Props) {
               },
               {
                 q: 'Will my bank flag this purchase?',
-                a: 'Statements show as Merit Sciences LLC. Standard merchant descriptor — does not trigger category-code flags. All major cards via Stripe; PayPal accepted at checkout.',
+                a: 'Statements show as Merit Sciences LLC. Standard merchant descriptor — does not trigger category-code flags. All major cards and PayPal accepted at checkout.',
               },
               {
                 q: 'How fast does it ship?',
