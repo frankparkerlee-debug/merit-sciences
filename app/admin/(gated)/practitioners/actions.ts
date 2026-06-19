@@ -357,3 +357,105 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+// ── Per-practice pricing ────────────────────────────────────────────────
+// Two knobs per approved practitioner:
+//   Knob 1: book-level multiplier in basis points (10000 = no change).
+//   Knob 2: per-SKU price pins, beating the multiplier for that SKU.
+//
+// Form payload conventions:
+//   priceMultiplierBps         — integer in basis points
+//   override.<productHandle>   — dollar amount (e.g. "182.50") or empty
+//                                to clear the override.
+
+export type PricingSaveResult =
+  | { ok: true; message: string }
+  | { ok: false; error: string };
+
+export async function savePractitionerPricing(
+  _prev: PricingSaveResult | null,
+  formData: FormData,
+): Promise<PricingSaveResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return { ok: false, error: 'Missing application id' };
+
+  const app = await prisma.practitionerApplication.findUnique({
+    where: { id },
+    select: { id: true, status: true },
+  });
+  if (!app) return { ok: false, error: 'Application not found' };
+  if (app.status !== 'APPROVED') {
+    return { ok: false, error: 'Pricing is only configurable on approved practices.' };
+  }
+
+  // ── Knob 1: book-level multiplier ──
+  const rawMult = String(formData.get('priceMultiplierBps') ?? '').trim();
+  const parsedMult = Number.parseInt(rawMult, 10);
+  if (!Number.isFinite(parsedMult) || parsedMult < 1000 || parsedMult > 30000) {
+    return { ok: false, error: 'Multiplier must be between 10% and 300% (1000–30000 bps).' };
+  }
+
+  // ── Knob 2: per-SKU overrides ──
+  // Walk every `override.<handle>` form field. Empty string = delete row.
+  // Non-empty = upsert with parsed dollar amount converted to cents.
+  type Pending = { handle: string; priceCents: number | null };
+  const pending: Pending[] = [];
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith('override.')) continue;
+    const handle = key.slice('override.'.length).trim();
+    if (!handle) continue;
+    const raw = String(value ?? '').trim();
+    if (raw === '') {
+      pending.push({ handle, priceCents: null });
+      continue;
+    }
+    const dollars = Number.parseFloat(raw);
+    if (!Number.isFinite(dollars) || dollars <= 0 || dollars > 100_000) {
+      return { ok: false, error: `Override price for ${handle} must be between $0.01 and $100,000.` };
+    }
+    pending.push({ handle, priceCents: Math.round(dollars * 100) });
+  }
+
+  const handles = pending.map((p) => p.handle);
+  const knownProducts = new Set(
+    (await prisma.product.findMany({
+      where: { handle: { in: handles.length ? handles : ['__none__'] } },
+      select: { handle: true },
+    })).map((p) => p.handle),
+  );
+
+  await prisma.$transaction(async (tx) => {
+    await tx.practitionerApplication.update({
+      where: { id },
+      data: { priceMultiplierBps: parsedMult },
+    });
+
+    for (const row of pending) {
+      if (!knownProducts.has(row.handle)) continue;
+      if (row.priceCents === null) {
+        await tx.practitionerPriceOverride.deleteMany({
+          where: { applicationId: id, productHandle: row.handle },
+        });
+      } else {
+        await tx.practitionerPriceOverride.upsert({
+          where: {
+            applicationId_productHandle: { applicationId: id, productHandle: row.handle },
+          },
+          create: {
+            applicationId: id,
+            productHandle: row.handle,
+            priceCents: row.priceCents,
+          },
+          update: { priceCents: row.priceCents },
+        });
+      }
+    }
+  });
+
+  revalidatePath(`/admin/practitioners/${id}`);
+  revalidatePath('/catalog');
+  return { ok: true, message: 'Pricing saved.' };
+}

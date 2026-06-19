@@ -139,24 +139,43 @@ export async function POST(req: Request) {
 
   // ── Practitioner pricing override ────────────────────────────────
   // Server-authoritative: if the buyer is a signed-in approved
-  // practitioner, override the client-supplied unitCents using the
-  // physicianPriceCents-to-priceCents ratio from the DB. Preserves
-  // bundle/subscribe discounts proportionally. No-op if not signed in,
-  // if the product handle isn't in our DB, or if no practitioner price
-  // is configured for that SKU.
+  // practitioner, re-price each line using the four-step waterfall
+  // (per-SKU override → physicianPriceCents × book-level multiplier →
+  // bare physicianPriceCents → retail). We compute a per-handle ratio
+  // against the retail priceCents and multiply, which preserves any
+  // bundle/subscribe discounts the client cart encoded.
   const practitionerSession = await getPractitionerSession();
   if (practitionerSession) {
     const handles = [...new Set(cleanLines.map((l) => l.handle).filter(Boolean))];
     if (handles.length > 0) {
-      const refs = await prisma.product.findMany({
-        where: { handle: { in: handles } },
-        select: { handle: true, priceCents: true, physicianPriceCents: true },
-      });
+      const [refs, overrideRows] = await Promise.all([
+        prisma.product.findMany({
+          where: { handle: { in: handles } },
+          select: { handle: true, priceCents: true, physicianPriceCents: true },
+        }),
+        prisma.practitionerPriceOverride.findMany({
+          where: {
+            applicationId: practitionerSession.applicationId,
+            productHandle: { in: handles },
+          },
+          select: { productHandle: true, priceCents: true },
+        }),
+      ]);
       const refMap = new Map(refs.map((r) => [r.handle, r]));
+      const overrideMap = new Map(overrideRows.map((o) => [o.productHandle, o.priceCents]));
+      const multBps = practitionerSession.priceMultiplierBps ?? 10000;
       for (const line of cleanLines) {
         const ref = refMap.get(line.handle);
-        if (!ref || !ref.physicianPriceCents || ref.priceCents <= 0) continue;
-        const ratio = ref.physicianPriceCents / ref.priceCents;
+        if (!ref || ref.priceCents <= 0) continue;
+        let effectivePerVial: number | null = null;
+        const override = overrideMap.get(line.handle);
+        if (override != null && override > 0) {
+          effectivePerVial = override;
+        } else if (ref.physicianPriceCents && ref.physicianPriceCents > 0) {
+          effectivePerVial = Math.round((ref.physicianPriceCents * multBps) / 10000);
+        }
+        if (effectivePerVial === null) continue;
+        const ratio = effectivePerVial / ref.priceCents;
         line.unitCents = Math.max(1, Math.round(line.unitCents * ratio));
       }
     }

@@ -22,6 +22,10 @@ export type PractitionerSession = {
   /** Pricing tier — currently always 'standard'. Custom tiers per
    *  practitioner will plug in here when admin assigns them. */
   tier: 'standard';
+  /** Book-level multiplier in basis points. 10000 = no change
+   *  (standard physician tier). Applied to physicianPriceCents in
+   *  lib/pricing.ts. Per-SKU override rows beat this. */
+  priceMultiplierBps: number;
 };
 
 export async function getPractitionerSession(): Promise<PractitionerSession | null> {
@@ -32,7 +36,7 @@ export async function getPractitionerSession(): Promise<PractitionerSession | nu
 
   const app = await prisma.practitionerApplication.findFirst({
     where: { email, status: 'APPROVED' },
-    select: { id: true, practiceName: true, providerName: true },
+    select: { id: true, practiceName: true, providerName: true, priceMultiplierBps: true },
   });
   if (!app) return null;
 
@@ -43,6 +47,7 @@ export async function getPractitionerSession(): Promise<PractitionerSession | nu
     practiceName: app.practiceName,
     providerName: app.providerName,
     tier: 'standard',
+    priceMultiplierBps: app.priceMultiplierBps ?? 10000,
   };
 }
 

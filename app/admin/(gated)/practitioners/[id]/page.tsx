@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { ReviewActions } from './ReviewActions';
+import { PricingSection } from './PricingSection';
 
 export const metadata = { title: 'Application — Merit Admin' };
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,42 @@ export default async function PractitionerApplicationDetail({
     where: { id: params.id },
   });
   if (!app) return notFound();
+
+  // Pricing data — only meaningful for APPROVED practitioners.
+  let pricingProps: null | {
+    currentMultiplierBps: number;
+    products: {
+      handle: string;
+      title: string;
+      retailPriceCents: number;
+      physicianPriceCents: number | null;
+    }[];
+    currentOverrides: Record<string, number>;
+  } = null;
+
+  if (app.status === 'APPROVED') {
+    const [products, overrides] = await Promise.all([
+      prisma.product.findMany({
+        where: { status: 'ACTIVE' },
+        select: { handle: true, title: true, priceCents: true, physicianPriceCents: true },
+        orderBy: { title: 'asc' },
+      }),
+      prisma.practitionerPriceOverride.findMany({
+        where: { applicationId: app.id },
+        select: { productHandle: true, priceCents: true },
+      }),
+    ]);
+    pricingProps = {
+      currentMultiplierBps: app.priceMultiplierBps ?? 10000,
+      products: products.map((p) => ({
+        handle: p.handle,
+        title: p.title,
+        retailPriceCents: p.priceCents,
+        physicianPriceCents: p.physicianPriceCents ?? null,
+      })),
+      currentOverrides: Object.fromEntries(overrides.map((o) => [o.productHandle, o.priceCents])),
+    };
+  }
 
   return (
     <main className="max-w-[960px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
@@ -88,6 +125,19 @@ export default async function PractitionerApplicationDetail({
         providerFirst={app.providerName.split(' ')[0]}
         practiceName={app.practiceName}
       />
+
+      {/* Per-practice pricing — book-level multiplier + per-SKU overrides */}
+      {pricingProps && (
+        <div className="mt-6">
+          <PricingSection
+            applicationId={app.id}
+            practiceName={app.practiceName}
+            currentMultiplierBps={pricingProps.currentMultiplierBps}
+            products={pricingProps.products}
+            currentOverrides={pricingProps.currentOverrides}
+          />
+        </div>
+      )}
     </main>
   );
 }

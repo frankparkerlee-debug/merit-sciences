@@ -586,6 +586,9 @@ model Product {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
+  // Back-relation for per-practitioner price overrides on this SKU.
+  practitionerPriceOverrides PractitionerPriceOverride[]
+
   @@index([status, channel])
   @@index([segment])
   @@map("products")
@@ -678,13 +681,42 @@ model PractitionerApplication {
   reviewedAt      DateTime?
   reviewerEmail   String?
   reviewerNote    String?
+  // Per-practice pricing — book-level multiplier in basis points.
+  // 10000 = no change (standard physician tier). 9500 = 5% below
+  // standard. 10800 = 8% above standard. Applied to physicianPriceCents
+  // by the pricing resolver waterfall in lib/pricing.ts.
+  priceMultiplierBps Int    @default(10000)
   // Audit
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  // Per-SKU price pins for this practice. Overrides the multiplier above.
+  priceOverrides  PractitionerPriceOverride[]
+
   @@index([status])
   @@index([createdAt])
   @@map("practitioner_applications")
+}
+
+// Per-SKU price pinned for one approved practitioner. Overrides both
+// Product.physicianPriceCents and the practitioner's book-level
+// priceMultiplierBps for that specific SKU. Used when a clinic
+// negotiates a specific compound (e.g. retatrutide) but stays on the
+// standard tier for everything else.
+model PractitionerPriceOverride {
+  id            String   @id @default(cuid())
+  applicationId String
+  productHandle String
+  priceCents    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application   PractitionerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  product       Product                 @relation(fields: [productHandle], references: [handle], onDelete: Cascade)
+
+  @@unique([applicationId, productHandle])
+  @@index([applicationId])
+  @@map("practitioner_price_overrides")
 }
 
 // Practitioner email journey — tracks which sequence + how far through.
