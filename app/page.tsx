@@ -313,7 +313,7 @@ export default async function HomePage() {
               href="/catalog"
               className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-semibold hover:text-ink transition whitespace-nowrap"
             >
-              View all 18 compounds →
+              View the full catalog →
             </Link>
           </div>
 
