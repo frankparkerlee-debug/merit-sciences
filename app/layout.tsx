@@ -25,10 +25,11 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  // metadataBase resolves all relative OG/Twitter image URLs. Render's
-  // temporary domain is the source of truth until shop.meritsciences.com
-  // is wired — relative `/og-image.jpg` then works under both.
-  metadataBase: new URL('https://merit-sciences.onrender.com'),
+  // metadataBase resolves all relative OG/Twitter image URLs and is the
+  // canonical origin Google/Bing attribute authority to. meritsciences.com
+  // is the live production domain (apex → Render), so it is the source of
+  // truth — NOT the onrender.com temp URL, which would split SEO authority.
+  metadataBase: new URL('https://meritsciences.com'),
   title: {
     default: 'Merit Sciences · Pharmacy-grade compounds',
     template: '%s · Merit Sciences',
