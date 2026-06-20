@@ -18,8 +18,36 @@ import {
 import { getResearchData } from '@/lib/research-data';
 import { ProductBuyBox } from './ProductBuyBox';
 import { PdpStackAddButton } from './PdpStackAddButton';
+import { JsonLd } from '@/components/JsonLd';
+import { productJsonLd, faqJsonLd, breadcrumbJsonLd, abs } from '@/lib/seo';
 
 type Props = { params: { handle: string } };
+
+// Generic PDP FAQs — rendered as the accordion AND emitted as FAQPage
+// JSON-LD (AI answer-engines extract this format most reliably).
+// Compound-specific Q&A is layered on per target in the content phase.
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: 'Why does Merit ship lyophilized?',
+    a: 'Lyophilized format gives ≥24 months sealed stability at -20°C — significantly longer than pre-reconstituted, which has a 30-day shelf life once in solution. You reconstitute at the moment of use, when potency is at its peak.',
+  },
+  {
+    q: "How do I verify my lot's COA?",
+    a: 'Your vial label carries the lot number. Use that number to pull the COA on our site at any time — the COA for your specific batch lives at /coa/[lot-id] and stays accessible for the life of the product.',
+  },
+  {
+    q: 'What does "pharmacy-verified" actually mean?',
+    a: "A US-licensed pharmacist on our team reviews every batch before release. They sign off on the lot's purity, identity, and release. No batch ships without that sign-off — and that's what separates Merit from a reseller catalog.",
+  },
+  {
+    q: 'Will my bank flag this purchase?',
+    a: 'Statements show as Merit Sciences LLC. Standard merchant descriptor — does not trigger category-code flags. All major cards and PayPal accepted at checkout.',
+  },
+  {
+    q: 'How fast does it ship?',
+    a: '48 hours from order to dispatch, Monday through Thursday. UPS Ground, tracked + insured. From Dallas, TX, most US addresses receive within 3-5 business days.',
+  },
+];
 
 // Force-dynamic — see app/page.tsx for rationale (Supabase pool cap).
 export const dynamic = 'force-dynamic';
@@ -66,6 +94,27 @@ export default async function ProductPage({ params }: Props) {
   const restock = RESTOCK_SIGNALS[product.handle] ?? null;
   const research = getResearchData(product.handle);
 
+  // ── Structured data (JSON-LD) ────────────────────────────────────
+  // Uses `raw` (undecorated) so the Offer always shows PUBLIC retail
+  // price, never the practitioner-tier price.
+  const seoDescription =
+    research?.description?.[0]
+    || raw.oneLiner
+    || `${raw.title} ${raw.vialSize} — research compound, HPLC-tested to ≥99% purity, lot-documented with a COA in every shipment.`;
+  const productSchema = productJsonLd({
+    product: raw,
+    retailCents: raw.priceCents,
+    description: seoDescription,
+    image: abs(productImage(raw.imageUrl)),
+    inStock: raw.status === 'active',
+  });
+  const breadcrumbSchema = breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Catalog', path: '/catalog' },
+    { name: raw.title, path: `/products/${raw.handle}` },
+  ]);
+  const faqSchema = faqJsonLd(FAQ_ITEMS);
+
   // Sibling sizes — other Product rows sharing this compound. Drives the
   // size selector pills in the buybox. Returns [] if this is the only
   // size in the family.
@@ -92,6 +141,9 @@ export default async function ProductPage({ params }: Props) {
   return (
     // Bottom padding on mobile reserves space for the sticky add-to-cart bar
     <main className="bg-cream min-h-screen pb-24 lg:pb-0">
+      <JsonLd data={productSchema} />
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={faqSchema} />
       {/* Practitioner pricing banner — shown only when signed in as approved practitioner */}
       {isPractitionerPricing && (
         <div className="bg-ink text-white">
@@ -904,28 +956,7 @@ export default async function ProductPage({ params }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           {/* FAQ accordion */}
           <div className="lg:col-span-2 space-y-3">
-            {[
-              {
-                q: 'Why does Merit ship lyophilized?',
-                a: 'Lyophilized format gives ≥24 months sealed stability at -20°C — significantly longer than pre-reconstituted, which has a 30-day shelf life once in solution. You reconstitute at the moment of use, when potency is at its peak.',
-              },
-              {
-                q: 'How do I verify my lot\'s COA?',
-                a: 'Your vial label carries the lot number. Use that number to pull the COA on our site at any time — the COA for your specific batch lives at /coa/[lot-id] and stays accessible for the life of the product.',
-              },
-              {
-                q: 'What does "pharmacy-verified" actually mean?',
-                a: 'A US-licensed pharmacist on our team reviews every batch before release. They sign off on the lot\'s purity, identity, and release. No batch ships without that sign-off — and that\'s what separates Merit from a reseller catalog.',
-              },
-              {
-                q: 'Will my bank flag this purchase?',
-                a: 'Statements show as Merit Sciences LLC. Standard merchant descriptor — does not trigger category-code flags. All major cards and PayPal accepted at checkout.',
-              },
-              {
-                q: 'How fast does it ship?',
-                a: '48 hours from order to dispatch, Monday through Thursday. UPS Ground, tracked + insured. From Dallas, TX, most US addresses receive within 3-5 business days.',
-              },
-            ].map((item, i) => (
+            {FAQ_ITEMS.map((item, i) => (
               <details
                 key={item.q}
                 className="group bg-white border border-cobalt/10 rounded-xl overflow-hidden"
