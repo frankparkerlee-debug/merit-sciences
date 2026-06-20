@@ -131,10 +131,10 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
           style={{ fontSize: 'clamp(26px, 4.5vw, 60px)' }}
         >
-          {product.title}
+          {product.title} <span className="text-ink-soft">{product.vialSize}</span>
         </h1>
         <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-ink-soft">
-          {product.vialSize} · {product.format === 'lyophilized' ? 'Lyophilized vial' : 'Reconstituted vial'}
+          {product.format === 'lyophilized' ? 'Lyophilized vial' : 'Reconstituted vial'}
           {product.spec.aminoAcids ? ` · ${product.spec.aminoAcids} AA` : ''}
         </p>
       </div>

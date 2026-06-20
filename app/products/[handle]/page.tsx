@@ -154,7 +154,29 @@ export default async function ProductPage({ params }: Props) {
     { name: 'Catalog', path: '/catalog' },
     { name: raw.title, path: `/products/${raw.handle}` },
   ]);
-  const faqSchema = faqJsonLd(FAQ_ITEMS);
+  // Compound-specific Q&A, derived from the research data. These rank
+  // for long-tail question queries ("what is X", "how does X work",
+  // "X half life"), are the format AI answer-engines extract most
+  // reliably, and make each PDP's FAQ unique (no generic-FAQ
+  // duplication). They lead; the shared logistics FAQs follow.
+  const compoundFaqs: { q: string; a: string }[] = [];
+  if (research?.description?.[0]) {
+    compoundFaqs.push({ q: `What is ${product.title}?`, a: research.description[0] });
+  }
+  if (research?.mechanism) {
+    compoundFaqs.push({ q: `How does ${product.title} work?`, a: research.mechanism });
+  }
+  if (research?.compoundClass) {
+    compoundFaqs.push({
+      q: `What class of compound is ${product.title}?`,
+      a: `${product.title} is classified as ${research.compoundClass.charAt(0).toLowerCase()}${research.compoundClass.slice(1)}.`,
+    });
+  }
+  if (research?.halfLife) {
+    compoundFaqs.push({ q: `What is the reported half-life of ${product.title}?`, a: research.halfLife });
+  }
+  const faqItems = [...compoundFaqs, ...FAQ_ITEMS];
+  const faqSchema = faqJsonLd(faqItems);
 
   // Sibling sizes — other Product rows sharing this compound. Drives the
   // size selector pills in the buybox. Returns [] if this is the only
@@ -997,7 +1019,7 @@ export default async function ProductPage({ params }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           {/* FAQ accordion */}
           <div className="lg:col-span-2 space-y-3">
-            {FAQ_ITEMS.map((item, i) => (
+            {faqItems.map((item, i) => (
               <details
                 key={item.q}
                 className="group bg-white border border-cobalt/10 rounded-xl overflow-hidden"
