@@ -876,13 +876,214 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     ],
   },
 
-  // KLOW (multi-pathway blend): no per-blend research data — the
-  // individual components (BPC-157, KPV, GHK-Cu, TB-500 in some
-  // formulations) carry their own literature, but the blend itself is
-  // a Merit-specific co-formulation without a separate published record.
-  // PDP falls back to the "Research data verification in progress" panel.
+  // ─── Semaglutide (GLP-1 receptor agonist) ──────────────────────────
+  'semaglutide': {
+    compoundClass: 'Long-acting glucagon-like peptide-1 (GLP-1) receptor agonist (acylated GLP-1 analog)',
+    discovery:
+      'Developed by Novo Nordisk as a structurally engineered, albumin-binding analog of native GLP-1 designed for an extended half-life. The broader GLP-1 analog field grew out of incretin physiology characterized from the 1980s onward.',
+    description: [
+      'Semaglutide is a synthetic analog of human glucagon-like peptide-1 (GLP-1), a 31-amino-acid incretin hormone. Engineering modifications — a C18 fatty-diacid side chain that promotes reversible binding to serum albumin, plus substitutions that resist DPP-4 degradation — give it a markedly longer circulating half-life than native GLP-1, a central focus of the analog literature.',
+      'In research, semaglutide is used as a reference GLP-1 receptor agonist for studying incretin signaling, pancreatic islet biology, and energy-metabolism models. It is a regulated therapeutic in approved human channels; the Merit Sciences offering is supplied strictly for research use and not for human or veterinary administration.',
+    ],
+    mechanism:
+      'Selective agonism at the GLP-1 receptor, a class B G-protein-coupled receptor. Receptor engagement modulates glucose-dependent insulin secretion, glucagon release, and central pathways implicated in satiety in preclinical models.',
+    halfLife: '~7 days (engineered albumin binding; pharmacokinetic literature).',
+    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    researchApplications: [
+      'GLP-1 receptor signaling research',
+      'Incretin and islet-biology models',
+      'Energy-metabolism and appetite-pathway studies',
+      'Comparative GLP-1 analog pharmacology',
+    ],
+    references: [
+      {
+        title: 'The Discovery and Development of Liraglutide and Semaglutide',
+        authors: 'Knudsen LB, Lau J',
+        journal: 'Frontiers in Endocrinology',
+        year: 2019,
+        doi: '10.3389/fendo.2019.00155',
+        url: 'https://doi.org/10.3389/fendo.2019.00155',
+        verify: true,
+      },
+      {
+        title: 'GLP-1 receptor agonists: mechanism of action and clinical pharmacology (review)',
+        authors: 'Nauck MA, Quast DR, Wefers J, et al.',
+        journal: 'Molecular Metabolism',
+        year: 2021,
+        doi: '10.1016/j.molmet.2020.101102',
+        url: 'https://doi.org/10.1016/j.molmet.2020.101102',
+        verify: true,
+      },
+    ],
+  },
+
+  // ─── 5-Amino-1MQ (NNMT inhibitor) ──────────────────────────────────
+  '5-amino-1mq': {
+    compoundClass: 'Small-molecule nicotinamide N-methyltransferase (NNMT) inhibitor (5-amino-1-methylquinolinium)',
+    discovery:
+      'Reported by Neelakantan and colleagues in 2018 as part of medicinal-chemistry work on membrane-permeable NNMT inhibitors developed to probe NNMT’s role in adipocyte energy metabolism.',
+    description: [
+      '5-Amino-1MQ (5-amino-1-methylquinolinium) is a small-molecule, cell-permeable inhibitor of nicotinamide N-methyltransferase (NNMT) — an enzyme that methylates nicotinamide using S-adenosylmethionine (SAM) as the methyl donor. Unlike the catalog’s peptides, it is a low-molecular-weight quinolinium compound, not an amino-acid chain.',
+      'Research interest centers on NNMT’s position at the intersection of the NAD+ salvage pathway and SAM-dependent methylation. Preclinical models have investigated whether NNMT inhibition shifts adipocyte energy expenditure and cellular NAD+ availability. Supplied for research use only.',
+    ],
+    mechanism:
+      'Competitive inhibition of NNMT, reducing enzymatic methylation of nicotinamide. Proposed downstream effects in the literature include preservation of nicotinamide for NAD+ salvage and modulation of the cellular SAM/SAH methylation balance in adipocyte models.',
+    halfLife: 'Not well-characterized in the public literature; small-molecule pharmacokinetics differ from the catalog peptides.',
+    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    researchApplications: [
+      'NNMT enzyme-inhibition research',
+      'NAD+ salvage-pathway studies',
+      'Adipocyte energy-metabolism models',
+      'Cellular methylation (SAM/SAH) research',
+    ],
+    references: [
+      {
+        title: 'Selective and membrane-permeable small molecule inhibitors of nicotinamide N-methyltransferase reverse high fat diet-induced obesity in mice',
+        authors: 'Neelakantan H, Vance V, Wetzel MD, et al.',
+        journal: 'Biochemical Pharmacology',
+        year: 2018,
+        doi: '10.1016/j.bcp.2018.01.019',
+        url: 'https://doi.org/10.1016/j.bcp.2018.01.019',
+        verify: true,
+      },
+    ],
+  },
+
+  // ─── GLOW (BPC-157 + GHK-Cu + TB-500 co-formulation) ───────────────
+  'glow': {
+    compoundClass: 'Merit co-formulation: BPC-157 + GHK-Cu + TB-500 (Thymosin Beta-4 fragment)',
+    discovery:
+      'GLOW is a Merit-specific co-formulation rather than a single characterized molecule. Each component carries its own research record: BPC-157 (Sikiric laboratory, University of Zagreb, early 1990s), GHK-Cu (Pickart, 1973), and TB-500 / Thymosin Beta-4 (Goldstein, 1981).',
+    description: [
+      'GLOW combines three peptides that recur in tissue-repair and extracellular-matrix research: BPC-157, a stable gastric pentadecapeptide; GHK-Cu, a copper-binding tripeptide (glycyl-L-histidyl-L-lysine) studied in collagen and remodeling contexts; and TB-500, a synthetic fragment of the actin-binding peptide Thymosin Beta-4.',
+      'Because GLOW is a co-formulation, it has no separate published literature of its own — the relevant research belongs to each component. Merit supplies it as a single research preparation for laboratory use only.',
+    ],
+    mechanism:
+      'Component-level: BPC-157 is studied for cytoprotective and angiogenic signaling; GHK-Cu for copper-dependent modulation of extracellular-matrix and remodeling genes; TB-500 for actin sequestration and cell-migration pathways. No combined mechanism is established for the blend.',
+    halfLife: 'Component-dependent (see the individual BPC-157, GHK-Cu, and TB-500 records).',
+    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    researchApplications: [
+      'Tissue-repair pathway research (component-based)',
+      'Extracellular-matrix and collagen models',
+      'Angiogenesis and cell-migration studies',
+      'Comparative peptide co-formulation research',
+    ],
+    references: [
+      {
+        title: 'Stable gastric pentadecapeptide BPC 157 in the treatment of various organ lesions (review)',
+        authors: 'Sikiric P, Seiwerth S, Rucman R, et al.',
+        journal: 'Current Pharmaceutical Design',
+        year: 2011,
+        doi: '10.2174/138161211796196907',
+        url: 'https://doi.org/10.2174/138161211796196907',
+        verify: true,
+      },
+      {
+        title: 'The human tripeptide GHK-Cu in prevention of oxidative stress and degenerative conditions of aging',
+        authors: 'Pickart L, Margolina A',
+        journal: 'Oxidative Medicine and Cellular Longevity',
+        year: 2012,
+        doi: '10.1155/2012/324832',
+        url: 'https://doi.org/10.1155/2012/324832',
+        verify: true,
+      },
+    ],
+  },
+
+  // ─── KLOW (BPC-157 + GHK-Cu + TB-500 + KPV co-formulation) ─────────
+  'klow': {
+    compoundClass: 'Merit co-formulation: BPC-157 + GHK-Cu + TB-500 + KPV',
+    discovery:
+      'KLOW is a Merit-specific four-component co-formulation. It extends the GLOW blend with KPV, the C-terminal tripeptide (lysine-proline-valine) of alpha-melanocyte-stimulating hormone (α-MSH).',
+    description: [
+      'KLOW combines four peptides recurrent in repair and immune-signaling research: BPC-157, GHK-Cu, TB-500, and KPV. KPV is the C-terminal fragment of α-MSH and is studied for anti-inflammatory signaling that appears, in some models, to act independently of the melanocortin-1 receptor.',
+      'As a co-formulation, KLOW has no separate published record; the literature belongs to each component. Merit supplies it as a single research preparation for laboratory use only.',
+    ],
+    mechanism:
+      'Component-level: BPC-157 (cytoprotection / angiogenesis), GHK-Cu (matrix remodeling), TB-500 (actin / cell migration), and KPV (NF-κB-pathway modulation in inflammation models). No combined mechanism is established for the blend.',
+    halfLife: 'Component-dependent (see the individual component records).',
+    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    researchApplications: [
+      'Tissue-repair and remodeling research (component-based)',
+      'Inflammation-pathway models (KPV)',
+      'Extracellular-matrix studies',
+      'Comparative peptide co-formulation research',
+    ],
+    references: [
+      {
+        title: 'PepT1-mediated tripeptide KPV uptake reduces intestinal inflammation',
+        authors: 'Dalmasso G, Charrier-Hisamuddin L, Nguyen HTT, et al.',
+        journal: 'Gastroenterology',
+        year: 2008,
+        doi: '10.1053/j.gastro.2007.11.041',
+        url: 'https://doi.org/10.1053/j.gastro.2007.11.041',
+        verify: true,
+      },
+      {
+        title: 'Stable gastric pentadecapeptide BPC 157 in the treatment of various organ lesions (review)',
+        authors: 'Sikiric P, Seiwerth S, Rucman R, et al.',
+        journal: 'Current Pharmaceutical Design',
+        year: 2011,
+        doi: '10.2174/138161211796196907',
+        url: 'https://doi.org/10.2174/138161211796196907',
+        verify: true,
+      },
+    ],
+  },
 };
 
-export function getResearchData(handle: string): ResearchData | null {
-  return RESEARCH_DATA[handle] ?? null;
+// Common name / research-code → canonical RESEARCH_DATA key. Lets the
+// PDP resolve research content whether the product handle is a chemical
+// code (ly3298176), a real name (tirzepatide), or a blend label.
+const NAME_TO_KEY: Record<string, string> = {
+  tirzepatide: 'ly3298176',
+  ly3298176: 'ly3298176',
+  retatrutide: 'ly3437943',
+  ly3437943: 'ly3437943',
+  tesamorelin: 'th9507',
+  th9507: 'th9507',
+  semaglutide: 'semaglutide',
+  'aod-9604': 'aod-9604',
+  aod9604: 'aod-9604',
+  '5-amino-1mq': '5-amino-1mq',
+  '5amino1mq': '5-amino-1mq',
+  glow: 'glow',
+  klow: 'klow',
+  wolverine: 'bpc-157-tb-500',
+};
+
+// Blend tokens that may appear anywhere in a handle or compound label.
+const BLEND_TOKENS: [string, string][] = [
+  ['klow', 'klow'],
+  ['glow', 'glow'],
+  ['wolverine', 'bpc-157-tb-500'],
+];
+
+function normKey(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Resolve research data for a product. Tries, in order: exact handle,
+ * normalized-handle alias, normalized-compound alias, then a contains-
+ * scan for blend tokens — so content renders regardless of whether the
+ * handle is a code, a real name, or a long blend slug.
+ */
+export function getResearchData(handle: string, compound?: string): ResearchData | null {
+  if (RESEARCH_DATA[handle]) return RESEARCH_DATA[handle];
+
+  const hKey = NAME_TO_KEY[normKey(handle)];
+  if (hKey && RESEARCH_DATA[hKey]) return RESEARCH_DATA[hKey];
+
+  if (compound) {
+    const nc = normKey(compound);
+    const cKey = NAME_TO_KEY[nc] ?? (RESEARCH_DATA[nc] ? nc : undefined);
+    if (cKey && RESEARCH_DATA[cKey]) return RESEARCH_DATA[cKey];
+  }
+
+  const hay = `${normKey(handle)} ${compound ? normKey(compound) : ''}`;
+  for (const [tok, key] of BLEND_TOKENS) {
+    if (hay.includes(tok) && RESEARCH_DATA[key]) return RESEARCH_DATA[key];
+  }
+  return null;
 }

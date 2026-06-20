@@ -69,14 +69,55 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props) {
   const p = await getProduct(params.handle);
+  if (!p) return { title: 'Product' };
+
+  // Entity-rich metadata: leads with the real compound name + its class
+  // so both Google and AI answer-engines map this page to the entity and
+  // cite it. Real names are correct here (organic SEO ≠ ad review — just
+  // don't point paid ads at PDPs).
+  const research = getResearchData(p.handle, p.compound);
+  const name = p.title;
+  const cls = research?.compoundClass;
+  const url = abs(`/products/${p.handle}`);
+  const image = abs(productImage(p.imageUrl));
+
+  const title = `${name} ${p.vialSize} — ≥99% HPLC, COA Included | Merit Sciences`;
+  const entity = cls ? `${name}: ${cls.charAt(0).toLowerCase()}${cls.slice(1)}. ` : '';
+  const description =
+    `${entity}${name} ${p.vialSize} research compound — HPLC-tested ≥99% purity, lot COA in every order, ships 48hr from Dallas. Research use only — not for human or veterinary use.`;
+
   return {
-    title: p ? `${p.title} · ${p.vialSize} · Merit Sciences` : 'Product',
-    // PPC-safer fallback description — drops "pharmacy-verified" pharma
-    // language; explicit "not for human or veterinary use" satisfies
-    // Meta/Google ad reviewers' RUO documentation expectation.
-    description:
-      p?.oneLiner
-      || `${p?.title}, research compound. HPLC-verified ≥99% purity, lot-documented. Ships 48hr from Dallas. Research use only — not for human or veterinary use.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    keywords: [
+      name,
+      `${name} ${p.vialSize}`,
+      `buy ${name}`,
+      `${name} for sale`,
+      `${name} COA`,
+      `${name} research`,
+      ...(cls ? [cls] : []),
+      'research compound',
+      'HPLC tested',
+      'Merit Sciences',
+    ],
+    openGraph: {
+      type: 'website',
+      url,
+      siteName: 'Merit Sciences',
+      title: `${name} ${p.vialSize} · Merit Sciences`,
+      description,
+      images: [
+        { url: image, width: 1200, height: 1200, alt: `${name} ${p.vialSize} research vial — Merit Sciences` },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${name} ${p.vialSize}`,
+      description,
+      images: [image],
+    },
   };
 }
 
@@ -92,7 +133,7 @@ export default async function ProductPage({ params }: Props) {
   const family = getFamily(product.handle);
   const pharmacistNote = PHARMACIST_NOTES[product.handle] ?? null;
   const restock = RESTOCK_SIGNALS[product.handle] ?? null;
-  const research = getResearchData(product.handle);
+  const research = getResearchData(product.handle, product.compound);
 
   // ── Structured data (JSON-LD) ────────────────────────────────────
   // Uses `raw` (undecorated) so the Offer always shows PUBLIC retail
