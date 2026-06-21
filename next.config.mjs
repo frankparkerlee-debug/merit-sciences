@@ -36,37 +36,66 @@ const nextConfig = {
   // migration export (aup-phase2-live-handles.json + redirects-import).
   // permanent: true → 308, which Google treats as a 301 for SEO.
   async redirects() {
-    const product = (from, to) => ({
-      source: `/products/${from}`,
-      destination: `/products/${to}`,
-      permanent: true,
-    });
+    // Map built by cross-referencing the old Shopify handles (migration
+    // export) against the LIVE catalog. Rule: only redirect an old URL
+    // if it does NOT already exist on the new site — handles like
+    // tirzepatide-10mg / retatrutide-10mg are live and must NOT move.
+    const p = (from, to) => ({ source: `/products/${from}`, destination: `/products/${to}`, permanent: true });
+    const gone = (from) => ({ source: `/products/${from}`, destination: '/catalog', permanent: true });
     return [
-      // Metabolic money pages: real-name handles → chemical-code handles.
-      // Both legacy size variants point at the live compound page (its
-      // size selector covers the rest).
-      product('tirzepatide', 'ly3298176'),
-      product('tirzepatide-10mg', 'ly3298176'),
-      product('tirzepatide-30mg', 'ly3298176'),
-      product('retatrutide', 'ly3437943'),
-      product('retatrutide-10mg', 'ly3437943'),
-      product('retatrutide-30mg', 'ly3437943'),
-      product('tesamorelin', 'th9507'),
-      product('tesamorelin-10mg', 'th9507'),
-      // Strength-suffix dropped on the new site.
-      product('ghk-cu-50mg', 'ghk-cu'),
-      product('mots-c-20mg', 'mots-c'),
-      product('semax-10mg', 'semax'),
-      product('epitalon-100mg', 'epitalon'),
-      product('thymosin-alpha-1-10mg', 'thymosin-alpha-1'),
-      // Collections (a Shopify store's biggest organic surface) → catalog.
+      // ── Renamed / re-handled products (old → its live equivalent) ──
+      p('tirzepatide-30mg', 'ly3298176'),      // 30mg now lives at the code handle
+      p('tirzepatide', 'tirzepatide-10mg'),    // bare → the live 10mg
+      p('retatrutide-30mg', 'ly3437943'),
+      p('retatrutide', 'retatrutide-10mg'),
+      p('tesamorelin-10mg', 'th9507'),
+      p('tesamorelin', 'th9507'),
+      p('semaglutide', 'semaglutide-10mg'),
+      p('ghk-cu-50mg', 'ghk-cu'),
+      p('mots-c-20mg', 'mots-c'),
+      p('semax-10mg', 'semax'),
+      p('epitalon-100mg', 'epitalon'),
+      p('thymosin-alpha-1-10mg', 'thymosin-alpha-1'),
+      p('glutathione-600mg', 'glutathione-1500mg'),
+      p('glutathione', 'glutathione-1500mg'),
+      p('nad-plus', 'nad-500mg'),
+      p('nad', 'nad-500mg'),
+      p('glow', 'bpc157-ghk-cu-50-tb500-glow-70mg'),
+      p('cjc-1295-ipamorelin', 'cjc-1295-w-o-dac-10-ipa-10-20mg'),
+      p('cjc-1295-ipamorelin-7-5mg-10mg-injectable-vial', 'cjc-1295-w-o-dac-10-ipa-10-20mg'),
+      p('bpc-157-tb-500-10mg-10mg-injectable-vial', 'bpc-157-tb-500'),
+      // ── Bacteriostatic-water sizes → the single live listing ──
+      p('bacteriostatic-water-3ml', 'bacteriostatic-water'),
+      p('bacteriostatic-water-10ml', 'bacteriostatic-water'),
+      p('bacteriostatic-water-30ml', 'bacteriostatic-water'),
+      // ── Discontinued SKUs (nasal sprays, premixes, supplies, standalone
+      //    KPV) — no current equivalent → catalog ──
+      gone('kpv'),
+      gone('kpv-10mg'),
+      gone('ss-31'),
+      gone('injection-syringe-kit'),
+      gone('bpc-157-30mg-nasal-spray'),
+      gone('bpc-157-tb-500-5mg-10mg-nasal-spray'),
+      gone('tb-500-30mg-nasal-spray'),
+      gone('cjc-1295-10mg-nasal-spray'),
+      gone('cjc-1295-ipamorelin-10mg-10mg-nasal-spray'),
+      gone('epitalon-thymulin-50mg-10mg-nasal-spray'),
+      gone('ghk-cu-kpv-50mg-10mg-nasal-spray'),
+      gone('ghk-cu-kpv-skin-premix'),
+      gone('nad-plus-cjc-1295-500mg-20mg-nasal-spray'),
+      gone('oxytocin-10mg-nasal-spray'),
+      gone('oxytocin-pt-141-5mg-10mg-nasal-spray'),
+      gone('pt-141-oxytocin-tesamorelin-10mg-3mg-10mg-nasal-spray'),
+      gone('retatrutide-semaglutide-25mg-15mg-nasal-spray'),
+      gone('semax-selank-15mg-15mg-nasal-spray'),
+      gone('semax-selank-day-night-mind'),
+      gone('ta-1-kpv-10mg-10mg-nasal-spray'),
+      // ── Collections + Shopify pages ──
       { source: '/collections/:slug*', destination: '/catalog', permanent: true },
-      // Shopify policy / info pages → their merit-render equivalents.
       { source: '/pages/privacy-policy', destination: '/privacy', permanent: true },
       { source: '/pages/refund-policy', destination: '/returns', permanent: true },
       { source: '/pages/terms-of-service', destination: '/terms', permanent: true },
       { source: '/pages/frequently-asked-questions', destination: '/catalog', permanent: true },
-      // Any other legacy Shopify page.
       { source: '/pages/:slug*', destination: '/', permanent: true },
     ];
   },
