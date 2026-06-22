@@ -46,7 +46,15 @@ services:
       # ─── PostHog analytics ──────────────────────────────────────────
       # NEXT_PUBLIC_ keys are inlined into the client bundle at BUILD time,
       # so set the key in the dashboard then redeploy for it to take effect.
+      # Public project (write) key — ships in the client bundle, safe to commit.
       - key: NEXT_PUBLIC_POSTHOG_KEY
-        sync: false           # Project API key (phc_…) from PostHog → populate in dashboard
+        value: phc_xjAJ2o3sxD4z79k7cTcnS8dCAgt3kpBxCkGG6fyd2U3B
       - key: NEXT_PUBLIC_POSTHOG_HOST
         value: https://us.i.posthog.com
+      # Server-side READ access for the native in-admin analytics (Query API).
+      # Personal API key (scopes: query:read, insight:read) — populate in
+      # dashboard; never goes to the browser.
+      - key: POSTHOG_PERSONAL_API_KEY
+        sync: false
+      - key: POSTHOG_PROJECT_ID
+        sync: false           # numeric project id (PostHog → Settings → Project)
