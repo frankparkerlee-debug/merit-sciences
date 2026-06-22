@@ -102,7 +102,7 @@ export function AffiliateSignupForm() {
       <Field
         label="Referral handle"
         required
-        hint="The end of your referral URL: meritsciences.com?ref=YOUR-HANDLE"
+        hint="The end of your referral URL: meritsciences.com/?ref=YOUR-HANDLE"
         error={errorField === 'slug' ? error : undefined}
       >
         <input

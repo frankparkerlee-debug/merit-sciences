@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getBrowserSupabase } from '@/lib/supabase-browser';
+import { requestAffiliateMagicLink } from './action';
 
 /**
  * Magic-link sign-in. We use Supabase Auth's signInWithOtp which sends
@@ -30,51 +30,23 @@ export function LoginForm({ next }: { next: string }) {
     }
     setSubmitting(true);
 
-    // First: check the affiliate exists. The server route returns
-    // { exists: true } or { exists: false }.
+    // The server action verifies the affiliate exists, mints the magic link,
+    // and sends our BRANDED sign-in email (not Supabase's plain default).
     try {
-      const lookup = await fetch('/api/affiliate/login-check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed }),
-      });
-      const lookupData = await lookup.json();
-      if (!lookup.ok) {
-        setError(lookupData.error || 'Something went wrong. Try again.');
+      const fd = new FormData();
+      fd.set('email', trimmed);
+      fd.set('next', next);
+      const result = await requestAffiliateMagicLink(null, fd);
+      if (!result.ok) {
+        setError(result.error);
         setSubmitting(false);
         return;
       }
-      if (!lookupData.exists) {
-        setError(
-          `No affiliate account found for ${trimmed}. Join the program first.`,
-        );
-        setSubmitting(false);
-        return;
-      }
+      router.replace(`/affiliate/login?sent=1&email=${encodeURIComponent(trimmed)}`);
     } catch {
       setError('Network error. Try again.');
       setSubmitting(false);
-      return;
     }
-
-    // Affiliate exists — fire the magic link.
-    const supabase = getBrowserSupabase();
-    const siteUrl =
-      typeof window !== 'undefined' ? window.location.origin : '';
-    const { error: sbError } = await supabase.auth.signInWithOtp({
-      email: trimmed,
-      options: {
-        emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`,
-        shouldCreateUser: true, // first-time login creates the Supabase user
-      },
-    });
-    if (sbError) {
-      setError(sbError.message);
-      setSubmitting(false);
-      return;
-    }
-
-    router.replace(`/affiliate/login?sent=1&email=${encodeURIComponent(trimmed)}`);
   }
 
   return (

@@ -62,9 +62,9 @@ export async function requestPractitionerMagicLink(
   try {
     const body =
       heading('Sign in to your Practitioner Portal.') +
-      p(`Click the button below to sign in to your Merit Sciences portal — no password needed.`) +
+      p(`Use the button below to open your Merit Sciences practitioner portal — your account pricing, order history, and fast reorders. No password needed.`) +
       btn('Sign in to your portal →', signInUrl) +
-      note(`The link expires in 60 minutes and can only be used once. If you didn’t request this, ignore this email.`) +
+      note(`This link expires in 60 minutes and can only be used once. If you didn’t request it, you can safely ignore this email.`) +
       p(`Questions? Reply directly — you reach the pharmacy team.`);
 
     await sendEmail({
