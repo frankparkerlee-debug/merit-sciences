@@ -6,6 +6,7 @@ import { getProduct, listProducts } from '@/lib/catalog';
 import { productImage } from '@/lib/product-types';
 import { getSiblings } from '@/lib/product-siblings';
 import { withPricing } from '@/lib/pricing';
+import { getActiveReferral } from '@/lib/referral';
 import {
   getFamily,
   familyLabel,
@@ -129,6 +130,9 @@ export default async function ProductPage({ params }: Props) {
   // strikethrough comparison.
   const product = await withPricing(raw);
   const isPractitionerPricing = product.isPractitionerPricing;
+  // Referral pricing: surface the affiliate buyer discount as a strikethrough
+  // when the visitor arrived via an active ?ref= link.
+  const referral = await getActiveReferral();
 
   const family = getFamily(product.handle);
   const pharmacistNote = PHARMACIST_NOTES[product.handle] ?? null;
@@ -253,6 +257,7 @@ export default async function ProductPage({ params }: Props) {
             pharmacistNote={pharmacistNote}
             restock={restock}
             siblings={siblings}
+            referralPct={referral?.discountPct ?? 0}
           />
         </div>
       </section>

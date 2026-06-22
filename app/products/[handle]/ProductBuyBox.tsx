@@ -23,9 +23,11 @@ type Props = {
   pharmacistNote: string | null;
   restock: RestockSignal | null;
   siblings: Sibling[];
+  /** Buyer discount % from an active ?ref= affiliate link. 0 = none. */
+  referralPct?: number;
 };
 
-export function ProductBuyBox({ product, family, pharmacistNote, restock, siblings }: Props) {
+export function ProductBuyBox({ product, family, pharmacistNote, restock, siblings, referralPct = 0 }: Props) {
   const bundles = product.bundles ?? [
     { label: 'Single', vials: 1, priceCents: product.priceCents },
   ];
@@ -49,6 +51,17 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
   const effectiveBundle = purchaseType === 'subscribe' && subscribeBundle ? subscribeBundle : selected;
 
   const subtotalCents = effectiveBundle.priceCents + (addBacWater ? bacWaterCents : 0);
+
+  // Referral pricing (display only): an active ?ref= visitor sees the buyer
+  // discount on a one-time purchase, with the pre-referral price struck
+  // through. The discount is actually applied by the auto-filled code at
+  // checkout, so the cart still carries retail. Skipped for practitioners
+  // (own pricing) and Subscribe (a separate discount layer).
+  const referralActive =
+    referralPct > 0 && !product.isPractitionerPricing && purchaseType === 'onetime';
+  const referralPriceCents = referralActive
+    ? Math.round((effectiveBundle.priceCents * (100 - referralPct)) / 100)
+    : effectiveBundle.priceCents;
 
   // Compute savings %
   const singleBundle = bundles[0];
@@ -264,11 +277,25 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       <div className="pt-2 border-t border-cobalt/10">
         <div className="flex items-baseline gap-3 flex-wrap">
           <span className="font-display text-3xl lg:text-4xl font-black text-ink">
-            {money(effectiveBundle.priceCents)}
+            {money(referralActive ? referralPriceCents : effectiveBundle.priceCents)}
           </span>
+          {/* Referral strikethrough — active ?ref= visitor sees the buyer
+              discount; the pre-referral price is struck through. The % is
+              applied for real by the auto-filled code at checkout. */}
+          {referralActive && (
+            <>
+              <span className="text-lg text-ink-muted line-through font-semibold">
+                {money(effectiveBundle.priceCents)}
+              </span>
+              <span className="bg-cobalt text-white text-[11px] font-bold tracking-[0.12em] uppercase px-2 py-0.5 rounded">
+                {referralPct}% off · referral
+              </span>
+            </>
+          )}
           {/* Bundle savings strikethrough (existing) — applies to 3-pack /
-              6-pack vs Single, on either tier. */}
-          {savingsPct > 0 && selectedIdx > 0 && purchaseType === 'onetime' && (
+              6-pack vs Single, on either tier. Hidden when a referral
+              discount is showing so we don't stack two strikethroughs. */}
+          {savingsPct > 0 && selectedIdx > 0 && purchaseType === 'onetime' && !referralActive && (
             <>
               <span className="text-lg text-ink-muted line-through font-semibold">
                 {money(singleBundle.priceCents * selected.vials)}

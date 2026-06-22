@@ -2,6 +2,7 @@ import { listProducts } from '@/lib/catalog';
 import type { Product } from '@/lib/product-types';
 import { familyByCompound, familySortRank } from '@/lib/catalog-meta';
 import { withPricingMany } from '@/lib/pricing';
+import { getActiveReferral } from '@/lib/referral';
 
 /** Numeric weight for sorting "5mg" / "1500mg" / "10000IU" strings. */
 function sizeWeight(s: string): number {
@@ -184,6 +185,10 @@ export default async function CatalogPage() {
     savedCents: number;
   }>;
 
+  // Referral pricing: if the visitor arrived via an active affiliate link,
+  // surface the buyer discount as a strikethrough across the catalog.
+  const referral = await getActiveReferral();
+
   return (
     <CatalogClient
       products={enriched}
@@ -191,6 +196,7 @@ export default async function CatalogPage() {
       accessories={accessories}
       totalCount={products.length}
       isPractitionerPricing={isPractitionerPricing}
+      referralPct={referral?.discountPct ?? 0}
     />
   );
 }

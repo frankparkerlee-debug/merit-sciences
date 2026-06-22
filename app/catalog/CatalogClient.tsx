@@ -37,6 +37,9 @@ type Props = {
   /** True when the signed-in user is an approved practitioner — used to
    *  surface a "practitioner pricing applied" banner above the grid. */
   isPractitionerPricing?: boolean;
+  /** Buyer discount % when the visitor arrived via an active affiliate
+   *  link (?ref=). 0 = no referral. Rendered as a strikethrough per card. */
+  referralPct?: number;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -90,7 +93,7 @@ function familyLabel(f: Family): string {
 // Component
 // ─────────────────────────────────────────────────────────────────────────
 
-export function CatalogClient({ products, stacks, accessories, totalCount, isPractitionerPricing = false }: Props) {
+export function CatalogClient({ products, stacks, accessories, totalCount, isPractitionerPricing = false, referralPct = 0 }: Props) {
   const [selectedFamily, setSelectedFamily] = useState<Family | 'all'>('all');
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [subscribeMode, setSubscribeMode] = useState(false);
@@ -373,6 +376,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
           products={sorted}
           stacks={stacks}
           subscribeMode={subscribeMode}
+          referralPct={referralPct}
           selectedHandles={selectedHandles}
           onToggleSelect={toggleSelect}
           onAddToCart={handleAddToCart}
@@ -536,6 +540,7 @@ function ProductGridWithBreaks({
   products,
   stacks,
   subscribeMode,
+  referralPct,
   selectedHandles,
   onToggleSelect,
   onAddToCart,
@@ -548,6 +553,7 @@ function ProductGridWithBreaks({
   products: EnrichedProduct[];
   stacks: StackResolved[];
   subscribeMode: boolean;
+  referralPct: number;
   selectedHandles: string[];
   onToggleSelect: (handle: string) => void;
   onAddToCart: (product: Product) => void;
@@ -581,6 +587,7 @@ function ProductGridWithBreaks({
               key={`p-${section.data.product.handle}`}
               enriched={section.data}
               subscribeMode={subscribeMode}
+              referralPct={referralPct}
               isSelected={selectedHandles.includes(section.data.product.handle)}
               onToggleSelect={onToggleSelect}
               onAddToCart={onAddToCart}
@@ -615,6 +622,7 @@ function ProductGridWithBreaks({
 function ProductCard({
   enriched,
   subscribeMode,
+  referralPct,
   isSelected,
   onToggleSelect,
   onAddToCart,
@@ -623,6 +631,7 @@ function ProductCard({
 }: {
   enriched: EnrichedProduct;
   subscribeMode: boolean;
+  referralPct: number;
   isSelected: boolean;
   onToggleSelect: (handle: string) => void;
   onAddToCart: (product: Product) => void;
@@ -630,7 +639,14 @@ function ProductCard({
   onQuickView: (handle: string) => void;
 }) {
   const { product: p, family, restock } = enriched;
-  const displayPrice = subscribeMode ? subscribePrice(p) : p.priceCents;
+  // Referral price: an active ?ref= visitor sees the buyer discount applied
+  // with retail struck through. Skipped for practitioners (own pricing) and
+  // subscribe mode (already a discounted layer).
+  const referralPrice =
+    referralPct > 0 && !p.isPractitionerPricing && !subscribeMode
+      ? Math.round((p.priceCents * (100 - referralPct)) / 100)
+      : null;
+  const displayPrice = referralPrice ?? (subscribeMode ? subscribePrice(p) : p.priceCents);
 
   return (
     <div
@@ -727,8 +743,14 @@ function ProductCard({
           </h3>
           <span className="font-display font-black text-ink tracking-tight leading-tight whitespace-nowrap flex items-baseline gap-1.5">
             <span className="text-[15px] sm:text-lg lg:text-xl">{money(displayPrice)}</span>
-            {/* Strikethrough retail when practitioner pricing is in effect.
-                Skipped when subscribe mode is on (already discounted layer). */}
+            {/* Strikethrough the retail price — for referral pricing (?ref=)
+                OR practitioner pricing. Never both (referralPrice is null
+                when practitioner pricing is on). */}
+            {referralPrice != null && (
+              <span className="text-[12px] sm:text-[13px] text-ink-soft/60 line-through font-medium">
+                {money(p.priceCents)}
+              </span>
+            )}
             {p.isPractitionerPricing && p.retailPriceCents != null && p.retailPriceCents > p.priceCents && !subscribeMode && (
               <span className="text-[12px] sm:text-[13px] text-ink-soft/60 line-through font-medium">
                 {money(p.retailPriceCents)}
