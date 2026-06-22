@@ -4,6 +4,7 @@ import './globals.css';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { CartDrawer } from '@/components/CartDrawer';
+import { SubscribePopup } from '@/components/SubscribePopup';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -136,6 +137,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Global slide-in cart drawer — opens whenever the cart store's
             isDrawerOpen flips true (e.g. after any "Add to cart"). */}
         <CartDrawer />
+        {/* Exit-intent / timed subscribe popup → 10%-off capture. Self-gates
+            on transactional/account routes + frequency-caps via localStorage. */}
+        <SubscribePopup />
       </body>
     </html>
   );
