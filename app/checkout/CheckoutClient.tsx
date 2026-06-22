@@ -61,6 +61,8 @@ export function CheckoutClient({
   const lines = useCart((s) => s.lines);
   const clear = useCart((s) => s.clear);
   const add = useCart((s) => s.add);
+  const setQty = useCart((s) => s.setQty);
+  const remove = useCart((s) => s.remove);
 
   // Reconstitution nudge: most compounds need bacteriostatic water. True when
   // the cart already has a standalone bac-water line.
@@ -189,6 +191,22 @@ export function CheckoutClient({
     applyCode(autoReferralCode, { silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoReferralCode, hydrated, lines.length, appliedCode]);
+
+  // Re-validate an applied code whenever the cart subtotal changes (qty edit
+  // or remove at checkout) so the shown discount + total stay accurate. The
+  // ref guards re-firing on an unchanged subtotal; applyCode mutates none of
+  // these deps, so there's no loop.
+  const lastPricedSubtotalRef = useRef(subtotalCents);
+  useEffect(() => {
+    if (!appliedCode || lines.length === 0) {
+      lastPricedSubtotalRef.current = subtotalCents;
+      return;
+    }
+    if (subtotalCents === lastPricedSubtotalRef.current) return;
+    lastPricedSubtotalRef.current = subtotalCents;
+    applyCode(appliedCode, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotalCents, appliedCode, lines.length]);
 
   function handleRemoveCode() {
     setAppliedCode(null);
@@ -396,7 +414,12 @@ export function CheckoutClient({
 
           <ul className="divide-y divide-cobalt/5">
             {lines.map((l) => (
-              <CartRow key={`${l.handle}__${l.bundleLabel}`} line={l} />
+              <CartRow
+                key={`${l.handle}__${l.bundleLabel}`}
+                line={l}
+                onSetQty={(q) => setQty(l.handle, l.bundleLabel, q)}
+                onRemove={() => remove(l.handle, l.bundleLabel)}
+              />
             ))}
           </ul>
 
@@ -997,17 +1020,53 @@ function FieldShell({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-function CartRow({ line }: { line: CartLine }) {
+function CartRow({
+  line,
+  onSetQty,
+  onRemove,
+}: {
+  line: CartLine;
+  onSetQty: (qty: number) => void;
+  onRemove: () => void;
+}) {
   return (
-    <li className="flex gap-3 px-5 sm:px-6 py-3.5 items-center">
+    <li className="flex gap-3 px-5 sm:px-6 py-3.5 items-start">
       <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-cobalt/5">
         <Image src={productImage(line.imageUrl)} alt="" fill className="object-contain p-1" sizes="48px" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-ink truncate">{line.title}</p>
-        <p className="text-[11px] text-ink-soft truncate">
-          {line.bundleLabel} · Qty {line.qty}
-        </p>
+        <p className="text-[11px] text-ink-soft truncate mb-1.5">{line.bundleLabel}</p>
+        {/* Qty stepper + remove — editable at checkout. Stepping below 1
+            removes the line (store.setQty treats qty<=0 as a remove). */}
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center border border-cobalt/15 rounded-full overflow-hidden bg-white">
+            <button
+              type="button"
+              onClick={() => onSetQty(line.qty - 1)}
+              className="w-6 h-6 flex items-center justify-center text-ink hover:bg-cream transition"
+              aria-label="Decrease quantity"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            </button>
+            <span className="w-6 text-center text-[11px] font-bold text-ink tabular-nums">{line.qty}</span>
+            <button
+              type="button"
+              onClick={() => onSetQty(line.qty + 1)}
+              className="w-6 h-6 flex items-center justify-center text-ink hover:bg-cream transition"
+              aria-label="Increase quantity"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-[11px] text-ink-muted hover:text-rose-700 underline-offset-2 hover:underline transition"
+          >
+            Remove
+          </button>
+        </div>
       </div>
       <p className="text-sm text-ink font-bold tabular-nums">
         {fmtMoney(line.unitCents * line.qty)}
