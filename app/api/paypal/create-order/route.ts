@@ -208,15 +208,23 @@ export async function POST(req: Request) {
     discountCode = v.code;
     discountCents = v.discountCents;
     freeShipping = v.freeShipping;
-    attributionVia = 'discount_code';
     if (v.source === 'affiliate') {
-      // Affiliate codes carry commission attribution
+      // Affiliate codes carry their own commission attribution — this
+      // wins over any ?ref= cookie below.
       affiliateId = v.affiliateId;
       affiliateSlug = v.affiliateSlug;
+      attributionVia = 'discount_code';
     }
-    // Manual codes: no affiliate attribution. discountCode + discountCents only.
-  } else {
-    // Fall back to cookie-based attribution (set by middleware on ?ref=)
+    // Manual codes apply the discount but carry no affiliate of their own.
+    // We deliberately fall through to the cookie check below so a buyer
+    // referred via ?ref= who then uses a general promo code STILL credits
+    // their referrer (previously this path dropped the referral entirely).
+  }
+
+  // Cookie-based attribution (set by middleware on ?ref=). Runs whenever an
+  // affiliate CODE hasn't already claimed the sale — i.e. no code, or a
+  // manual code. An affiliate code always takes precedence over the cookie.
+  if (!affiliateId) {
     const cookieSlug = (await cookies()).get('merit_ref')?.value ?? null;
     if (cookieSlug) {
       const aff = await prisma.affiliate.findUnique({
@@ -227,8 +235,8 @@ export async function POST(req: Request) {
         affiliateId = aff.id;
         affiliateSlug = aff.slug;
         attributionVia = 'cookie';
-        // Cookie-only attribution doesn't apply a buyer discount
-        // (cookie is silent — only typed codes give 10% off)
+        // The cookie credits the affiliate but applies no extra discount —
+        // only a typed affiliate code gives the buyer the 10% off.
       }
     }
   }

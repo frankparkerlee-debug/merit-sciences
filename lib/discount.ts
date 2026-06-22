@@ -122,7 +122,10 @@ export async function validateDiscountCode(
   if (manual.maxUses !== null) {
     const usedCount = await prisma.order.count({
       where: {
-        discountCode: code,
+        // Orders persist discountCode uppercased (see create-order /
+        // webhook), so match that case or the count is always 0 and the
+        // limit never enforces.
+        discountCode: code.toUpperCase(),
         status: { not: 'PENDING_PAYMENT' }, // only count completed
       },
     });
@@ -135,7 +138,7 @@ export async function validateDiscountCode(
   if (manual.oncePerCustomer && ctx.buyerEmail) {
     const priorUse = await prisma.order.findFirst({
       where: {
-        discountCode: code,
+        discountCode: code.toUpperCase(), // orders store the code uppercased
         customerEmail: ctx.buyerEmail.toLowerCase(),
         status: { not: 'PENDING_PAYMENT' },
       },
