@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
 import { money } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
+import { track } from '@/lib/analytics';
 import { familyLabel, type Family, type RestockSignal } from '@/lib/catalog-meta';
 import { DeliveryPromise } from './DeliveryPromise';
 
@@ -70,6 +71,17 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       ? Math.round((1 - (selected.priceCents / selected.vials) / singleBundle.priceCents) * 100)
       : 0;
 
+  // Funnel: product viewed (PDP). Fires once per product.
+  useEffect(() => {
+    track('product_viewed', {
+      handle: product.handle,
+      name: product.title,
+      price_usd: product.priceCents / 100,
+      family: family ?? undefined,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.handle]);
+
   // Add-to-cart action — used by both the in-page button AND the mobile
   // sticky bottom bar so they stay in sync. Opens the cart drawer after
   // commit (this is the PDP — the buyer is committing, not browsing).
@@ -95,6 +107,14 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
         1,
       );
     }
+    track('add_to_cart', {
+      handle: product.handle,
+      name: product.title,
+      bundle: purchaseType === 'subscribe' ? `Subscribe · ${subscriptionFreq}` : selected.label,
+      price_usd: effectiveBundle.priceCents / 100,
+      qty: 1,
+      source: 'pdp',
+    });
     openDrawer();
   };
 

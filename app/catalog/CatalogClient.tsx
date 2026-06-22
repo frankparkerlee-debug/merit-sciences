@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
 import { money, productImage } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
+import { track } from '@/lib/analytics';
 import { stackToCartLine } from '@/lib/catalog-meta';
 import type { Family, StackTemplate } from './page';
 
@@ -175,32 +176,41 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
     return { bundle, unitCents };
   }
 
-  // Add a single product line to the cart (no UI side-effect).
-  function addProductToCart(product: Product) {
+  // Add a single product line to the cart + fire the analytics event.
+  function addProductToCart(product: Product, source: string) {
     const { bundle, unitCents } = priceForProduct(product);
+    const bundleLabel = subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label;
     addToCart(
       {
         handle: product.handle,
         title: product.title,
-        bundleLabel: subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label,
+        bundleLabel,
         unitCents,
         imageUrl: product.imageUrl,
       },
       1,
     );
+    track('add_to_cart', {
+      handle: product.handle,
+      name: product.title,
+      bundle: bundleLabel,
+      price_usd: unitCents / 100,
+      qty: 1,
+      source,
+    });
   }
 
   // Per-card add: drop it in and slide the (non-blocking) cart open so the
   // buyer sees it land — they can keep browsing without dismissing it.
   function handleAddToCart(product: Product) {
-    addProductToCart(product);
+    addProductToCart(product, 'catalog');
     openDrawer();
   }
 
   // Buy it now: add + go straight to checkout. Anything already in the cart
   // comes along — checkout renders the full cart, not just this item.
   function handleBuyNow(product: Product) {
-    addProductToCart(product);
+    addProductToCart(product, 'buy_now');
     window.location.href = '/checkout';
   }
 

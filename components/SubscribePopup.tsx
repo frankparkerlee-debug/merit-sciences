@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { track, identify } from '@/lib/analytics';
 
 /**
  * Subscribe / exit-intent popup → email capture → 10%-off-first-order code.
@@ -101,6 +102,8 @@ export function SubscribePopup() {
         return;
       }
       if (data.code) setCode(data.code);
+      identify(trimmed);
+      track('subscribe', { source: 'popup' });
       setStatus('done');
       suppress(SUPPRESS_DAYS_DONE);
     } catch {

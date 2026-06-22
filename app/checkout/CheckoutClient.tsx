@@ -15,6 +15,7 @@ import {
   usePayPalScriptReducer,
 } from '@paypal/react-paypal-js';
 import { useCart, type CartLine } from '@/lib/cart';
+import { track, identify } from '@/lib/analytics';
 import { US_STATES } from './us-states';
 
 const FREE_SHIPPING_THRESHOLD = 10_000;
@@ -208,6 +209,17 @@ export function CheckoutClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtotalCents, appliedCode, lines.length]);
 
+  // Funnel: begin checkout. Fires once when the cart has hydrated with items.
+  const beganCheckoutRef = useRef(false);
+  useEffect(() => {
+    if (beganCheckoutRef.current || !hydrated || lines.length === 0) return;
+    beganCheckoutRef.current = true;
+    track('begin_checkout', {
+      value_usd: subtotalCents / 100,
+      item_count: lines.reduce((n, l) => n + l.qty, 0),
+    });
+  }, [hydrated, lines.length, subtotalCents]);
+
   function handleRemoveCode() {
     setAppliedCode(null);
     setAppliedAmounts(null);
@@ -302,6 +314,17 @@ export function CheckoutClient({
     if (!captured.ok) {
       throw new Error(captured.error || 'Payment did not complete.');
     }
+    // Funnel endpoint: purchase. Identify the buyer + record revenue before
+    // we clear the cart (so the line data is still available).
+    const buyerEmail = (captured.payerEmail || formRef.current.email || '').toLowerCase();
+    if (buyerEmail) identify(buyerEmail);
+    track('purchase', {
+      order_id: data.orderID,
+      value_usd: localTotalCents / 100,
+      item_count: lines.reduce((n, l) => n + l.qty, 0),
+      discount_usd: localDiscountCents / 100,
+      code: appliedCode ?? undefined,
+    });
     clear();
     router.push(`/checkout/success?order_id=${data.orderID}`);
   }
