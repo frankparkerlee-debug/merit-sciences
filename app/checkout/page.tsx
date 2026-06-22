@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
+import { prisma } from '@/lib/db';
 import { CheckoutClient } from './CheckoutClient';
 
 export const metadata = {
@@ -7,7 +9,27 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  // Referral auto-discount: if the visitor arrived via an affiliate link
+  // (?ref= set the merit_ref cookie), pre-fill that affiliate's discount
+  // code so the 10% applies automatically AND the code is visible in the
+  // discount box. The buyer can still remove it.
+  let autoReferralCode: string | null = null;
+  try {
+    const cookieSlug = (await cookies()).get('merit_ref')?.value ?? null;
+    if (cookieSlug) {
+      const aff = await prisma.affiliate.findUnique({
+        where: { slug: cookieSlug },
+        select: { status: true, discountCode: true },
+      });
+      if (aff?.status === 'ACTIVE' && aff.discountCode) {
+        autoReferralCode = aff.discountCode.toUpperCase();
+      }
+    }
+  } catch {
+    /* no referral pre-fill if the lookup fails — checkout still works */
+  }
+
   return (
     <main className="bg-cream min-h-screen pb-24">
       <div className="border-b border-cobalt/10 bg-white">
@@ -38,7 +60,7 @@ export default function CheckoutPage() {
           Review &amp; pay<span className="text-cobalt">.</span>
         </h1>
 
-        <CheckoutClient />
+        <CheckoutClient autoReferralCode={autoReferralCode} />
       </section>
     </main>
   );

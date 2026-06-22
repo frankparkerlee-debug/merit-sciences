@@ -50,7 +50,11 @@ type CheckoutFormState = {
   billing: AddressState;
 };
 
-export function CheckoutClient() {
+export function CheckoutClient({
+  autoReferralCode = null,
+}: {
+  autoReferralCode?: string | null;
+}) {
   const router = useRouter();
   const lines = useCart((s) => s.lines);
   const clear = useCart((s) => s.clear);
@@ -121,11 +125,13 @@ export function CheckoutClient() {
     );
   }
 
-  async function handleApplyCode(e: React.FormEvent) {
-    e.preventDefault();
-    setCodeError(null);
-    const code = discountCode.trim();
+  // Apply a discount/affiliate code. `silent` suppresses errors for the
+  // auto-applied referral code (the buyer didn't type it, so a failure
+  // shouldn't surface as an error).
+  async function applyCode(rawCode: string, opts?: { silent?: boolean }) {
+    const code = rawCode.trim();
     if (!code) return;
+    if (!opts?.silent) setCodeError(null);
     setCodeApplying(true);
     try {
       // Use a lightweight discount-only validation flow: call create-order
@@ -138,7 +144,7 @@ export function CheckoutClient() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setCodeError(data.error || 'Could not apply code.');
+        if (!opts?.silent) setCodeError(data.error || 'Could not apply code.');
         setAppliedCode(null);
         setAppliedAmounts(null);
         return;
@@ -153,11 +159,29 @@ export function CheckoutClient() {
       });
       setDiscountCode('');
     } catch {
-      setCodeError('Network error. Try again.');
+      if (!opts?.silent) setCodeError('Network error. Try again.');
     } finally {
       setCodeApplying(false);
     }
   }
+
+  function handleApplyCode(e: React.FormEvent) {
+    e.preventDefault();
+    applyCode(discountCode);
+  }
+
+  // Auto-apply the referring affiliate's code (from the ?ref= cookie,
+  // resolved server-side). Fires once the cart has hydrated, only if the
+  // buyer hasn't already applied a code. Populates the discount box so the
+  // 10% shows AND the code is visible — the buyer can still remove it.
+  const autoAppliedRef = useRef(false);
+  useEffect(() => {
+    if (autoAppliedRef.current) return;
+    if (!autoReferralCode || !hydrated || lines.length === 0 || appliedCode) return;
+    autoAppliedRef.current = true;
+    applyCode(autoReferralCode, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoReferralCode, hydrated, lines.length, appliedCode]);
 
   function handleRemoveCode() {
     setAppliedCode(null);
