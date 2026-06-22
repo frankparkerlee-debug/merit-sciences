@@ -58,3 +58,14 @@ services:
         sync: false
       - key: POSTHOG_PROJECT_ID
         sync: false           # numeric project id (PostHog → Settings → Project)
+      # ─── Abandoned-cart recovery ────────────────────────────────────
+      # Carts are CAPTURED + shown in /admin/analytics unconditionally. The
+      # automated recovery EMAIL is outward-facing, so it's opt-in: set this
+      # to `on` (and add a Render Cron Job hitting /api/cron/abandoned-carts
+      # with the CRON_SECRET bearer) to arm the hourly nudge. Unset = no sends.
+      - key: ABANDONED_CART_RECOVERY
+        sync: false           # set to "on" to enable recovery emails
+      # CRON_SECRET — bearer shared by every /api/cron/* job. Set in dashboard;
+      # reuse the existing value for the abandoned-cart cron.
+      - key: CRON_SECRET
+        sync: false

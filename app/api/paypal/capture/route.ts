@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { capturePayPalOrder } from '@/lib/paypal';
+import { markCartsRecovered } from '@/lib/abandoned-cart';
 
 export const runtime = 'nodejs';
 
@@ -50,12 +51,18 @@ export async function POST(req: Request) {
       );
     }
 
+    const payerEmail = captured.payer?.email_address ?? null;
+    // Close out any abandoned-cart record for this shopper so the recovery
+    // cron never nudges someone who just bought. Fire-and-forget — the typed
+    // email covers the card flow, payer email covers the wallet flow.
+    markCartsRecovered([typeof body.email === 'string' ? body.email : null, payerEmail]).catch(() => {});
+
     return NextResponse.json({
       ok: true,
       orderId,
       captureId: capture.id,
       status,
-      payerEmail: captured.payer?.email_address ?? null,
+      payerEmail,
       payerId: captured.payer?.payer_id ?? null,
       amount: capture.amount,
     });

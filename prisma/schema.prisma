@@ -772,3 +772,45 @@ model PractitionerJourney {
   @@index([email])
   @@map("practitioner_journeys")
 }
+
+// ─── Abandoned cart ───────────────────────────────────────────────────
+// A cart whose shopper reached checkout and gave us an email but didn't
+// pay. Captured the moment a valid email is entered at /checkout (BEFORE
+// payment) so the lead + contents are never lost if they bail. One living
+// row per email: re-upserted on cart edits, flipped to RECOVERED when a
+// paid order lands, reopened if they build a new cart later. Powers the
+// abandoned-cart panel in /admin/analytics and the opt-in recovery email.
+model AbandonedCart {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  // Snapshot of CartLine[] — { handle, title, bundleLabel, unitCents, qty, imageUrl?, components? }
+  lines         Json
+  itemCount     Int      @default(0)
+  subtotalCents Int      @default(0)
+  // Referral carried from the merit_ref cookie so a recovered checkout keeps
+  // its discount + affiliate attribution. slug re-seeds the cookie on recovery.
+  referralCode  String?
+  referralSlug  String?
+  // Where the email was captured (checkout, …)
+  source        String   @default("checkout")
+  status        AbandonedCartStatus @default(OPEN)
+  recoveredAt   DateTime?
+  // Recovery-email bookkeeping (one nudge in v1 — emailCount gate prevents re-spam)
+  emailCount    Int      @default(0)
+  lastEmailedAt DateTime?
+  // Opaque token for the one-click "return to your cart" link (cross-device)
+  recoverToken  String   @unique @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, updatedAt])
+  @@map("abandoned_carts")
+}
+
+enum AbandonedCartStatus {
+  OPEN
+  RECOVERED
+  DISMISSED
+
+  @@map("abandoned_cart_status")
+}

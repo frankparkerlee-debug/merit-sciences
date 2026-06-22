@@ -220,6 +220,32 @@ export function CheckoutClient({
     });
   }, [hydrated, lines.length, subtotalCents]);
 
+  // Abandoned-cart capture. The moment a valid email is entered — BEFORE
+  // payment — persist the cart server-side so the lead + contents are never
+  // lost if the buyer bails. Debounced; re-posts when the cart changes; a
+  // signature guard avoids duplicate writes. keepalive lets the request
+  // survive the navigation away. Failures are swallowed — never block pay.
+  const lastCapturedRef = useRef('');
+  useEffect(() => {
+    const email = form.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || lines.length === 0) return;
+    const itemCount = lines.reduce((n, l) => n + l.qty, 0);
+    const signature = `${email}|${subtotalCents}|${itemCount}`;
+    if (signature === lastCapturedRef.current) return;
+    const t = setTimeout(() => {
+      lastCapturedRef.current = signature;
+      identify(email);
+      track('checkout_email_captured', { value_usd: subtotalCents / 100, item_count: itemCount });
+      fetch('/api/abandoned-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, lines, source: 'checkout' }),
+        keepalive: true,
+      }).catch(() => {});
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [form.email, lines, subtotalCents]);
+
   function handleRemoveCode() {
     setAppliedCode(null);
     setAppliedAmounts(null);
@@ -308,7 +334,9 @@ export function CheckoutClient({
     const res = await fetch('/api/paypal/capture', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: data.orderID }),
+      // Pass the typed email so the server can mark this shopper's saved
+      // cart recovered (the card flow has it; wallet flow relies on payer email).
+      body: JSON.stringify({ orderId: data.orderID, email: formRef.current.email || undefined }),
     });
     const captured = await res.json();
     if (!captured.ok) {

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { hogql, posthogReadConfigured } from '@/lib/posthog-query';
+import { recoveryEmailsEnabled } from '@/lib/abandoned-cart';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Analytics · Admin' };
@@ -32,6 +33,25 @@ export default async function AnalyticsPage() {
   ]);
   const revenueCents = Number(revenueAgg?._sum?.totalCents ?? 0);
   const pendingCommissionCents = Number(pendingAgg?._sum?.commissionCents ?? 0);
+
+  // ── Abandoned carts (DB) — recoverable leads; always available ──
+  const [openAgg, recoveredAgg, recentCarts] = await Promise.all([
+    prisma.abandonedCart.aggregate({ _count: true, _sum: { subtotalCents: true }, where: { status: 'OPEN', subtotalCents: { gt: 0 } } }).catch(() => null),
+    prisma.abandonedCart.aggregate({ _count: true, _sum: { subtotalCents: true }, where: { status: 'RECOVERED', recoveredAt: { gte: since30 } } }).catch(() => null),
+    prisma.abandonedCart.findMany({
+      where: { status: 'OPEN', subtotalCents: { gt: 0 } },
+      orderBy: { updatedAt: 'desc' },
+      take: 8,
+      select: { email: true, subtotalCents: true, itemCount: true, updatedAt: true, lastEmailedAt: true },
+    }).catch(() => [] as Array<{ email: string; subtotalCents: number; itemCount: number; updatedAt: Date; lastEmailedAt: Date | null }>),
+  ]);
+  const openCount = Number(openAgg?._count ?? 0);
+  const openValueCents = Number(openAgg?._sum?.subtotalCents ?? 0);
+  const recoveredCount = Number(recoveredAgg?._count ?? 0);
+  const recoveredValueCents = Number(recoveredAgg?._sum?.subtotalCents ?? 0);
+  const recoveryRate = openCount + recoveredCount > 0
+    ? Math.round((recoveredCount / (openCount + recoveredCount)) * 100)
+    : 0;
 
   const kpis = [
     { label: 'Revenue', value: money(revenueCents), sub: 'paid orders, all-time' },
@@ -87,6 +107,57 @@ export default async function AnalyticsPage() {
             <p className="text-[11px] text-ink-soft mt-1.5">{k.sub}</p>
           </div>
         ))}
+      </div>
+
+      {/* Abandoned carts — recoverable leads. DB-backed, so it renders even
+          before PostHog read access is connected. */}
+      <div className="mb-8">
+        <Panel
+          title="Abandoned carts · recoverable"
+          right={`${openCount.toLocaleString()} open · ${money(openValueCents)} at risk`}
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2 mb-4">
+            <Stat label="Open carts" value={openCount.toLocaleString()} sub={`${money(openValueCents)} at risk`} />
+            <Stat label="Recovered · 30d" value={recoveredCount.toLocaleString()} sub={`${money(recoveredValueCents)} reclaimed`} />
+            <Stat label="Recovery rate" value={`${recoveryRate}%`} sub="recovered ÷ all carts" />
+            <Stat
+              label="Recovery email"
+              value={recoveryEmailsEnabled ? 'On' : 'Off'}
+              sub={recoveryEmailsEnabled ? 'auto-nudge live' : 'set flag to arm'}
+              accent={recoveryEmailsEnabled ? 'emerald' : 'amber'}
+            />
+          </div>
+          {recentCarts.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-cobalt/10">
+              <table className="w-full text-[12px]">
+                <thead>
+                  <tr className="bg-cobalt/[0.04] text-ink-soft/70">
+                    <th className="text-left font-bold uppercase tracking-wider px-3 py-2 text-[10px]">Email</th>
+                    <th className="text-right font-bold uppercase tracking-wider px-3 py-2 text-[10px]">Value</th>
+                    <th className="text-right font-bold uppercase tracking-wider px-3 py-2 text-[10px]">Items</th>
+                    <th className="text-right font-bold uppercase tracking-wider px-3 py-2 text-[10px]">Idle</th>
+                    <th className="text-right font-bold uppercase tracking-wider px-3 py-2 text-[10px]">Nudged</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-cobalt/5">
+                  {recentCarts.map((c, i) => (
+                    <tr key={i} className="text-ink">
+                      <td className="px-3 py-2 truncate max-w-[220px]">{c.email}</td>
+                      <td className="px-3 py-2 text-right font-bold tabular-nums">{money(c.subtotalCents)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-ink-soft">{c.itemCount}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-ink-soft">{ago(c.updatedAt)}</td>
+                      <td className="px-3 py-2 text-right text-ink-soft">{c.lastEmailedAt ? '✓' : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-[12px] text-ink-soft/60 py-2">
+              No abandoned carts captured yet — a cart appears here once a shopper enters their email at checkout without paying.
+            </p>
+          )}
+        </Panel>
       </div>
 
       {!posthogReadConfigured ? (
@@ -158,6 +229,31 @@ export default async function AnalyticsPage() {
       )}
     </main>
   );
+}
+
+function Stat({
+  label, value, sub, accent,
+}: { label: string; value: string; sub: string; accent?: 'emerald' | 'amber' }) {
+  const valueCls =
+    accent === 'emerald' ? 'text-emerald-700' : accent === 'amber' ? 'text-amber-700' : 'text-ink';
+  return (
+    <div className="rounded-xl border border-cobalt/10 bg-cobalt/[0.02] p-3">
+      <p className="text-[10px] tracking-[0.12em] uppercase font-bold text-ink-soft/60 mb-1.5">{label}</p>
+      <p className={`font-display text-xl font-black tracking-tight leading-none ${valueCls}`}>{value}</p>
+      <p className="text-[11px] text-ink-soft mt-1">{sub}</p>
+    </div>
+  );
+}
+
+// Compact "time since" for the idle column: 3m / 5h / 2d.
+function ago(date: Date): string {
+  const ms = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
 }
 
 function Panel({ title, right, children }: { title: string; right?: string; children: React.ReactNode }) {
