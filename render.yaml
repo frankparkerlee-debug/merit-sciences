@@ -43,3 +43,10 @@ services:
         sync: false           # populate in dashboard
       - key: DATABASE_URL
         sync: false           # populate in dashboard — full pooler URL w/ password
+      # ─── PostHog analytics ──────────────────────────────────────────
+      # NEXT_PUBLIC_ keys are inlined into the client bundle at BUILD time,
+      # so set the key in the dashboard then redeploy for it to take effect.
+      - key: NEXT_PUBLIC_POSTHOG_KEY
+        sync: false           # Project API key (phc_…) from PostHog → populate in dashboard
+      - key: NEXT_PUBLIC_POSTHOG_HOST
+        value: https://us.i.posthog.com

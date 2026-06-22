@@ -5,6 +5,7 @@ import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { CartDrawer } from '@/components/CartDrawer';
 import { SubscribePopup } from '@/components/SubscribePopup';
+import { PostHogProvider } from '@/components/PostHogProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -128,18 +129,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable}`}>
       <body className="font-sans">
-        <div className="bg-steel text-white text-center py-2 text-[10.5px] font-semibold tracking-[0.12em] uppercase">
-          For Research Use Only · Not For Human or Veterinary Use · Not FDA-Approved
-        </div>
-        <Nav />
-        <main>{children}</main>
-        <Footer />
-        {/* Global slide-in cart drawer — opens whenever the cart store's
-            isDrawerOpen flips true (e.g. after any "Add to cart"). */}
-        <CartDrawer />
-        {/* Exit-intent / timed subscribe popup → 10%-off capture. Self-gates
-            on transactional/account routes + frequency-caps via localStorage. */}
-        <SubscribePopup />
+        {/* PostHog: autocapture + pageviews across the whole app. No-ops
+            until NEXT_PUBLIC_POSTHOG_KEY is set in Render. */}
+        <PostHogProvider>
+          <div className="bg-steel text-white text-center py-2 text-[10.5px] font-semibold tracking-[0.12em] uppercase">
+            For Research Use Only · Not For Human or Veterinary Use · Not FDA-Approved
+          </div>
+          <Nav />
+          <main>{children}</main>
+          <Footer />
+          {/* Global slide-in cart drawer — opens whenever the cart store's
+              isDrawerOpen flips true (e.g. after any "Add to cart"). */}
+          <CartDrawer />
+          {/* Exit-intent / timed subscribe popup → 10%-off capture. Self-gates
+              on transactional/account routes + frequency-caps via localStorage. */}
+          <SubscribePopup />
+        </PostHogProvider>
       </body>
     </html>
   );
