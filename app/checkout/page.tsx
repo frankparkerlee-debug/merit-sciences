@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { prisma } from '@/lib/db';
+import { getActiveReferral } from '@/lib/referral';
+import { getProduct } from '@/lib/catalog';
 import { CheckoutClient } from './CheckoutClient';
 
 export const metadata = {
@@ -10,24 +10,28 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function CheckoutPage() {
-  // Referral auto-discount: if the visitor arrived via an affiliate link
-  // (?ref= set the merit_ref cookie), pre-fill that affiliate's discount
-  // code so the 10% applies automatically AND the code is visible in the
-  // discount box. The buyer can still remove it.
-  let autoReferralCode: string | null = null;
+  // Referral auto-discount: if the visitor arrived via an affiliate link,
+  // pre-fill that affiliate's code so the 10% applies automatically and
+  // shows in the discount box (removable).
+  const referral = await getActiveReferral();
+  const autoReferralCode = referral?.code ?? null;
+
+  // BAC water cross-sell — resolve the real product so the checkout
+  // reconstitution nudge adds the correct handle/price/image. Null if the
+  // product isn't stocked (the nudge then simply doesn't render).
+  let bacWaterProduct: { handle: string; title: string; unitCents: number; imageUrl?: string } | null = null;
   try {
-    const cookieSlug = (await cookies()).get('merit_ref')?.value ?? null;
-    if (cookieSlug) {
-      const aff = await prisma.affiliate.findUnique({
-        where: { slug: cookieSlug },
-        select: { status: true, discountCode: true },
-      });
-      if (aff?.status === 'ACTIVE' && aff.discountCode) {
-        autoReferralCode = aff.discountCode.toUpperCase();
-      }
+    const bac = await getProduct('bacteriostatic-water');
+    if (bac) {
+      bacWaterProduct = {
+        handle: bac.handle,
+        title: bac.title,
+        unitCents: bac.priceCents,
+        imageUrl: bac.imageUrl ?? undefined,
+      };
     }
   } catch {
-    /* no referral pre-fill if the lookup fails — checkout still works */
+    /* checkout still works without the nudge */
   }
 
   return (
@@ -60,7 +64,7 @@ export default async function CheckoutPage() {
           Review &amp; pay<span className="text-cobalt">.</span>
         </h1>
 
-        <CheckoutClient autoReferralCode={autoReferralCode} />
+        <CheckoutClient autoReferralCode={autoReferralCode} bacWaterProduct={bacWaterProduct} />
       </section>
     </main>
   );

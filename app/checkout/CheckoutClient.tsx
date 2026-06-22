@@ -52,12 +52,19 @@ type CheckoutFormState = {
 
 export function CheckoutClient({
   autoReferralCode = null,
+  bacWaterProduct = null,
 }: {
   autoReferralCode?: string | null;
+  bacWaterProduct?: { handle: string; title: string; unitCents: number; imageUrl?: string } | null;
 }) {
   const router = useRouter();
   const lines = useCart((s) => s.lines);
   const clear = useCart((s) => s.clear);
+  const add = useCart((s) => s.add);
+
+  // Reconstitution nudge: most compounds need bacteriostatic water. True when
+  // the cart already has a standalone bac-water line.
+  const hasBacWater = lines.some((l) => /bacteriostatic|bac-water/i.test(l.handle));
 
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
@@ -392,6 +399,37 @@ export function CheckoutClient({
               <CartRow key={`${l.handle}__${l.bundleLabel}`} line={l} />
             ))}
           </ul>
+
+          {/* Reconstitution nudge — most compounds need bacteriostatic water.
+              Shows only when the cart has none; one tap adds it and the
+              nudge disappears. */}
+          {bacWaterProduct && !hasBacWater && (
+            <div className="px-5 sm:px-6 py-3.5 border-t border-amber-300/50 bg-amber-50/70">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={() =>
+                    add(
+                      {
+                        handle: bacWaterProduct.handle,
+                        title: bacWaterProduct.title,
+                        bundleLabel: 'Single',
+                        unitCents: bacWaterProduct.unitCents,
+                        imageUrl: bacWaterProduct.imageUrl,
+                      },
+                      1,
+                    )
+                  }
+                  className="mt-0.5 w-4 h-4 accent-cobalt cursor-pointer flex-shrink-0"
+                />
+                <span className="text-[13px] leading-snug text-ink">
+                  <strong className="font-bold">Add Bacteriostatic Water — {fmtMoney(bacWaterProduct.unitCents)}.</strong>{' '}
+                  <span className="text-ink-soft">Most research compounds require reconstitution, and your cart doesn&rsquo;t include any.</span>
+                </span>
+              </label>
+            </div>
+          )}
 
           <div className="px-5 sm:px-6 py-4 border-t border-cobalt/10 bg-cobalt/5">
             {appliedCode ? (
