@@ -50,15 +50,9 @@ export function CartDrawer() {
   const shippingCents = qualifiesForFreeShip ? 0 : (lines.length > 0 ? FLAT_SHIPPING_CENTS : 0);
   const grandTotalCents = subtotalCents + shippingCents;
 
-  // Lock body scroll while open.
-  useEffect(() => {
-    if (!isOpen) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = original;
-    };
-  }, [isOpen]);
+  // Intentionally NO body-scroll lock: the drawer opens automatically on
+  // every add, and we don't want it to hijack the page each time. The buyer
+  // can keep scrolling/browsing the catalog with the cart open beside them.
 
   // ESC to close.
   useEffect(() => {
@@ -72,11 +66,13 @@ export function CartDrawer() {
 
   return (
     <>
-      {/* Backdrop — pointer-events off when closed so it doesn't trap clicks */}
+      {/* Backdrop — light, no blur (a gentle slide-in, not a takeover).
+          Click to dismiss; pointer-events off when closed so it never traps
+          clicks while the buyer is browsing. */}
       <div
         onClick={closeDrawer}
         aria-hidden={!isOpen}
-        className={`fixed inset-0 z-50 bg-ink/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-50 bg-ink/20 transition-opacity duration-300 ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       />
@@ -234,7 +230,7 @@ export function CartDrawer() {
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-cobalt" />
-                503B · ISO
+                Pharmacist-released
               </span>
             </div>
           </footer>

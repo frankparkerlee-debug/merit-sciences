@@ -172,9 +172,8 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
     return { bundle, unitCents };
   }
 
-  // Per-card add (single). Flashes a toast for confirmation; does NOT
-  // open the drawer (interrupts browsing if the buyer is still picking).
-  function handleAddToCart(product: Product) {
+  // Add a single product line to the cart (no UI side-effect).
+  function addProductToCart(product: Product) {
     const { bundle, unitCents } = priceForProduct(product);
     addToCart(
       {
@@ -186,7 +185,20 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
       },
       1,
     );
-    setAddedFlash({ title: product.title, cents: unitCents });
+  }
+
+  // Per-card add: drop it in and slide the (non-blocking) cart open so the
+  // buyer sees it land — they can keep browsing without dismissing it.
+  function handleAddToCart(product: Product) {
+    addProductToCart(product);
+    openDrawer();
+  }
+
+  // Buy it now: add + go straight to checkout. Anything already in the cart
+  // comes along — checkout renders the full cart, not just this item.
+  function handleBuyNow(product: Product) {
+    addProductToCart(product);
+    window.location.href = '/checkout';
   }
 
   // Bulk add — user explicitly chose to commit a multi-select batch.
@@ -364,6 +376,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
           selectedHandles={selectedHandles}
           onToggleSelect={toggleSelect}
           onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
           onAddStack={handleAddStack}
           onQuickView={setQuickViewHandle}
           showStacksAt={6}
@@ -526,6 +539,7 @@ function ProductGridWithBreaks({
   selectedHandles,
   onToggleSelect,
   onAddToCart,
+  onBuyNow,
   onAddStack,
   onQuickView,
   showStacksAt,
@@ -537,6 +551,7 @@ function ProductGridWithBreaks({
   selectedHandles: string[];
   onToggleSelect: (handle: string) => void;
   onAddToCart: (product: Product) => void;
+  onBuyNow: (product: Product) => void;
   onAddStack: (stack: StackResolved) => void;
   onQuickView: (handle: string) => void;
   showStacksAt: number;
@@ -569,6 +584,7 @@ function ProductGridWithBreaks({
               isSelected={selectedHandles.includes(section.data.product.handle)}
               onToggleSelect={onToggleSelect}
               onAddToCart={onAddToCart}
+              onBuyNow={onBuyNow}
               onQuickView={onQuickView}
             />
           );
@@ -602,6 +618,7 @@ function ProductCard({
   isSelected,
   onToggleSelect,
   onAddToCart,
+  onBuyNow,
   onQuickView,
 }: {
   enriched: EnrichedProduct;
@@ -609,6 +626,7 @@ function ProductCard({
   isSelected: boolean;
   onToggleSelect: (handle: string) => void;
   onAddToCart: (product: Product) => void;
+  onBuyNow: (product: Product) => void;
   onQuickView: (handle: string) => void;
 }) {
   const { product: p, family, restock } = enriched;
@@ -735,25 +753,37 @@ function ProductCard({
           </p>
         )}
 
-        {/* Add to cart button — sits where the price/Details row used to.
-            Full-width cobalt; primary action for the card. */}
-        <button
-          type="button"
-          onClick={() => onAddToCart(p)}
-          className="mt-auto w-full text-white py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-sm font-bold shadow-sm hover:opacity-95 transition flex items-center justify-center gap-1.5 sm:gap-2"
-          style={{
-            background:
-              'linear-gradient(135deg, #2E4DDB 0%, #5078FF 50%, #2E4DDB 100%)',
-          }}
-          aria-label={`Add ${p.title} to cart`}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-            <circle cx="9" cy="21" r="1" />
-            <circle cx="20" cy="21" r="1" />
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-          </svg>
-          Add to cart
-        </button>
+        {/* Buy-it-now + Add-to-cart. Buy-it-now is the low-friction primary
+            for single-vial buyers (straight to checkout); Add to cart slides
+            the cart open and lets them keep browsing. Stacks on cramped 2-up
+            mobile, side-by-side from sm up. */}
+        <div className="mt-auto flex flex-col sm:flex-row items-stretch gap-2">
+          <button
+            type="button"
+            onClick={() => onBuyNow(p)}
+            className="flex-1 text-white py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-sm font-bold shadow-sm hover:opacity-95 transition"
+            style={{
+              background:
+                'linear-gradient(135deg, #2E4DDB 0%, #5078FF 50%, #2E4DDB 100%)',
+            }}
+            aria-label={`Buy ${p.title} now`}
+          >
+            Buy it now
+          </button>
+          <button
+            type="button"
+            onClick={() => onAddToCart(p)}
+            className="flex-1 bg-white text-cobalt border border-cobalt/30 py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-sm font-bold hover:border-cobalt hover:bg-cobalt/[0.04] transition flex items-center justify-center gap-1.5"
+            aria-label={`Add ${p.title} to cart`}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            Add to cart
+          </button>
+        </div>
       </div>
     </div>
   );
