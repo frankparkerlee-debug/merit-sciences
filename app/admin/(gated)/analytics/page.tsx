@@ -42,22 +42,29 @@ export default async function AnalyticsPage() {
   ];
 
   // ── Native PostHog (Query API) — null when read access isn't configured ──
-  const [traffic, topPages, sources, funnelRows] = posthogReadConfigured
+  // Exclude internal /admin pageviews from the customer-facing charts; count
+  // them separately so admin browsing never inflates traffic/top-pages.
+  const NOT_ADMIN = `properties.$pathname NOT LIKE '/admin%'`;
+  const [traffic, topPages, sources, funnelRows, adminViewsRows] = posthogReadConfigured
     ? await Promise.all([
         hogql(`SELECT toStartOfDay(timestamp) AS day, count() AS views, uniq(person_id) AS visitors
-               FROM events WHERE event = '$pageview' AND timestamp >= now() - INTERVAL 14 DAY
+               FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 14 DAY
                GROUP BY day ORDER BY day`),
         hogql(`SELECT properties.$pathname AS path, count() AS views
-               FROM events WHERE event = '$pageview' AND timestamp >= now() - INTERVAL 7 DAY
+               FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 7 DAY
                GROUP BY path ORDER BY views DESC LIMIT 8`),
         hogql(`SELECT coalesce(nullIf(properties.$referring_domain, ''), '(direct)') AS source, count() AS views
-               FROM events WHERE event = '$pageview' AND timestamp >= now() - INTERVAL 7 DAY
+               FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 7 DAY
                GROUP BY source ORDER BY views DESC LIMIT 6`),
         hogql(`SELECT event, count() AS n
                FROM events WHERE event IN ('product_viewed','add_to_cart','begin_checkout','purchase')
                AND timestamp >= now() - INTERVAL 14 DAY GROUP BY event`),
+        hogql(`SELECT count() AS n FROM events
+               WHERE event = '$pageview' AND properties.$pathname LIKE '/admin%'
+               AND timestamp >= now() - INTERVAL 14 DAY`),
       ])
-    : [null, null, null, null];
+    : [null, null, null, null, null];
+  const adminViews = Number(adminViewsRows?.[0]?.[0] ?? 0);
 
   const funnelMap = new Map<string, number>((funnelRows ?? []).map((r) => [String(r[0]), Number(r[1])]));
   const funnel = FUNNEL_STEPS.map((s) => ({ ...s, count: funnelMap.get(s.event) ?? 0 }));
@@ -86,21 +93,28 @@ export default async function AnalyticsPage() {
         <ConnectCard />
       ) : (
         <div className="space-y-6">
-          {/* Traffic trend */}
+          {/* Traffic trend (customer-facing; /admin excluded) */}
           <Panel title="Traffic · last 14 days" right={`${totalViews.toLocaleString()} views · ${totalVisitors.toLocaleString()} visitors`}>
             {traffic && traffic.length > 0 ? (
               <div className="flex items-end gap-1 h-32 mt-2">
                 {traffic.map((r, i) => (
-                  <div key={i} className="flex-1 group relative flex flex-col justify-end">
-                    <div
-                      className="rounded-t bg-cobalt/80 group-hover:bg-cobalt transition-all"
-                      style={{ height: `${Math.max(3, (Number(r[1]) / maxViews) * 100)}%` }}
-                      title={`${String(r[0]).slice(0, 10)} · ${Number(r[1])} views`}
-                    />
-                  </div>
+                  // Bar is the direct flex child so its % height resolves
+                  // against the h-32 row (a wrapper here collapses to 0).
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t bg-cobalt/80 hover:bg-cobalt transition-all"
+                    style={{ height: `${Math.max(2, (Number(r[1]) / maxViews) * 100)}%`, minHeight: '2px' }}
+                    title={`${String(r[0]).slice(0, 10)} · ${Number(r[1])} views`}
+                  />
                 ))}
               </div>
             ) : <Empty />}
+            {adminViews > 0 && (
+              <p className="text-[11px] text-ink-soft/60 mt-3">
+                Internal <code className="text-[11px] bg-cream px-1 py-0.5 rounded">/admin</code> views (tracked separately, excluded above):{' '}
+                <span className="font-bold text-ink-soft">{adminViews.toLocaleString()}</span>
+              </p>
+            )}
           </Panel>
 
           {/* Conversion funnel */}
