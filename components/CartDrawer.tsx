@@ -14,7 +14,7 @@ import { money, productImage } from '@/lib/product-types';
  * bulk-add completion, or when the buyer taps the cart icon). Single-
  * card adds don't auto-open; they fire a toast instead.
  */
-const FREE_SHIP_THRESHOLD_CENTS = 10_000; // $100
+const FREE_SHIP_THRESHOLD_CENTS = 35_000; // $350
 const FLAT_SHIPPING_CENTS = 999;          // $9.99 under threshold
 
 export function CartDrawer() {

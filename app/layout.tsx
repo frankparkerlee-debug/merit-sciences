@@ -5,6 +5,7 @@ import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { CartDrawer } from '@/components/CartDrawer';
 import { SubscribePopup } from '@/components/SubscribePopup';
+import { ChromeGate } from '@/components/ChromeGate';
 import { PostHogProvider } from '@/components/PostHogProvider';
 
 const inter = Inter({
@@ -135,15 +136,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="bg-steel text-white text-center py-2 text-[10.5px] font-semibold tracking-[0.12em] uppercase">
             For Research Use Only · Not For Human or Veterinary Use · Not FDA-Approved
           </div>
-          <Nav />
+          {/* ChromeGate strips Nav/Footer/cart/popup on clean-room ad
+              landing routes (/access) so paid-ad crawlers see no catalog
+              links. The RUO banner above and <main> below always render. */}
+          <ChromeGate>
+            <Nav />
+          </ChromeGate>
           <main>{children}</main>
-          <Footer />
-          {/* Global slide-in cart drawer — opens whenever the cart store's
-              isDrawerOpen flips true (e.g. after any "Add to cart"). */}
-          <CartDrawer />
-          {/* Exit-intent / timed subscribe popup → 10%-off capture. Self-gates
-              on transactional/account routes + frequency-caps via localStorage. */}
-          <SubscribePopup />
+          <ChromeGate>
+            <Footer />
+            {/* Global slide-in cart drawer — opens whenever the cart store's
+                isDrawerOpen flips true (e.g. after any "Add to cart"). */}
+            <CartDrawer />
+            {/* Exit-intent / timed subscribe popup → 10%-off capture. Self-gates
+                on transactional/account routes + frequency-caps via localStorage. */}
+            <SubscribePopup />
+          </ChromeGate>
         </PostHogProvider>
       </body>
     </html>

@@ -18,7 +18,7 @@ import { useCart, type CartLine } from '@/lib/cart';
 import { track, identify } from '@/lib/analytics';
 import { US_STATES } from './us-states';
 
-const FREE_SHIPPING_THRESHOLD = 10_000;
+const FREE_SHIPPING_THRESHOLD = 35_000;
 const FLAT_SHIPPING = 999;
 
 const RUO_TEXT =
@@ -561,7 +561,7 @@ export function CheckoutClient({
         </div>
 
         <p className="text-[11px] text-ink-soft/70 mt-4 leading-relaxed">
-          US shipping only. Free over $100. Card details encrypted end-to-end by PayPal — we never see or store them. Wallet payments pull shipping from your device&rsquo;s saved address.
+          US shipping only. Free over $350. Card details encrypted end-to-end by PayPal — we never see or store them. Wallet payments pull shipping from your device&rsquo;s saved address.
         </p>
       </aside>
     </div>
