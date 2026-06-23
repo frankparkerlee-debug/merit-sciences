@@ -85,18 +85,18 @@ export default function ProtocolPage() {
             <LpEmailCapture source="lp-protocol" label="Get access — 10% off your first order" />
           </div>
 
-          {/* Mobile: COA document below CTA */}
-          <div className="relative mt-12 lg:hidden mx-auto w-[78%]">
+          {/* Mobile: COA crop below CTA — shows HPLC banner + mass ID + chromatogram */}
+          <div className="relative mt-12 lg:hidden mx-auto w-full">
             <div className="absolute inset-0 translate-x-3 translate-y-3 bg-cobalt/10 rounded-xl" />
             <div
               className="relative rounded-xl overflow-hidden shadow-2xl border border-white/8"
               style={{ transform: 'rotate(2deg)' }}
             >
               <Image
-                src="/coa/bpc157-coa.png"
+                src="/coa/bpc157-coa-crop.png"
                 alt="Certificate of Analysis — HPLC and Mass Spectrometry, 99.389% purity"
-                width={1836}
-                height={2376}
+                width={1785}
+                height={885}
                 className="w-full h-auto opacity-90"
               />
             </div>

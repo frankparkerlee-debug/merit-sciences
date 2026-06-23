@@ -20,10 +20,10 @@ export default function ClinicSourcePage() {
             style={{ transform: 'rotate(-1.5deg)' }}
           >
             <Image
-              src="/coa/bpc157-coa.png"
+              src="/coa/bpc157-coa-crop.png"
               alt="Certificate of Analysis — HPLC and Mass Spectrometry, 99.389% purity"
               fill
-              className="object-cover object-top"
+              className="object-cover object-center"
               priority
             />
             {/* Fade out bottom edge so it doesn't hard-cut */}
