@@ -14,7 +14,7 @@ import { usePathname } from 'next/navigation';
  * The global "Research Use Only" banner and <main> stay (they live outside
  * this gate in the root layout). Keep BARE_PREFIXES tight — only true ad LPs.
  */
-const BARE_PREFIXES = ['/access'];
+const BARE_PREFIXES = ['/access', '/lp'];
 
 export function ChromeGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
