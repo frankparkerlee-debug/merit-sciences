@@ -7,6 +7,7 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { SubscribePopup } from '@/components/SubscribePopup';
 import { ChromeGate } from '@/components/ChromeGate';
 import { PostHogProvider } from '@/components/PostHogProvider';
+import { getStoreSettings } from '@/lib/store-settings';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -126,7 +127,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getStoreSettings();
   return (
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable}`}>
       <body className="font-sans">
@@ -147,7 +149,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Footer />
             {/* Global slide-in cart drawer — opens whenever the cart store's
                 isDrawerOpen flips true (e.g. after any "Add to cart"). */}
-            <CartDrawer />
+            <CartDrawer freeShippingThresholdCents={settings.freeShippingThreshold} />
             {/* Exit-intent / timed subscribe popup → 10%-off capture. Self-gates
                 on transactional/account routes + frequency-caps via localStorage. */}
             <SubscribePopup />

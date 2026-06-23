@@ -33,6 +33,10 @@ const NAV: Section[] = [
     ],
   },
   {
+    section: 'Store',
+    items: [{ label: 'Settings', href: '/admin/settings' }],
+  },
+  {
     section: 'Data',
     items: [
       {

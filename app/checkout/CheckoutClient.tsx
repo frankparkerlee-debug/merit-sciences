@@ -18,7 +18,6 @@ import { useCart, type CartLine } from '@/lib/cart';
 import { track, identify } from '@/lib/analytics';
 import { US_STATES } from './us-states';
 
-const FREE_SHIPPING_THRESHOLD = 35_000;
 const FLAT_SHIPPING = 999;
 
 const RUO_TEXT =
@@ -54,9 +53,11 @@ type CheckoutFormState = {
 export function CheckoutClient({
   autoReferralCode = null,
   bacWaterProduct = null,
+  freeShippingThresholdCents = 35_000,
 }: {
   autoReferralCode?: string | null;
   bacWaterProduct?: { handle: string; title: string; unitCents: number; imageUrl?: string } | null;
+  freeShippingThresholdCents?: number;
 }) {
   const router = useRouter();
   const lines = useCart((s) => s.lines);
@@ -115,7 +116,7 @@ export function CheckoutClient({
   const localDiscountCents = appliedAmounts?.discountCents ?? 0;
   const localShippingCents =
     appliedAmounts?.shippingCents
-    ?? (subtotalCents - localDiscountCents >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING);
+    ?? (subtotalCents - localDiscountCents >= freeShippingThresholdCents ? 0 : FLAT_SHIPPING);
   const localTotalCents =
     appliedAmounts?.totalCents
     ?? (subtotalCents - localDiscountCents + localShippingCents);

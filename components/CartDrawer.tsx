@@ -14,10 +14,9 @@ import { money, productImage } from '@/lib/product-types';
  * bulk-add completion, or when the buyer taps the cart icon). Single-
  * card adds don't auto-open; they fire a toast instead.
  */
-const FREE_SHIP_THRESHOLD_CENTS = 35_000; // $350
-const FLAT_SHIPPING_CENTS = 999;          // $9.99 under threshold
+const FLAT_SHIPPING_CENTS = 999; // $9.99 under threshold
 
-export function CartDrawer() {
+export function CartDrawer({ freeShippingThresholdCents = 35_000 }: { freeShippingThresholdCents?: number }) {
   const isOpen     = useCart((s) => s.isDrawerOpen);
   const lines      = useCart((s) => s.lines);
   const closeDrawer = useCart((s) => s.closeDrawer);
@@ -45,8 +44,8 @@ export function CartDrawer() {
   const subtotalCents = lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0);
   const itemCount     = lines.reduce((sum, l) => sum + l.qty, 0);
 
-  const qualifiesForFreeShip = subtotalCents >= FREE_SHIP_THRESHOLD_CENTS;
-  const remainingToFreeShip = Math.max(0, FREE_SHIP_THRESHOLD_CENTS - subtotalCents);
+  const qualifiesForFreeShip = subtotalCents >= freeShippingThresholdCents;
+  const remainingToFreeShip = Math.max(0, freeShippingThresholdCents - subtotalCents);
   const shippingCents = qualifiesForFreeShip ? 0 : (lines.length > 0 ? FLAT_SHIPPING_CENTS : 0);
   const grandTotalCents = subtotalCents + shippingCents;
 
@@ -141,7 +140,7 @@ export function CartDrawer() {
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.min(100, (subtotalCents / FREE_SHIP_THRESHOLD_CENTS) * 100)}%`,
+                      width: `${Math.min(100, (subtotalCents / freeShippingThresholdCents) * 100)}%`,
                       background: 'linear-gradient(90deg, #2E4DDB 0%, #5078FF 100%)',
                     }}
                   />

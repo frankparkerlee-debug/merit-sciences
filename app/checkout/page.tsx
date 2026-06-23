@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getActiveReferral } from '@/lib/referral';
 import { getProduct } from '@/lib/catalog';
+import { getStoreSettings } from '@/lib/store-settings';
 import { CheckoutClient } from './CheckoutClient';
 
 export const metadata = {
@@ -13,7 +14,7 @@ export default async function CheckoutPage() {
   // Referral auto-discount: if the visitor arrived via an affiliate link,
   // pre-fill that affiliate's code so the 10% applies automatically and
   // shows in the discount box (removable).
-  const referral = await getActiveReferral();
+  const [referral, settings] = await Promise.all([getActiveReferral(), getStoreSettings()]);
   const autoReferralCode = referral?.code ?? null;
 
   // BAC water cross-sell — resolve the real product so the checkout
@@ -64,7 +65,11 @@ export default async function CheckoutPage() {
           Review &amp; pay<span className="text-cobalt">.</span>
         </h1>
 
-        <CheckoutClient autoReferralCode={autoReferralCode} bacWaterProduct={bacWaterProduct} />
+        <CheckoutClient
+          autoReferralCode={autoReferralCode}
+          bacWaterProduct={bacWaterProduct}
+          freeShippingThresholdCents={settings.freeShippingThreshold}
+        />
       </section>
     </main>
   );
