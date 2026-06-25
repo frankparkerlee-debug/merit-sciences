@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { suspendAffiliate, reactivateAffiliate, deleteAffiliate, type ActionResult } from '../actions';
+import { suspendAffiliate, reactivateAffiliate, deleteAffiliate, changeAffiliateCode, type ActionResult } from '../actions';
 
 export function AffiliateActions({
   id,
@@ -13,12 +13,55 @@ export function AffiliateActions({
   canDelete: boolean;
 }) {
   return (
-    <section className="rounded-2xl border border-cobalt/15 bg-white p-5 space-y-3">
+    <section className="rounded-2xl border border-cobalt/15 bg-white p-5 space-y-4">
       <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold">— Actions</p>
 
+      <ChangeCodeForm id={id} />
+      <div className="w-full h-px bg-cobalt/10" />
       {isSuspended ? <ReactivateForm id={id} /> : <SuspendForm id={id} />}
       <DeleteForm id={id} canDelete={canDelete} />
     </section>
+  );
+}
+
+function ChangeCodeForm({ id }: { id: string }) {
+  const [result, formAction] = useFormState<ActionResult | null, FormData>(changeAffiliateCode, null);
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="id" value={id} />
+      <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-soft mb-1">
+        Change discount code
+      </label>
+      <p className="text-[11px] text-ink-soft mb-2">
+        Cannot contain &ldquo;merit&rdquo;. Must be unique. Existing referral links using this code will continue to work at the old slug.
+      </p>
+      <input
+        type="text"
+        name="code"
+        placeholder="e.g. SUMMER30, DRSMITH10"
+        maxLength={40}
+        className="block w-full rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt mb-2 font-mono uppercase"
+      />
+      <ChangeCodeButton />
+      {result && (
+        <p className={`mt-2 text-xs ${result.ok ? 'text-emerald-700' : 'text-rose-700'}`}>
+          {result.ok ? result.message : result.error}
+        </p>
+      )}
+    </form>
+  );
+}
+
+function ChangeCodeButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full bg-cobalt/10 text-cobalt border border-cobalt/20 px-4 py-2.5 rounded-lg text-xs font-bold tracking-wide uppercase hover:bg-cobalt/15 transition disabled:opacity-60"
+    >
+      {pending ? 'Updating…' : 'Update code'}
+    </button>
   );
 }
 

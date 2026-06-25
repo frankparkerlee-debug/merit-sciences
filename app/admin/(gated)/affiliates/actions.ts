@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
+import { validateCodeFormat } from '@/lib/code-rules';
 
 export type ActionResult =
   | { ok: true; message: string }
@@ -112,4 +113,45 @@ export async function deleteAffiliate(_prev: ActionResult | null, formData: Form
   revalidatePath('/admin/affiliates');
   revalidatePath('/admin/discounts');
   redirect('/admin/affiliates');
+}
+
+/* ─── Change affiliate discount code ─── */
+
+export async function changeAffiliateCode(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  const rawCode = String(formData.get('code') ?? '').trim();
+  if (!id) return { ok: false, error: 'Missing affiliate id.' };
+
+  // Validate format + blocklist (stores lowercase)
+  const formatErr = validateCodeFormat(rawCode);
+  if (formatErr) return { ok: false, error: formatErr };
+
+  const newCode = rawCode.toLowerCase();
+
+  // Uniqueness against other affiliate codes
+  const existingAffiliate = await prisma.affiliate.findUnique({
+    where: { discountCode: newCode },
+    select: { id: true },
+  });
+  if (existingAffiliate && existingAffiliate.id !== id) {
+    return { ok: false, error: 'That code is already in use by another affiliate.' };
+  }
+
+  // Uniqueness against manual discount codes
+  const existingDiscount = await prisma.discount.findUnique({
+    where: { code: newCode },
+    select: { code: true },
+  });
+  if (existingDiscount) {
+    return { ok: false, error: 'That code is already in use as a manual discount code.' };
+  }
+
+  await prisma.affiliate.update({ where: { id }, data: { discountCode: newCode } });
+
+  revalidatePath(`/admin/affiliates/${id}`);
+  revalidatePath('/admin/affiliates');
+  return { ok: true, message: `Discount code updated to ${newCode.toUpperCase()}.` };
 }

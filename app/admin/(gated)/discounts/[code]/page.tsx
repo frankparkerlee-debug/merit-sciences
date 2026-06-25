@@ -34,15 +34,18 @@ export default async function DiscountDetailPage({ params }: { params: Promise<{
   const discount = await prisma.discount.findUnique({ where: { code } });
   if (!discount) notFound();
 
+  // Orders store discountCode UPPERCASED (create-order route + webhook both
+  // call .toUpperCase() before persisting). Must match case or count = 0.
+  const codeUpper = code.toUpperCase();
   // Pull usage + recent orders that used this code
   const [usage, recentOrders] = await Promise.all([
     prisma.order.aggregate({
-      where: { discountCode: code, status: { not: 'PENDING_PAYMENT' } },
+      where: { discountCode: codeUpper, status: { not: 'PENDING_PAYMENT' } },
       _count: { _all: true },
       _sum: { totalCents: true, discountCents: true },
     }),
     prisma.order.findMany({
-      where: { discountCode: code, status: { not: 'PENDING_PAYMENT' } },
+      where: { discountCode: codeUpper, status: { not: 'PENDING_PAYMENT' } },
       orderBy: { createdAt: 'desc' },
       take: 20,
       select: {

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
+import { validateCodeFormat } from '@/lib/code-rules';
 
 export type ActionResult =
   | { ok: true; message: string; redirectTo?: string }
@@ -33,11 +34,9 @@ export async function createDiscount(_prev: ActionResult | null, formData: FormD
   const startsAtInput = String(formData.get('startsAt') ?? '').trim();
   const endsAtInput = String(formData.get('endsAt') ?? '').trim();
 
-  // Validate code
-  if (!code) return { ok: false, error: 'Discount code is required.' };
-  if (!/^[a-z0-9-_]{3,40}$/i.test(code)) {
-    return { ok: false, error: 'Code must be 3–40 chars: letters, numbers, hyphen, underscore.' };
-  }
+  // Validate code format + blocklist
+  const codeFormatErr = validateCodeFormat(code);
+  if (codeFormatErr) return { ok: false, error: codeFormatErr };
 
   // Validate type + value
   if (!['PERCENT', 'FIXED_AMOUNT', 'FREE_SHIPPING'].includes(typeInput)) {

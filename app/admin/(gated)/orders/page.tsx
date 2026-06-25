@@ -154,12 +154,20 @@ export default async function AdminOrdersPage({
             <span className="text-cobalt">.</span>
           </h1>
         </div>
-        <Link
-          href="/admin/import/orders"
-          className="bg-white border border-cobalt/20 text-ink px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:border-cobalt/40 transition"
-        >
-          Import CSV
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/admin/orders/new"
+            className="bg-ink text-white px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-cobalt transition"
+          >
+            + New order
+          </Link>
+          <Link
+            href="/admin/import/orders"
+            className="bg-white border border-cobalt/20 text-ink px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:border-cobalt/40 transition"
+          >
+            Import CSV
+          </Link>
+        </div>
       </div>
 
       {/* KPI strip — today's metrics */}
