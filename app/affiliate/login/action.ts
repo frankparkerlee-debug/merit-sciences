@@ -63,11 +63,16 @@ export async function requestAffiliateMagicLink(
       email,
       options: { redirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(next)}` },
     });
-    if (error || !data?.properties?.action_link) {
+    if (error || !data?.properties?.hashed_token) {
       console.error('[affiliate-login] magic-link mint failed', error);
       return { ok: false, error: 'Could not generate a sign-in link. Please try again.' };
     }
-    signInUrl = data.properties.action_link;
+    // Send a token_hash link pointed at OUR callback (verified server-side via
+    // verifyOtp). The raw action_link routes through Supabase's verify endpoint
+    // and lands code-less on our server route → "Missing sign-in code".
+    signInUrl =
+      `${SITE_URL}/auth/callback?token_hash=${encodeURIComponent(data.properties.hashed_token)}` +
+      `&type=magiclink&next=${encodeURIComponent(next)}`;
   } catch (err) {
     console.error('[affiliate-login] magic-link mint threw', err);
     return { ok: false, error: 'Could not generate a sign-in link. Please try again.' };

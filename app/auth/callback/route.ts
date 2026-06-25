@@ -1,28 +1,42 @@
 import { NextResponse } from 'next/server';
+import type { EmailOtpType } from '@supabase/supabase-js';
 import { createServerSupabase } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
 
 /**
- * GET /auth/callback?code=...&next=...
+ * GET /auth/callback — magic-link landing endpoint.
  *
- * Magic-link landing endpoint. Supabase Auth redirects users here after
- * they click the link in their email. We exchange the one-time `code`
- * for a session, which writes the supabase auth cookies. Then we
- * redirect to `next` (the page they were trying to reach) or the
- * default dashboard.
+ * Handles two link shapes so every sign-in path works:
+ *   - ?token_hash=...&type=...  → our branded, self-emailed links (minted via
+ *     admin.generateLink, sent through Resend). Verified server-side with
+ *     verifyOtp — needs NO browser PKCE verifier, so it works from any device
+ *     or email client. This is what affiliates + practitioners use.
+ *   - ?code=...                 → client-initiated PKCE (browser signInWithOtp,
+ *     used by admin login). Exchanged with exchangeCodeForSession.
  *
- * If the exchange fails — link expired, already used, etc. — we send
- * them back to /affiliate/login with an error so they can request
- * another link.
+ * Supabase may instead redirect here with ?error=...&error_code=... when a
+ * one-time link was already consumed (commonly an email-security scanner
+ * pre-clicking it). We surface that honestly instead of a generic
+ * "missing code".
+ *
+ * On success we route by role; on any failure we bounce to the right login
+ * page with a message so the user can request a fresh link.
  */
+
+const VALID_OTP_TYPES: readonly EmailOtpType[] = [
+  'magiclink', 'signup', 'invite', 'recovery', 'email_change', 'email',
+];
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
+  const tokenHash = url.searchParams.get('token_hash');
+  const typeParam = url.searchParams.get('type');
+  const sbError = url.searchParams.get('error_description') || url.searchParams.get('error');
   const next = url.searchParams.get('next') || '/affiliate/dashboard';
 
-  // Route admins back to /admin/login on error, practitioners back to
-  // /practitioners/login, affiliates back to /affiliate/login.
+  // Route failures back to the right login page.
   const isAdminFlow = next.startsWith('/admin');
   const isPractitionerFlow = next.startsWith('/practitioners');
   const loginPath = isAdminFlow
@@ -31,8 +45,7 @@ export async function GET(req: Request) {
       ? '/practitioners/login'
       : '/affiliate/login';
 
-  // Compute the origin for redirects. On Render the request URL is the
-  // internal port — use forwarded headers to build the real public URL.
+  // Compute the real public origin (Render's request URL is the internal port).
   const forwardedHost = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
   const forwardedProto = req.headers.get('x-forwarded-proto') ?? 'https';
   const origin =
@@ -41,22 +54,39 @@ export async function GET(req: Request) {
         ? `${forwardedProto}://${forwardedHost}`
         : url.origin);
 
-  if (!code) {
-    return NextResponse.redirect(
-      `${origin}${loginPath}?error=${encodeURIComponent('Missing sign-in code. Try requesting another link.')}`,
-    );
+  const bounce = (msg: string) =>
+    NextResponse.redirect(`${origin}${loginPath}?error=${encodeURIComponent(msg)}`);
+
+  // Supabase already reported a failure (link expired / already used — often an
+  // email scanner consumed the one-time token before the human clicked).
+  if (sbError) {
+    return bounce('That sign-in link was already used or has expired. Request a fresh one below.');
   }
 
   const supabase = await createServerSupabase();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
-    return NextResponse.redirect(
-      `${origin}${loginPath}?error=${encodeURIComponent('Sign-in link expired or already used. Request a new one.')}`,
-    );
+
+  if (tokenHash) {
+    // Branded, self-emailed link (affiliate / practitioner). Server-verifiable.
+    const type: EmailOtpType =
+      typeParam && (VALID_OTP_TYPES as readonly string[]).includes(typeParam)
+        ? (typeParam as EmailOtpType)
+        : 'magiclink';
+    const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+    if (error) {
+      return bounce('That sign-in link was already used or has expired. Request a fresh one below.');
+    }
+  } else if (code) {
+    // Client-initiated PKCE link (admin signInWithOtp).
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return bounce('That sign-in link was already used or has expired. Request a fresh one below.');
+    }
+  } else {
+    // No verifiable credential on the URL at all.
+    return bounce('That sign-in link looks incomplete. Request a fresh one below.');
   }
 
-  // Honor the `next` param but only if it stays within our site
-  // (relative path or matching origin) — defensive against open-redirect.
+  // Honor `next` but only internal relative paths (anti open-redirect).
   let safeNext = isAdminFlow
     ? '/admin/orders'
     : isPractitionerFlow
@@ -66,17 +96,13 @@ export async function GET(req: Request) {
     safeNext = next;
   }
 
-  // Defense in depth: if `next` was stripped en route (e.g. Supabase Auth
-  // overriding redirect_to from the Site URL allowlist), check the
-  // signed-in user's role and route them to the right portal anyway.
-  // Without this, practitioners would land at the affiliate dashboard
-  // and have to navigate manually.
+  // Defense in depth: if `next` was stripped en route, route by the signed-in
+  // user's role so practitioners/admins don't land on the affiliate dashboard.
   if (safeNext === '/affiliate/dashboard' || !next) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
         const email = user.email.toLowerCase();
-        // Admin override
         const adminList = (process.env.ADMIN_EMAILS ?? '')
           .split(',')
           .map((e) => e.trim().toLowerCase())
@@ -84,8 +110,6 @@ export async function GET(req: Request) {
         if (adminList.includes(email)) {
           safeNext = '/admin/orders';
         } else {
-          // Practitioner override — direct DB read to avoid a tight
-          // coupling to prisma/db on the auth path
           const { isApprovedPractitioner } = await import('@/lib/practitioner-session');
           if (await isApprovedPractitioner(email)) {
             safeNext = '/practitioners/portal';
@@ -93,7 +117,7 @@ export async function GET(req: Request) {
         }
       }
     } catch {
-      // Best-effort routing fallback — never block auth on a lookup failure
+      // Best-effort routing fallback — never block auth on a lookup failure.
     }
   }
 
