@@ -124,19 +124,22 @@ export default async function AdminDiscountsPage({
     rows = rows.filter((r) => r.code.toLowerCase().includes(needle) || r.title.toLowerCase().includes(needle));
   }
 
-  // Authoritative usage (across both sources) — one groupBy on Order
-  const codesLower = allRows.map((r) => r.code.toLowerCase());
+  // Authoritative usage (across both sources) — one groupBy on Order.
+  // Orders persist discountCode UPPERCASED (see create-order route +
+  // webhook), so we MUST query + key by uppercase or every count is 0.
+  // r.code is already uppercased when the rows are built above.
+  const codesUpper = allRows.map((r) => r.code);
   const usageMap = new Map<string, { count: number; revenueCents: number }>();
-  if (codesLower.length > 0) {
+  if (codesUpper.length > 0) {
     const usage = await prisma.order.groupBy({
       by: ['discountCode'],
-      where: { discountCode: { in: codesLower }, status: { not: 'PENDING_PAYMENT' } },
+      where: { discountCode: { in: codesUpper }, status: { not: 'PENDING_PAYMENT' } },
       _count: { _all: true },
       _sum: { totalCents: true },
     });
     for (const u of usage) {
       if (u.discountCode) {
-        usageMap.set(u.discountCode.toLowerCase(), {
+        usageMap.set(u.discountCode.toUpperCase(), {
           count: u._count._all,
           revenueCents: Number(u._sum.totalCents ?? 0),
         });
@@ -237,7 +240,7 @@ export default async function AdminDiscountsPage({
               <div></div>
             </div>
             {rows.map((r) => {
-              const usage = usageMap.get(r.code.toLowerCase()) ?? { count: 0, revenueCents: 0 };
+              const usage = usageMap.get(r.code) ?? { count: 0, revenueCents: 0 };
               const statusCls = statusPill(r.status);
               return (
                 <div
