@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import { EnterButton } from './EnterButton';
 
 /**
@@ -37,27 +36,6 @@ export default function AccessPage() {
             'radial-gradient(125% 90% at 50% -15%, #4763F0 0%, #2438B4 32%, #111B6E 60%, #060B33 90%)',
         }}
       />
-      {/* Organic cobalt form — masked to drop its cream ground, screened into
-          the field as a glowing bloom (policy-safe abstract, not a product). */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-[14%] left-1/2 -z-20 aspect-square w-[150vw] max-w-[1100px] -translate-x-1/2 opacity-70 mix-blend-screen sm:-top-[28%]"
-        style={{
-          maskImage:
-            'radial-gradient(circle at 50% 47%, #000 55%, transparent 86%)',
-          WebkitMaskImage:
-            'radial-gradient(circle at 50% 47%, #000 55%, transparent 86%)',
-        }}
-      >
-        <Image
-          src="/editorial/cobalt-ink-bloom.png"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-contain"
-        />
-      </div>
       {/* Grain */}
       <div
         aria-hidden
@@ -88,18 +66,18 @@ export default function AccessPage() {
         </p>
 
         <h1
-          className="font-display font-black leading-[0.95] tracking-[-0.03em] text-cream"
-          style={{ fontSize: 'clamp(40px, 8vw, 78px)' }}
+          className="font-display font-black leading-[0.96] tracking-[-0.03em] text-cream"
+          style={{ fontSize: 'clamp(36px, 7.2vw, 70px)' }}
         >
           You research everything.
           <br />
-          Your source was{' '}
-          <span className="text-cream/45 line-through decoration-cobalt-soft decoration-4">
+          Then you trusted{' '}
+          <span className="whitespace-nowrap text-cream/45 line-through decoration-cobalt-soft decoration-[5px]">
             a group chat
           </span>
           .
           <br />
-          <span className="text-cobalt-soft">Now it isn&apos;t.</span>
+          <span className="text-cobalt-soft">Now it&apos;s a pharmacy.</span>
         </h1>
 
         <p className="mt-7 max-w-lg text-lg leading-relaxed text-cream/70">
