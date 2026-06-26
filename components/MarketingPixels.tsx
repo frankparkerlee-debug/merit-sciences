@@ -13,7 +13,10 @@ import Script from 'next/script';
  *   NEXT_PUBLIC_META_PIXEL_ID     — Meta Pixel ID (Events Manager)
  *   NEXT_PUBLIC_TIKTOK_PIXEL_ID   — TikTok Pixel ID (Events Manager)
  */
-const META = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+// Meta pixel defaults to "Merit Sciences's pixel" (the live dataset, ~7.4K
+// events) — a pixel ID is a public client-side value, so it's safe in code.
+// Override via NEXT_PUBLIC_META_PIXEL_ID in Render if it ever changes.
+const META = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1012608588376068';
 const TIKTOK = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 
 export function MarketingPixels() {
