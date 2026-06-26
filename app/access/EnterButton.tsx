@@ -2,18 +2,26 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { track } from '@/lib/analytics';
+import { track, trackLead } from '@/lib/analytics';
 
 /**
- * Click-to-verify CTA for the /access ad gate. The click IS the RUO
- * authorization — sets a local flag, fires the analytics event (the key
- * paid-funnel step), then routes into the site. No email, minimal friction:
- * cold Meta/TikTok traffic converts on a single tap, not a form.
+ * Click-to-verify CTA for the /access ad gate (offer + one-click hybrid).
+ * The click IS the RUO authorization — no email, minimal friction. It stashes
+ * the welcome code so the site can surface/apply it, fires the analytics event
+ * (the key paid-funnel step), then routes into the catalog.
  *
  * When the Meta/TikTok pixels land, fire their "Lead"/"ClickButton" events
  * here too so this verify-click is the optimization signal.
  */
-export function EnterButton({ href = '/' }: { href?: string }) {
+export function EnterButton({
+  href = '/',
+  label = 'Enter the catalog',
+  code,
+}: {
+  href?: string;
+  label?: string;
+  code?: string;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
 
@@ -21,10 +29,13 @@ export function EnterButton({ href = '/' }: { href?: string }) {
     setPending(true);
     try {
       localStorage.setItem('merit_access_verified', String(Date.now()));
+      if (code) localStorage.setItem('merit_welcome_code', code);
     } catch {
       /* private mode — non-fatal */
     }
-    track('access_verify', { source: 'access' });
+    track('access_verify', { source: 'access', ...(code ? { offer: code } : {}) });
+    // Top-of-funnel conversion signal for Meta/TikTok ad optimization.
+    trackLead({ source: 'access', ...(code ? { offer: code } : {}) });
     router.push(href);
   }
 
@@ -33,9 +44,9 @@ export function EnterButton({ href = '/' }: { href?: string }) {
       type="button"
       onClick={enter}
       disabled={pending}
-      className="group inline-flex items-center gap-3 rounded-2xl bg-cobalt px-9 py-5 text-lg font-bold text-white shadow-[0_8px_40px_-8px_rgba(46,77,219,0.7)] transition-all hover:bg-cobalt-soft hover:shadow-[0_12px_50px_-8px_rgba(107,138,255,0.8)] disabled:opacity-70"
+      className="group inline-flex items-center gap-3 rounded-2xl bg-cream px-9 py-5 text-lg font-bold text-ink shadow-[0_10px_50px_-10px_rgba(0,0,0,0.6)] transition-all hover:bg-white disabled:opacity-70"
     >
-      {pending ? 'Entering…' : 'Enter the catalog'}
+      {pending ? 'Entering…' : label}
       <span
         aria-hidden
         className="transition-transform duration-200 group-hover:translate-x-1"

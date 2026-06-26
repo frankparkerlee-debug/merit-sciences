@@ -23,6 +23,27 @@ export function track(event: string, props?: Record<string, unknown>): void {
   }
 }
 
+/**
+ * Top-of-funnel Lead event for the paid funnel — fired from the /access
+ * Enter click + email capture. Fans out to PostHog + the Meta/TikTok ad
+ * pixels (the Meta optimization signal, since Purchase is blocked on
+ * flagged health domains). Every leg is guarded so a missing pixel never
+ * breaks the click.
+ */
+export function trackLead(props?: Record<string, unknown>): void {
+  track('lead', props);
+  try {
+    (window as any).fbq?.('track', 'Lead', props);
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+  try {
+    (window as any).ttq?.track?.('SubmitForm', props);
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+}
+
 /** Tie anonymous events to a known person (email) across sessions/devices. */
 export function identify(email: string, props?: Record<string, unknown>): void {
   try {

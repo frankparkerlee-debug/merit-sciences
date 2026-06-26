@@ -7,6 +7,7 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { SubscribePopup } from '@/components/SubscribePopup';
 import { ChromeGate } from '@/components/ChromeGate';
 import { PostHogProvider } from '@/components/PostHogProvider';
+import { MarketingPixels } from '@/components/MarketingPixels';
 import { getStoreSettings } from '@/lib/store-settings';
 
 const inter = Inter({
@@ -132,6 +133,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable}`}>
       <body className="font-sans">
+        {/* Meta + TikTok ad pixels. Env-gated — no-op until IDs are set. */}
+        <MarketingPixels />
         {/* PostHog: autocapture + pageviews across the whole app. No-ops
             until NEXT_PUBLIC_POSTHOG_KEY is set in Render. */}
         <PostHogProvider>
