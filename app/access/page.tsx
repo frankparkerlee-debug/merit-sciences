@@ -94,7 +94,7 @@ export default function AccessPage() {
           You research everything.
           <br />
           Your source was{' '}
-          <span className="inline-block rounded-md bg-cream/90 px-2 text-transparent select-none">
+          <span className="text-cream/45 line-through decoration-cobalt-soft decoration-4">
             a group chat
           </span>
           .
