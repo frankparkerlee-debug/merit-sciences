@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merit · lead ad (vial)</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#070A12; color:#F4F1EA; font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:30px; }
+  .label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#6B8AFF; text-align:center; }
+
+  .ad { width:min(500px, 90vw); aspect-ratio:4/5; position:relative; overflow:hidden; border-radius:16px;
+        background:#EDE8DC url('/brand/scene-sculptural.webp') center 8%/cover no-repeat; }
+
+  /* readability scrim rising from the base */
+  .scrim { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(10,15,32,0) 26%, rgba(10,15,32,0.5) 45%, rgba(10,15,32,0.86) 60%, rgba(8,12,24,0.97) 100%); }
+
+  .top { position:absolute; top:24px; left:26px; right:26px; display:flex; justify-content:space-between; align-items:center; }
+  .top .cat { font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:#2E4DDB; }
+  .top .mark { font-family:'Inter Tight',sans-serif; font-weight:900; font-size:15px; letter-spacing:-0.02em; color:#15110A; }
+
+  .bot { position:absolute; bottom:24px; left:28px; right:28px; }
+  .bot h1 { font-family:'Inter Tight',sans-serif; font-weight:900; font-size:clamp(26px, 6.2vw, 34px); line-height:0.98; letter-spacing:-0.035em; color:#FFFFFF; text-shadow:0 2px 18px rgba(0,0,0,0.55); }
+  .bot h1 em { font-style:normal; color:#A9BCFF; }
+  .bot .punch { font-family:'Inter Tight',sans-serif; font-weight:800; font-size:clamp(16px, 3.9vw, 21px); color:#A9BCFF; margin-top:11px; line-height:1.12; letter-spacing:-0.02em; text-shadow:0 1px 12px rgba(0,0,0,0.6); }
+  .bot .row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:16px; }
+  .bot .offer { font-family:'Inter Tight',sans-serif; font-weight:800; font-size:14px; color:#F4F1EA; }
+  .bot .offer span { color:#9DB2FF; }
+  .cta { background:#F4F1EA; color:#0B0F19; font-weight:700; font-size:12.5px; padding:10px 16px; border-radius:9px; white-space:nowrap; }
+</style>
+</head>
+<body>
+  <div class="ad">
+    <div class="scrim"></div>
+    <div class="top">
+      <span class="mark">Merit.</span>
+      <span class="cat">American Made · Pharmacy Grade</span>
+    </div>
+    <div class="bot">
+      <h1>You wouldn&rsquo;t eat<br>gas-station sushi.</h1>
+      <p class="punch">So why buy peptides from a stranger?</p>
+      <div class="row">
+        <div class="offer">10% off <span>your first order</span></div>
+        <div class="cta">Get access →</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
