@@ -10,13 +10,13 @@ import { EnterButton } from './EnterButton';
  * Design (per direction): bold, offer-led, immersive — the conversion energy
  * of a full-bleed cobalt takeover, but built flag-safe (no vials) and
  * fast-loading (one optimized form + CSS) so it actually delivers at scale.
- * Mechanism: offer + one-click hybrid — "10% off" hook, one tap into the
+ * Mechanism: offer + one-click hybrid — "20% off" hook, one tap into the
  * catalog (welcome code stashed for the site to apply). No email friction.
  */
 export const metadata: Metadata = {
-  title: 'Get 10% off · Merit Sciences',
+  title: 'Get 20% off · Merit Sciences',
   description:
-    'American made, pharmacy-grade. The opposite of a mystery source — third-party tested, shipped from Dallas. 10% off your first order.',
+    'American made, pharmacy-grade. The opposite of a mystery source — third-party tested, shipped from Dallas. 20% off your first order.',
   robots: { index: false, follow: false },
 };
 
@@ -86,17 +86,17 @@ export default function AccessPage() {
         </p>
 
         <p className="mt-6 text-base font-semibold text-cream/90">
-          New here? Take 10% off your first order.
+          New here? Take 20% off your first order.
         </p>
 
         <div className="mt-5">
-          <EnterButton href="/" label="Enter &amp; save 10%" code="WELCOME10" />
+          <EnterButton href="/" label="Enter &amp; save 20%" code="WELCOME20" />
         </div>
 
         <p className="mt-5 text-xs leading-relaxed text-cream/40">
           Code{' '}
           <span className="font-mono font-semibold tracking-wider text-cream/70">
-            WELCOME10
+            WELCOME20
           </span>
           . For research use only — by entering you confirm you are a qualified
           researcher or laboratory.

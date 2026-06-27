@@ -5,7 +5,7 @@ export type StoreSettings = {
   freeShippingThreshold: number; // cents
 };
 
-const DEFAULTS: StoreSettings = { freeShippingThreshold: 35_000 };
+const DEFAULTS: StoreSettings = { freeShippingThreshold: 30_000 };
 
 // Module-level cache — avoids a DB round-trip on every request while still
 // picking up changes within ~60s of an admin save.

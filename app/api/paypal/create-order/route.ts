@@ -84,8 +84,13 @@ function cleanAddress(a: AddressIn | undefined): {
  * to render Smart Buttons / Card Fields.
  */
 
-const FREE_SHIPPING_CENTS_THRESHOLD = 10_000; // $100
+const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300 — authoritative free-shipping gate
 const FLAT_SHIPPING_CENTS = 999;               // $9.99
+
+// Ad-funnel / paid-acquisition codes. A sale that arrives on one of these is
+// OUR paid ad's sale, so it OVERRIDES any ?ref= affiliate cookie — we don't
+// pay affiliate commission on traffic we already bought. Stored lowercase.
+const AD_FUNNEL_CODES = new Set(['welcome20']);
 
 type CartLineIn = {
   handle: string;
@@ -219,12 +224,18 @@ export async function POST(req: Request) {
     // We deliberately fall through to the cookie check below so a buyer
     // referred via ?ref= who then uses a general promo code STILL credits
     // their referrer (previously this path dropped the referral entirely).
+    // EXCEPTION: ad-funnel codes suppress that fall-through (see adOverride).
   }
+
+  // Ad-funnel codes win over a ?ref= cookie: a click on our paid ad that lands
+  // on /access with this code is OUR sale — don't credit (or pay) an affiliate.
+  const adOverride =
+    !!discountCode && AD_FUNNEL_CODES.has(discountCode.toLowerCase());
 
   // Cookie-based attribution (set by middleware on ?ref=). Runs whenever an
   // affiliate CODE hasn't already claimed the sale — i.e. no code, or a
-  // manual code. An affiliate code always takes precedence over the cookie.
-  if (!affiliateId) {
+  // manual code — UNLESS an ad-funnel code overrides it.
+  if (!affiliateId && !adOverride) {
     const cookieSlug = (await cookies()).get('merit_ref')?.value ?? null;
     if (cookieSlug) {
       const aff = await prisma.affiliate.findUnique({

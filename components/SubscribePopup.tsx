@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { track, identify } from '@/lib/analytics';
 
 /**
- * Subscribe / exit-intent popup → email capture → 10%-off-first-order code.
+ * Subscribe / exit-intent popup → email capture → 20%-off-first-order code.
  *
  * Full-screen cobalt takeover: the vial pattern fills the viewport behind a
  * deep cobalt→ink wash, the four colored lane vials float around the edges
@@ -66,7 +66,7 @@ export function SubscribePopup() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [code, setCode] = useState('WELCOME10');
+  const [code, setCode] = useState('WELCOME20');
 
   const hidden = HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p));
 
@@ -150,7 +150,7 @@ export function SubscribePopup() {
       className="fixed inset-0 z-[80] overflow-hidden"
       role="dialog"
       aria-modal="true"
-      aria-label="Subscribe for 10% off"
+      aria-label="Subscribe for 20% off"
       style={{ animation: 'meritPop .5s cubic-bezier(0.22,1,0.36,1) both' }}
     >
       {/* Keyframes (scoped, self-contained) */}
@@ -236,7 +236,7 @@ export function SubscribePopup() {
             <>
               <p className="font-display text-[12px] tracking-[0.28em] uppercase text-cobalt-soft font-bold mb-4">— You’re in</p>
               <h2 className="font-display font-black text-cream tracking-[-0.03em] leading-[0.92] mb-5" style={{ fontSize: 'clamp(40px, 8vw, 76px)' }}>
-                Here’s your 10% off<span className="text-cobalt-soft">.</span>
+                Here’s your 20% off<span className="text-cobalt-soft">.</span>
               </h2>
               <p className="text-base text-cream/70 mb-7">Use it at checkout — emailed to you too.</p>
               <div className="inline-block font-mono text-2xl sm:text-3xl font-extrabold tracking-[0.14em] text-cream bg-white/10 backdrop-blur-sm border border-dashed border-cobalt-soft/60 rounded-2xl px-8 py-5 mb-8 shadow-2xl">
@@ -257,7 +257,7 @@ export function SubscribePopup() {
             <>
               <p className="font-display text-[12px] tracking-[0.28em] uppercase text-cobalt-soft font-bold mb-4">— Merit Sciences · Welcome offer</p>
               <h2 className="font-display font-black text-cream tracking-[-0.035em] leading-[0.9] mb-5" style={{ fontSize: 'clamp(44px, 9vw, 88px)' }}>
-                Get 10% off<br />your first order<span className="text-cobalt-soft">.</span>
+                Get 20% off<br />your first order<span className="text-cobalt-soft">.</span>
               </h2>
               <p className="text-base sm:text-lg text-cream/75 mb-8 leading-relaxed max-w-lg mx-auto">
                 Pharmacy-grade research compounds — HPLC-tested to ≥99%, a COA in every box. Join the list for your code plus restock alerts.

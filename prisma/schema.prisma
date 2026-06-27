@@ -818,7 +818,7 @@ enum AbandonedCartStatus {
 // Single-row store-wide settings. Always id=1; upserted on first read.
 model StoreSettings {
   id                    Int      @id @default(1)
-  freeShippingThreshold Int      @default(35000) // cents
+  freeShippingThreshold Int      @default(30000) // cents
   updatedAt             DateTime @updatedAt
 
   @@map("store_settings")
