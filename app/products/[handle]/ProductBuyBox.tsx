@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
-import { money } from '@/lib/product-types';
+import { money, productDisplayName } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
 import { track } from '@/lib/analytics';
 import { familyLabel, type Family, type RestockSignal } from '@/lib/catalog-meta';
@@ -89,7 +89,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
     add(
       {
         handle: product.handle,
-        title: product.title,
+        title: productDisplayName(product),
         bundleLabel: purchaseType === 'subscribe' ? `Subscribe · ${subscriptionFreq}` : selected.label,
         unitCents: effectiveBundle.priceCents,
         imageUrl: product.imageUrl,

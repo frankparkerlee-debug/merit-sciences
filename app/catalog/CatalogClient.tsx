@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
-import { money, productImage } from '@/lib/product-types';
+import { money, productImage, productDisplayName } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
 import { track } from '@/lib/analytics';
 import { stackToCartLine } from '@/lib/catalog-meta';
@@ -437,7 +437,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
                     />
                   </div>
                   <div className="p-5">
-                    <h3 className="font-display text-base font-extrabold text-ink mb-1">{p.title}</h3>
+                    <h3 className="font-display text-base font-extrabold text-ink mb-1">{productDisplayName(p)}</h3>
                     <p className="text-sm text-ink-soft mb-3">{p.vialSize} · {p.format}</p>
                     <span className="font-display text-base font-bold text-ink">
                       {money(p.priceCents)}
@@ -748,7 +748,7 @@ function ProductCard({
               href={`/products/${p.handle}`}
               className="hover:text-cobalt transition"
             >
-              {p.title}
+              {productDisplayName(p)}
             </Link>
           </h3>
           <span className="font-display font-black text-ink tracking-tight leading-tight whitespace-nowrap flex items-baseline gap-1.5">

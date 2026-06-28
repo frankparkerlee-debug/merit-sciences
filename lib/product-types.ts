@@ -86,3 +86,14 @@ export const PRODUCT_PLACEHOLDER_IMAGE = '/products/placeholder-vial.webp';
 export function productImage(imageUrl: string | null | undefined): string {
   return imageUrl || PRODUCT_PLACEHOLDER_IMAGE;
 }
+
+/**
+ * Canonical buyer-facing product name = compound + vial size, e.g.
+ * "Retatrutide 30 mg". Use EVERYWHERE a product is named (catalog cards,
+ * PDP, cart, order lines) so a buyer comparing sizes always sees which one
+ * they're looking at. `title` holds just the compound; the size lives in
+ * `vialSize` — never bake the size into `title` (it double-prints).
+ */
+export function productDisplayName(p: { title: string; vialSize: string }): string {
+  return `${p.title} ${p.vialSize}`.replace(/\s+/g, ' ').trim();
+}
