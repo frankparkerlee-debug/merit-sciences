@@ -27,7 +27,32 @@ const COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 days
 //   lowercase alphanumeric + hyphen, 3-30 chars, must start/end alphanumeric.
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/;
 
+// Clean-room ad-gate domain(s). Traffic on this host NEVER reaches the catalog:
+// every page path is rewritten to the static /gate.html email wall, so Meta's
+// crawler (and reviewers) hitting the ad's destination can't surface a single
+// compound name. The real store lives on a different registered domain with its
+// own reputation. Override via GATE_HOST (comma-separated) in Render.
+const GATE_HOSTS = (process.env.GATE_HOST || 'trymerit.co')
+  .split(',')
+  .map((h) => h.trim().toLowerCase())
+  .filter(Boolean);
+
+function isGateHost(host: string): boolean {
+  const h = host.toLowerCase().split(':')[0]; // strip any port
+  return GATE_HOSTS.some((g) => h === g || h === `www.${g}`);
+}
+
 export async function middleware(req: NextRequest) {
+  // ── Clean-room gate domain (e.g. trymerit.co) ──────────────────────────
+  // Serve the static email wall for EVERY page path on this host. /api/* and
+  // dotted asset paths (incl. /gate.html itself) are excluded by the matcher,
+  // so the form POST → /api/gate-enter and the asset itself pass through.
+  if (isGateHost(req.headers.get('host') || '')) {
+    const gateUrl = req.nextUrl.clone();
+    gateUrl.pathname = '/gate.html';
+    return NextResponse.rewrite(gateUrl);
+  }
+
   const { searchParams, pathname } = req.nextUrl;
   const ref = searchParams.get('ref');
 

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Clean-room ad gate. Served for every path on the gate domain via
+       middleware. Deliberately self-contained static HTML so it bypasses the
+       app shell entirely — only this email wall renders. The destination URL is
+       returned by /api/gate-enter at submit time and never appears in this
+       source, so a visitor that won't fill the form can't follow it onward. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Merit · Members Access</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --ink: #08152e;
+      --cobalt: #173a8a;
+      --cobalt-soft: #4f74c9;
+      --cream: #f4f1ea;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background:
+        radial-gradient(120% 80% at 50% -10%, rgba(79,116,201,0.45) 0%, rgba(23,58,138,0.0) 55%),
+        linear-gradient(180deg, #0a1b3d 0%, #08152e 60%, #060f22 100%);
+      color: var(--cream);
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 26px;
+      padding: 44px 38px 34px;
+      box-shadow: 0 40px 120px -40px rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px);
+    }
+    .brand {
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 0.42em;
+      color: var(--cream);
+      text-indent: 0.42em;
+    }
+    .eyebrow {
+      margin-top: 18px;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--cobalt-soft);
+    }
+    h1 {
+      margin-top: 14px;
+      font-size: clamp(30px, 8vw, 38px);
+      line-height: 1.04;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      margin-top: 16px;
+      font-size: 15.5px;
+      line-height: 1.5;
+      color: rgba(244,241,234,0.66);
+    }
+    form { margin-top: 26px; display: flex; flex-direction: column; gap: 12px; }
+    input {
+      width: 100%;
+      font-size: 16px;
+      color: var(--cream);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 14px;
+      padding: 16px 18px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input::placeholder { color: rgba(244,241,234,0.38); }
+    input:focus { border-color: var(--cobalt-soft); box-shadow: 0 0 0 3px rgba(79,116,201,0.22); }
+    button {
+      width: 100%;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      background: var(--cream);
+      border: none;
+      border-radius: 14px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: transform .12s, background .15s, opacity .15s;
+    }
+    button:hover { background: #ffffff; transform: translateY(-1px); }
+    button:disabled { opacity: 0.65; cursor: default; transform: none; }
+    .err { margin-top: 10px; font-size: 13px; color: #f6a9b4; min-height: 16px; }
+    .trust {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: rgba(244,241,234,0.46);
+      text-align: center;
+    }
+    .fine { margin-top: 14px; font-size: 11.5px; line-height: 1.5; color: rgba(244,241,234,0.34); text-align: center; }
+  </style>
+</head>
+<body>
+  <!-- Meta Pixel -->
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init','1012608588376068');
+    fbq('track','PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1012608588376068&ev=PageView&noscript=1" /></noscript>
+
+  <main class="card">
+    <div class="brand">MERIT</div>
+    <div class="eyebrow">Members Access</div>
+    <h1>You're early.<br />Here's 20% off.</h1>
+    <p class="sub">Enter your email and we'll take you straight in — your code lands in your inbox instantly.</p>
+
+    <form id="gate-form" novalidate>
+      <input id="gate-email" type="email" inputmode="email" autocomplete="email" required placeholder="your@email.com" aria-label="Email address" />
+      <button id="gate-btn" type="submit">Unlock access →</button>
+    </form>
+    <p id="gate-err" class="err" role="alert"></p>
+
+    <div class="trust">American-made · Ships in 48 hrs · Secure checkout</div>
+    <p class="fine">We'll email your code. No spam — unsubscribe anytime.</p>
+  </main>
+
+  <script>
+    (function () {
+      var form = document.getElementById('gate-form');
+      var email = document.getElementById('gate-email');
+      var btn = document.getElementById('gate-btn');
+      var err = document.getElementById('gate-err');
+      var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var addr = (email.value || '').trim().toLowerCase();
+        if (!EMAIL_RE.test(addr)) { err.textContent = 'Enter a valid email to continue.'; return; }
+        err.textContent = '';
+        btn.disabled = true;
+        btn.textContent = 'Unlocking…';
+
+        // Top-of-funnel conversion signal for Meta optimization.
+        try { if (window.fbq) fbq('track', 'Lead'); } catch (_) {}
+
+        try {
+          var res = await fetch('/api/gate-enter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: addr, search: location.search }),
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (data && data.ok && data.next) { window.location.href = data.next; return; }
+          err.textContent = (data && data.error) || 'Something went wrong. Try again.';
+        } catch (_) {
+          err.textContent = 'Something went wrong. Try again.';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Unlock access →';
+      });
+    })();
+  </script>
+</body>
+</html>
