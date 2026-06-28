@@ -1,7 +1,7 @@
 import 'server-only';
 import { unstable_cache } from 'next/cache';
 import { prisma } from './db';
-import type { Product } from './product-types';
+import { deriveBundles, type Product } from './product-types';
 import type { Product as DbProduct } from './generated/prisma/index.js';
 
 // Product data is identical for every visitor and changes rarely, but
@@ -94,7 +94,10 @@ function dbToProduct(r: DbProduct): Product {
     oneLiner: r.oneLiner,
     priceCents: r.priceCents,
     compareAtCents: r.compareAtCents ?? undefined,
-    bundles: (r.bundles as any) ?? undefined,
+    // Bundles DERIVE from priceCents (single source of truth) — the stored
+    // r.bundles JSON is intentionally ignored so a price edit always flows to
+    // every pack/subscribe tier. See deriveBundles in product-types.
+    bundles: deriveBundles(r.priceCents),
     spec: {
       cas: r.specCas ?? undefined,
       mw: r.specMw ?? undefined,

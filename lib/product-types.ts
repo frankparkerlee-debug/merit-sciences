@@ -54,6 +54,24 @@ export function money(cents: number): string {
 }
 
 /**
+ * Standard bundle ladder DERIVED from a single per-vial price. The price is
+ * the single source of truth — editing a product's priceCents flows to every
+ * pack tier automatically. Multipliers are uniform across the whole catalog
+ * (verified): Single 1.0× · 3-Pack 0.95× · 6-Pack 0.90× · Subscribe 0.90×.
+ * Replaces the hand-maintained `bundles` JSON, which went stale whenever a
+ * price was edited without re-editing the array — the exact cause of the
+ * $169.99-pill / $135-body split on Retatrutide 30mg.
+ */
+export function deriveBundles(perVialCents: number): NonNullable<Product['bundles']> {
+  return [
+    { label: 'Single', vials: 1, priceCents: perVialCents },
+    { label: '3-Pack', vials: 3, priceCents: Math.round(perVialCents * 3 * 0.95) },
+    { label: '6-Pack', vials: 6, priceCents: Math.round(perVialCents * 6 * 0.9) },
+    { label: 'Subscribe & Save 10%', vials: 1, priceCents: Math.round(perVialCents * 0.9) },
+  ];
+}
+
+/**
  * Resolve a product image URL with a Merit-branded placeholder fallback.
  * Use this everywhere a product image is rendered so newly created
  * draft products (no imageUrl yet) still show a clean visual instead

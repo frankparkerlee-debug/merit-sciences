@@ -15,7 +15,7 @@
 import 'server-only';
 import { getPractitionerSession, type PractitionerSession } from '@/lib/practitioner-session';
 import { prisma } from '@/lib/db';
-import type { Product } from '@/lib/product-types';
+import { deriveBundles, type Product } from '@/lib/product-types';
 
 export type PricingContext = {
   session: PractitionerSession | null;
@@ -162,9 +162,15 @@ function decorate<T extends Product>(
     retailPriceCents,
     effectivePriceCents,
     isPractitionerPricing,
-    bundles: product.bundles
-      ? bundlesFor(product.bundles, retailPriceCents, effectivePriceCents, isPractitionerPricing)
-      : product.bundles,
+    // Bundles are DERIVED from the retail price (not the stored JSON) so the
+    // pack / subscribe tiers always track the live price; bundlesFor then
+    // re-prices the ladder for a signed-in practitioner (no-op for retail).
+    bundles: bundlesFor(
+      deriveBundles(retailPriceCents),
+      retailPriceCents,
+      effectivePriceCents,
+      isPractitionerPricing,
+    ),
     // Same overwrite trick for compareAtCents — when practitioner sees
     // a struck-through "was $X" marker, that X should also be the
     // practitioner-tier "was", not retail's marketing was.
