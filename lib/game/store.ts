@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import {
   CHARACTERS,
   CHARACTERS_BY_ID,
@@ -24,6 +24,65 @@ const OFFLINE_EFFICIENCY = 0.5;
 const TOKEN_BOOST = 0.02;
 /** Prestige unlocks once you've earned this much, lifetime. */
 export const PRESTIGE_THRESHOLD = 1_000_000;
+
+// ── Throttled persistence ──────────────────────────────────────────────────
+// The idle tick mutates state ~10x/sec. Zustand's persist writes to
+// localStorage on every set(), so a naive setup would hammer the disk 10x/sec
+// forever — measurable battery/jank on phones. This storage coalesces writes
+// to at most once per WRITE_THROTTLE_MS, with a trailing flush, plus an
+// explicit flush() we call on tab-hide so nothing is lost on exit.
+const WRITE_THROTTLE_MS = 3000;
+
+function createThrottledStorage(): StateStorage & { flush: () => void } {
+  let pending: { key: string; value: string } | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const write = () => {
+    if (pending) {
+      try {
+        window.localStorage.setItem(pending.key, pending.value);
+      } catch {
+        /* quota / private-mode — ignore, game still runs in-memory */
+      }
+      pending = null;
+    }
+    timer = null;
+  };
+  return {
+    getItem: (key) => {
+      try {
+        return window.localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    },
+    setItem: (key, value) => {
+      pending = { key, value };
+      if (timer == null) timer = setTimeout(write, WRITE_THROTTLE_MS);
+    },
+    removeItem: (key) => {
+      try {
+        window.localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
+    },
+    flush: write,
+  };
+}
+
+const noopStorage: StateStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
+
+const gameStorage =
+  typeof window !== 'undefined' ? createThrottledStorage() : null;
+
+/** Force any pending save to disk immediately (call on tab hide / unload). */
+export function flushGameStorage(): void {
+  gameStorage?.flush();
+}
 
 export type UnlockedReward = {
   characterId: string;
@@ -56,6 +115,8 @@ type GameState = {
   isOwned: (id: string) => boolean;
   recruitCost: (id: string) => number;
   upgradeCost: (id: string) => number;
+  /** Cost + count for buying `want` levels (or as many as affordable for 'max'). */
+  previewUpgrade: (id: string, want: number | 'max') => { count: number; cost: number };
   unlockedRewards: () => UnlockedReward[];
   pendingPrestigeTokens: () => number;
   canPrestige: () => boolean;
@@ -64,7 +125,7 @@ type GameState = {
   tick: (deltaSec: number) => void;
   click: () => number;
   recruit: (id: string) => void;
-  upgrade: (id: string) => void;
+  upgrade: (id: string, count?: number) => void;
   grantOffline: (seconds: number) => number;
   touch: () => void;
   prestige: () => void;
@@ -112,6 +173,25 @@ export const useGame = create<GameState>()(
         const level = get().owned[id] ?? 0;
         if (!char || level <= 0) return Infinity;
         return Math.ceil(char.unlockCost * Math.pow(UPGRADE_GROWTH, level));
+      },
+
+      previewUpgrade: (id, want) => {
+        const char = CHARACTERS_BY_ID[id];
+        const level = get().owned[id] ?? 0;
+        if (!char || level <= 0) return { count: 0, cost: Infinity };
+        const budget = get().rp;
+        let count = 0;
+        let cost = 0;
+        // Iterate level-by-level so cost reflects the exact geometric ramp.
+        // 'max' buys until the next level is unaffordable (hard-capped for safety).
+        const limit = want === 'max' ? 10_000 : want;
+        for (let k = 0; k < limit; k++) {
+          const next = Math.ceil(char.unlockCost * Math.pow(UPGRADE_GROWTH, level + k));
+          if (want === 'max' && cost + next > budget) break;
+          cost += next;
+          count++;
+        }
+        return { count, cost };
       },
 
       unlockedRewards: () => {
@@ -185,16 +265,24 @@ export const useGame = create<GameState>()(
           };
         }),
 
-      upgrade: (id) =>
+      upgrade: (id, count = 1) =>
         set((s) => {
           const char = CHARACTERS_BY_ID[id];
           const level = s.owned[id] ?? 0;
-          if (!char || level <= 0) return s;
-          const cost = Math.ceil(char.unlockCost * Math.pow(UPGRADE_GROWTH, level));
-          if (s.rp < cost) return s;
+          if (!char || level <= 0 || count <= 0) return s;
+          // Buy as many of the requested `count` levels as the balance allows.
+          let spent = 0;
+          let bought = 0;
+          for (let k = 0; k < count; k++) {
+            const next = Math.ceil(char.unlockCost * Math.pow(UPGRADE_GROWTH, level + k));
+            if (s.rp - spent < next) break;
+            spent += next;
+            bought++;
+          }
+          if (bought === 0) return s;
           return {
-            rp: s.rp - cost,
-            owned: { ...s.owned, [id]: level + 1 },
+            rp: s.rp - spent,
+            owned: { ...s.owned, [id]: level + bought },
           };
         }),
 
@@ -241,6 +329,8 @@ export const useGame = create<GameState>()(
     }),
     {
       name: 'merit-peptide-tycoon',
+      // Throttled so the 10x/sec idle tick doesn't write to disk 10x/sec.
+      storage: createJSONStorage(() => gameStorage ?? noopStorage),
       partialize: (s) => ({
         rp: s.rp,
         totalEarned: s.totalEarned,

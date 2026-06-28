@@ -1,13 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import { PeptideTycoon } from './PeptideTycoon';
 
-// Mobile-browser game — no app store needed. This viewport keeps it locked to
-// a comfortable phone layout (no accidental pinch-zoom mid-tap) while staying
-// responsive up to desktop.
+// Mobile-browser game — no app store needed. We deliberately DON'T set
+// maximumScale/user-scalable (that breaks pinch-zoom + fails WCAG); rapid-tap
+// double-tap-zoom is instead suppressed via `touch-manipulation` on buttons.
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
   themeColor: '#2E4DDB',
 };
 
