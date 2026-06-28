@@ -694,8 +694,9 @@ function ProductCard({
         {isSelected ? 'Selected' : 'Select'}
       </label>
 
-      {/* Restock signal — top-right corner */}
-      {restock && (
+      {/* Restock signal — top-right corner. 'low' (Low stock) is intentionally
+          suppressed: we don't surface low-stock scarcity on the storefront. */}
+      {restock && restock.status !== 'low' && (
         <span
           className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] uppercase px-2 py-1 rounded ${
             restock.status === 'fresh'

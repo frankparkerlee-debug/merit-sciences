@@ -120,8 +120,9 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
 
   return (
     <div className="flex flex-col gap-4 lg:gap-5">
-      {/* Restock signal — at the top, like the reference's "Hurry Up!" banner */}
-      {restock && (
+      {/* Restock signal — at the top. 'low' (Low stock) is intentionally
+          suppressed: we don't surface low-stock scarcity on the storefront. */}
+      {restock && restock.status !== 'low' && (
         <div
           className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg w-fit text-[12px] font-bold ${
             restock.status === 'fresh'
