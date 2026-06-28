@@ -13,8 +13,22 @@ export function Nav() {
           <Link href="/catalog#blends" className="hover:text-cobalt transition">Blends</Link>
           <Link href="/about" className="hover:text-cobalt transition">About</Link>
           <Link href="/practitioners" className="hover:text-cobalt transition">Practitioner Program</Link>
+          <Link
+            href="/game"
+            className="inline-flex items-center gap-1 font-semibold text-cobalt hover:text-cobalt-soft transition"
+          >
+            <span aria-hidden>🎮</span> Game
+          </Link>
         </div>
         <div className="flex items-center gap-4">
+          {/* Compact game entry for mobile (desktop uses the text link above). */}
+          <Link
+            href="/game"
+            aria-label="Play Peptide Tycoon"
+            className="md:hidden text-lg leading-none"
+          >
+            🎮
+          </Link>
           <Link
             href="/practitioners/login"
             className="hidden sm:inline-flex text-[11px] tracking-[0.12em] uppercase font-bold text-ink-soft hover:text-cobalt transition"
