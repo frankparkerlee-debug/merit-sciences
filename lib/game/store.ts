@@ -124,6 +124,8 @@ type GameState = {
   // ── actions ──
   tick: (deltaSec: number) => void;
   click: () => number;
+  /** Credit RP earned from a mini-game run (Peptide Dash). */
+  award: (amount: number) => void;
   recruit: (id: string) => void;
   upgrade: (id: string, count?: number) => void;
   grantOffline: (seconds: number) => number;
@@ -252,6 +254,13 @@ export const useGame = create<GameState>()(
         }));
         return gain;
       },
+
+      award: (amount) =>
+        set((s) =>
+          amount > 0
+            ? { rp: s.rp + amount, totalEarned: s.totalEarned + amount }
+            : s,
+        ),
 
       recruit: (id) =>
         set((s) => {

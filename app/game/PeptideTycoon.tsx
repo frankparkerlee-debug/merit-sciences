@@ -7,16 +7,24 @@ import { useGame, flushGameStorage, PRESTIGE_THRESHOLD } from '@/lib/game/store'
 import { formatRP, formatRate, formatDuration } from '@/lib/game/format';
 import { CharacterCard } from '@/components/game/CharacterCard';
 import { PixelSprite } from '@/components/game/PixelSprite';
+import { PeptideDash } from '@/components/game/dash/PeptideDash';
 
 const TICK_MS = 100;
-type Tab = 'lab' | 'roster' | 'locker';
+// Runner tint by the player's strongest hero rarity.
+const RARITY_HEX: Record<string, string> = {
+  common: '#94A0B0',
+  rare: '#2E4DDB',
+  epic: '#8B5CF6',
+  legendary: '#F0B040',
+};
+type Tab = 'dash' | 'lab' | 'roster' | 'locker';
 type BuyAmount = '1' | '10' | 'max';
 type Toast = { id: number; text: string };
 
 export function PeptideTycoon() {
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
-  const [tab, setTab] = useState<Tab>('lab');
+  const [tab, setTab] = useState<Tab>('dash');
   const [buyAmount, setBuyAmount] = useState<BuyAmount>('1');
   const [offlineGain, setOfflineGain] = useState<{ gain: number; secs: number } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -209,12 +217,13 @@ export function PeptideTycoon() {
       </header>
 
       {/* ── Tab nav ─────────────────────────────────────────────────────── */}
-      <nav className="mt-4 grid grid-cols-3 gap-1.5 rounded-2xl bg-border-soft p-1.5 text-[13px] font-bold">
+      <nav className="mt-4 grid grid-cols-4 gap-1.5 rounded-2xl bg-border-soft p-1.5 text-[12px] font-bold">
         {(
           [
+            ['dash', '🏃 Dash'],
             ['lab', '🧬 Lab'],
-            ['roster', `🦸 Roster ${collected}/${total}`],
-            ['locker', `🎟️ Locker ${rewards.length}`],
+            ['roster', `🦸 ${collected}/${total}`],
+            ['locker', `🎟️ ${rewards.length}`],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button
@@ -228,6 +237,21 @@ export function PeptideTycoon() {
           </button>
         ))}
       </nav>
+
+      {/* ── DASH (endless runner) ───────────────────────────────────────── */}
+      {tab === 'dash' && (
+        <section className="mt-4">
+          <PeptideDash
+            color={topHero ? RARITY_HEX[topHero.rarity] : '#2E4DDB'}
+            heroName={topHero?.name ?? 'your peptide'}
+            onAward={store.award}
+          />
+          <p className="mt-3 text-center text-[12px] text-white/60">
+            Every meter banks RP — spend it in <strong className="text-white">Roster</strong>{' '}
+            to recruit heroes and unlock real Merit discounts.
+          </p>
+        </section>
+      )}
 
       {/* ── LAB ─────────────────────────────────────────────────────────── */}
       {tab === 'lab' && (
