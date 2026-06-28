@@ -6,6 +6,7 @@ import { CHARACTERS, CHARACTERS_BY_ID } from '@/lib/game/characters';
 import { useGame, flushGameStorage, PRESTIGE_THRESHOLD } from '@/lib/game/store';
 import { formatRP, formatRate, formatDuration } from '@/lib/game/format';
 import { CharacterCard } from '@/components/game/CharacterCard';
+import { PixelSprite } from '@/components/game/PixelSprite';
 
 const TICK_MS = 100;
 type Tab = 'lab' | 'roster' | 'locker';
@@ -126,10 +127,10 @@ export function PeptideTycoon() {
 
   if (!mounted) {
     return (
-      <div className="min-h-[70vh] grid place-items-center text-ink-muted">
+      <div className="min-h-[70vh] grid place-items-center text-white/70">
         <div className="text-center">
           <div className="text-5xl animate-reactor">🧬</div>
-          <div className="mt-3 font-mono text-sm animate-pulse">Booting the lab…</div>
+          <div className="mt-4 font-pixel text-[11px] animate-pulse">BOOTING THE LAB…</div>
         </div>
       </div>
     );
@@ -148,10 +149,10 @@ export function PeptideTycoon() {
   return (
     <div className="max-w-container mx-auto px-3 sm:px-6 pb-28">
       {/* Brand strip */}
-      <div className="mt-4 rounded-2xl bg-ink text-white px-4 py-2.5 flex items-center justify-between gap-3">
-        <p className="text-[12px] sm:text-[13px] leading-tight">
-          <span className="font-display font-extrabold">Peptide Tycoon</span>
-          <span className="hidden sm:inline text-white/55">
+      <div className="mt-4 rounded-2xl bg-[#141a36] ring-1 ring-cobalt/30 text-white px-4 py-2.5 flex items-center justify-between gap-3">
+        <p className="leading-tight">
+          <span className="font-pixel text-[10px] sm:text-[12px]">PEPTIDE TYCOON</span>
+          <span className="hidden sm:inline text-white/55 text-[12px]">
             {' '}· the heroes are jokes, the compounds are real
           </span>
         </p>
@@ -165,11 +166,11 @@ export function PeptideTycoon() {
 
       {/* ── HUD ─────────────────────────────────────────────────────────── */}
       <header className="mt-3 sticky top-2 z-30">
-        <div className="rounded-3xl bg-gradient-to-br from-cobalt to-[#16236E] text-white p-4 sm:p-5 shadow-[0_10px_40px_rgba(46,77,219,0.30)]">
+        <div className="scanlines pixel-frame rounded-2xl bg-gradient-to-br from-cobalt to-[#16236E] text-white p-4 sm:p-5">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-white/65 font-bold">
-                Research Points
+              <p className="font-pixel text-[8px] text-white/70">
+                RESEARCH POINTS
               </p>
               <p className="font-display text-3xl sm:text-4xl font-extrabold tabular-nums leading-none">
                 {formatRP(store.rp)}
@@ -241,8 +242,10 @@ export function PeptideTycoon() {
               <span className="absolute inset-3 rounded-full bg-cobalt/10 animate-reactor" />
               <span className="absolute inset-8 rounded-full bg-cobalt/15 animate-reactor [animation-delay:0.4s]" />
               <span className="absolute inset-0 rounded-full ring-2 ring-cobalt/30" />
-              <span className="absolute inset-[18%] rounded-full bg-gradient-to-br from-cobalt to-[#16236E] grid place-items-center shadow-[0_8px_30px_rgba(46,77,219,0.35)]">
-                <span className="text-6xl sm:text-7xl drop-shadow">🧬</span>
+              <span className="scanlines absolute inset-[18%] rounded-full bg-gradient-to-br from-cobalt to-[#16236E] grid place-items-center shadow-[0_8px_30px_rgba(46,77,219,0.45)] ring-2 ring-white/15 overflow-hidden">
+                <span className="block w-[58%] h-[58%]">
+                  <PixelSprite emoji="🧬" res={22} pixel={6} />
+                </span>
               </span>
               {/* tap ripples */}
               {pings.map((pid) => (
@@ -263,10 +266,10 @@ export function PeptideTycoon() {
               </span>
             ))}
           </div>
-          <p className="mt-4 text-center font-display font-extrabold text-ink text-lg">
-            Tap to synthesize
+          <p className="mt-4 text-center font-pixel text-[12px] text-white">
+            TAP TO SYNTHESIZE
           </p>
-          <p className="text-center text-[12px] text-ink-muted font-mono">
+          <p className="mt-1.5 text-center text-[12px] text-white/60 font-mono">
             +{formatRP(store.clickPower())} RP per tap · your lab earns{' '}
             {formatRate(rate)} on its own
           </p>
@@ -287,7 +290,9 @@ export function PeptideTycoon() {
                 onClick={() => setTab('roster')}
                 className="mt-6 w-full rounded-2xl bg-white ring-1 ring-border p-4 flex items-center gap-3 text-left touch-manipulation hover:ring-cobalt/40 transition"
               >
-                <span className="text-3xl">{next.emoji}</span>
+                <span className="block h-10 w-10 shrink-0">
+                  <PixelSprite emoji={next.emoji} res={16} pixel={5} />
+                </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[11px] font-bold uppercase tracking-wide text-ink-muted">
                     Next recruit
@@ -313,7 +318,7 @@ export function PeptideTycoon() {
       {tab === 'roster' && (
         <section className="mt-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[12px] text-ink-soft">
+            <p className="text-[12px] text-white/70">
               Recruit all {total}. Each hero is a real Merit compound in disguise.
             </p>
             <div className="flex items-center gap-1 rounded-full bg-border-soft p-1 text-[11px] font-bold shrink-0">
@@ -359,14 +364,15 @@ export function PeptideTycoon() {
       {/* ── LOCKER ──────────────────────────────────────────────────────── */}
       {tab === 'locker' && (
         <section className="mt-4">
-          <h2 className="font-display text-lg font-extrabold text-ink">🎟️ Merit Locker</h2>
-          <p className="text-[12px] text-ink-soft mt-0.5">
+          <h2 className="font-pixel text-[13px] text-white">🎟️ MERIT LOCKER</h2>
+          <p className="text-[12px] text-white/70 mt-2">
             Level up heroes to unlock real discounts on the compounds they parody.
           </p>
           {rewards.length === 0 ? (
-            <div className="mt-3 rounded-2xl border border-dashed border-border p-6 text-center text-[13px] text-ink-muted">
-              No rewards yet — get any hero to <strong>Level 5</strong> to unlock your
-              first discount code.
+            <div className="mt-3 rounded-2xl border border-dashed border-white/25 p-6 text-center text-[13px] text-white/60">
+              No rewards yet — get any hero to{' '}
+              <strong className="text-white">Level 5</strong> to unlock your first
+              discount code.
             </div>
           ) : (
             <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -375,13 +381,15 @@ export function PeptideTycoon() {
                 return (
                   <div
                     key={r.characterId}
-                    className="rounded-2xl bg-success/5 ring-1 ring-success/30 p-4"
+                    className="rounded-2xl bg-white ring-1 ring-success/40 p-4 shadow-sm"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-success">
+                      <span className="font-pixel text-[8px] uppercase text-success">
                         {r.pct}% OFF · {r.tierLabel}
                       </span>
-                      <span className="text-xl">{char?.emoji}</span>
+                      <span className="block h-7 w-7">
+                        {char && <PixelSprite emoji={char.emoji} res={14} pixel={4} />}
+                      </span>
                     </div>
                     <p className="mt-1 text-sm font-bold text-ink">{r.compound}</p>
                     <div className="mt-2 flex items-center gap-2">
@@ -409,7 +417,7 @@ export function PeptideTycoon() {
 
           {/* Prestige */}
           <div className="mt-7 rounded-3xl bg-gradient-to-br from-cream to-[#ECE6D8] p-6 text-center">
-            <h3 className="font-display text-lg font-extrabold text-ink">Reset the Lab ⭐</h3>
+            <h3 className="font-pixel text-[12px] text-ink">RESET THE LAB ⭐</h3>
             <p className="mt-1 text-[13px] text-ink-soft max-w-md mx-auto">
               Cash out your research for <strong>Merit Tokens</strong> — each one
               permanently boosts production +2%. Resets RP and roster. Copied

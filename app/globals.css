@@ -69,6 +69,45 @@ body {
   .animate-toast { animation: none; }
 }
 
+/* Retro/arcade chrome — scoped to the /game route. */
+.font-pixel {
+  font-family: var(--font-pixel), ui-monospace, monospace;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+/* Faint pixel-grid play surface, tinted toward the brand cobalt. */
+.game-bg {
+  background-color: #0c1024;
+  background-image:
+    linear-gradient(rgba(46, 77, 219, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(46, 77, 219, 0.10) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, rgba(46, 77, 219, 0.35), transparent 60%);
+  background-size: 22px 22px, 22px 22px, 100% 100%;
+}
+/* CRT scanlines — overlay via ::after so it never blocks taps. */
+.scanlines {
+  position: relative;
+}
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    rgba(0, 0, 0, 0.10) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: multiply;
+}
+/* Chunky pixel-stepped border for the retro panels. */
+.pixel-frame {
+  box-shadow:
+    0 0 0 2px #0c1024,
+    0 0 0 5px rgba(46, 77, 219, 0.55),
+    0 6px 0 5px rgba(0, 0, 0, 0.25);
+}
+
 /* Credentials marquee — §02 homepage.
    Two duplicated content blocks scroll right-to-left; at 50% the animation
    resets seamlessly because both copies are identical. */

@@ -8,6 +8,7 @@ import {
   type GameCharacter,
 } from '@/lib/game/characters';
 import { formatRP, formatRate } from '@/lib/game/format';
+import { PixelSprite } from './PixelSprite';
 
 type Props = {
   char: GameCharacter;
@@ -74,7 +75,7 @@ function CharacterCardImpl({
         }`}
       >
         <span
-          className={`text-[9.5px] font-extrabold uppercase tracking-[0.14em] px-2 py-0.5 rounded-full ${rarity.chip}`}
+          className={`font-pixel text-[7px] uppercase px-2 py-1 rounded ${rarity.chip}`}
         >
           {rarity.label}
         </span>
@@ -91,9 +92,9 @@ function CharacterCardImpl({
         <div
           className={`relative grid place-items-center h-16 w-16 shrink-0 rounded-2xl bg-gradient-to-br ${
             MEDALLION[char.rarity]
-          } text-3xl shadow-inner ${owned ? '' : 'grayscale opacity-60'}`}
+          } p-1.5 shadow-inner ${owned ? '' : 'grayscale opacity-60'}`}
         >
-          {char.emoji}
+          <PixelSprite emoji={char.emoji} />
         </div>
         <div className="min-w-0">
           <h3 className="font-display font-extrabold text-ink leading-tight truncate">

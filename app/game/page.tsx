@@ -1,5 +1,15 @@
 import type { Metadata, Viewport } from 'next';
+import { Press_Start_2P } from 'next/font/google';
 import { PeptideTycoon } from './PeptideTycoon';
+
+// Retro pixel display font — scoped to the game route via the CSS variable on
+// the wrapper below, so the storefront's typography is untouched.
+const pressStart = Press_Start_2P({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-pixel',
+  display: 'swap',
+});
 
 // Mobile-browser game — no app store needed. We deliberately DON'T set
 // maximumScale/user-scalable (that breaks pinch-zoom + fails WCAG); rapid-tap
@@ -32,7 +42,7 @@ export const metadata: Metadata = {
 
 export default function GamePage() {
   return (
-    <div className="bg-[#FAFAF8] min-h-screen">
+    <div className={`${pressStart.variable} game-bg min-h-screen`}>
       <PeptideTycoon />
     </div>
   );
