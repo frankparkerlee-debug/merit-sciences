@@ -126,13 +126,13 @@
 
   <main class="card">
     <div class="brand">MERIT</div>
-    <div class="eyebrow">Members Access</div>
-    <h1>You're early.<br />Here's 20% off.</h1>
-    <p class="sub">Enter your email and we'll take you straight in — your code lands in your inbox instantly.</p>
+    <div class="eyebrow">20% off · first order</div>
+    <h1>You vet everything.<br />Start with your source.</h1>
+    <p class="sub">Where careful people get theirs — sealed, third-party tested, American-made. Your 20% and the full lineup are right inside.</p>
 
     <form id="gate-form" novalidate>
       <input id="gate-email" type="email" inputmode="email" autocomplete="email" required placeholder="your@email.com" aria-label="Email address" />
-      <button id="gate-btn" type="submit">Unlock access →</button>
+      <button id="gate-btn" type="submit">Get my 20% →</button>
     </form>
     <p id="gate-err" class="err" role="alert"></p>
 
@@ -172,7 +172,7 @@
           err.textContent = 'Something went wrong. Try again.';
         }
         btn.disabled = false;
-        btn.textContent = 'Unlock access →';
+        btn.textContent = 'Get my 20% →';
       });
     })();
   </script>
