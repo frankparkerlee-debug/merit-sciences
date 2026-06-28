@@ -701,17 +701,15 @@ function ProductCard({
           className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] uppercase px-2 py-1 rounded ${
             restock.status === 'fresh'
               ? 'bg-green-500/10 text-green-700 border border-green-500/30'
-              : restock.status === 'low'
-              ? 'bg-amber-500/10 text-amber-700 border border-amber-500/30'
               : 'bg-cobalt/10 text-cobalt border border-cobalt/30'
           }`}
         >
           <span
             className={`w-1.5 h-1.5 rounded-full ${
-              restock.status === 'fresh' ? 'bg-green-600' : restock.status === 'low' ? 'bg-amber-600' : 'bg-cobalt'
+              restock.status === 'fresh' ? 'bg-green-600' : 'bg-cobalt'
             }`}
           />
-          {restock.status === 'fresh' ? 'New lot' : restock.status === 'low' ? 'Low stock' : 'Restocking'}
+          {restock.status === 'fresh' ? 'New lot' : 'Restocking'}
         </span>
       )}
 

@@ -127,13 +127,11 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg w-fit text-[12px] font-bold ${
             restock.status === 'fresh'
               ? 'bg-green-500/10 text-green-700 border border-green-500/30'
-              : restock.status === 'low'
-              ? 'bg-amber-500/10 text-amber-700 border border-amber-500/30'
               : 'bg-cobalt/10 text-cobalt border border-cobalt/30'
           }`}
         >
           <span className="text-lg leading-none">
-            {restock.status === 'fresh' ? '✦' : restock.status === 'low' ? '⏱' : '↻'}
+            {restock.status === 'fresh' ? '✦' : '↻'}
           </span>
           {restock.message}
         </div>
