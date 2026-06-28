@@ -202,10 +202,19 @@ export async function POST(req: Request) {
 
   if (discountCodeInput) {
     const cartQuantity = cleanLines.reduce((sum, l) => sum + l.qty, 0);
+    // Per-product line subtotals so product-specific codes (e.g. game rewards)
+    // can discount only their target product's lines.
+    const lineSubtotalsByHandle: Record<string, number> = {};
+    for (const l of cleanLines) {
+      if (!l.handle) continue;
+      lineSubtotalsByHandle[l.handle] =
+        (lineSubtotalsByHandle[l.handle] ?? 0) + l.unitCents * l.qty;
+    }
     const v = await validateDiscountCode(discountCodeInput, {
       subtotalCents,
       buyerEmail: buyer?.email ?? null,
       cartQuantity,
+      lineSubtotalsByHandle,
     });
     if (!v.ok) {
       return NextResponse.json({ error: v.error, field: 'discountCode' }, { status: 400 });

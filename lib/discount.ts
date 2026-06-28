@@ -43,6 +43,9 @@ export type ValidationContext = {
   subtotalCents: number;
   buyerEmail?: string | null;     // optional — only needed for once-per-customer / customer-locked codes
   cartQuantity?: number;          // optional — only needed for min-quantity codes
+  // Per-product line subtotals (handle → cents). Only needed for codes that
+  // set Discount.productHandle (product-specific codes, e.g. game rewards).
+  lineSubtotalsByHandle?: Record<string, number>;
 };
 
 /**
@@ -149,6 +152,22 @@ export async function validateDiscountCode(
     }
   }
 
+  // Product-specific restriction. When Discount.productHandle is set, the code
+  // is only valid if the cart contains that product, and the discount applies
+  // to that product's line subtotal — NOT the whole order. Codes with a null
+  // productHandle (every pre-existing code) use the full subtotal, unchanged.
+  let baseCents = ctx.subtotalCents;
+  if (manual.productHandle) {
+    const eligibleCents = ctx.lineSubtotalsByHandle?.[manual.productHandle] ?? 0;
+    if (eligibleCents <= 0) {
+      return {
+        ok: false,
+        error: 'This code only applies to a specific product that isn’t in your cart yet',
+      };
+    }
+    baseCents = eligibleCents;
+  }
+
   // ── Calculate the discount amount ──
   let discountCents = 0;
   let freeShipping = false;
@@ -156,10 +175,10 @@ export async function validateDiscountCode(
   switch (manual.type) {
     case 'PERCENT':
       // value is stored in basis points (10% = 1000)
-      discountCents = Math.floor((ctx.subtotalCents * manual.value) / 10000);
+      discountCents = Math.floor((baseCents * manual.value) / 10000);
       break;
     case 'FIXED_AMOUNT':
-      discountCents = Math.min(manual.value, ctx.subtotalCents);
+      discountCents = Math.min(manual.value, baseCents);
       break;
     case 'FREE_SHIPPING':
       // Type-only — signals shipping should be free, no subtotal reduction

@@ -80,9 +80,18 @@ export async function createManualOrder(
   let discountCode: string | null = null;
 
   if (discountCodeInput) {
+    // Per-product line subtotals so product-specific codes (e.g. game rewards)
+    // discount only their target product's lines.
+    const lineSubtotalsByHandle: Record<string, number> = {};
+    for (const l of lines) {
+      if (!l.handle) continue;
+      lineSubtotalsByHandle[l.handle] =
+        (lineSubtotalsByHandle[l.handle] ?? 0) + l.unitCents * l.qty;
+    }
     const v = await validateDiscountCode(discountCodeInput, {
       subtotalCents,
       buyerEmail: customerEmail,
+      lineSubtotalsByHandle,
     });
     if (!v.ok) return { ok: false, error: `Discount: ${v.error}` };
     discountCents = v.discountCents;

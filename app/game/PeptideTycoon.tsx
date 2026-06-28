@@ -403,9 +403,12 @@ export function PeptideTycoon() {
                         {copied === r.characterId ? '✓' : 'Copy'}
                       </button>
                     </div>
+                    <p className="mt-2 text-center text-[10px] text-ink-muted">
+                      Applies to {r.compound} · one use per customer
+                    </p>
                     <Link
                       href={`/products/${r.handle}`}
-                      className="mt-2 block text-center text-[11px] font-bold text-cobalt hover:underline"
+                      className="mt-1 block text-center text-[11px] font-bold text-cobalt hover:underline"
                     >
                       Redeem on {r.compound} →
                     </Link>

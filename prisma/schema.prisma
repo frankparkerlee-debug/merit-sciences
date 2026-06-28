@@ -494,6 +494,12 @@ model Discount {
   freeShipping     Boolean        @default(false)
   // Optional restriction to a single customer email
   customerEmail    String?
+  // Optional restriction to a single product (by storefront handle). When set,
+  // a PERCENT/FIXED discount applies ONLY to that product's line subtotal, and
+  // the code is invalid unless the cart contains that product. null (default)
+  // = order-wide, which preserves the behavior of every existing code.
+  // Used by the Peptide Tycoon game rewards (e.g. RETA10 → 10% off Retatrutide).
+  productHandle    String?
   // Schedule
   startsAt        DateTime        @default(now())
   endsAt          DateTime?
