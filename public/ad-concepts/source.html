@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <!-- Meta creative (4:5, 1080x1350). Kept as clean as the gate — Meta OCRs ad
+       images, so the rendered art carries no product/category language and no
+       body claims. Source-discernment hook, message-matched to the trymerit.co
+       gate ("You vet everything. Start with your source."). Screenshot the .ad
+       box for the ad. -->
+  <title>Merit — source creative</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --ink:#08152e; --cobalt:#173a8a; --cobalt-soft:#5e84d6; --cream:#f4f1ea; --amber:#e6a45c; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a1326; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .ad {
+      position: relative; width: 1080px; height: 1350px; max-width: 100%;
+      aspect-ratio: 4 / 5; overflow: hidden; border-radius: 6px;
+      background:
+        radial-gradient(80% 55% at 78% 12%, rgba(94,132,214,0.42) 0%, rgba(23,58,138,0) 58%),
+        linear-gradient(170deg, #0c1f48 0%, #08152e 55%, #060f22 100%);
+      color: var(--cream);
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 88px 84px;
+    }
+    .ad::after {
+      content: ""; position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 90px 90px; pointer-events: none;
+    }
+    .wm { font-size: 40px; font-weight: 800; letter-spacing: 0.42em; text-indent: 0.42em; position: relative; z-index: 1; }
+    .hook { position: relative; z-index: 1; }
+    .l1 { font-size: 96px; line-height: 0.98; font-weight: 700; letter-spacing: -0.025em; color: rgba(244,241,234,0.92); }
+    .l2 { margin-top: 22px; font-size: 96px; line-height: 0.98; font-weight: 800; letter-spacing: -0.03em; }
+    .hl { position: relative; white-space: nowrap; }
+    .hl::after {
+      content: ""; position: absolute; left: 0; right: -4px; bottom: 6px; height: 14px;
+      background: var(--amber); opacity: 0.92; border-radius: 2px; z-index: -1; transform: rotate(-0.6deg);
+    }
+    .foot { position: relative; z-index: 1; }
+    .offer {
+      display: inline-block; font-size: 34px; font-weight: 800; letter-spacing: -0.01em;
+      color: var(--ink); background: var(--cream); padding: 20px 30px; border-radius: 16px;
+    }
+    .sub { margin-top: 26px; font-size: 24px; font-weight: 500; letter-spacing: 0.02em; color: rgba(244,241,234,0.5); }
+  </style>
+</head>
+<body>
+  <div class="ad">
+    <div class="wm">MERIT</div>
+
+    <div class="hook">
+      <p class="l1">You vet<br />everything.</p>
+      <p class="l2">Except your <span class="hl">source</span>.</p>
+    </div>
+
+    <div class="foot">
+      <span class="offer">20% off your first order</span>
+      <p class="sub">American-made · sealed · ships in 48 hrs</p>
+    </div>
+  </div>
+</body>
+</html>
