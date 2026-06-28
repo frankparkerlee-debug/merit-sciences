@@ -20,6 +20,17 @@ body {
   text-transform: uppercase;
 }
 
+/* Peptide Tycoon game — floating "+RP" on tap and modal fade-in.
+   floatUp drifts the number up and fades it; fadeIn eases modal overlays. */
+@keyframes floatUp {
+  from { transform: translate(-50%, 0); opacity: 1; }
+  to   { transform: translate(-50%, -36px); opacity: 0; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 /* Credentials marquee — §02 homepage.
    Two duplicated content blocks scroll right-to-left; at 50% the animation
    resets seamlessly because both copies are identical. */
