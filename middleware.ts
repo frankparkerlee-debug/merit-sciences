@@ -27,12 +27,17 @@ const COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 days
 //   lowercase alphanumeric + hyphen, 3-30 chars, must start/end alphanumeric.
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/;
 
-// Clean-room ad-gate domain(s). Traffic on this host NEVER reaches the catalog:
+// Clean-room ad-gate domain(s). Traffic on these hosts NEVER reaches the catalog:
 // every page path is rewritten to the static /gate.html email wall, so Meta's
-// crawler (and reviewers) hitting the ad's destination can't surface a single
-// compound name. The real store lives on a different registered domain with its
-// own reputation. Override via GATE_HOST (comma-separated) in Render.
-const GATE_HOSTS = (process.env.GATE_HOST || 'trymerit.co')
+// crawler hitting the ad's destination can't surface a single compound name.
+//
+// Includes the Render *.onrender.com URL so the gate is launchable on an
+// INSTANT-resolving host right now (no DNS wait) — point ads at it today, and
+// trymerit.co swaps in as the branded version once its DNS propagates. The real
+// store stays on meritsciences.com (a separate registered domain). Override via
+// GATE_HOST (comma-separated) in Render — e.g. after renaming the Render service
+// to a generic *.onrender.com with no "merit" in the name for cleaner isolation.
+const GATE_HOSTS = (process.env.GATE_HOST || 'trymerit.co,merit-sciences.onrender.com')
   .split(',')
   .map((h) => h.trim().toLowerCase())
   .filter(Boolean);
