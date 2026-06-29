@@ -17,18 +17,23 @@ function fmtDate(d: Date): string {
 }
 
 export default async function AffiliatePayoutsPage() {
-  const [preview, recent] = await Promise.all([
+  const [preview, recent, paidAgg] = await Promise.all([
     getPayoutPreview(),
     prisma.payout.findMany({
       orderBy: { createdAt: 'desc' },
       take: 25,
       include: { affiliate: { select: { name: true, email: true } } },
     }),
+    prisma.payout.aggregate({ where: { status: 'PAID' }, _sum: { totalCents: true } }),
   ]);
 
   const payable = preview.filter((p) => p.payable);
   const blocked = preview.filter((p) => !p.payable);
   const totalDueCents = payable.reduce((s, p) => s + p.eligibleCents, 0);
+  // Running tally across ALL affiliates — what's owed + what's been paid.
+  const totalMaturedCents = preview.reduce((s, p) => s + p.eligibleCents, 0);
+  const totalHeldCents = preview.reduce((s, p) => s + p.heldCents, 0);
+  const lifetimePaidCents = Number(paidAgg._sum.totalCents ?? 0n);
 
   return (
     <main className="max-w-[1000px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
@@ -45,6 +50,14 @@ export default async function AffiliatePayoutsPage() {
         Commissions become payable {COMMISSION_HOLD_DAYS} days after the order (refund window), then
         pay out by PayPal once an affiliate clears the ${AFFILIATE_PROGRAM.payoutMinUsd} minimum.
       </p>
+
+      {/* Running tally — what's owed + what's been paid, across all affiliates */}
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <TallyTile label="Payable now" value={money(totalMaturedCents)} />
+        <TallyTile label="In refund hold" value={money(totalHeldCents)} />
+        <TallyTile label="Total accrued" value={money(totalMaturedCents + totalHeldCents)} />
+        <TallyTile label="Paid to date" value={money(lifetimePaidCents)} />
+      </section>
 
       {/* Run band */}
       <section className="rounded-2xl border border-cobalt/15 bg-white p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -134,6 +147,15 @@ export default async function AffiliatePayoutsPage() {
         </Table>
       )}
     </main>
+  );
+}
+
+function TallyTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-cobalt/15 bg-white px-4 py-3">
+      <p className="text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold">{label}</p>
+      <p className="font-display font-black text-ink text-xl tabular-nums mt-1">{value}</p>
+    </div>
   );
 }
 
