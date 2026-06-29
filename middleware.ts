@@ -29,15 +29,12 @@ const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/;
 
 // Clean-room ad-gate domain(s). Traffic on these hosts NEVER reaches the catalog:
 // every page path is rewritten to the static /gate.html email wall, so Meta's
-// crawler hitting the ad's destination can't surface a single compound name.
-//
-// Includes the Render *.onrender.com URL so the gate is launchable on an
-// INSTANT-resolving host right now (no DNS wait) — point ads at it today, and
-// trymerit.co swaps in as the branded version once its DNS propagates. The real
-// store stays on meritsciences.com (a separate registered domain). Override via
-// GATE_HOST (comma-separated) in Render — e.g. after renaming the Render service
-// to a generic *.onrender.com with no "merit" in the name for cleaner isolation.
-const GATE_HOSTS = (process.env.GATE_HOST || 'trymerit.co,merit-sciences.onrender.com')
+// crawler hitting the ad's destination can't surface a single compound name. The
+// real store stays on meritsciences.com. Set GATE_HOST (comma-separated) in
+// Render to the clean ad domain(s) — e.g. a fresh Cloudflare domain pointed at
+// Render. Deliberately NOT the onrender URL: it shares the store's backend and
+// reads as "merit-sciences" — the gate belongs on a clean, separate domain.
+const GATE_HOSTS = (process.env.GATE_HOST || 'trymerit.co')
   .split(',')
   .map((h) => h.trim().toLowerCase())
   .filter(Boolean);
