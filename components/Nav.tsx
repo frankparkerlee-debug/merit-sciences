@@ -10,9 +10,9 @@ export function Nav() {
         </Link>
         <div className="hidden md:flex gap-6 text-sm font-medium">
           <Link href="/catalog" className="hover:text-cobalt transition">Catalog</Link>
-          <Link href="/catalog#blends" className="hover:text-cobalt transition">Blends</Link>
-          <Link href="/about" className="hover:text-cobalt transition">About</Link>
+          <Link href="/coa" className="hover:text-cobalt transition">COA</Link>
           <Link href="/practitioners" className="hover:text-cobalt transition">Practitioner Program</Link>
+          <Link href="/about" className="hover:text-cobalt transition">About</Link>
         </div>
         <div className="flex items-center gap-4">
           <Link
