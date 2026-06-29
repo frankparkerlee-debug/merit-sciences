@@ -86,14 +86,21 @@ export default async function AffiliatePayoutsPage() {
       {blocked.length > 0 && (
         <>
           <SectionTitle>Accruing (not payable yet)</SectionTitle>
-          <Table head={['Affiliate', 'Cleared balance', 'Status']}>
+          <Table head={['Affiliate', 'Earned', 'Status']}>
             {blocked.map((p) => (
               <tr key={p.affiliateId} className="border-t border-cobalt/10">
                 <Td>
                   <span className="font-bold text-ink">{p.name}</span>
                   <span className="block text-[11px] text-ink-muted">{p.email}</span>
                 </Td>
-                <Td className="tabular-nums">{money(p.eligibleCents)}</Td>
+                <Td className="tabular-nums">
+                  {money(p.eligibleCents + p.heldCents)}
+                  {p.heldCents > 0 && p.eligibleCents > 0 && (
+                    <span className="block text-[10px] text-ink-muted">
+                      {money(p.eligibleCents)} cleared · {money(p.heldCents)} in hold
+                    </span>
+                  )}
+                </Td>
                 <Td>
                   <span className="text-[11px] tracking-wide uppercase font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
                     {p.blockedReason}

@@ -31,7 +31,12 @@ export type AffiliatePayoutPreview = {
   name: string;
   email: string;
   paypalEmail: string | null;
+  /** matured (past the hold) commission total — payable now */
   eligibleCents: number;
+  /** earned but still inside the 30-day refund hold — not payable yet */
+  heldCents: number;
+  /** when the earliest held commission clears the hold (null if none held) */
+  earliestMatureAt: Date | null;
   commissionCount: number;
   /** true → meets the minimum AND has a PayPal email → will be paid */
   payable: boolean;
@@ -47,17 +52,22 @@ function holdCutoff(): Date {
  * Per-affiliate preview of what the next payout run would do. Pure read.
  */
 export async function getPayoutPreview(): Promise<AffiliatePayoutPreview[]> {
+  const cutoff = holdCutoff();
+  // Pull ALL un-paid, un-clawed commissions for active affiliates — INCLUDING
+  // those still inside the hold window. We split matured vs held per affiliate
+  // so held earnings are SHOWN (flagged), instead of dropping the affiliate
+  // from the query entirely — which made the screen read "no one earned"
+  // during the hold even when commission had accrued.
   const rows = await prisma.orderCommission.findMany({
     where: {
       status: { in: ['PENDING', 'PAYABLE'] },
       clawedBackAt: null,
       payoutId: null,
-      occurredAt: { lte: holdCutoff() },
       affiliate: { status: 'ACTIVE' },
     },
     select: {
-      id: true,
       commissionCents: true,
+      occurredAt: true,
       affiliate: { select: { id: true, name: true, email: true, paypalEmail: true } },
     },
   });
@@ -73,24 +83,42 @@ export async function getPayoutPreview(): Promise<AffiliatePayoutPreview[]> {
         email: a.email,
         paypalEmail: a.paypalEmail,
         eligibleCents: 0,
+        heldCents: 0,
+        earliestMatureAt: null,
         commissionCount: 0,
         payable: false,
         blockedReason: null,
       };
       byAff.set(a.id, p);
     }
-    p.eligibleCents += Number(r.commissionCents);
     p.commissionCount += 1;
+    const cents = Number(r.commissionCents);
+    if (r.occurredAt <= cutoff) {
+      p.eligibleCents += cents; // matured — payable now
+    } else {
+      p.heldCents += cents; // still in the refund hold
+      const matureAt = new Date(r.occurredAt.getTime() + COMMISSION_HOLD_DAYS * 86_400_000);
+      if (!p.earliestMatureAt || matureAt < p.earliestMatureAt) p.earliestMatureAt = matureAt;
+    }
   }
 
   for (const p of byAff.values()) {
-    if (!p.paypalEmail) p.blockedReason = 'No PayPal email on file';
-    else if (p.eligibleCents < MIN_CENTS)
-      p.blockedReason = `Below $${AFFILIATE_PROGRAM.payoutMinUsd} minimum`;
+    if (!p.paypalEmail) {
+      p.blockedReason = 'No PayPal email on file';
+    } else if (p.eligibleCents < MIN_CENTS) {
+      if (p.heldCents > 0 && p.earliestMatureAt) {
+        const d = p.earliestMatureAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        p.blockedReason = `In ${COMMISSION_HOLD_DAYS}-day refund hold — matures ${d}`;
+      } else {
+        p.blockedReason = `Below $${AFFILIATE_PROGRAM.payoutMinUsd} minimum`;
+      }
+    }
     p.payable = !p.blockedReason;
   }
 
-  return [...byAff.values()].sort((a, b) => b.eligibleCents - a.eligibleCents);
+  return [...byAff.values()].sort(
+    (a, b) => (b.eligibleCents + b.heldCents) - (a.eligibleCents + a.heldCents),
+  );
 }
 
 export type RunPayoutsResult = {
