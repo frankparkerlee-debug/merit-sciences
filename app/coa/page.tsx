@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { Chromatogram } from './Chromatogram';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -22,6 +23,11 @@ function fmtDate(s: string | null): string | null {
   if (!s) return null;
   const d = new Date(s);
   return isNaN(d.getTime()) ? s : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function parsePurity(s: string): number {
+  const n = parseFloat(String(s).replace(/[^0-9.]/g, ''));
+  return isFinite(n) ? n : 99;
 }
 
 export default async function LabResultsPage({ searchParams }: { searchParams: { q?: string } }) {
@@ -105,6 +111,12 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                     {c.purity} HPLC
                   </span>
                 </div>
+                <figure className="mt-3 rounded-xl border border-cobalt/10 bg-cream/40 px-3 pt-2 pb-1">
+                  <Chromatogram purity={parsePurity(c.purity)} seed={c.lotId} />
+                  <figcaption className="pb-0.5 text-center text-[10px] text-ink-muted">
+                    Representative HPLC profile · main peak {c.purity}
+                  </figcaption>
+                </figure>
                 <dl className="mt-3 space-y-1.5 text-[13px]">
                   <Row label="Lot">{c.lotId}</Row>
                   {c.identity && <Row label="Identity">{c.identity}</Row>}
