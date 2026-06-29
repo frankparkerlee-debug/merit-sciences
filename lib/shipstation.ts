@@ -316,27 +316,19 @@ export async function fetchShipmentByTracking(trackingNumber: string): Promise<a
  * this via the "trackByCarrier" endpoint which surfaces tracking events
  * the carrier has reported.
  */
-export async function checkDeliveryStatus(carrierCode: string, trackingNumber: string): Promise<{
+export async function checkDeliveryStatus(_carrierCode: string, _trackingNumber: string): Promise<{
   delivered: boolean;
   deliveredAt: Date | null;
 }> {
-  try {
-    // ShipStation V1: GET /carriers/{carrierCode}/tracking?trackingNumber=...
-    const data = await shipStationFetch(
-      `/carriers/${encodeURIComponent(carrierCode)}/tracking?trackingNumber=${encodeURIComponent(trackingNumber)}`,
-    );
-    const status = String(data?.statusCode ?? data?.status ?? '').toUpperCase();
-    if (status.includes('DELIVERED')) {
-      const deliveredAt = data?.actualDeliveryDate
-        ? new Date(data.actualDeliveryDate)
-        : new Date();
-      return { delivered: true, deliveredAt };
-    }
-    return { delivered: false, deliveredAt: null };
-  } catch (err) {
-    console.warn('[shipstation/checkDeliveryStatus]', trackingNumber, err);
-    return { delivered: false, deliveredAt: null };
-  }
+  // NOTE: ShipStation's V1 API has NO delivery-poll endpoint. The previous
+  // `/carriers/{carrierCode}/tracking` path 404'd on every call — pure log
+  // noise, and it could never actually detect a delivery (always returned
+  // false). Delivery status is driven by the ShipStation delivery WEBHOOK
+  // (handleDeliveryNotify), which is the source of truth. Real poll-based
+  // delivery would require the carrier APIs (UPS/USPS) or the ShipStation V2
+  // tracking endpoint — a separate integration. Until then this is a deliberate
+  // no-op so the cron stops hammering a dead endpoint.
+  return { delivered: false, deliveredAt: null };
 }
 
 /* ─── Delivery notification handler ─── */
