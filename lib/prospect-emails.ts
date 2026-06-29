@@ -14,6 +14,7 @@ import { wrapPractitionerEmail, heading, p, btn, note, calloutBox } from './prac
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
 const CATALOG = `${SITE_URL}/catalog`;
+const COA = `${SITE_URL}/coa`;
 
 export type ProspectEmailData = { code: string; unsubscribeUrl?: string };
 type Rendered = { subject: string; html: string; text: string };
@@ -49,12 +50,12 @@ export function renderProspectProof(d: ProspectEmailData): Rendered {
     calloutBox(
       '<strong>Lot MS-2406-A</strong><br>HPLC purity: <strong>99.2%</strong><br>Endotoxin: &lt;0.5 EU/mg<br>Tested: independent lab, USA',
     ) +
-    btn('See a real COA →', CATALOG) +
+    btn('See a real COA →', COA) +
     note(`Quietly: your 20% (${d.code}) is still here whenever you’re ready.`);
   return {
     subject,
     html: shell(subject, 'Proof, not promises', body, d),
-    text: `Most people never ask to see the test. We hope you do. Every Merit lot ships with its COA — HPLC trace, purity, lot number.\n\nSee a real one: ${CATALOG}\n\nYour 20% code: ${d.code}`,
+    text: `Most people never ask to see the test. We hope you do. Every Merit lot ships with its COA — HPLC trace, purity, lot number.\n\nSee a real one: ${COA}\n\nYour 20% code: ${d.code}`,
   };
 }
 

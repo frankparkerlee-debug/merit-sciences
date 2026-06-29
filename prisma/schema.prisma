@@ -21,6 +21,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Certificate of Analysis (COA) library ────────────────────────────
+// One row per uploaded lab report. The public /coa page lists them; a QR
+// printed on the bottle points to that library so a buyer can pull up the
+// COA for their exact lot. Table created via Supabase SQL (the pooler
+// can't run prisma db push) — keep the SQL in lockstep with this model.
+model Coa {
+  id            String   @id @default(cuid())
+  compound      String // display name, e.g. "Tirzepatide"
+  productHandle String? // optional link back to a catalog product
+  lotId         String // e.g. "MS-2406-A" — matches the bottle label
+  purity        String // e.g. "99.2%"
+  testedDate    String // ISO date string
+  fileUrl       String // Supabase Storage public URL (the PDF)
+  fileName      String? // original upload filename, for the admin list
+  createdAt     DateTime @default(now())
+
+  @@index([compound])
+  @@index([lotId])
+  @@map("coas")
+}
+
 // ─── Affiliate ────────────────────────────────────────────────────────
 // An approved promoter. One row per person/business that drives traffic.
 
