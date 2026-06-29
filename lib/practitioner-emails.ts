@@ -67,7 +67,7 @@ export function renderEmail(def: EmailDefinition, ctx: EmailContext): string {
           ${def.body(ctx)}
         </td></tr>
         <tr><td style="padding:18px 32px;border-top:1px solid #EBE6D7;font-size:11px;line-height:18px;color:${INK_SOFT};">
-          Merit Sciences &middot; Dallas, TX &middot; 503B outsourcing facility &middot; ISO certified<br>
+          Merit Sciences &middot; Dallas, TX &middot; ISO-certified facility<br>
           <a href="${ctx.unsubscribeUrl}" style="color:${INK_SOFT};text-decoration:underline;">Unsubscribe</a> &middot;
           <a href="mailto:info@meritpeptides.com" style="color:${INK_SOFT};text-decoration:underline;">Reply directly</a>
         </td></tr>
@@ -120,7 +120,7 @@ const PROSPECT: EmailDefinition[] = [
       <p>Most practitioners we talk to have never been walked through their supplier&rsquo;s release chain. Worth knowing what&rsquo;s in ours.</p>
       <ol style="padding-left:20px;margin:8px 0 16px;">
         <li><strong>API procurement</strong> — FDA-registered upstream suppliers, COA on receipt.</li>
-        <li><strong>Compounding</strong> — under USP &lt;797&gt; in a 503B facility. ISO Class 5 fill room.</li>
+        <li><strong>Compounding</strong> — under USP &lt;797&gt; in an ISO-certified facility. ISO Class 5 fill room.</li>
         <li><strong>Characterization</strong> — HPLC &ge;99% purity per lot. Sterility (USP &lt;71&gt;), endotoxin (USP &lt;85&gt;), particulate (USP &lt;788&gt;).</li>
         <li><strong>Pharmacist release</strong> — a US-licensed pharmacist signs off on every batch.</li>
         <li><strong>COA</strong> — accompanies every shipment. Lot # on the label.</li>
@@ -169,7 +169,7 @@ const PROSPECT: EmailDefinition[] = [
     subject: () => 'The supplier story you can name',
     body: (ctx) => `
       <p>A lot of supplier stories are vapor — &ldquo;manufactured in a sterile lab, tested rigorously&rdquo; with no entity name, no facility address, no inspectable chain.</p>
-      <p>Ours: a <strong>503B outsourcing facility in Dallas</strong>, FDA-registered, ISO certified. US-licensed pharmacy team. Named in your COA. Inspectable on the FDA&rsquo;s 503B registration list.</p>
+      <p>Ours: an <strong>ISO-certified US facility in Dallas</strong>. US-licensed pharmacy team. Lot-documented and named in your COA.</p>
       <p>That&rsquo;s what we mean when we say sourcing that holds up to scrutiny.</p>
       ${btn('Apply →', `${ctx.siteUrl}/practitioners#apply`)}
     `,
@@ -345,7 +345,7 @@ const ONBOARDING: EmailDefinition[] = [
     body: (ctx) => `
       <p>A quick recap of what your account gives you:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
-        <li><strong>503B + ISO certified facility</strong> in Dallas</li>
+        <li><strong>ISO-certified facility</strong> in Dallas</li>
         <li><strong>HPLC &ge;99% per lot</strong> with full USP &lt;71&gt;/&lt;85&gt;/&lt;788&gt; characterization</li>
         <li><strong>Acetate counterion</strong> across the catalog</li>
         <li><strong>COA with every shipment</strong></li>

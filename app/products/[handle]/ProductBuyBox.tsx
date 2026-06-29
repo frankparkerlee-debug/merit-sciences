@@ -264,7 +264,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       <div className="hidden sm:block bg-cobalt/5 border border-cobalt/10 rounded-xl p-4">
         <p className="text-sm text-ink leading-relaxed">
           {product.oneLiner ||
-            `${product.title} — pharmacy-verified, lot-tested, and shipped from our 503B facility in Dallas. Released only after a US-licensed pharmacist signs off on the batch.`}
+            `${product.title} — pharmacy-verified, lot-tested, and shipped from our facility in Dallas. Released only after a US-licensed pharmacist signs off on the batch.`}
         </p>
       </div>
 
@@ -602,12 +602,12 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
         </div>
       </div>
 
-      {/* Below-CTA trust strip — 503B + ISO badge row. Final reassurance
+      {/* Below-CTA trust strip — pharmacy-grade + ISO badge row. Final reassurance
           for buyers who scrolled past the cart button without clicking. */}
       <div className="flex items-center justify-center gap-3 text-[10px] tracking-[0.14em] uppercase font-bold text-ink-muted pt-1">
         <span className="inline-flex items-center gap-1.5">
           <span className="w-1 h-1 rounded-full bg-cobalt" />
-          503B
+          Pharmacy-grade
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="w-1 h-1 rounded-full bg-cobalt" />

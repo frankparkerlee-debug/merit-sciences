@@ -8,7 +8,7 @@ export function Footer() {
             Merit<span className="text-cobalt-soft">.</span>
           </div>
           <p className="mt-2 text-[11px] text-white/45 leading-relaxed max-w-[200px]">
-            Research-grade compounds from a 503B/ISO facility in Dallas.
+            Research-grade compounds from an ISO-certified US facility in Dallas.
           </p>
           <a
             href="mailto:rx@meritsciences.com"

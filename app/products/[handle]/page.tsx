@@ -276,7 +276,7 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-              503B Facility · ISO-Certified
+              Pharmacy-Grade · ISO-Certified
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
@@ -541,7 +541,7 @@ export default async function ProductPage({ params }: Props) {
             </div>
             <div className="bg-cobalt/15 px-3 sm:px-5 py-3 sm:py-4 text-center">
               <span className="font-display font-black text-white block leading-none">Merit</span>
-              <span className="text-[9px] text-cobalt-soft tracking-[0.12em] uppercase font-bold">503B + ISO</span>
+              <span className="text-[9px] text-cobalt-soft tracking-[0.12em] uppercase font-bold">ISO-certified</span>
             </div>
             <div className="bg-ink/80 px-3 sm:px-5 py-3 sm:py-4 text-center">
               <span className="font-bold text-white/85 block leading-none">Online Resellers</span>
@@ -573,7 +573,7 @@ export default async function ProductPage({ params }: Props) {
                 compounding: 'yes',
               },
               {
-                criterion: 'Ships from a 503B/ISO facility in the US',
+                criterion: 'Ships from an ISO-certified US facility',
                 merit: 'yes',
                 resellers: 'no',
                 compounding: 'varies',
@@ -668,11 +668,11 @@ export default async function ProductPage({ params }: Props) {
               {
                 num: '02',
                 eyebrow: 'Compounding',
-                headline: 'Sterile-filled at a 503B facility.',
+                headline: 'Sterile-filled in a US cleanroom.',
                 description:
-                  'Lyophilized in a cleanroom at our 503B outsourcing facility. The powder format gives ≥24 months sealed stability — no cold-chain shipping required.',
+                  'Lyophilized in a cleanroom at our US facility. The powder format gives ≥24 months sealed stability — no cold-chain shipping required.',
                 facts: [
-                  '503B outsourcing facility, FDA-registered',
+                  'ISO-certified US facility',
                   'ISO-certified manufacturing process',
                   'Lyophilized powder for transit stability',
                 ],
@@ -931,7 +931,7 @@ export default async function ProductPage({ params }: Props) {
                       Merit Sciences Pharmacy Team
                     </p>
                     <p className="text-[11px] sm:text-[12px] text-ink-soft mt-0.5">
-                      US-licensed pharmacist · 503B outsourcing facility · Dallas, TX
+                      US-licensed pharmacist · ISO-certified facility · Dallas, TX
                     </p>
                   </div>
                   {/* Verified seal — top-right of signature block */}

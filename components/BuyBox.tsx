@@ -69,7 +69,7 @@ export function BuyBox({ product }: { product: Product }) {
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <span>
-            <strong className="font-semibold">Pharmacy-verified per lot</strong> · 503B facility, ISO-certified · COA per lot
+            <strong className="font-semibold">Pharmacy-verified per lot</strong> · ISO-certified facility · COA per lot
           </span>
         </div>
 

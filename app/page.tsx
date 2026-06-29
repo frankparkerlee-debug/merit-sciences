@@ -262,7 +262,7 @@ export default async function HomePage() {
                 {[
                   'US-LICENSED PHARMACY TEAM',
                   'PHARMACY-VERIFIED PER LOT',
-                  '503B OUTSOURCING FACILITY',
+                  'SEALED STERILE VIALS',
                   'ISO-CERTIFIED CLEANROOM',
                   'HPLC-TESTED PER LOT',
                   '≥99% PURITY',
@@ -660,7 +660,7 @@ export default async function HomePage() {
           {/* Comparison table.
               3 columns (Merit / Online Resellers / Influencer Brands), 6
               rows. Plain-English buyer-relevant claims — no jargon (no
-              "503B", "HPLC", "COA" without context). Marks: cobalt ✓ for
+              "USP 797", "HPLC", "COA" without context). Marks: cobalt ✓ for
               win, amber — for partial credit (honest calibration — resellers
               DO sometimes provide test results, so we don't zero them),
               muted ✗ for clear loss. */}

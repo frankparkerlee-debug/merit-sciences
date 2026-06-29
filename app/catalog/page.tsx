@@ -107,7 +107,7 @@ const PHARMACIST_NOTES: Record<string, string> = {
   'nad-500mg':
     'A coenzyme, not a peptide. Stocked because the cellular-pathway literature is deep and reorders are consistent.',
   'klow':
-    'Multi-pathway blend, co-formulated at our 503B facility. One vial, four signaling pathways under research.',
+    'Multi-pathway blend, co-formulated at our US facility. One vial, four signaling pathways under research.',
   'ly3437943':
     'Triple-agonist — newer than Tirzepatide. Limited literature but increasing research interest.',
   'pt-141':

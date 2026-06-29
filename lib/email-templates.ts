@@ -677,7 +677,7 @@ export function renderAbandonedCart(d: AbandonedCartData): { subject: string; ht
       <tr>
         <td style="padding:18px;font-size:12px;line-height:18px;color:${COLOR_TEXT_SOFT};">
           <p style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:${COLOR_INK};">— Why Merit</p>
-          &ge;99% HPLC-verified purity &middot; 503B outsourcing facility, ISO-certified &middot; Lot-documented &middot; Ships 48hr from Dallas
+          &ge;99% HPLC-verified purity &middot; ISO-certified US facility &middot; Lot-documented &middot; Ships 48hr from Dallas
         </td>
       </tr>
     </table>
@@ -742,7 +742,7 @@ export function renderWelcome(d: WelcomeData): { subject: string; html: string; 
   const body = `
     ${headline(`Welcome, ${name}`)}
     <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      You&rsquo;re in. Merit is built on a simple premise: pharmacy-grade research compounds shouldn&rsquo;t cost pharmacy prices. Every lot we ship is HPLC-verified to &ge;99% purity, compounded in a 503B outsourcing facility with ISO certifications, and signed off by a US-licensed pharmacist before release.
+      You&rsquo;re in. Merit is built on a simple premise: pharmacy-grade research compounds shouldn&rsquo;t cost pharmacy prices. Every lot we ship is HPLC-verified to &ge;99% purity, compounded in an ISO-certified US facility, and signed off by a US-licensed pharmacist before release.
     </p>
 
     ${incentive}
@@ -776,7 +776,7 @@ You're in. Merit is built on a simple premise: pharmacy-grade research compounds
 
 Every lot we ship:
   · HPLC-verified ≥99% purity
-  · Compounded in a 503B outsourcing facility (ISO-certified)
+  · Compounded in an ISO-certified US facility
   · Signed off by a US-licensed pharmacist
   · Ships 48hr from Dallas
 

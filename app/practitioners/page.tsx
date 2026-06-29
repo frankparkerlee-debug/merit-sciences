@@ -6,7 +6,7 @@ import { LeadCaptureForm } from './LeadCaptureForm';
 export const metadata = {
   title: 'Practitioner Program — Merit Sciences',
   description:
-    'Merit Sciences Practitioner Program — verified-account access for licensed practitioners. 503B + ISO certified. HPLC ≥99% per lot. COA with every shipment. Apply for portal access.',
+    'Merit Sciences Practitioner Program — verified-account access for licensed practitioners. ISO-certified. HPLC ≥99% per lot. COA with every shipment. Apply for portal access.',
 };
 
 export default function PractitionersPage() {
@@ -56,7 +56,7 @@ export default function PractitionersPage() {
           <p className="mt-5 max-w-xl text-[15px] lg:text-[17px] text-ink-soft leading-relaxed">
             A verified-account program for licensed practitioners. Practices save an average{' '}
             <strong>~30% on compound cost</strong> versus their previous supplier &mdash; margin
-            added straight back into the practice. <strong>503B-sourced.</strong>{' '}
+            added straight back into the practice. <strong>Pharmacy-grade.</strong>{' '}
             <strong>HPLC &ge;99%</strong> per lot. COA with every shipment. Shipped from Dallas in 48
             hours.
           </p>
@@ -82,7 +82,7 @@ export default function PractitionersPage() {
         <div className="max-w-[1240px] mx-auto px-6 lg:px-10 py-7 lg:py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-6 gap-x-4">
             <ProofStat value="40+" label="Texas practices sourcing through Merit" />
-            <ProofStat value="503B" label="+ ISO certified outsourcing facility" />
+            <ProofStat value="ISO" label="certified · sterile-filled facility" />
             <ProofStat value="≥99%" label="HPLC purity, released per lot" />
             <ProofStat value="48hr" label="shipped from Dallas · no MOQ" />
           </div>
@@ -191,13 +191,13 @@ export default function PractitionersPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <DarkCard
-              tag="Facility"
-              title="503B + ISO certified"
+              tag="Sourcing"
+              title="USP <797> + ISO certified"
               body={
                 <>
-                  FDA-registered <strong>503B outsourcing facility</strong>, USP &lt;797&gt;
-                  sterile processing, ISO certifications on top. The regulatory tier above 503A
-                  pharmacies &mdash; named, registered, and inspectable.
+                  Active ingredients sourced from a US facility with USP &lt;797&gt; sterile
+                  processing and ISO certifications &mdash; pharmacist-released, lot-documented,
+                  and fully traceable.
                 </>
               }
             />

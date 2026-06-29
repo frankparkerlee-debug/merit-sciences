@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merit · lead ad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#070A12; color:#F4F1EA; font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:34px; }
+  .label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#6B8AFF; }
+
+  .ad { width:min(500px, 88vw); aspect-ratio:4/5; border-radius:16px; overflow:hidden; position:relative; display:flex; flex-direction:column; justify-content:space-between; padding:38px 36px 30px;
+        background:radial-gradient(130% 100% at 22% 0%, #2C44CE 0%, #18267E 44%, #0A1138 100%); isolation:isolate; }
+
+  /* science cue — chromatogram band, makes it read as a TESTED product */
+  .chrom { position:absolute; left:0; right:0; bottom:0; height:30%; width:100%; opacity:0.22; z-index:0; }
+  .ad > * { position:relative; z-index:1; }
+
+  .top .cat { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:#BFD0FF; }
+  .top .cred { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:rgba(244,241,234,0.55); margin-top:4px; }
+
+  .mid h1 { font-family:'Inter Tight',sans-serif; font-weight:900; font-size:clamp(28px, 6.6vw, 38px); line-height:0.96; letter-spacing:-0.035em; color:#F4F1EA; }
+  .mid h1 em { font-style:normal; color:#9DB2FF; }
+  .mid .what { font-size:15px; line-height:1.4; color:rgba(244,241,234,0.82); margin-top:16px; max-width:23em; font-weight:500; }
+
+  .bot { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .offer { font-family:'Inter Tight',sans-serif; font-weight:800; font-size:16px; color:#F4F1EA; }
+  .offer span { color:#9DB2FF; }
+  .cta { background:#F4F1EA; color:#0B0F19; font-weight:700; font-size:13px; padding:11px 18px; border-radius:10px; white-space:nowrap; }
+  .ruo { position:absolute; bottom:11px; left:36px; font-size:8.5px; letter-spacing:0.05em; color:rgba(244,241,234,0.38); z-index:1; }
+</style>
+</head>
+<body>
+  <div class="label">— Merit · lead ad · 4:5 · clear what + converting hook</div>
+
+  <div class="ad">
+    <svg class="chrom" viewBox="0 0 520 110" preserveAspectRatio="none"><path d="M0,98 L120,98 L150,90 L172,30 L196,90 L230,98 L330,98 L360,82 L384,20 L410,82 L444,98 L520,98" fill="none" stroke="#8FA6FF" stroke-width="2.5"/></svg>
+
+    <div class="top">
+      <div class="cat">Research compounds · Recovery &amp; performance</div>
+      <div class="cred">American Made · Pharmacy Grade</div>
+    </div>
+
+    <div class="mid">
+      <h1>You research everything.<br><em>Why not your source?</em></h1>
+      <p class="what">Pharmacy-grade research compounds — American made, third-party tested. Not a group chat.</p>
+    </div>
+
+    <div class="bot">
+      <div class="offer">10% off <span>your first order</span></div>
+      <div class="cta">Get access →</div>
+    </div>
+    <div class="ruo">For research use only.</div>
+  </div>
+
+  <div class="label" style="color:#94A0B0; max-width:520px; text-align:center; line-height:1.5">What it is = explicit (&ldquo;research compounds · recovery &amp; performance&rdquo; + the value line). Hook = the contradiction. Science cue = the chromatogram. Compliant: no molecules, no vials, no claims.</div>
+</body>
+</html>

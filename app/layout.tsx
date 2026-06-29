@@ -43,13 +43,13 @@ export const metadata: Metadata = {
   // vocabulary: "compounds" (not peptides — auto-flagged by Meta).
   // RUO compliance lives in the top steel banner + Footer + Terms —
   // we don't repeat it in the SERP impression so the brand reads as a
-  // 503B-sourced pharmaceutical supplier, not a research-chem shop.
+  // pharmacy-grade pharmaceutical supplier, not a research-chem shop.
   description:
-    'Pharmacy-grade compounds from an ISO-certified US 503B outsourcing facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from Dallas.',
+    'Pharmacy-grade compounds from an ISO-certified US facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from Dallas.',
   keywords: [
     // Primary commercial-intent terms
     'pharmacy-grade compounds',
-    '503B compounds',
+    'ISO-certified facility compounds',
     'lot-documented compounds',
     'HPLC tested compounds',
     'sealed sterile compounds',
@@ -100,15 +100,15 @@ export const metadata: Metadata = {
     title: 'Merit Sciences · Pharmacy-grade compounds',
     // OG description — names compounds in the catalog so AI link
     // previews and social cards surface the actual offerings. PPC-safer
-    // framing leads with the 503B / ISO / sealed sterile channel proof.
+    // framing leads with the ISO / sealed sterile channel proof.
     description:
-      'Pharmacy-grade compounds from an ISO-certified US 503B outsourcing facility — BPC-157, GHK-Cu, Tirzepatide, Sermorelin and more. Sealed sterile vials, lot COA on every batch. Ships 48hr from Dallas.',
+      'Pharmacy-grade compounds from an ISO-certified US facility — BPC-157, GHK-Cu, Tirzepatide, Sermorelin and more. Sealed sterile vials, lot COA on every batch. Ships 48hr from Dallas.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — pharmacy-grade compounds, 503B-sourced, Dallas',
+        alt: 'Merit Sciences — pharmacy-grade compounds, ISO-certified, Dallas',
         type: 'image/jpeg',
       },
     ],
@@ -117,9 +117,9 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Merit Sciences · Pharmacy-grade compounds',
-    // Twitter description — ~140 chars. 503B channel framing.
+    // Twitter description — ~140 chars. ISO-certified channel framing.
     description:
-      'Pharmacy-grade compounds from a US 503B outsourcing facility. Sealed sterile vials, lot COA, ≥99% HPLC purity. Ships 48hr from Dallas.',
+      'Pharmacy-grade compounds from a US compounding facility. Sealed sterile vials, lot COA, ≥99% HPLC purity. Ships 48hr from Dallas.',
     images: ['/og-image.jpg'],
   },
   robots: {
