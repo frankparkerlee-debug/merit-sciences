@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 export default function EmailPreviewsPage() {
   const transactional = TEMPLATES.filter((t) => t.group === 'transactional');
   const marketing = TEMPLATES.filter((t) => t.group === 'marketing');
+  const prospect = TEMPLATES.filter((t) => t.group === 'prospect');
 
   return (
     <main className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
@@ -32,6 +33,11 @@ export default function EmailPreviewsPage() {
       {/* Marketing group */}
       <Section title="Marketing" subtitle="Manual or scheduled outreach. Triggers wired in follow-up pushes.">
         <Grid templates={marketing} />
+      </Section>
+
+      {/* Prospect nurture track */}
+      <Section title="Prospect nurture — NEW" subtitle="Subscriber who hasn't purchased: the long-tail conversion (6 emails over ~4 weeks). Trust through craft, not coupon-spam. Branches out the moment they buy.">
+        <Grid templates={prospect} />
       </Section>
     </main>
   );

@@ -116,6 +116,16 @@ export function p(html: string): string {
   return `<p style="margin:0 0 14px;font-size:15px;line-height:23px;color:${INK};">${html}</p>`;
 }
 
+/** Cobalt-tinted highlight box — for proof, codes, spec callouts. */
+export function calloutBox(html: string): string {
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:4px 0 18px;"><tr><td style="background:#F3F5FF;border:1px solid #DBE2FF;border-radius:10px;padding:16px 18px;font-size:14px;line-height:22px;color:${INK};">${html}</td></tr></table>`;
+}
+
+/** Hairline divider. */
+export function divider(): string {
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:8px 0 18px;"><tr><td style="border-top:1px solid ${CREAM_EDGE};font-size:0;line-height:0;height:1px;">&nbsp;</td></tr></table>`;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')

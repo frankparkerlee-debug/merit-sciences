@@ -13,13 +13,20 @@ export type TemplateKey =
   | 'order_canceled'
   | 'abandoned_cart'
   | 'welcome'
-  | 'post_delivery';
+  | 'post_delivery'
+  // Prospect nurture (subscriber, no purchase yet)
+  | 'prospect_welcome'
+  | 'prospect_proof'
+  | 'prospect_sourcing'
+  | 'prospect_vetting'
+  | 'prospect_social_proof'
+  | 'prospect_last_call';
 
 export type TemplateMeta = {
   key: TemplateKey;
   label: string;
   description: string;
-  group: 'transactional' | 'marketing';
+  group: 'transactional' | 'marketing' | 'prospect';
 };
 
 export const TEMPLATES: TemplateMeta[] = [
@@ -79,6 +86,13 @@ export const TEMPLATES: TemplateMeta[] = [
     description: 'Sent 7 days after delivered. Offers CoA, reconstitution help, cross-sell. Trigger: not yet wired (cron).',
     group: 'marketing',
   },
+  // ── Prospect nurture (subscriber who hasn't purchased — the long-tail conversion)
+  { key: 'prospect_welcome', label: '1 · Welcome + 20%', description: 'Day 0. Sets the tone, hands over the code. Trigger: on subscribe w/o purchase. Not yet wired.', group: 'prospect' },
+  { key: 'prospect_proof', label: '2 · See the data', description: 'Day 2. The COA / proof email — transparency as the hook.', group: 'prospect' },
+  { key: 'prospect_sourcing', label: '3 · Made in a US pharmacy', description: 'Day 4. The sourcing story vs the gray market.', group: 'prospect' },
+  { key: 'prospect_vetting', label: '4 · Is this legit?', description: 'Day 7. The four questions serious people ask.', group: 'prospect' },
+  { key: 'prospect_social_proof', label: '5 · Good company', description: 'Day 10. Who sources from Merit.', group: 'prospect' },
+  { key: 'prospect_last_call', label: '6 · Last call', description: 'Day 28. Final value + the 20%. Branches out on first purchase.', group: 'prospect' },
 ];
 
 const SAMPLE_LINES = [
@@ -129,6 +143,13 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
   const catalogUrl = 'https://merit-sciences.onrender.com/catalog';
 
   switch (key) {
+    case 'prospect_welcome':
+    case 'prospect_proof':
+    case 'prospect_sourcing':
+    case 'prospect_vetting':
+    case 'prospect_social_proof':
+    case 'prospect_last_call':
+      return { code: 'WELCOME20', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?token=sample' };
     case 'order_confirmation':
       return {
         orderId: 'cuid-preview',

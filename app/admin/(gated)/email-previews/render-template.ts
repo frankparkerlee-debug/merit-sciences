@@ -16,6 +16,14 @@ import {
   renderWelcome,
   renderPostDeliveryFollowUp,
 } from '@/lib/email-templates';
+import {
+  renderProspectWelcome,
+  renderProspectProof,
+  renderProspectSourcing,
+  renderProspectVetting,
+  renderProspectSocialProof,
+  renderProspectLastCall,
+} from '@/lib/prospect-emails';
 import { sampleDataFor, type TemplateKey } from './sample-data';
 
 export function renderTemplate(key: TemplateKey): { subject: string; html: string; text: string } | null {
@@ -38,6 +46,18 @@ export function renderTemplate(key: TemplateKey): { subject: string; html: strin
       return renderWelcome(data as any);
     case 'post_delivery':
       return renderPostDeliveryFollowUp(data as any);
+    case 'prospect_welcome':
+      return renderProspectWelcome(data as any);
+    case 'prospect_proof':
+      return renderProspectProof(data as any);
+    case 'prospect_sourcing':
+      return renderProspectSourcing(data as any);
+    case 'prospect_vetting':
+      return renderProspectVetting(data as any);
+    case 'prospect_social_proof':
+      return renderProspectSocialProof(data as any);
+    case 'prospect_last_call':
+      return renderProspectLastCall(data as any);
     default:
       return null;
   }
