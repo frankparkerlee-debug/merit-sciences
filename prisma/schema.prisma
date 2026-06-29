@@ -32,9 +32,13 @@ model Coa {
   productHandle String? // optional link back to a catalog product
   lotId         String // e.g. "MS-2406-A" — matches the bottle label
   purity        String // e.g. "99.2%"
-  testedDate    String // ISO date string
-  fileUrl       String // Supabase Storage public URL (the PDF)
-  fileName      String? // original upload filename, for the admin list
+  identity      String? // tested compounds, e.g. "GHK-Cu, BPC-157, TB-500"
+  appearance    String? // e.g. "White lyophilized powder"
+  testedDate    String? // optional — not every published COA shows a date
+  // Optional masked/branded report PDF (lab + manufacturer identity redacted).
+  // Most entries are data-only — the card IS the deliverable, like the old store.
+  fileUrl       String?
+  fileName      String?
   createdAt     DateTime @default(now())
 
   @@index([compound])

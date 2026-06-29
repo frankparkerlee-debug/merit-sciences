@@ -8,8 +8,8 @@ type Row = {
   compound: string;
   lotId: string;
   purity: string;
-  testedDate: string;
-  fileUrl: string;
+  testedDate: string | null;
+  fileUrl: string | null;
   fileName: string | null;
 };
 
@@ -43,16 +43,18 @@ export function CoaList({ rows }: { rows: Row[] }) {
               <td className="px-4 py-2.5 font-bold text-ink">{c.compound}</td>
               <td className="px-4 py-2.5 font-mono text-[13px] text-ink-soft">{c.lotId}</td>
               <td className="px-4 py-2.5 tabular-nums">{c.purity}</td>
-              <td className="px-4 py-2.5 text-ink-soft">{c.testedDate}</td>
+              <td className="px-4 py-2.5 text-ink-soft">{c.testedDate || '—'}</td>
               <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                <a
-                  href={c.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-bold text-cobalt hover:underline mr-4"
-                >
-                  View
-                </a>
+                {c.fileUrl && (
+                  <a
+                    href={c.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-cobalt hover:underline mr-4"
+                  >
+                    View
+                  </a>
+                )}
                 <button
                   type="button"
                   disabled={busy === c.id}

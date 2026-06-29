@@ -33,27 +33,35 @@ export function CoaUploadForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelCls}>Compound *</label>
-          <input name="compound" required placeholder="Tirzepatide" className={inputCls} />
+          <input name="compound" required placeholder="CJC-1295 / Ipamorelin" className={inputCls} />
         </div>
         <div>
           <label className={labelCls}>Lot ID * (matches the bottle)</label>
-          <input name="lotId" required placeholder="MS-2406-A" className={inputCls} />
+          <input name="lotId" required placeholder="MRT-2603-204" className={inputCls} />
         </div>
         <div>
-          <label className={labelCls}>Purity *</label>
-          <input name="purity" required placeholder="99.2%" className={inputCls} />
+          <label className={labelCls}>HPLC purity *</label>
+          <input name="purity" required placeholder="99.9%" className={inputCls} />
         </div>
         <div>
-          <label className={labelCls}>Tested date *</label>
-          <input name="testedDate" required type="date" className={inputCls} />
+          <label className={labelCls}>Tested date (optional)</label>
+          <input name="testedDate" type="date" className={inputCls} />
         </div>
         <div className="sm:col-span-2">
+          <label className={labelCls}>Identity — tested compounds (optional)</label>
+          <input name="identity" placeholder="GHK-Cu, BPC-157, TB-500" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Appearance (optional)</label>
+          <input name="appearance" placeholder="White lyophilized powder" className={inputCls} />
+        </div>
+        <div>
           <label className={labelCls}>Product handle (optional)</label>
           <input name="productHandle" placeholder="ly3437943" className={inputCls} />
         </div>
         <div className="sm:col-span-2">
-          <label className={labelCls}>COA PDF *</label>
-          <input name="file" required type="file" accept="application/pdf" className="block w-full text-sm text-ink-soft file:mr-3 file:rounded-lg file:border-0 file:bg-cobalt file:px-4 file:py-2 file:text-sm file:font-bold file:text-white" />
+          <label className={labelCls}>Masked report PDF (optional — redact the lab letterhead first)</label>
+          <input name="file" type="file" accept="application/pdf" className="block w-full text-sm text-ink-soft file:mr-3 file:rounded-lg file:border-0 file:bg-cobalt file:px-4 file:py-2 file:text-sm file:font-bold file:text-white" />
         </div>
       </div>
 

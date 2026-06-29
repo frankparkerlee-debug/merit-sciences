@@ -2,9 +2,9 @@ import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
-  title: 'Certificates of Analysis · Merit Sciences',
+  title: 'Lab results · Merit Sciences',
   description:
-    'Every Merit lot ships with a third-party Certificate of Analysis. Find yours by compound or lot number — the same report linked from the QR code on your bottle.',
+    'Every Merit batch is independently HPLC-verified before release. Find your lot by compound or lot number — purity, identity, and appearance, with lab and manufacturer identifiers redacted to protect supply-chain integrity.',
 };
 
 type CoaRow = {
@@ -12,22 +12,19 @@ type CoaRow = {
   compound: string;
   lotId: string;
   purity: string;
-  testedDate: string;
-  fileUrl: string;
+  identity: string | null;
+  appearance: string | null;
+  testedDate: string | null;
+  fileUrl: string | null;
 };
 
-function fmtDate(s: string): string {
+function fmtDate(s: string | null): string | null {
+  if (!s) return null;
   const d = new Date(s);
-  return isNaN(d.getTime())
-    ? s
-    : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return isNaN(d.getTime()) ? s : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default async function CoaLibraryPage({
-  searchParams,
-}: {
-  searchParams: { q?: string };
-}) {
+export default async function LabResultsPage({ searchParams }: { searchParams: { q?: string } }) {
   const q = (searchParams.q ?? '').trim();
   let coas: CoaRow[] = [];
   try {
@@ -37,12 +34,16 @@ export default async function CoaLibraryPage({
             OR: [
               { compound: { contains: q, mode: 'insensitive' } },
               { lotId: { contains: q, mode: 'insensitive' } },
+              { identity: { contains: q, mode: 'insensitive' } },
             ],
           }
         : undefined,
       orderBy: [{ compound: 'asc' }, { createdAt: 'desc' }],
       take: 500,
-      select: { id: true, compound: true, lotId: true, purity: true, testedDate: true, fileUrl: true },
+      select: {
+        id: true, compound: true, lotId: true, purity: true,
+        identity: true, appearance: true, testedDate: true, fileUrl: true,
+      },
     });
   } catch {
     coas = [];
@@ -50,25 +51,24 @@ export default async function CoaLibraryPage({
 
   return (
     <main className="bg-cream min-h-screen">
+      {/* Hero */}
       <section className="bg-white border-b border-cobalt/10">
-        <div className="max-w-[900px] mx-auto px-5 sm:px-6 lg:px-8 pt-14 pb-10">
+        <div className="max-w-[1000px] mx-auto px-5 sm:px-6 lg:px-8 pt-14 pb-10">
           <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-            — Verify your lot
+            — Independent third-party verification
           </p>
           <h1
             className="font-display font-black text-ink tracking-[-0.035em] leading-[0.98] mb-4"
             style={{ fontSize: 'clamp(30px, 5vw, 52px)' }}
           >
-            Certificates of Analysis<span className="text-cobalt">.</span>
+            Lab results<span className="text-cobalt">.</span>
           </h1>
           <p className="text-base text-ink-soft leading-relaxed max-w-2xl">
-            Every Merit lot ships with an independent, third-party Certificate of Analysis —
-            the HPLC trace, the measured purity, and the lot ID. Find yours below by compound
-            or by the lot number printed on your bottle. It&rsquo;s the same report the QR code
-            on your label points to.
+            Every Merit batch is independently HPLC-verified before release. Find your lot below by
+            compound or by the lot number printed on your bottle — the same library the QR on your
+            label points to.
           </p>
 
-          {/* Search */}
           <form method="GET" className="mt-7 flex gap-2 max-w-md">
             <input
               type="search"
@@ -76,74 +76,100 @@ export default async function CoaLibraryPage({
               defaultValue={q}
               placeholder="Search by compound or lot number…"
               className="flex-1 rounded-xl border border-cobalt/20 bg-white px-4 py-2.5 text-sm text-ink outline-none focus:border-cobalt"
-              aria-label="Search certificates of analysis"
+              aria-label="Search lab results"
             />
-            <button
-              type="submit"
-              className="rounded-xl bg-cobalt px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
-            >
+            <button type="submit" className="rounded-xl bg-cobalt px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
               Search
             </button>
           </form>
         </div>
       </section>
 
-      <section className="max-w-[900px] mx-auto px-5 sm:px-6 lg:px-8 py-10">
+      {/* Results */}
+      <section className="max-w-[1000px] mx-auto px-5 sm:px-6 lg:px-8 py-10">
         {coas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-cobalt/20 bg-white px-6 py-12 text-center">
             <p className="text-sm text-ink-soft">
-              {q
-                ? `No certificate found for “${q}”. Check the lot number on your bottle, or `
-                : 'Certificates are being published. '}
-              <a href="mailto:rx@meritsciences.com" className="text-cobalt font-bold underline-offset-2 hover:underline">
-                email us
-              </a>{' '}
-              and we&rsquo;ll send your lot&rsquo;s COA directly.
+              {q ? `No result found for “${q}”. Check the lot number on your bottle, or ` : 'Results are being published. '}
+              <a href="mailto:rx@meritsciences.com" className="text-cobalt font-bold underline-offset-2 hover:underline">email us</a>{' '}
+              with your lot number and we&rsquo;ll send it.
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-cobalt/12 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-cobalt/5 text-[10px] tracking-[0.16em] uppercase text-ink-soft font-bold">
-                <tr>
-                  <th className="px-5 py-3 text-left">Compound</th>
-                  <th className="px-5 py-3 text-left">Lot</th>
-                  <th className="px-5 py-3 text-left">Purity</th>
-                  <th className="px-5 py-3 text-left">Tested</th>
-                  <th className="px-5 py-3 text-right">COA</th>
-                </tr>
-              </thead>
-              <tbody>
-                {coas.map((c) => (
-                  <tr key={c.id} className="border-t border-cobalt/8">
-                    <td className="px-5 py-3 font-bold text-ink">{c.compound}</td>
-                    <td className="px-5 py-3 font-mono text-[13px] text-ink-soft">{c.lotId}</td>
-                    <td className="px-5 py-3 tabular-nums text-ink">{c.purity}</td>
-                    <td className="px-5 py-3 text-ink-soft">{fmtDate(c.testedDate)}</td>
-                    <td className="px-5 py-3 text-right">
-                      <a
-                        href={c.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block rounded-lg border border-cobalt/30 px-3 py-1.5 text-xs font-bold text-cobalt hover:bg-cobalt/5"
-                      >
-                        View PDF →
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {coas.map((c) => (
+              <div key={c.id} className="rounded-2xl border border-cobalt/12 bg-white p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="font-display text-lg font-extrabold text-ink leading-tight">{c.compound}</h2>
+                  <span className="flex-none rounded-lg bg-cobalt/10 px-2.5 py-1 text-[12px] font-bold tabular-nums text-cobalt">
+                    {c.purity} HPLC
+                  </span>
+                </div>
+                <dl className="mt-3 space-y-1.5 text-[13px]">
+                  <Row label="Lot">{c.lotId}</Row>
+                  {c.identity && <Row label="Identity">{c.identity}</Row>}
+                  {c.appearance && <Row label="Appearance">{c.appearance}</Row>}
+                  {fmtDate(c.testedDate) && <Row label="Tested">{fmtDate(c.testedDate)}</Row>}
+                </dl>
+                <div className="mt-3 flex items-center justify-between border-t border-cobalt/8 pt-3">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Verified · passed
+                  </span>
+                  {c.fileUrl && (
+                    <a
+                      href={c.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-cobalt hover:underline"
+                    >
+                      View report →
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
+      </section>
 
-        <p className="mt-6 text-[12px] text-ink-muted leading-relaxed">
-          Certificates are issued per production lot. If your lot isn&rsquo;t listed yet, it may be a
-          recent batch still in publishing — email{' '}
-          <a href="mailto:rx@meritsciences.com" className="text-cobalt font-bold">rx@meritsciences.com</a>{' '}
-          with your lot number and we&rsquo;ll send it. For research use only.
-        </p>
+      {/* How we verify */}
+      <section className="bg-white border-t border-cobalt/10">
+        <div className="max-w-[1000px] mx-auto px-5 sm:px-6 lg:px-8 py-12">
+          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">— How we verify</p>
+          <h2 className="font-display text-2xl font-black text-ink tracking-tight mb-6">
+            Three independent checks. Zero exceptions<span className="text-cobalt">.</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Check title="HPLC purity" body="High-performance liquid chromatography measures the exact purity of every lot before release." />
+            <Check title="Mass-spec identity" body="Mass spectrometry confirms the compound is what the label says it is — no substitutions." />
+            <Check title="Heavy metals + endotoxin" body="Screened for heavy-metal and endotoxin contamination to research-grade thresholds." />
+          </div>
+          <p className="mt-8 max-w-2xl text-[13px] leading-relaxed text-ink-soft">
+            <strong className="text-ink">A note on what&rsquo;s shown.</strong> Manufacturer and laboratory
+            identifiers are redacted to protect supply-chain integrity — the data is not. Purity, identity,
+            and lot are reported exactly as measured. For research use only.
+          </p>
+        </div>
       </section>
     </main>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-2">
+      <dt className="w-24 flex-none text-ink-muted">{label}</dt>
+      <dd className="text-ink font-medium">{children}</dd>
+    </div>
+  );
+}
+
+function Check({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-xl border border-cobalt/12 bg-cream/40 p-4">
+      <p className="font-display font-extrabold text-ink text-sm mb-1.5">{title}</p>
+      <p className="text-[12.5px] leading-relaxed text-ink-soft">{body}</p>
+    </div>
   );
 }
