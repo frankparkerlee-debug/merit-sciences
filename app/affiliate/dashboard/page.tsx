@@ -131,6 +131,12 @@ export default async function AffiliateDashboardPage() {
           </div>
           <div className="flex items-center gap-5">
             <Link
+              href="/affiliate/dashboard/kit"
+              className="text-xs font-bold tracking-wider uppercase text-cobalt hover:text-ink transition"
+            >
+              Promotion kit
+            </Link>
+            <Link
               href="/affiliate/dashboard/settings"
               className="text-xs font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition"
             >
@@ -216,6 +222,21 @@ export default async function AffiliateDashboardPage() {
             mono
           />
         </div>
+
+        {/* Content kit CTA */}
+        <Link
+          href="/affiliate/dashboard/kit"
+          className="block rounded-2xl border border-cobalt/20 bg-cobalt/5 p-6 mb-10 hover:bg-cobalt/10 transition"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">— Promotion kit</p>
+              <h3 className="font-display font-extrabold text-ink text-lg">Captions, rules &amp; assets — ready to post.</h3>
+              <p className="text-sm text-ink-soft mt-1">Approved captions with your code built in, the do/don&rsquo;t rules, and your asset pack.</p>
+            </div>
+            <span className="flex-none text-cobalt font-bold text-sm">Open →</span>
+          </div>
+        </Link>
 
         {/* Recent activity — every order attributed to you (commission or not) */}
         <div className="rounded-2xl border border-cobalt/15 bg-white overflow-hidden">
