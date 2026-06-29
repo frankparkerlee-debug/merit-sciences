@@ -33,7 +33,7 @@ export default async function AffiliateDashboardPage() {
     customerCount,
     lifetimeCommissions,
     last30Commissions,
-    recentCommissions,
+    recentOrders,
   ] = await Promise.all([
     prisma.click.count({ where: { affiliateId: affiliate.id } }),
     prisma.customerAffiliateLink.count({ where: { affiliateId: affiliate.id } }),
@@ -49,20 +49,38 @@ export default async function AffiliateDashboardPage() {
       },
       select: { commissionCents: true, orderTotalCents: true },
     }),
-    prisma.orderCommission.findMany({
+    // Every order attributed to this affiliate — keyed on affiliateId, NOT on
+    // commission rows. Card-flow + self-purchase orders may carry a $0 (or no)
+    // commission but the affiliate must still SEE them here.
+    prisma.order.findMany({
       where: { affiliateId: affiliate.id },
-      orderBy: { occurredAt: 'desc' },
-      take: 10,
+      orderBy: { createdAt: 'desc' },
+      take: 12,
       select: {
         id: true,
-        occurredAt: true,
-        orderTotalCents: true,
-        commissionCents: true,
-        commissionRateBp: true,
+        paypalOrderId: true,
+        createdAt: true,
+        totalCents: true,
         status: true,
       },
     }),
   ]);
+
+  // Join the commission row (if any) for each recent order so we can show what
+  // the affiliate earned per order. Orders with no commission row simply show
+  // a dash (legacy card-flow before the webhook fix, or not-yet-processed).
+  const recentOrderPaypalIds = recentOrders
+    .map((o) => o.paypalOrderId)
+    .filter((x): x is string => !!x);
+  const commissionByOrder = new Map(
+    (recentOrderPaypalIds.length
+      ? await prisma.orderCommission.findMany({
+          where: { affiliateId: affiliate.id, paypalOrderId: { in: recentOrderPaypalIds } },
+          select: { paypalOrderId: true, commissionCents: true, commissionRateBp: true, status: true },
+        })
+      : []
+    ).map((c) => [c.paypalOrderId as string, c]),
+  );
 
   // Aggregate calculations
   const lifetimeEarnings = lifetimeCommissions.reduce(
@@ -199,20 +217,20 @@ export default async function AffiliateDashboardPage() {
           />
         </div>
 
-        {/* Recent activity */}
+        {/* Recent activity — every order attributed to you (commission or not) */}
         <div className="rounded-2xl border border-cobalt/15 bg-white overflow-hidden">
           <div className="px-5 sm:px-6 py-4 border-b border-cobalt/10 flex items-center justify-between">
             <h3 className="font-display font-black text-ink tracking-tight text-lg">
-              Recent commissions
+              Recent orders
             </h3>
             <p className="text-xs text-ink-soft">
-              {recentCommissions.length === 0 ? '0' : `${recentCommissions.length} most recent`}
+              {recentOrders.length === 0 ? '0' : `${recentOrders.length} most recent`}
             </p>
           </div>
-          {recentCommissions.length === 0 ? (
+          {recentOrders.length === 0 ? (
             <div className="px-5 sm:px-6 py-10 text-center">
               <p className="text-sm text-ink-soft">
-                No commissions yet. Share your link or code &mdash; the moment someone buys, it shows up here.
+                No orders yet. Share your link or code &mdash; every order placed with it shows up here, whether or not it earns commission.
               </p>
             </div>
           ) : (
@@ -227,17 +245,24 @@ export default async function AffiliateDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentCommissions.map((c) => (
-                  <tr key={c.id} className="border-t border-cobalt/5">
-                    <td className="px-5 sm:px-6 py-3 text-ink-soft">{fmtDate(c.occurredAt)}</td>
-                    <td className="px-5 sm:px-6 py-3 text-right text-ink">{fmtMoney(c.orderTotalCents)}</td>
-                    <td className="px-5 sm:px-6 py-3 text-right text-ink-soft">{fmtPct(c.commissionRateBp)}</td>
-                    <td className="px-5 sm:px-6 py-3 text-right font-bold text-ink">{fmtMoney(c.commissionCents)}</td>
-                    <td className="px-5 sm:px-6 py-3 text-right">
-                      <StatusBadge status={c.status} />
-                    </td>
-                  </tr>
-                ))}
+                {recentOrders.map((o) => {
+                  const c = o.paypalOrderId ? commissionByOrder.get(o.paypalOrderId) : undefined;
+                  return (
+                    <tr key={o.id} className="border-t border-cobalt/5">
+                      <td className="px-5 sm:px-6 py-3 text-ink-soft">{fmtDate(o.createdAt)}</td>
+                      <td className="px-5 sm:px-6 py-3 text-right text-ink">{fmtMoney(o.totalCents)}</td>
+                      <td className="px-5 sm:px-6 py-3 text-right text-ink-soft">
+                        {c ? fmtPct(c.commissionRateBp) : <span className="text-ink-muted">&mdash;</span>}
+                      </td>
+                      <td className="px-5 sm:px-6 py-3 text-right font-bold text-ink">
+                        {c ? fmtMoney(c.commissionCents) : <span className="text-ink-muted font-normal">&mdash;</span>}
+                      </td>
+                      <td className="px-5 sm:px-6 py-3 text-right">
+                        <StatusBadge status={c ? c.status : o.status} />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

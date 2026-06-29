@@ -148,8 +148,22 @@ async function handleCaptureCompleted(event: any) {
     // if applicable, and webhook retries will write the order next time.
   }
 
-  // ── Affiliate commission (only if attribution + payer email exist) ──
-  if (!affiliateId || !payerEmail) return;
+  // ── Affiliate commission ─────────────────────────────────────────
+  if (!affiliateId) return;
+
+  // PayPal omits payer.email_address on Advanced Card Fields captures, so the
+  // card flow arrives here with no payerEmail. Fall back to the persisted
+  // order's email (stored at create-order) — otherwise EVERY card-flow referral
+  // silently earns no commission and never surfaces on the affiliate dashboard.
+  let buyerEmail: string | null = payerEmail;
+  if (!buyerEmail) {
+    const persisted = await prisma.order.findUnique({
+      where: { paypalOrderId: orderId },
+      select: { customerEmail: true },
+    });
+    buyerEmail = persisted?.customerEmail?.toLowerCase() ?? null;
+  }
+  if (!buyerEmail) return;
 
   // Resolve affiliate and confirm ACTIVE
   const affiliate = await prisma.affiliate.findUnique({
@@ -158,17 +172,17 @@ async function handleCaptureCompleted(event: any) {
   });
   if (!affiliate || affiliate.status !== 'ACTIVE') return;
 
-  // Self-purchase guard
-  const isSelfPurchase = payerEmail === affiliate.email.toLowerCase();
+  // Self-purchase guard (affiliate gets a $0 commission row — still visible)
+  const isSelfPurchase = buyerEmail === affiliate.email.toLowerCase();
 
   // ── Evergreen lock: find-or-create by email ──────────────────────
   let link = await prisma.customerAffiliateLink.findUnique({
-    where: { customerEmail: payerEmail },
+    where: { customerEmail: buyerEmail },
   });
   if (!link) {
     link = await prisma.customerAffiliateLink.create({
       data: {
-        customerEmail: payerEmail,
+        customerEmail: buyerEmail,
         paypalPayerId: payerId,
         affiliateId: affiliate.id,
       },
