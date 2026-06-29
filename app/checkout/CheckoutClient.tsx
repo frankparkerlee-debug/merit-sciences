@@ -343,18 +343,25 @@ export function CheckoutClient({
     if (!captured.ok) {
       throw new Error(captured.error || 'Payment did not complete.');
     }
-    // Funnel endpoint: purchase. Identify the buyer + record revenue before
-    // we clear the cart (so the line data is still available).
-    const buyerEmail = (captured.payerEmail || formRef.current.email || '').toLowerCase();
-    if (buyerEmail) identify(buyerEmail);
-    track('purchase', {
-      order_id: data.orderID,
-      value_usd: localTotalCents / 100,
-      item_count: lines.reduce((n, l) => n + l.qty, 0),
-      discount_usd: localDiscountCents / 100,
-      code: appliedCode ?? undefined,
-    });
-    clear();
+    // Payment is captured — from here the buyer MUST reach the success page.
+    // Analytics + cart-clear are best-effort: a throw in any of them must
+    // never bubble out of onApprove and trip onError's "Payment failed" alert
+    // for someone who was just charged. (This was surfacing an error screen on
+    // every completed order.)
+    try {
+      const buyerEmail = (captured.payerEmail || formRef.current.email || '').toLowerCase();
+      if (buyerEmail) identify(buyerEmail);
+      track('purchase', {
+        order_id: data.orderID,
+        value_usd: localTotalCents / 100,
+        item_count: lines.reduce((n, l) => n + l.qty, 0),
+        discount_usd: localDiscountCents / 100,
+        code: appliedCode ?? undefined,
+      });
+      clear();
+    } catch (e) {
+      console.error('[checkout] post-capture side-effect failed (non-fatal)', e);
+    }
     router.push(`/checkout/success?order_id=${data.orderID}`);
   }
 

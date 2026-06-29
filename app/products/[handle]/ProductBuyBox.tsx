@@ -45,7 +45,11 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
   const openDrawer = useCart((s) => s.openDrawer);
 
   const selected = bundles[selectedIdx];
-  const bacWaterCents = 999;
+  // MUST match the live `bacteriostatic-water` product price ($19.99). This was
+  // a stale $9.99 hardcode that sold BAC water at half price on every PDP add —
+  // losing money on every order. TODO: source from the DB product so it can't
+  // drift again (the checkout cross-sell already does via getProduct).
+  const bacWaterCents = 1999;
 
   // If subscribe selected, find subscribe bundle for pricing
   const subscribeBundle = bundles.find((b) => b.label.toLowerCase().includes('subscribe'));
