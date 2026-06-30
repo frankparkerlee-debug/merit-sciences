@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import {
+  ATTR_COOKIE,
+  ATTR_COOKIE_MAX_AGE,
+  buildAttribution,
+  encodeAttrCookie,
+  hasAttributionParams,
+} from '@/lib/attribution';
 
 /**
  * Affiliate click tracking.
@@ -83,15 +90,37 @@ export async function middleware(req: NextRequest) {
   }
 
   const { searchParams, pathname } = req.nextUrl;
+
+  // ── First-touch traffic attribution → merit_attr cookie ────────────────
+  // If this landing carries UTMs / a paid-click id and attribution isn't
+  // already locked, stamp a first-touch cookie. create-order reads it and
+  // writes an OrderAttribution row keyed by the PayPal order id (for ROAS).
+  const attrValue =
+    !req.cookies.get(ATTR_COOKIE) && hasAttributionParams(searchParams)
+      ? encodeAttrCookie(buildAttribution(searchParams, req.headers.get('referer'), pathname, Date.now()))
+      : null;
+  const withAttr = (res: NextResponse): NextResponse => {
+    if (attrValue) {
+      res.cookies.set(ATTR_COOKIE, attrValue, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: ATTR_COOKIE_MAX_AGE,
+      });
+    }
+    return res;
+  };
+
   const ref = searchParams.get('ref');
 
   // Pass through if no ?ref= param. (The vast majority of requests.)
-  if (!ref) return NextResponse.next();
+  if (!ref) return withAttr(NextResponse.next());
 
   // Normalize + validate. Bad slugs just pass through — we don't want to
   // surface "invalid ref" errors to the user.
   const slug = ref.trim().toLowerCase();
-  if (!SLUG_RE.test(slug)) return NextResponse.next();
+  if (!SLUG_RE.test(slug)) return withAttr(NextResponse.next());
 
   // Build the redirect URL without the ?ref= param. Any other query
   // params (utm_*, etc.) are preserved.
@@ -130,7 +159,7 @@ export async function middleware(req: NextRequest) {
     // Swallow — never block the user redirect on logging
   });
 
-  return response;
+  return withAttr(response);
 }
 
 export const config = {

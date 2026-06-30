@@ -5,6 +5,7 @@ import { validateDiscountCode } from '@/lib/discount';
 import { prisma } from '@/lib/db';
 import { preCreateOrder } from '@/lib/orders';
 import { getPractitionerSession } from '@/lib/practitioner-session';
+import { ATTR_COOKIE, decodeAttrCookie } from '@/lib/attribution';
 
 export const runtime = 'nodejs';
 
@@ -349,6 +350,33 @@ export async function POST(req: Request) {
       payerFirstName,
       payerLastName,
     });
+
+    // ── Capture first-party traffic attribution (for ROAS) ─────────
+    // Keyed by the PayPal order id, so it covers BOTH the card and wallet
+    // paths (this route runs for every checkout + carries the merit_attr
+    // cookie). Best-effort — never block checkout. First write wins.
+    try {
+      const attr = decodeAttrCookie((await cookies()).get(ATTR_COOKIE)?.value);
+      if (attr) {
+        await prisma.orderAttribution.upsert({
+          where: { paypalOrderId: order.id },
+          create: {
+            paypalOrderId: order.id,
+            source: attr.source ?? null,
+            medium: attr.medium ?? null,
+            campaign: attr.campaign ?? null,
+            content: attr.content ?? null,
+            term: attr.term ?? null,
+            clickId: attr.clickId ?? null,
+            referrer: attr.referrer ?? null,
+            landing: attr.landing ?? null,
+          },
+          update: {},
+        });
+      }
+    } catch (err) {
+      console.error('[create-order] attribution capture failed', err);
+    }
 
     // ── PRE-CREATE Order row for card flow ─────────────────────────
     // PayPal does NOT include payer.email_address on the order response

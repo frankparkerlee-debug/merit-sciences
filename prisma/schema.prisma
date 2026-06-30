@@ -286,6 +286,28 @@ model Customer {
 // is the source of truth for money; this row is OUR source of truth for
 // fulfillment, customer service, and reporting.
 
+/// First-party traffic attribution per order (first-touch). Keyed by the
+/// PayPal order id and written at create-order, so it covers BOTH the card and
+/// wallet checkout paths without touching order-creation logic. Joined to Order
+/// by paypalOrderId for per-order source + revenue-by-channel (ROAS).
+model OrderAttribution {
+  id            String   @id @default(cuid())
+  paypalOrderId String   @unique
+  source        String?
+  medium        String?
+  campaign      String?
+  content       String?
+  term          String?
+  clickId       String?
+  referrer      String?
+  landing       String?
+  createdAt     DateTime @default(now())
+
+  @@index([source])
+  @@index([campaign])
+  @@map("order_attributions")
+}
+
 model Order {
   id                String      @id @default(cuid())
   // External PayPal references.

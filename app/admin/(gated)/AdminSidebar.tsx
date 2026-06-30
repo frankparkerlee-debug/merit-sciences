@@ -10,7 +10,13 @@ type Section = { section: string; items: Item[] };
 // Single source of truth for the admin IA. Logically-associated pages are
 // tucked under their parent (Payouts under Affiliates, the imports grouped).
 const NAV: Section[] = [
-  { section: 'Overview', items: [{ label: 'Analytics', href: '/admin/analytics' }] },
+  {
+    section: 'Overview',
+    items: [
+      { label: 'Analytics', href: '/admin/analytics' },
+      { label: 'Attribution', href: '/admin/attribution' },
+    ],
+  },
   {
     section: 'Commerce',
     items: [
