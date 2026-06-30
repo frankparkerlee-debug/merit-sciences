@@ -16,7 +16,7 @@ import { EnterButton } from './EnterButton';
 export const metadata: Metadata = {
   title: 'Get 20% off · Merit Sciences',
   description:
-    'American made, pharmacy-grade. The opposite of a mystery source — third-party tested, shipped from Dallas. 20% off your first order.',
+    'American made, lab-verified. The opposite of a mystery source — third-party tested, shipped from Dallas. 20% off your first order.',
   robots: { index: false, follow: false },
 };
 
@@ -62,7 +62,7 @@ export default function AccessPage() {
       {/* Centered offer card */}
       <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-col items-center px-6 py-16 text-center">
         <p className="mb-6 font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-cobalt-soft">
-          American Made · Pharmacy Grade
+          American Made · Lab-Tested
         </p>
 
         <h1
@@ -77,11 +77,11 @@ export default function AccessPage() {
           </span>
           .
           <br />
-          <span className="text-cobalt-soft">Now it&apos;s a pharmacy.</span>
+          <span className="text-cobalt-soft">Now it&apos;s lab-tested.</span>
         </h1>
 
         <p className="mt-7 max-w-lg text-lg leading-relaxed text-cream/70">
-          Merit is American made and pharmacy-grade — third-party tested,
+          Merit is American made and independently tested —
           shipped from Dallas in 48 hours. The opposite of a stranger and a Venmo.
         </p>
 

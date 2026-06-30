@@ -45,38 +45,20 @@ export const metadata: Metadata = {
   // we don't repeat it in the SERP impression so the brand reads as a
   // pharmacy-grade pharmaceutical supplier, not a research-chem shop.
   description:
-    'Pharmacy-grade compounds from an ISO-certified US facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from Dallas.',
+    'Lab-verified compounds from an ISO-certified US facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from Dallas.',
+  // NOTE: molecule names deliberately kept OUT of the GLOBAL <head> — it rides
+  // on every page incl. the /access ad gate, and a paid-platform crawler must
+  // never see a compound there. Compound-level SEO lives on the per-product
+  // pages + page content (which Google/AI index directly).
   keywords: [
-    // Primary commercial-intent terms
-    'pharmacy-grade compounds',
+    'lab-verified compounds',
     'ISO-certified facility compounds',
     'lot-documented compounds',
     'HPLC tested compounds',
     'sealed sterile compounds',
-    'ISO-certified compounds',
-    // Compound-specific (long-tail, high commercial intent)
-    'BPC-157',
-    'BPC-157 supplier',
-    'TB-500',
-    'GHK-Cu',
-    'Tirzepatide',
-    'Retatrutide',
-    'Tesamorelin',
-    'Sermorelin',
-    'IGF-1 LR3',
-    'NAD+',
-    'MOTS-c',
-    'Selank',
-    'Semax',
-    'PT-141',
-    'Epitalon',
-    'AOD-9604',
-    'Thymosin Alpha-1',
-    // Quality / verification angle (AI citation + trust)
     'COA',
     'HPLC verified',
     'bacteriostatic water',
-    // Brand + compliance
     'Merit Sciences',
     'research use only',
   ],
@@ -97,18 +79,18 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://merit-sciences.onrender.com',
     siteName: 'Merit Sciences',
-    title: 'Merit Sciences · Pharmacy-grade compounds',
-    // OG description — names compounds in the catalog so AI link
-    // previews and social cards surface the actual offerings. PPC-safer
-    // framing leads with the ISO / sealed sterile channel proof.
+    title: 'Merit Sciences · Lab-verified compounds',
+    // OG description — GENERIC only (no molecule names): this rides on the
+    // /access ad gate's <head>, so a paid-platform crawler can't surface a
+    // compound. Per-product OG (on the product pages) carries the specifics.
     description:
-      'Pharmacy-grade compounds from an ISO-certified US facility — BPC-157, GHK-Cu, Tirzepatide, Sermorelin and more. Sealed sterile vials, lot COA on every batch. Ships 48hr from Dallas.',
+      'Lab-verified compounds from an ISO-certified US facility. Sealed sterile vials, lot COA on every batch, third-party tested. Ships 48hr from Dallas.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — pharmacy-grade compounds, ISO-certified, Dallas',
+        alt: 'Merit Sciences — lab-verified compounds, ISO-certified, Dallas',
         type: 'image/jpeg',
       },
     ],
@@ -116,10 +98,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Merit Sciences · Pharmacy-grade compounds',
+    title: 'Merit Sciences · Lab-verified compounds',
     // Twitter description — ~140 chars. ISO-certified channel framing.
     description:
-      'Pharmacy-grade compounds from a US compounding facility. Sealed sterile vials, lot COA, ≥99% HPLC purity. Ships 48hr from Dallas.',
+      'Lab-verified compounds from a US facility. Sealed sterile vials, lot COA, ≥99% HPLC purity. Ships 48hr from Dallas.',
     images: ['/og-image.jpg'],
   },
   robots: {

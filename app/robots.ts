@@ -27,6 +27,14 @@ export default function robots(): MetadataRoute.Robots {
           '/practitioners/unsubscribe',
         ],
       },
+      {
+        // Paid-platform crawlers: keep them off the catalog entirely. They may
+        // still fetch the clean ad gates (/access, /lp) to validate an ad's
+        // destination. Advisory layer — the hard block lives in middleware.ts.
+        userAgent: ['facebookexternalhit', 'meta-externalagent', 'FacebookBot', 'facebookcatalog', 'Facebot', 'Bytespider'],
+        allow: ['/access', '/lp'],
+        disallow: '/',
+      },
     ],
     sitemap: `${BASE}/sitemap.xml`,
     host: BASE,

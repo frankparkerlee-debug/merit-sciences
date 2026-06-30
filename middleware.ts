@@ -44,6 +44,21 @@ function isGateHost(host: string): boolean {
   return GATE_HOSTS.some((g) => h === g || h === `www.${g}`);
 }
 
+// Paid-platform ad/link crawlers (Meta + ByteDance/TikTok). When reviewing an
+// ad they crawl its destination — and would otherwise reach the compound
+// catalog on meritsciences.com and reject the ad under the drug policy. We
+// rewrite them to the clean /access gate on any non-clean path (below).
+// Deliberately UA-specific: real browsers (incl. the TikTok in-app webview) and
+// Google/Bing are NOT matched, so the site stays fully indexable for SEO.
+const AD_CRAWLER_RE =
+  /facebookexternalhit|facebookcatalog|meta-externalagent|meta-externalfetcher|facebookbot|facebot|bytespider/i;
+
+// Paths that are already compliant (chrome-stripped, no compounds) — a crawler
+// may see these as-is so it can validate an ad's actual destination.
+function isCleanPath(p: string): boolean {
+  return p === '/access' || p.startsWith('/access/') || p === '/lp' || p.startsWith('/lp/');
+}
+
 export async function middleware(req: NextRequest) {
   // ── Clean-room gate domain (e.g. trymerit.co) ──────────────────────────
   // Serve the static email wall for EVERY page path on this host. /api/* and
@@ -53,6 +68,18 @@ export async function middleware(req: NextRequest) {
     const gateUrl = req.nextUrl.clone();
     gateUrl.pathname = '/gate.html';
     return NextResponse.rewrite(gateUrl);
+  }
+
+  // ── Block paid-platform crawlers from the catalog (SEO-safe) ───────────
+  // A Meta/ByteDance crawler on any non-clean path is served the chrome-stripped
+  // /access gate instead of the real page, so it can never surface a compound —
+  // no matter which URL it tries. Real users and Google/Bing are never matched,
+  // so meritsciences.com stays fully indexable.
+  if (AD_CRAWLER_RE.test(req.headers.get('user-agent') || '') && !isCleanPath(req.nextUrl.pathname)) {
+    const gate = req.nextUrl.clone();
+    gate.pathname = '/access';
+    gate.search = '';
+    return NextResponse.rewrite(gate);
   }
 
   const { searchParams, pathname } = req.nextUrl;
