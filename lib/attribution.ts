@@ -82,10 +82,25 @@ export function encodeAttrCookie(a: Attribution): string {
 
 export function decodeAttrCookie(value: string | undefined | null): Attribution | null {
   if (!value) return null;
-  try {
-    const obj = JSON.parse(decodeURIComponent(value));
-    return obj && typeof obj === 'object' ? (obj as Attribution) : null;
-  } catch {
-    return null;
+  // Robust to 0–2 layers of URL-encoding: our encode adds one, the cookie
+  // serializer may add another, and runtimes differ on whether `.value` is
+  // already decoded on read. Peel until it parses as JSON.
+  let v = value;
+  for (let i = 0; i < 3; i++) {
+    try {
+      const obj = JSON.parse(v);
+      if (obj && typeof obj === 'object') return obj as Attribution;
+    } catch {
+      /* not JSON at this layer — peel one more below */
+    }
+    let dec: string;
+    try {
+      dec = decodeURIComponent(v);
+    } catch {
+      break;
+    }
+    if (dec === v) break;
+    v = dec;
   }
+  return null;
 }
