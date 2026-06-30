@@ -186,6 +186,22 @@ export function CheckoutClient({
   // buyer hasn't already applied a code. Populates the discount box so the
   // 10% shows AND the code is visible — the buyer can still remove it.
   const autoAppliedRef = useRef(false);
+
+  // Auto-apply the WELCOME20 first-order code stashed by the /access gate.
+  // Runs BEFORE the referral auto-apply and shares autoAppliedRef, so the
+  // ad-funnel code wins (matches the server: ad-funnel codes override ?ref).
+  // Without this, the gate promised "20% off" but the buyer hit full price.
+  useEffect(() => {
+    if (autoAppliedRef.current) return;
+    if (!hydrated || lines.length === 0 || appliedCode) return;
+    let welcome: string | null = null;
+    try { welcome = localStorage.getItem('merit_welcome_code'); } catch { /* private mode */ }
+    if (!welcome) return;
+    autoAppliedRef.current = true;
+    applyCode(welcome, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, lines.length, appliedCode]);
+
   useEffect(() => {
     if (autoAppliedRef.current) return;
     if (!autoReferralCode || !hydrated || lines.length === 0 || appliedCode) return;

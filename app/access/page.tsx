@@ -90,7 +90,7 @@ export default function AccessPage() {
         </p>
 
         <div className="mt-5">
-          <EnterButton href="/" label="Unlock &amp; enter" code="WELCOME20" />
+          <EnterButton href="/catalog" label="Unlock &amp; enter" code="WELCOME20" />
         </div>
 
         <p className="mt-5 text-xs leading-relaxed text-cream/40">

@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { CartDrawer } from '@/components/CartDrawer';
 import { SubscribePopup } from '@/components/SubscribePopup';
 import { ChromeGate } from '@/components/ChromeGate';
+import { WelcomeOfferBar } from '@/components/WelcomeOfferBar';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import { MarketingPixels } from '@/components/MarketingPixels';
 import { getStoreSettings } from '@/lib/store-settings';
@@ -128,6 +129,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               links. The RUO banner above and <main> below always render. */}
           <ChromeGate>
             <Nav />
+            <WelcomeOfferBar />
           </ChromeGate>
           <main>{children}</main>
           <ChromeGate>
