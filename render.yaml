@@ -69,3 +69,10 @@ services:
       # reuse the existing value for the abandoned-cart cron.
       - key: CRON_SECRET
         sync: false
+      # ─── Prospect email drip ────────────────────────────────────────
+      # Nurtures newsletter/gate leads who haven't purchased (lib/prospect-
+      # emails.ts). Add a DAILY Render Cron Job hitting /api/cron/prospect-emails
+      # with the CRON_SECRET bearer to arm it. Suppresses anyone in `customers`;
+      # unsubscribe link is signed with UNSUB_SECRET (falls back to CRON_SECRET).
+      - key: UNSUB_SECRET
+        sync: false           # optional; used to sign one-click unsubscribe links

@@ -19,8 +19,11 @@ import {
 import {
   renderProspectWelcome,
   renderProspectProof,
+  renderProspectTelegram,
   renderProspectSourcing,
   renderProspectVetting,
+  renderProspectShipping,
+  renderProspectReengage,
   renderProspectSocialProof,
   renderProspectLastCall,
 } from '@/lib/prospect-emails';
@@ -50,10 +53,16 @@ export function renderTemplate(key: TemplateKey): { subject: string; html: strin
       return renderProspectWelcome(data as any);
     case 'prospect_proof':
       return renderProspectProof(data as any);
+    case 'prospect_telegram':
+      return renderProspectTelegram(data as any);
     case 'prospect_sourcing':
       return renderProspectSourcing(data as any);
     case 'prospect_vetting':
       return renderProspectVetting(data as any);
+    case 'prospect_shipping':
+      return renderProspectShipping(data as any);
+    case 'prospect_reengage':
+      return renderProspectReengage(data as any);
     case 'prospect_social_proof':
       return renderProspectSocialProof(data as any);
     case 'prospect_last_call':

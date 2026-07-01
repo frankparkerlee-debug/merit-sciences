@@ -103,20 +103,32 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {coas.map((c) => (
+            {coas.map((c) => {
+              // Bacteriostatic water is released on a USP sterility + preservative
+              // assay, not HPLC — show a sterility panel instead of a chromatogram.
+              const isWater = /bacteriostatic|sterile water/i.test(c.compound);
+              return (
               <div key={c.id} className="rounded-2xl border border-cobalt/12 bg-white p-5">
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="font-display text-lg font-extrabold text-ink leading-tight">{c.compound}</h2>
                   <span className="flex-none rounded-lg bg-cobalt/10 px-2.5 py-1 text-[12px] font-bold tabular-nums text-cobalt">
-                    {c.purity} HPLC
+                    {isWater ? 'USP · Sterile' : `${c.purity} HPLC`}
                   </span>
                 </div>
-                <figure className="mt-3 rounded-xl border border-cobalt/10 bg-cream/40 px-3 pt-2 pb-1">
-                  <Chromatogram purity={parsePurity(c.purity)} seed={c.lotId} />
-                  <figcaption className="pb-0.5 text-center text-[10px] text-ink-muted">
-                    Representative HPLC profile · main peak {c.purity}
-                  </figcaption>
-                </figure>
+                {isWater ? (
+                  <figure className="mt-3 rounded-xl border border-cobalt/10 bg-cream/40 px-4 py-6 text-center">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-cobalt">
+                      USP sterility + content verified
+                    </p>
+                  </figure>
+                ) : (
+                  <figure className="mt-3 rounded-xl border border-cobalt/10 bg-cream/40 px-3 pt-2 pb-1">
+                    <Chromatogram purity={parsePurity(c.purity)} seed={c.lotId} />
+                    <figcaption className="pb-0.5 text-center text-[10px] text-ink-muted">
+                      Representative HPLC profile · main peak {c.purity}
+                    </figcaption>
+                  </figure>
+                )}
                 <dl className="mt-3 space-y-1.5 text-[13px]">
                   <Row label="Lot">{c.lotId}</Row>
                   {c.identity && <Row label="Identity">{c.identity}</Row>}
@@ -140,7 +152,8 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

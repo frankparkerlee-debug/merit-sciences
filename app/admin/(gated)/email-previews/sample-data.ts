@@ -17,8 +17,11 @@ export type TemplateKey =
   // Prospect nurture (subscriber, no purchase yet)
   | 'prospect_welcome'
   | 'prospect_proof'
+  | 'prospect_telegram'
   | 'prospect_sourcing'
   | 'prospect_vetting'
+  | 'prospect_shipping'
+  | 'prospect_reengage'
   | 'prospect_social_proof'
   | 'prospect_last_call';
 
@@ -86,13 +89,17 @@ export const TEMPLATES: TemplateMeta[] = [
     description: 'Sent 7 days after delivered. Offers CoA, reconstitution help, cross-sell. Trigger: not yet wired (cron).',
     group: 'marketing',
   },
-  // ── Prospect nurture (subscriber who hasn't purchased — the long-tail conversion)
-  { key: 'prospect_welcome', label: '1 · Welcome + 20%', description: 'Day 0. Sets the tone, hands over the code. Trigger: on subscribe w/o purchase. Not yet wired.', group: 'prospect' },
-  { key: 'prospect_proof', label: '2 · See the data', description: 'Day 2. The COA / proof email — transparency as the hook.', group: 'prospect' },
-  { key: 'prospect_sourcing', label: '3 · Made in a US pharmacy', description: 'Day 4. The sourcing story vs the gray market.', group: 'prospect' },
-  { key: 'prospect_vetting', label: '4 · Is this legit?', description: 'Day 7. The four questions serious people ask.', group: 'prospect' },
-  { key: 'prospect_social_proof', label: '5 · Good company', description: 'Day 10. Who sources from Merit.', group: 'prospect' },
-  { key: 'prospect_last_call', label: '6 · Last call', description: 'Day 28. Final value + the 20%. Branches out on first purchase.', group: 'prospect' },
+  // ── Prospect nurture: instant welcome (day 0) + an 8-email funnel. Timer
+  //    starts "today" for the whole backlog; one email/day max. Some witty.
+  { key: 'prospect_welcome', label: '0 · Welcome + 20% (instant)', description: 'Sent the moment they subscribe. Hands over the code. Not part of the drip cadence.', group: 'prospect' },
+  { key: 'prospect_proof', label: '1 · Show the receipt', description: 'Day 0. COA / proof — transparency as the hook. Links the live lot library.', group: 'prospect' },
+  { key: 'prospect_telegram', label: "2 · Don't buy off Telegram", description: 'Day 2. The funny one — gray-market gamble vs tested. Telegram-vs-Merit table.', group: 'prospect' },
+  { key: 'prospect_sourcing', label: '3 · Not a garage. A pharmacy.', description: 'Day 4. The sourcing story vs the gray market.', group: 'prospect' },
+  { key: 'prospect_vetting', label: '4 · The 4 questions', description: 'Day 7. The four questions serious buyers ask.', group: 'prospect' },
+  { key: 'prospect_shipping', label: '5 · What actually ships', description: 'Day 10. Sealed, lot-labeled, QR-to-COA. Operational trust.', group: 'prospect' },
+  { key: 'prospect_reengage', label: '6 · Did we lose you?', description: 'Day 14. The witty re-engagement nudge.', group: 'prospect' },
+  { key: 'prospect_social_proof', label: '7 · Good company', description: 'Day 18. Who sources from Merit.', group: 'prospect' },
+  { key: 'prospect_last_call', label: '8 · Last call', description: 'Day 24. Final value + the 20%. Branches out the moment they buy.', group: 'prospect' },
 ];
 
 const SAMPLE_LINES = [
@@ -145,11 +152,14 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
   switch (key) {
     case 'prospect_welcome':
     case 'prospect_proof':
+    case 'prospect_telegram':
     case 'prospect_sourcing':
     case 'prospect_vetting':
+    case 'prospect_shipping':
+    case 'prospect_reengage':
     case 'prospect_social_proof':
     case 'prospect_last_call':
-      return { code: 'WELCOME20', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?token=sample' };
+      return { code: 'WELCOME20', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample' };
     case 'order_confirmation':
       return {
         orderId: 'cuid-preview',

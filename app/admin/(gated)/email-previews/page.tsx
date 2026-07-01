@@ -36,7 +36,7 @@ export default function EmailPreviewsPage() {
       </Section>
 
       {/* Prospect nurture track */}
-      <Section title="Prospect nurture — NEW" subtitle="Subscriber who hasn't purchased: the long-tail conversion (6 emails over ~4 weeks). Trust through craft, not coupon-spam. Branches out the moment they buy.">
+      <Section title="Prospect nurture — LIVE" subtitle="Subscriber who hasn't purchased: instant welcome + an 8-email funnel (timer starts today for the whole backlog, one email/day max, a few witty). Trust through craft. Branches out the moment they buy.">
         <Grid templates={prospect} />
       </Section>
     </main>

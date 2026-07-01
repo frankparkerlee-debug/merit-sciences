@@ -67,7 +67,13 @@ export async function POST(req: Request) {
     await prisma.newsletterSubscriber.upsert({
       where: { email },
       update: { isSubscribed: true, unsubscribedAt: null },
-      create: { email, source, tags: [`${source}-signup`, 'discount-20'], isSubscribed: true },
+      create: {
+        email,
+        source,
+        tags: [`${source}-signup`, 'discount-20'],
+        isSubscribed: true,
+        dripStartedAt: new Date(), // start the nurture clock at signup
+      },
     });
     await ensureWelcomeDiscount();
   } catch (err) {

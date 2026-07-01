@@ -707,6 +707,16 @@ model NewsletterSubscriber {
   // Subscription state
   isSubscribed    Boolean  @default(true)
   unsubscribedAt  DateTime?
+  // Prospect drip pointer (lib/prospect-journey.ts): which nurture email was
+  // last sent + when. Advanced by /api/cron/prospect-emails. NULL = brand-new,
+  // starts at the first drip beat. Added via Supabase SQL (pooler can't
+  // migrate) — keep the ALTER in lockstep with these two fields.
+  lastSentKey     String?
+  lastSentAt      DateTime?
+  // When the drip clock starts for this subscriber. Backfilled to "today" for
+  // the existing backlog so day offsets count from now, not an old signup date.
+  // New signups get it set to now() at capture. Falls back to createdAt if null.
+  dripStartedAt   DateTime?
   // Audit
   createdAt       DateTime @default(now())
 
