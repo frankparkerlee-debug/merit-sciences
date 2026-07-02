@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { listProducts } from '@/lib/catalog';
 import { STACK_TEMPLATES } from '@/lib/catalog-meta';
+import { ARTICLES } from '@/lib/library';
 
 const BASE = 'https://meritsciences.com';
 
@@ -22,6 +23,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/catalog`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE}/stacks`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/practitioners`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/coa`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE}/library`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE}/shipping`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${BASE}/returns`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${BASE}/research-disclosure`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
@@ -52,5 +55,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...productRoutes, ...stackRoutes];
+  // Research Library — static article pages (reconstitution protocols, testing
+  // guides, trial summaries). Real molecule names live here → strong SEO surface.
+  const libraryRoutes: MetadataRoute.Sitemap = ARTICLES.map((a) => ({
+    url: `${BASE}/library/${a.slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...productRoutes, ...stackRoutes, ...libraryRoutes];
 }

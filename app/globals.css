@@ -236,3 +236,20 @@ body {
 .merit-policy-prose p:empty {
   margin: 0.5em 0;
 }
+
+/* Research Library article body — renders migrated (cleaned) HTML. */
+.library-prose { color: #0b0f1a; font-size: 16px; line-height: 1.72; }
+.library-prose h2 { font-family: var(--font-inter-tight), sans-serif; font-weight: 800; font-size: 1.45rem; letter-spacing: -0.02em; color: #0b0f1a; margin: 2rem 0 0.7rem; }
+.library-prose h3 { font-weight: 800; font-size: 1.12rem; color: #0b0f1a; margin: 1.5rem 0 0.5rem; }
+.library-prose p { margin: 0 0 1rem; color: #2b3040; }
+.library-prose ul, .library-prose ol { margin: 0 0 1.1rem 1.25rem; }
+.library-prose ul { list-style: disc; }
+.library-prose ol { list-style: decimal; }
+.library-prose li { margin: 0.35rem 0; color: #2b3040; }
+.library-prose a { color: #2e4ddb; text-decoration: underline; }
+.library-prose strong { font-weight: 700; color: #0b0f1a; }
+.library-prose table { width: 100%; border-collapse: collapse; margin: 1.1rem 0; font-size: 0.9rem; display: block; overflow-x: auto; }
+.library-prose th, .library-prose td { border: 1px solid #e5e1d6; padding: 0.5rem 0.7rem; text-align: left; vertical-align: top; }
+.library-prose th { background: #f4f1ea; font-weight: 700; color: #0b0f1a; }
+.library-prose blockquote { border-left: 3px solid #2e4ddb; padding-left: 1rem; color: #5c6378; margin: 1rem 0; }
+.library-prose hr { border: 0; border-top: 1px solid #e5e1d6; margin: 1.6rem 0; }

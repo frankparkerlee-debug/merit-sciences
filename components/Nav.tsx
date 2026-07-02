@@ -11,6 +11,7 @@ export function Nav() {
         <div className="hidden md:flex gap-6 text-sm font-medium">
           <Link href="/catalog" className="hover:text-cobalt transition">Catalog</Link>
           <Link href="/coa" className="hover:text-cobalt transition">COA</Link>
+          <Link href="/library" className="hover:text-cobalt transition">Library</Link>
           <Link href="/practitioners" className="hover:text-cobalt transition">Practitioner Program</Link>
           <Link href="/about" className="hover:text-cobalt transition">About</Link>
         </div>
