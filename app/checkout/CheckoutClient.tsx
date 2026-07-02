@@ -21,7 +21,7 @@ import { US_STATES } from './us-states';
 const FLAT_SHIPPING = 999;
 
 const RUO_TEXT =
-  'I attest that I am purchasing this product for research use only (RUO). It is not for human or veterinary consumption, diagnosis, treatment, or prevention of disease. I understand that I assume all responsibility for proper handling, storage, and disposal under federal and state law.';
+  'By placing your order, you confirm you’re a qualified researcher purchasing for research use only — not for human or veterinary use — and agree to our Terms.';
 
 function fmtMoney(cents: number): string {
   const sign = cents < 0 ? '-' : '';
@@ -88,7 +88,10 @@ export function CheckoutClient({
   const [codeApplying, setCodeApplying] = useState(false);
 
   const [form, setForm] = useState<CheckoutFormState>({
-    ruoAttested: false,
+    // Attestation is now a passive notice at the pay action (clickwrap-by-button),
+    // not a blocking checkbox — so it starts satisfied. The RUO_NOT_ATTESTED gates
+    // below stay as a harmless backstop.
+    ruoAttested: true,
     email: '',
     phone: '',
     shipping: { ...blankAddress },
@@ -407,13 +410,9 @@ export function CheckoutClient({
       {/* ── Left column: payment surface ── */}
       <div className="space-y-5 order-2 lg:order-1">
 
-        {/* RUO Attestation — gates everything */}
+        {/* RUO notice — passive; agreement is implied by placing the order below. */}
         <div ref={ruoRef}>
-          <RUOAttestation
-            checked={form.ruoAttested}
-            onChange={(v) => { setForm({ ...form, ruoAttested: v }); if (v) setFormError(null); }}
-            error={formError}
-          />
+          <RUOAttestation />
         </div>
 
         {!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? (
@@ -594,30 +593,15 @@ export function CheckoutClient({
 
 /* ─── RUO Attestation ─── */
 
-function RUOAttestation({
-  checked, onChange, error,
-}: { checked: boolean; onChange: (v: boolean) => void; error: string | null }) {
+/** Passive research-use notice. Agreement is implied by placing the order
+ *  (clickwrap-by-button) — no blocking checkbox. Kept calm + compact so it
+ *  reassures rather than scares at the moment of payment. */
+function RUOAttestation() {
   return (
-    <div className={`rounded-2xl border p-5 sm:p-6 transition ${checked
-      ? 'border-emerald-200 bg-emerald-50/50'
-      : error ? 'border-rose-300 bg-rose-50' : 'border-amber-300 bg-amber-50/60'}`}>
-      <div className="flex gap-4 items-start">
-        <input
-          id="ruo"
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className="mt-1 w-5 h-5 rounded border-2 border-ink/40 text-cobalt focus:ring-2 focus:ring-cobalt/20 cursor-pointer shrink-0"
-        />
-        <label htmlFor="ruo" className="flex-1 cursor-pointer">
-          <p className="text-[10px] tracking-[0.22em] uppercase text-ink-soft font-bold mb-1">
-            — Required: Research Use Only Attestation
-          </p>
-          <p className="text-sm text-ink leading-relaxed">
-            {RUO_TEXT}
-          </p>
-        </label>
-      </div>
+    <div className="rounded-xl border border-cobalt/12 bg-cobalt/[0.03] px-4 py-3">
+      <p className="text-[12px] leading-relaxed text-ink-soft">
+        <span className="font-bold text-ink">Research use only.</span> {RUO_TEXT}
+      </p>
     </div>
   );
 }

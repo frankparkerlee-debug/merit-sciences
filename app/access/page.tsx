@@ -86,16 +86,16 @@ export default function AccessPage() {
         </p>
 
         <p className="mt-6 text-base font-semibold text-cream/90">
-          Enter your email — unlock 20% off + instant access.
+          Confirm you’re a researcher to enter — add your email for 20% off.
         </p>
 
         <div className="mt-5">
-          <EnterButton href="/catalog" label="Unlock &amp; enter" code="WELCOME20" />
+          <EnterButton href="/catalog" label="Enter the catalog" code="WELCOME20" />
         </div>
 
         <p className="mt-5 text-xs leading-relaxed text-cream/40">
-          Your 20% code lands in your inbox instantly. For research use only —
-          by entering you confirm you are a qualified researcher or laboratory.
+          American made · independently lab-tested · research use only. No spam —
+          add your email and your 20% code lands instantly.
         </p>
       </div>
     </div>
