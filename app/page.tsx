@@ -884,6 +884,12 @@ export default async function HomePage() {
             >
               See a sample COA →
             </Link>
+            <Link
+              href="/library"
+              className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-semibold hover:text-white transition"
+            >
+              Explore the research library →
+            </Link>
           </div>
         </div>
       </section>
