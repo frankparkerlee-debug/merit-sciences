@@ -17,6 +17,15 @@ export default async function CheckoutPage() {
   const [referral, settings] = await Promise.all([getActiveReferral(), getStoreSettings()]);
   const autoReferralCode = referral?.code ?? null;
 
+  // PayPal button client id — read from the SERVER env at request time (this
+  // page is force-dynamic) so the browser button always uses the SAME account
+  // we capture against server-side. This removes the build-time bake pitfall:
+  // when the Merchant-of-Record account's keys change, updating PAYPAL_CLIENT_ID
+  // alone is enough — no need to also set NEXT_PUBLIC_PAYPAL_CLIENT_ID and
+  // rebuild. Falls back to the public build-time var if the server one is unset.
+  const paypalClientId =
+    process.env.PAYPAL_CLIENT_ID || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+
   // BAC water cross-sell — resolve the real product so the checkout
   // reconstitution nudge adds the correct handle/price/image. Null if the
   // product isn't stocked (the nudge then simply doesn't render).
@@ -69,6 +78,7 @@ export default async function CheckoutPage() {
           autoReferralCode={autoReferralCode}
           bacWaterProduct={bacWaterProduct}
           freeShippingThresholdCents={settings.freeShippingThreshold}
+          paypalClientId={paypalClientId}
         />
       </section>
     </main>

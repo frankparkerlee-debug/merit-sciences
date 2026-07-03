@@ -54,10 +54,18 @@ export function CheckoutClient({
   autoReferralCode = null,
   bacWaterProduct = null,
   freeShippingThresholdCents = 35_000,
+  paypalClientId = '',
 }: {
   autoReferralCode?: string | null;
   bacWaterProduct?: { handle: string; title: string; unitCents: number; imageUrl?: string } | null;
   freeShippingThresholdCents?: number;
+  /**
+   * PayPal client id for the browser SDK/button. Sourced from the SERVER env
+   * (PAYPAL_CLIENT_ID) at request time by the checkout page, so the button's
+   * account can never drift from the credentials we capture against. Falls
+   * back to the build-time NEXT_PUBLIC_PAYPAL_CLIENT_ID when not supplied.
+   */
+  paypalClientId?: string;
 }) {
   const router = useRouter();
   const lines = useCart((s) => s.lines);
@@ -305,8 +313,14 @@ export function CheckoutClient({
     ? 'buttons,card-fields,applepay,googlepay'
     : 'buttons,card-fields,googlepay';
 
+  // Prefer the server-sourced client id (runtime PAYPAL_CLIENT_ID, passed as a
+  // prop) so the button always matches the account we capture against. Fall
+  // back to the build-time public var if the prop wasn't supplied.
+  const resolvedPaypalClientId =
+    paypalClientId || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+
   const paypalOptions = {
-    clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
+    clientId: resolvedPaypalClientId,
     currency: 'USD',
     intent: 'capture',
     components,
@@ -431,10 +445,10 @@ export function CheckoutClient({
           <RUOAttestation />
         </div>
 
-        {!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? (
+        {!resolvedPaypalClientId ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
             <p className="text-sm text-amber-900">
-              Payment processor not configured. Set NEXT_PUBLIC_PAYPAL_CLIENT_ID.
+              Payment processor not configured. Set PAYPAL_CLIENT_ID (server) or NEXT_PUBLIC_PAYPAL_CLIENT_ID.
             </p>
           </div>
         ) : (
