@@ -195,7 +195,10 @@ export async function createPayPalOrder(req: PayPalOrderRequest): Promise<PayPal
     intent: 'CAPTURE',
     purchase_units: [purchaseUnit],
     application_context: {
-      brand_name: 'Merit Sciences',
+      // Name shown on PayPal's own approval screen. Overridable via env so the
+      // Merchant-of-Record's registered name can be set without a code change;
+      // defaults to "Merit".
+      brand_name: process.env.PAYPAL_BRAND_NAME || 'Merit',
       landing_page: 'NO_PREFERENCE',
       shipping_preference: buyerProvidedShipping ? 'SET_PROVIDED_ADDRESS' : 'GET_FROM_FILE',
       user_action: 'PAY_NOW',
