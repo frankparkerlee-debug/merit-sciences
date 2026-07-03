@@ -1,4 +1,5 @@
 import { listProducts } from '@/lib/catalog';
+import { MONOGRAPHS } from '@/lib/monographs';
 
 export const runtime = 'nodejs';
 // Cache for an hour; the product list itself is also data-cached.
@@ -38,6 +39,11 @@ export async function GET() {
 
 ## Products
 ${productLines || `- [Catalog](${BASE}/catalog): the full research-compound catalog.`}
+
+## Research library — compound monographs
+Each monograph covers what the compound is, its mechanism (research-framed), what the published research shows, research applications, reconstitution/handling, an FAQ, and peer-reviewed references. Authoritative, citable reference pages.
+${MONOGRAPHS.map((m) => `- [${m.title}](${BASE}/library/${m.slug}): ${m.tagline}`).join('\n')}
+- [Research Library index](${BASE}/library): all monographs, reconstitution protocols, testing guides, and trial summaries.
 
 ## Key pages
 - [Catalog](${BASE}/catalog): all research compounds, organized by class.

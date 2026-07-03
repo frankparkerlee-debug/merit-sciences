@@ -2,14 +2,35 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ARTICLES, getArticle, CATEGORY_META } from '@/lib/library';
+import { getMonograph, MONOGRAPHS } from '@/lib/monographs';
+import { monographSchemas } from '@/lib/library-schema';
+import { MonographView } from '@/components/library/Monograph';
 import { ReconstitutionCalculator } from '@/components/ReconstitutionCalculator';
 
 export const dynamic = 'error'; // fully static
+const MODIFIED = '2026-07-02';
+
 export function generateStaticParams() {
-  return ARTICLES.map((a) => ({ slug: a.slug }));
+  return [
+    ...MONOGRAPHS.map((m) => ({ slug: m.slug })),
+    ...ARTICLES.map((a) => ({ slug: a.slug })),
+  ];
 }
 
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+  const mono = getMonograph(params.slug);
+  if (mono) {
+    const desc = `${mono.tagline} What ${mono.title} is, how it works, what the published research shows, and how it's reconstituted for laboratory handling — with peer-reviewed references. For research use only.`.slice(0, 300);
+    const url = `https://meritsciences.com/library/${mono.slug}`;
+    return {
+      title: `${mono.title}: Mechanism, Research & Handling`,
+      description: desc,
+      keywords: [mono.title, ...mono.aka, `${mono.title} mechanism`, `${mono.title} research`, `${mono.title} reconstitution`, `what is ${mono.title}`],
+      alternates: { canonical: url },
+      openGraph: { title: `${mono.title} — Research Monograph`, description: mono.tagline, type: 'article', url },
+    };
+  }
+
   const a = getArticle(params.slug);
   if (!a) return { title: 'Not found · Merit Sciences' };
   const desc = a.excerpt || `${a.title} — Merit Sciences Research Library.`;
@@ -23,7 +44,22 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
 
 const COMPOUND = (title: string) => title.replace(/ reconstitution protocol$/i, '').trim();
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
+export default function LibraryEntryPage({ params }: { params: { slug: string } }) {
+  // ── Research monograph (structured, SEO/AEO-optimized) ──
+  const mono = getMonograph(params.slug);
+  if (mono) {
+    const schemas = monographSchemas(mono, MODIFIED);
+    return (
+      <main className="bg-cream min-h-screen">
+        {schemas.map((s, i) => (
+          <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
+        ))}
+        <MonographView m={mono} />
+      </main>
+    );
+  }
+
+  // ── Migrated article (protocol / guide / trial summary) ──
   const a = getArticle(params.slug);
   if (!a) notFound();
   const related = ARTICLES.filter((x) => x.category === a.category && x.slug !== a.slug).slice(0, 4);

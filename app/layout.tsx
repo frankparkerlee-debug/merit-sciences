@@ -30,6 +30,37 @@ const jetbrains = JetBrains_Mono({
   display: 'swap',
 });
 
+// Site-wide entity graph — Organization + WebSite (with a sitelinks search box
+// wired to the library search). This is how Google/answer-engines resolve
+// "Merit Sciences" as a known entity and attribute the whole domain's content.
+const SITE = 'https://meritsciences.com';
+const SITE_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${SITE}/#organization`,
+      name: 'Merit Sciences',
+      url: SITE,
+      logo: `${SITE}/icon.png`,
+      description:
+        'Lab-verified research compounds — ≥99% HPLC purity, lot COA on every batch, ISO-certified US facility. Ships 48h from Dallas. For research use only.',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE}/#website`,
+      name: 'Merit Sciences',
+      url: SITE,
+      publisher: { '@id': `${SITE}/#organization` },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: `${SITE}/library?q={search_term_string}` },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ],
+};
+
 export const metadata: Metadata = {
   // metadataBase resolves all relative OG/Twitter image URLs and is the
   // canonical origin Google/Bing attribute authority to. meritsciences.com
@@ -116,6 +147,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable}`}>
       <body className="font-sans">
+        {/* Site-wide Organization + WebSite JSON-LD (entity + sitelinks search). */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_SCHEMA) }} />
         {/* Meta + TikTok ad pixels. Env-gated — no-op until IDs are set. */}
         <MarketingPixels />
         {/* PostHog: autocapture + pageviews across the whole app. No-ops

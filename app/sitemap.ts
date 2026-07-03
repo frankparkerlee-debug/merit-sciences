@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { listProducts } from '@/lib/catalog';
 import { STACK_TEMPLATES } from '@/lib/catalog-meta';
 import { ARTICLES } from '@/lib/library';
+import { MONOGRAPHS } from '@/lib/monographs';
 
 const BASE = 'https://meritsciences.com';
 
@@ -64,5 +65,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...productRoutes, ...stackRoutes, ...libraryRoutes];
+  // Compound monographs — the primary SEO/AEO surface (real molecule names,
+  // mechanism + cited research). Higher priority than protocol/guide articles.
+  const monographRoutes: MetadataRoute.Sitemap = MONOGRAPHS.map((m) => ({
+    url: `${BASE}/library/${m.slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  }));
+
+  return [...staticRoutes, ...productRoutes, ...stackRoutes, ...monographRoutes, ...libraryRoutes];
 }
