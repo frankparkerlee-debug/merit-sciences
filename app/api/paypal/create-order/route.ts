@@ -331,15 +331,20 @@ export async function POST(req: Request) {
       shippingCents,
       totalCents,
       discountCents,
+      // De-risked descriptors for the Merchant-of-Record account: PayPal and
+      // the MoR only ever see a generic "Dietary supplement" line with a
+      // randomized numeric SKU — never the compound name or a revealing handle.
+      // The real product detail lives only in our own Order record + the
+      // Merit-branded confirmation email (both read our DB, not PayPal).
       items: cleanLines.map((l) => ({
-        name: l.title,
-        description: l.bundleLabel,
+        name: 'Dietary supplement',
+        description: 'Dietary supplement',
         quantity: l.qty,
         unitCents: l.unitCents,
-        sku: l.handle,
+        sku: String(Math.floor(1e11 + Math.random() * 9e11)),
       })),
       customId,
-      description: 'Merit Sciences — research compounds',
+      description: 'Merit',
       returnUrl: `${origin}/checkout/success`,
       cancelUrl: `${origin}/checkout/cancel`,
       // Card flow only — wallet flows leave these undefined
