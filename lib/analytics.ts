@@ -55,6 +55,11 @@ export function trackLead(props?: Record<string, unknown>): void {
  * so the browser pixel and the server-side Conversions API event (fired from
  * the PayPal webhook with the same id) DEDUPLICATE instead of double-counting.
  */
+// Google Ads purchase conversion label (overridable via env). transaction_id
+// is set to the order id so Google de-duplicates repeat page loads.
+const GADS_PURCHASE_SEND_TO =
+  process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO || 'AW-18210986525/9hB9CO2D28kcEJ201utD';
+
 export function trackPurchase(props: {
   value: number;
   orderId: string;
@@ -72,6 +77,16 @@ export function trackPurchase(props: {
     (window as any).ttq?.track?.('CompletePayment', { value, currency }, { event_id: orderId });
   } catch {
     /* pixel not loaded — ignore */
+  }
+  try {
+    (window as any).gtag?.('event', 'conversion', {
+      send_to: GADS_PURCHASE_SEND_TO,
+      value,
+      currency,
+      transaction_id: orderId,
+    });
+  } catch {
+    /* gtag not loaded — ignore */
   }
 }
 
