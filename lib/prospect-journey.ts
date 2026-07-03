@@ -92,7 +92,7 @@ export async function unsubscribeNewsletter(email: string, token: string): Promi
 /**
  * Send every due prospect email. Idempotent within a day (the 20h gap guard +
  * advanced `lastSentKey` make a second same-day run a no-op). One email per
- * lead per run, newest-first, capped to protect sender reputation.
+ * lead per run, neediest-first, capped to protect sender reputation.
  */
 export async function tickProspects(now: Date = new Date()): Promise<{
   sent: number;
@@ -107,8 +107,12 @@ export async function tickProspects(now: Date = new Date()): Promise<{
       // excludes nulls, so brand-new (lastSentKey=null) leads need it spelled out.
       OR: [{ lastSentKey: null }, { lastSentKey: { not: LAST_KEY } }],
     },
-    orderBy: { createdAt: 'desc' },
-    take: 200,
+    // Neediest-first: never-sent (null) lead, then longest-since-last-send. With
+    // a >200 list every subscriber matches the funnel filter, so newest-first
+    // ordering would starve the oldest rows forever; this rotates the queue so
+    // no one is stranded across daily runs.
+    orderBy: [{ lastSentAt: { sort: 'asc', nulls: 'first' } }],
+    take: 250,
   });
 
   let sent = 0;
