@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
 import { money, productDisplayName } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
-import { track } from '@/lib/analytics';
+import { track, trackViewContent, trackAddToCart } from '@/lib/analytics';
 import { familyLabel, type Family, type RestockSignal } from '@/lib/catalog-meta';
 import { DeliveryPromise } from './DeliveryPromise';
 
@@ -77,10 +77,10 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
 
   // Funnel: product viewed (PDP). Fires once per product.
   useEffect(() => {
-    track('product_viewed', {
+    trackViewContent({
+      value: product.priceCents / 100,
       handle: product.handle,
       name: product.title,
-      price_usd: product.priceCents / 100,
       family: family ?? undefined,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,11 +111,11 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
         1,
       );
     }
-    track('add_to_cart', {
+    trackAddToCart({
+      value: subtotalCents / 100,
       handle: product.handle,
       name: product.title,
       bundle: purchaseType === 'subscribe' ? `Subscribe · ${subscriptionFreq}` : selected.label,
-      price_usd: effectiveBundle.priceCents / 100,
       qty: 1,
       source: 'pdp',
     });

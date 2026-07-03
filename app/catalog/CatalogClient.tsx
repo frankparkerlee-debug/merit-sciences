@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
 import { money, productImage, productDisplayName } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
-import { track } from '@/lib/analytics';
+import { track, trackAddToCart } from '@/lib/analytics';
 import { stackToCartLine } from '@/lib/catalog-meta';
 import type { Family, StackTemplate } from './page';
 
@@ -190,11 +190,11 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
       },
       1,
     );
-    track('add_to_cart', {
+    trackAddToCart({
+      value: unitCents / 100,
       handle: product.handle,
       name: product.title,
       bundle: bundleLabel,
-      price_usd: unitCents / 100,
       qty: 1,
       source,
     });

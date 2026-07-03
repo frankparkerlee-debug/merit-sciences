@@ -45,6 +45,61 @@ export function trackLead(props?: Record<string, unknown>): void {
 }
 
 /**
+ * Mid-funnel e-commerce events — the buyer-intent signals Meta/TikTok need to
+ * optimize for PURCHASERS instead of the cheap top-of-funnel Lead. Without
+ * these firing to the pixels, `Lead` (the /access email gate) is the only
+ * mid-funnel event the ad platforms can see — so they optimize for discount-
+ * hunters, not buyers. Each fires to PostHog (rich props, first-party) AND
+ * fans out to the Meta + TikTok pixels carrying ONLY value + currency — never
+ * product or compound names — to keep the dataset clean on a flagged health
+ * domain. Standard Meta event names so ad sets can optimize directly to them.
+ */
+export function trackViewContent(props: { value: number; currency?: string; [k: string]: unknown }): void {
+  const { value, currency = 'USD', ...rest } = props;
+  track('product_viewed', { value_usd: value, currency, ...rest });
+  try {
+    (window as any).fbq?.('track', 'ViewContent', { value, currency });
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+  try {
+    (window as any).ttq?.track?.('ViewContent', { value, currency });
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+}
+
+export function trackAddToCart(props: { value: number; currency?: string; [k: string]: unknown }): void {
+  const { value, currency = 'USD', ...rest } = props;
+  track('add_to_cart', { value_usd: value, currency, ...rest });
+  try {
+    (window as any).fbq?.('track', 'AddToCart', { value, currency });
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+  try {
+    (window as any).ttq?.track?.('AddToCart', { value, currency });
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+}
+
+export function trackInitiateCheckout(props: { value: number; currency?: string; [k: string]: unknown }): void {
+  const { value, currency = 'USD', ...rest } = props;
+  track('begin_checkout', { value_usd: value, currency, ...rest });
+  try {
+    (window as any).fbq?.('track', 'InitiateCheckout', { value, currency });
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+  try {
+    (window as any).ttq?.track?.('InitiateCheckout', { value, currency });
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+}
+
+/**
  * Bottom-of-funnel Purchase event — the signal both ad platforms need to
  * optimize for BUYERS instead of cheap clicks. Fired from checkout onApprove
  * once PayPal capture succeeds. Fans out to PostHog + Meta + TikTok.

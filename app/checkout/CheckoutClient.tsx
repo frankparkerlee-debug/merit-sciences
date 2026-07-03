@@ -15,7 +15,7 @@ import {
   usePayPalScriptReducer,
 } from '@paypal/react-paypal-js';
 import { useCart, type CartLine } from '@/lib/cart';
-import { track, identify, trackPurchase } from '@/lib/analytics';
+import { track, identify, trackPurchase, trackInitiateCheckout } from '@/lib/analytics';
 import { US_STATES } from './us-states';
 
 const FLAT_SHIPPING = 999;
@@ -72,6 +72,19 @@ export function CheckoutClient({
 
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
+
+  // Fire InitiateCheckout once, when the cart hydrates with items — the
+  // buyer-intent signal Meta/TikTok optimize toward (value + currency only).
+  const icFiredRef = useRef(false);
+  useEffect(() => {
+    if (icFiredRef.current || !hydrated || lines.length === 0) return;
+    icFiredRef.current = true;
+    trackInitiateCheckout({
+      value: subtotalCents / 100,
+      item_count: lines.reduce((n, l) => n + l.qty, 0),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, lines.length]);
 
   const [discountCode, setDiscountCode] = useState('');
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
