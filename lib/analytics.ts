@@ -75,6 +75,26 @@ export function trackPurchase(props: {
   }
 }
 
+/**
+ * Google Ads conversion for a practitioner application submit — the B2B lead
+ * signal that lets the Practitioner Search campaign optimize for real clinic
+ * applications instead of clicks (it had NO valid conversion action before).
+ * Fires the gtag 'conversion' event + a PostHog event. `send_to` is the
+ * account's Google Ads conversion label; overridable via env.
+ */
+const GADS_PRACTITIONER_SEND_TO =
+  process.env.NEXT_PUBLIC_GADS_PRACTITIONER_SEND_TO ||
+  'AW-18210986525/C0WQCJj68ckcEJ201utD';
+
+export function trackPractitionerLead(props?: Record<string, unknown>): void {
+  track('practitioner_lead', props);
+  try {
+    (window as any).gtag?.('event', 'conversion', { send_to: GADS_PRACTITIONER_SEND_TO });
+  } catch {
+    /* gtag not loaded — ignore */
+  }
+}
+
 /** Tie anonymous events to a known person (email) across sessions/devices. */
 export function identify(email: string, props?: Record<string, unknown>): void {
   try {

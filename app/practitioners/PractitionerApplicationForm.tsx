@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { submitPractitionerApplication, type SubmitResult } from './actions';
+import { trackPractitionerLead } from '@/lib/analytics';
 
 const CREDENTIALS = ['MD', 'DO', 'NP', 'PA', 'DC', 'PharmD', 'ND', 'DMD/DDS', 'Other'];
 const VOLUMES = [
@@ -17,6 +19,13 @@ export function PractitionerApplicationForm() {
     submitPractitionerApplication,
     null,
   );
+
+  // Fire the Google Ads (+ PostHog) practitioner-lead conversion exactly once,
+  // when the server action reports success. This is the signal the Practitioner
+  // Search campaign optimizes toward.
+  useEffect(() => {
+    if (result?.ok) trackPractitionerLead();
+  }, [result?.ok]);
 
   if (result?.ok) {
     return (
