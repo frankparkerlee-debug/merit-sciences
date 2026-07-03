@@ -44,6 +44,37 @@ export function trackLead(props?: Record<string, unknown>): void {
   }
 }
 
+/**
+ * Bottom-of-funnel Purchase event — the signal both ad platforms need to
+ * optimize for BUYERS instead of cheap clicks. Fired from checkout onApprove
+ * once PayPal capture succeeds. Fans out to PostHog + Meta + TikTok.
+ *
+ * Compliance: the pixel payload carries ONLY value + currency (no product or
+ * compound names) so it stays clean on a flagged health domain. `orderId`
+ * (the PayPal order id) is passed as the Meta `eventID` / TikTok `event_id`
+ * so the browser pixel and the server-side Conversions API event (fired from
+ * the PayPal webhook with the same id) DEDUPLICATE instead of double-counting.
+ */
+export function trackPurchase(props: {
+  value: number;
+  orderId: string;
+  currency?: string;
+  [k: string]: unknown;
+}): void {
+  const { value, orderId, currency = 'USD', ...rest } = props;
+  track('purchase', { order_id: orderId, value_usd: value, currency, ...rest });
+  try {
+    (window as any).fbq?.('track', 'Purchase', { value, currency }, { eventID: orderId });
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+  try {
+    (window as any).ttq?.track?.('CompletePayment', { value, currency }, { event_id: orderId });
+  } catch {
+    /* pixel not loaded — ignore */
+  }
+}
+
 /** Tie anonymous events to a known person (email) across sessions/devices. */
 export function identify(email: string, props?: Record<string, unknown>): void {
   try {

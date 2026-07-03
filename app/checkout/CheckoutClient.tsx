@@ -15,7 +15,7 @@ import {
   usePayPalScriptReducer,
 } from '@paypal/react-paypal-js';
 import { useCart, type CartLine } from '@/lib/cart';
-import { track, identify } from '@/lib/analytics';
+import { track, identify, trackPurchase } from '@/lib/analytics';
 import { US_STATES } from './us-states';
 
 const FLAT_SHIPPING = 999;
@@ -370,9 +370,12 @@ export function CheckoutClient({
     try {
       const buyerEmail = (captured.payerEmail || formRef.current.email || '').toLowerCase();
       if (buyerEmail) identify(buyerEmail);
-      track('purchase', {
-        order_id: data.orderID,
-        value_usd: localTotalCents / 100,
+      // Prefer PayPal's real captured amount; fall back to the local cart total.
+      const capturedValue = Number(captured.amount?.value) || localTotalCents / 100;
+      trackPurchase({
+        orderId: data.orderID,
+        value: capturedValue,
+        currency: captured.amount?.currency_code || 'USD',
         item_count: lines.reduce((n, l) => n + l.qty, 0),
         discount_usd: localDiscountCents / 100,
         code: appliedCode ?? undefined,

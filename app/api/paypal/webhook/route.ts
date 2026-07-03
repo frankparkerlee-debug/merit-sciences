@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { verifyPayPalWebhook, getPayPalOrder } from '@/lib/paypal';
 import { tierForOrderCount } from '@/lib/affiliate';
 import { createOrderFromPayPal, issueOrderConfirmationEmail } from '@/lib/orders';
+import { sendMetaPurchase } from '@/lib/meta-capi';
 
 export const runtime = 'nodejs';
 
@@ -147,6 +148,19 @@ async function handleCaptureCompleted(event: any) {
     // Continue — we still want to record affiliate commission below
     // if applicable, and webhook retries will write the order next time.
   }
+
+  // ── Ad-platform Purchase signal (server-side Conversions API) ────
+  // Fires for EVERY paid order (must stay above the affiliate early-return
+  // below). Deduplicates against the browser pixel via event_id = PayPal
+  // order id. Env-gated: no-op until META_CAPI_ACCESS_TOKEN is set. Value +
+  // currency only — never product names — to keep the flagged-domain dataset
+  // clean. Fire-and-forget: an ad-pixel failure must never fail the webhook.
+  sendMetaPurchase({
+    eventId: orderId,
+    value: amountCents / 100,
+    currency: capture.amount?.currency_code || 'USD',
+    email: payerEmail || null,
+  }).catch(() => {});
 
   // ── Affiliate commission ─────────────────────────────────────────
   if (!affiliateId) return;
