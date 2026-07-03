@@ -138,7 +138,7 @@ export default async function HomePage() {
               src="/brand/merit-vial-canonical-transparent.webp"
               alt=""
               fill
-              priority
+              loading="lazy"
               sizes="(max-width: 1400px) 42vw, 720px"
               className="object-contain"
             />
@@ -161,7 +161,7 @@ export default async function HomePage() {
               src="/brand/merit-vial-canonical-transparent.webp"
               alt=""
               fill
-              priority
+              loading="lazy"
               sizes="(max-width: 1400px) 18vw, 300px"
               className="object-contain"
             />
@@ -185,7 +185,7 @@ export default async function HomePage() {
               src="/brand/merit-vial-canonical-transparent.webp"
               alt=""
               fill
-              priority
+              loading="lazy"
               sizes="(max-width: 1400px) 28vw, 480px"
               className="object-contain"
             />
