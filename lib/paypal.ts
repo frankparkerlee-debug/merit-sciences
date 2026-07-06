@@ -263,6 +263,59 @@ export async function getPayPalOrder(orderId: string): Promise<any> {
   return res.json();
 }
 
+// ─── Shipment tracking (seller protection) ──────────────────────────
+// PayPal's Add Tracking API attaches a tracking number to a CAPTURE
+// transaction. This is PayPal's documented best practice for new/physical-
+// goods sellers: it feeds their risk model (fewer reserves/freezes) and
+// makes "item not received" disputes auto-resolve in the seller's favor.
+// https://developer.paypal.com/docs/tracking/
+
+export type PayPalTrackerCarrier = 'UPS' | 'USPS' | 'FEDEX' | 'DHL';
+
+export async function addPayPalTracker(input: {
+  /** PayPal CAPTURE id (transaction id) — NOT the order id. */
+  captureId: string;
+  trackingNumber: string;
+  carrier: PayPalTrackerCarrier;
+}): Promise<{ ok: true } | { ok: false; status: number; detail: string }> {
+  const res = await paypalFetch('/v1/shipping/trackers-batch', {
+    method: 'POST',
+    body: JSON.stringify({
+      trackers: [
+        {
+          transaction_id: input.captureId,
+          tracking_number: input.trackingNumber,
+          status: 'SHIPPED',
+          carrier: input.carrier,
+        },
+      ],
+    }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    return { ok: false, status: res.status, detail: text.slice(0, 300) };
+  }
+  // The batch endpoint returns 200 with per-item results; an item can still
+  // fail. "Already exists" counts as success — the tracker is on file.
+  try {
+    const data = JSON.parse(text) as {
+      tracker_identifiers?: unknown[];
+      errors?: unknown[];
+    };
+    const added = Array.isArray(data.tracker_identifiers) && data.tracker_identifiers.length > 0;
+    const errors = Array.isArray(data.errors) ? data.errors : [];
+    if (added && errors.length === 0) return { ok: true };
+    if (errors.length > 0) {
+      const detail = JSON.stringify(errors);
+      if (/EXISTS|DUPLICATE/i.test(detail)) return { ok: true };
+      return { ok: false, status: res.status, detail: detail.slice(0, 300) };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: true }; // 2xx with unparseable body — accept
+  }
+}
+
 // ─── Webhook verification ────────────────────────────────────────────
 // PayPal verifies inbound webhooks by POSTing the raw event payload
 // back to /v1/notifications/verify-webhook-signature, along with the

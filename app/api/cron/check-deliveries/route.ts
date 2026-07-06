@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { checkDeliveryStatus, handleDeliveryNotify } from '@/lib/shipstation';
+import { syncPendingTrackingToPayPal } from '@/lib/paypal-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -71,10 +72,17 @@ export async function GET(req: Request) {
     }
   }
 
+  // ── PayPal tracking sync (seller protection) ──
+  // Sweep shipped/delivered orders whose tracking hasn't been pushed to
+  // PayPal yet. Covers ShipStation-marked shipments (which bypass the admin
+  // action) and backfills history. Idempotent via paypalTrackingSyncedAt.
+  const paypalTracking = await syncPendingTrackingToPayPal();
+
   return NextResponse.json({
     ok: true,
     checked: candidates.length,
     deliveredNow,
+    paypalTracking,
     errors: errors.length > 0 ? errors : undefined,
     ranAt: new Date().toISOString(),
   });

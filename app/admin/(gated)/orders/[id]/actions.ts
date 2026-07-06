@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issueAdminOrderNotification, issueRefundEmail, issueCancellationEmail, recordOrderEvent } from '@/lib/orders';
 import { getAccessToken } from '@/lib/paypal';
+import { syncOrderTrackingToPayPal } from '@/lib/paypal-tracking';
 
 export type ActionResult =
   | { ok: true; message: string }
@@ -70,6 +71,10 @@ export async function markShipped(_prev: ActionResult | null, formData: FormData
     metadata: { carrier: normalizedCarrier, tracking_number: trackingNumber, tracking_url: trackingUrl },
     actorEmail: admin.email,
   });
+
+  // Push the tracking number to PayPal (seller-protection signal) — detached;
+  // the cron sweep is the safety net if this instance recycles first.
+  void syncOrderTrackingToPayPal(orderId).catch(() => {});
 
   // Fire shipment notification email + surface success/failure to operator
   // (issueShipmentEmail records its own SHIPMENT_EMAIL_SENT or EMAIL_FAILED event)

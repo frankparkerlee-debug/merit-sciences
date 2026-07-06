@@ -391,6 +391,11 @@ model Order {
   // on every full or partial refund. Net amount paid = totalCents - refundedCents.
   refundedCents     BigInt      @default(0)
 
+  // When this order's tracking number was pushed to PayPal's Add Tracking
+  // API (seller-protection signal; wins item-not-received disputes). Null =
+  // not yet synced; the delivery-sync cron sweeps unsynced shipped orders.
+  paypalTrackingSyncedAt DateTime?
+
   // Relations
   lines             OrderLine[]
   lookupTokens      OrderLookupToken[]
