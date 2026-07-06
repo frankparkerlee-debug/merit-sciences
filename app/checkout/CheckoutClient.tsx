@@ -145,20 +145,14 @@ export function CheckoutClient({
     appliedAmounts?.totalCents
     ?? (subtotalCents - localDiscountCents + localShippingCents);
 
-  if (hydrated && lines.length === 0) {
-    return (
-      <div className="rounded-2xl border border-cobalt/15 bg-white p-10 text-center">
-        <p className="text-base text-ink-soft mb-6">Your cart is empty.</p>
-        <button
-          type="button"
-          onClick={() => router.push('/catalog')}
-          className="bg-ink text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-cobalt transition"
-        >
-          Browse the catalog
-        </button>
-      </div>
-    );
-  }
+  // NOTE: the empty-cart early return lives at the BOTTOM of this component,
+  // after every hook. It used to sit here — before five useEffects — which
+  // violated the Rules of Hooks: the first client render (hydrated=false) ran
+  // all hooks, then hydration flipped and an empty cart skipped the later
+  // ones → React #300 → the entire checkout route crashed to an error screen.
+  // Worse, clear()-ing the cart after a successful capture re-rendered this
+  // component into that same crash — buyers who had JUST PAID saw a bare
+  // "Application error", assumed failure, and paid again.
 
   // Apply a discount/affiliate code. `silent` suppresses errors for the
   // auto-applied referral code (the buyer didn't type it, so a failure
@@ -517,6 +511,25 @@ export function CheckoutClient({
     }
     setFormError(null);
     return actions.resolve();
+  }
+
+  // Empty-cart state — deliberately AFTER every hook above (Rules of Hooks;
+  // see the note where this block used to live). Also renders for the brief
+  // moment after a successful payment clears the cart while the hard
+  // navigation to /checkout/success is in flight.
+  if (hydrated && lines.length === 0) {
+    return (
+      <div className="rounded-2xl border border-cobalt/15 bg-white p-10 text-center">
+        <p className="text-base text-ink-soft mb-6">Your cart is empty.</p>
+        <button
+          type="button"
+          onClick={() => router.push('/catalog')}
+          className="bg-ink text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-cobalt transition"
+        >
+          Browse the catalog
+        </button>
+      </div>
+    );
   }
 
   return (
