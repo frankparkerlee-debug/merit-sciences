@@ -324,6 +324,38 @@ export async function POST(req: Request) {
     shippingAddress = shipResult.address as any;
   }
 
+  // ── Duplicate-payment guard ──────────────────────────────────────
+  // The crash-retry failure mode we've refunded real money for: buyer pays,
+  // the client fails to show the thank-you page, buyer assumes failure and
+  // pays again 1–3 minutes later for the identical cart. If this email
+  // already has a PAID order for the exact same total in the last 10
+  // minutes, refuse politely instead of letting them get charged twice.
+  // Genuine declines never trip this — their orders stay
+  // PENDING_PAYMENT/CANCELED, so retrying after a real decline works fine.
+  if (payerEmail) {
+    try {
+      const recentPaid = await prisma.order.findFirst({
+        where: {
+          customerEmail: payerEmail,
+          totalCents: BigInt(totalCents),
+          status: { in: ['PAID', 'PROCESSING', 'SHIPPED'] },
+          createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
+        },
+        select: { id: true },
+      });
+      if (recentPaid) {
+        return NextResponse.json(
+          {
+            error: `It looks like your payment already went through a moment ago — your receipt is on its way to ${payerEmail}. Please don't pay again. Questions? Email rx@meritsciences.com and we'll verify your order right away.`,
+          },
+          { status: 409 },
+        );
+      }
+    } catch {
+      // Guard is best-effort — a DB hiccup must never block a checkout.
+    }
+  }
+
   // ── Create the order on PayPal ───────────────────────────────────
   try {
     const order = await createPayPalOrder({

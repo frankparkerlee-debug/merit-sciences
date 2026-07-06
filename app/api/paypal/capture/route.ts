@@ -55,14 +55,16 @@ export async function POST(req: Request) {
     }
 
     // ── Durable fulfillment — order PAID + email + commission + ad signal.
-    // Awaited so records are written before we ack the buyer. A failure here
-    // must never fail an already-captured (paid) transaction — log + move on;
-    // it'll show as PAID-in-PayPal / unrecorded-here and gets caught in recon.
-    try {
-      await fulfillCapturedOrder(captured, 'capture');
-    } catch (err) {
-      console.error('[paypal/capture] fulfillment failed after successful capture', err);
-    }
+    // DETACHED, not awaited: the buyer's confirmation must not wait on
+    // email/CAPI/DB round-trips. Every extra second here widens the window
+    // where a proxy timeout / mid-deploy restart eats the response and the
+    // buyer — already charged — sees a failure and pays again. Render runs a
+    // long-lived Node process, so the detached promise completes reliably;
+    // failures land in logs and surface as PAID-in-PayPal/unrecorded-here
+    // during reconciliation. fulfillCapturedOrder is idempotent throughout.
+    void fulfillCapturedOrder(captured, 'capture').catch((err) => {
+      console.error('[paypal/capture] detached fulfillment failed after successful capture', err);
+    });
 
     const payerEmail = captured.payer?.email_address ?? null;
     // Close out any abandoned-cart record for this shopper.

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect } from 'react';
+import { useCart } from '@/lib/cart';
 
 /**
  * Error boundary for the order-confirmation route.
@@ -18,7 +19,13 @@ import { useEffect } from 'react';
  * bundle (guarded against reload loops via sessionStorage).
  */
 export default function SuccessError({ error }: { error: Error & { digest?: string } }) {
+  const clearCart = useCart((s) => s.clear);
+
   useEffect(() => {
+    // The buyer PAID to get here — empty the persisted cart even though the
+    // page crashed, so wandering back to /checkout can't queue up a second
+    // charge for the same items.
+    try { clearCart(); } catch { /* non-fatal */ }
     const isChunkError =
       /ChunkLoadError|Loading chunk|dynamically imported module|importing a module script failed/i.test(
         `${error?.name ?? ''} ${error?.message ?? ''}`,
@@ -30,7 +37,7 @@ export default function SuccessError({ error }: { error: Error & { digest?: stri
         window.location.reload();
       }
     }
-  }, [error]);
+  }, [error, clearCart]);
 
   return (
     <main className="bg-cream min-h-screen">

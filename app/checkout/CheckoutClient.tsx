@@ -377,32 +377,48 @@ export function CheckoutClient({
     return data.orderId;
   }
 
-  async function onApprove(data: { orderID: string }) {
-    const res = await fetch('/api/paypal/capture', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // Pass the typed email so the server can mark this shopper's saved
-      // cart recovered (the card flow has it; wallet flow relies on payer email).
-      body: JSON.stringify({ orderId: data.orderID, email: formRef.current.email || undefined }),
-    });
-    const captured = await res.json();
-    if (!captured.ok) {
-      throw new Error(captured.error || 'Payment did not complete.');
+  // ── Post-payment handoff ──────────────────────────────────────────
+  // Everything from here to the thank-you page must be crash-proof: the
+  // buyer's card has ALREADY been charged. Any error shown after capture
+  // reads as "payment failed" and makes people pay again (we've refunded
+  // real double-charges caused by exactly that).
+
+  /**
+   * DB-truth probe: did this PayPal order actually get captured? Used when
+   * the /api/paypal/capture response is lost (proxy timeout, mid-deploy
+   * restart, flaky mobile network) — the money may have moved even though
+   * the browser never heard back. Fulfillment usually lands within ~2s of
+   * capture, so a few short polls settle it.
+   */
+  async function orderIsPaid(orderId: string): Promise<boolean> {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        const res = await fetch(
+          `/api/paypal/order-status?orderId=${encodeURIComponent(orderId)}`,
+          { cache: 'no-store' },
+        );
+        if (res.ok) {
+          const j = await res.json().catch(() => null);
+          if (j?.paid) return true;
+        }
+      } catch { /* keep polling */ }
+      await new Promise((r) => setTimeout(r, 2000));
     }
-    // Payment is captured — from here the buyer MUST reach the success page.
-    // Analytics + cart-clear are best-effort: a throw in any of them must
-    // never bubble out of onApprove and trip onError's "Payment failed" alert
-    // for someone who was just charged. (This was surfacing an error screen on
-    // every completed order.)
+    return false;
+  }
+
+  /** Confirmed paid → fire best-effort analytics, clear cart, HARD-navigate. */
+  function goToSuccess(orderId: string, captured?: any) {
+    // Analytics + cart-clear must never block the handoff. The server-side
+    // CAPI Purchase (deduped by order id) covers us if the pixel drops here.
     try {
-      const buyerEmail = (captured.payerEmail || formRef.current.email || '').toLowerCase();
+      const buyerEmail = (captured?.payerEmail || formRef.current.email || '').toLowerCase();
       if (buyerEmail) identify(buyerEmail);
-      // Prefer PayPal's real captured amount; fall back to the local cart total.
-      const capturedValue = Number(captured.amount?.value) || localTotalCents / 100;
+      const capturedValue = Number(captured?.amount?.value) || localTotalCents / 100;
       trackPurchase({
-        orderId: data.orderID,
+        orderId,
         value: capturedValue,
-        currency: captured.amount?.currency_code || 'USD',
+        currency: captured?.amount?.currency_code || 'USD',
         item_count: lines.reduce((n, l) => n + l.qty, 0),
         discount_usd: localDiscountCents / 100,
         code: appliedCode ?? undefined,
@@ -411,17 +427,85 @@ export function CheckoutClient({
     } catch (e) {
       console.error('[checkout] post-capture side-effect failed (non-fatal)', e);
     }
-    router.push(`/checkout/success?order_id=${data.orderID}`);
+    // HARD navigation, deliberately not router.push(). A soft navigation
+    // fetches RSC payloads/JS chunks and throws to Next's bare "Application
+    // error" screen when that fetch hiccups (mid-deploy chunk swap, flaky
+    // network) — which is how paid customers ended up back on checkout
+    // paying again. The browser owns this navigation; React can't crash it.
+    window.location.assign(`/checkout/success?order_id=${encodeURIComponent(orderId)}`);
+  }
+
+  /** Show a blocking checkout error and scroll it into view. */
+  function failCheckout(msg: string) {
+    setFormError(msg);
+    setTimeout(() => {
+      document.getElementById('checkout-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+  }
+
+  async function onApprove(data: { orderID: string }) {
+    let outcome: 'paid' | 'declined' | 'unknown' = 'unknown';
+    let captured: any = null;
+
+    try {
+      const res = await fetch('/api/paypal/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Pass the typed email so the server can mark this shopper's saved
+        // cart recovered (the card flow has it; wallet flow relies on payer email).
+        body: JSON.stringify({ orderId: data.orderID, email: formRef.current.email || undefined }),
+      });
+      if (res.status === 402) {
+        // Server confirmed the capture did NOT complete (decline/3DS fail).
+        // Retrying is safe and correct here — no money moved.
+        outcome = 'declined';
+      } else if (res.ok) {
+        captured = await res.json().catch(() => null);
+        outcome = captured?.ok ? 'paid' : 'unknown';
+      }
+      // 5xx / gateway errors stay 'unknown' — the capture may have succeeded.
+    } catch {
+      outcome = 'unknown';
+    }
+
+    // Ambiguous outcome → ask the server what actually happened before we
+    // show the buyer anything that could prompt a second payment.
+    if (outcome === 'unknown' && (await orderIsPaid(data.orderID))) {
+      outcome = 'paid';
+    }
+
+    if (outcome === 'paid') {
+      goToSuccess(data.orderID, captured);
+      return;
+    }
+    if (outcome === 'declined') {
+      failCheckout(
+        'Your payment didn’t go through and you were not charged for this attempt. You can try again or use a different payment method.',
+      );
+      return;
+    }
+    failCheckout(
+      'We couldn’t confirm whether your payment completed. Please don’t pay again yet — check your inbox for a Merit receipt first. If nothing arrives within a few minutes, try again or email rx@meritsciences.com and we’ll verify instantly.',
+    );
   }
 
   function onError(err: any) {
     console.error('[paypal] payment error:', err);
-    if (err?.message === 'RUO_NOT_ATTESTED') {
+    const msg = String(err?.message ?? '');
+    if (msg === 'RUO_NOT_ATTESTED') {
       ruoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setFormError('Please confirm the research-use-only attestation before paying.');
       return;
     }
-    alert('Payment failed. If you were charged, contact support and we’ll verify your order.');
+    // Server-side duplicate-payment guard tripped — relay its message verbatim
+    // (it tells the buyer their earlier payment already went through).
+    if (/already went through/i.test(msg)) {
+      failCheckout(msg);
+      return;
+    }
+    failCheckout(
+      'Something interrupted the payment window. If you completed payment, don’t pay again — check your inbox for a Merit receipt, or email rx@meritsciences.com and we’ll verify. Otherwise, you can simply try again.',
+    );
   }
 
   // Intercept wallet button clicks before they call createOrder
@@ -501,7 +585,7 @@ export function CheckoutClient({
 
         {/* Form-level error display below the form */}
         {formError && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+          <div id="checkout-error" className="rounded-xl border border-rose-200 bg-rose-50 p-4">
             <p className="text-sm text-rose-900 leading-relaxed">{formError}</p>
           </div>
         )}
