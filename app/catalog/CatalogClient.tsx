@@ -214,6 +214,35 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
     window.location.href = '/checkout';
   }
 
+  // Quick-view add: honors the pack size the buyer picked in the modal (Single/
+  // 3-Pack/6-Pack/Subscribe), each of which carries its own total price. Adds
+  // that exact bundle, closes the modal, and slides the cart open.
+  function handleAddFromQuickView(
+    product: Product,
+    bundle: { label: string; priceCents: number },
+  ) {
+    addToCart(
+      {
+        handle: product.handle,
+        title: product.title,
+        bundleLabel: bundle.label,
+        unitCents: bundle.priceCents,
+        imageUrl: product.imageUrl,
+      },
+      1,
+    );
+    trackAddToCart({
+      value: bundle.priceCents / 100,
+      handle: product.handle,
+      name: product.title,
+      bundle: bundle.label,
+      qty: 1,
+      source: 'quick_view',
+    });
+    setQuickViewHandle(null);
+    openDrawer();
+  }
+
   // Bulk add — user explicitly chose to commit a multi-select batch.
   // Opens the drawer after submit so they see the result + can checkout.
   function handleAddSelected() {
@@ -536,6 +565,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
           product={quickViewProduct}
           onClose={() => setQuickViewHandle(null)}
           subscribeMode={subscribeMode}
+          onAdd={handleAddFromQuickView}
         />
       )}
     </main>
@@ -948,10 +978,12 @@ function QuickViewModal({
   product,
   onClose,
   subscribeMode,
+  onAdd,
 }: {
   product: Product;
   onClose: () => void;
   subscribeMode: boolean;
+  onAdd: (product: Product, bundle: { label: string; priceCents: number }) => void;
 }) {
   const [selectedBundleIdx, setSelectedBundleIdx] = useState(0);
   const bundles = product.bundles ?? [
@@ -1050,6 +1082,7 @@ function QuickViewModal({
             {/* Add to cart + link */}
             <button
               type="button"
+              onClick={() => onAdd(product, selected)}
               className="w-full bg-cobalt text-white py-3 rounded-lg font-bold text-sm hover:opacity-90 transition mb-3"
             >
               Add to cart · {money(selected.priceCents)}
