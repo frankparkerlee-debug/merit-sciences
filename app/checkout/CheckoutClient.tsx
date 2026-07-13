@@ -711,7 +711,7 @@ export function CheckoutClient({
         </div>
 
         <p className="text-[11px] text-ink-soft/70 mt-4 leading-relaxed">
-          US shipping only. Free over $350. Card details encrypted end-to-end by PayPal — we never see or store them. Wallet payments pull shipping from your device&rsquo;s saved address.
+          US shipping only. Free over $300. Card details encrypted end-to-end by PayPal — we never see or store them. Wallet payments pull shipping from your device&rsquo;s saved address.
         </p>
       </aside>
     </div>

@@ -622,7 +622,7 @@ export default async function HomePage() {
                 <span className="opacity-75 text-[11px] tracking-[0.22em] uppercase font-semibold block mb-0.5 text-cobalt">
                   Ships fast
                 </span>
-                Free shipping over $100 · 48hr dispatch from Dallas, TX
+                Free shipping over $300 · 48hr dispatch from Dallas, TX
               </p>
             </div>
             <Link

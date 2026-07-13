@@ -486,7 +486,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
         <div className="px-6 lg:px-12 py-2 lg:py-3 max-w-[1400px] mx-auto flex items-center justify-between gap-3 text-[12px]">
           <p className="font-semibold flex items-center gap-2 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-            Free Shipping Over $100
+            Free Shipping Over $300
           </p>
           <Link
             href="mailto:rx@meritsciences.com"

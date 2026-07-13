@@ -226,7 +226,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           in the sticky top-bar trust strip below + the buybox lot strip). */}
       <div className="hidden sm:flex flex-wrap gap-2">
         {[
-          { label: 'Free shipping $100+', icon: 'truck' },
+          { label: 'Free shipping $300+', icon: 'truck' },
           { label: '48hr dispatch', icon: 'clock' },
           { label: 'Lot-documented', icon: 'doc' },
         ].map((b) => (
