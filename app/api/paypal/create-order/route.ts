@@ -458,6 +458,40 @@ export async function POST(req: Request) {
       }
     }
 
+    // ── Wallet-order draft ──────────────────────────────────────────
+    // Keyed by the PayPal order id. The wallet flow (PayPal / Apple /
+    // Google Pay) can't pre-create the full Order above (no buyer form),
+    // and PayPal's capture response drops the line items — so we stash the
+    // real cart lines + money here; createOrderFromPayPal reads them at
+    // capture to rebuild the order with real products instead of an empty
+    // shell. Harmless for the card flow (its Order is already pre-created);
+    // best-effort, never blocks checkout.
+    try {
+      await prisma.walletOrderDraft.upsert({
+        where: { paypalOrderId: order.id },
+        update: {},
+        create: {
+          paypalOrderId: order.id,
+          lines: cleanLines.map((l) => ({
+            handle: l.handle,
+            title: l.title,
+            bundleLabel: l.bundleLabel,
+            unitCents: l.unitCents,
+            qty: l.qty,
+            imageUrl: l.imageUrl ?? null,
+          })),
+          subtotalCents,
+          shippingCents,
+          discountCents,
+          totalCents,
+          discountCode: discountCode?.toUpperCase() ?? null,
+          affiliateId: affiliateId ?? null,
+        },
+      });
+    } catch (err) {
+      console.error('[create-order] wallet draft write failed', err);
+    }
+
     return NextResponse.json({
       orderId: order.id,
       subtotalCents,

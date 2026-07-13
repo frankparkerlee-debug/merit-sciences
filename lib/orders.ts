@@ -432,8 +432,43 @@ export async function createOrderFromPayPal(
   const discountCents = dollarsToCents(breakdown?.discount?.value);
   const totalCents = dollarsToCents(capture.amount?.value ?? pu.amount?.value);
 
-  // ── Lines ──
+  // ── Lines + money ──
+  // Prefer the wallet draft saved at create-order time: it carries the real
+  // cart lines (PayPal's capture response omits `items`) and the true money
+  // breakdown (the capture response omits item_total/discount too). Without
+  // it, a wallet order lands with 0 lines and $0 subtotal. Falls back to
+  // PayPal's own items for older / edge orders that predate the draft.
+  const draft = await prisma.walletOrderDraft
+    .findUnique({ where: { paypalOrderId } })
+    .catch(() => null);
+
   const items = pu.items ?? [];
+  const orderLines: Array<{
+    handle: string; title: string; bundleLabel: string; unitCents: bigint;
+    qty: number; imageUrl: string | null;
+  }> = draft
+    ? (draft.lines as any[]).map((l) => ({
+        handle: String(l.handle ?? ''),
+        title: String(l.title ?? 'Item'),
+        bundleLabel: String(l.bundleLabel ?? ''),
+        unitCents: BigInt(Math.round(Number(l.unitCents) || 0)),
+        qty: Math.max(1, Math.round(Number(l.qty) || 1)),
+        imageUrl: typeof l.imageUrl === 'string' ? l.imageUrl : null,
+      }))
+    : items.map((it) => ({
+        handle: it.sku ?? '',
+        title: it.name ?? 'Item',
+        bundleLabel: it.description ?? '',
+        unitCents: BigInt(dollarsToCents(it.unit_amount?.value)),
+        qty: parseInt(it.quantity ?? '1', 10) || 1,
+        imageUrl: null,
+      }));
+
+  // Draft breakdown is authoritative when present; the total always trusts
+  // the actual captured amount.
+  const finalSubtotalCents = draft ? draft.subtotalCents : subtotalCents;
+  const finalShippingCents = draft ? draft.shippingCents : shippingCents;
+  const finalDiscountCents = draft ? draft.discountCents : discountCents;
 
   // ── Atomic write: Order + OrderLines ──
   const order = await prisma.order.create({
@@ -445,12 +480,12 @@ export async function createOrderFromPayPal(
       customerEmail: email,
       customerName: payerName,
       status: 'PAID',
-      subtotalCents: BigInt(subtotalCents),
-      shippingCents: BigInt(shippingCents),
-      discountCents: BigInt(discountCents),
+      subtotalCents: BigInt(finalSubtotalCents),
+      shippingCents: BigInt(finalShippingCents),
+      discountCents: BigInt(finalDiscountCents),
       totalCents: BigInt(totalCents),
-      discountCode: attribution?.discountCode ?? null,
-      affiliateId: attribution?.affiliateId ?? null,
+      discountCode: draft?.discountCode ?? attribution?.discountCode ?? null,
+      affiliateId: draft?.affiliateId ?? attribution?.affiliateId ?? null,
       shippingFullName: shippingName,
       shippingLine1,
       shippingLine2,
@@ -462,18 +497,17 @@ export async function createOrderFromPayPal(
       shippingEmail: email,
       ruoAttested: true,
       ruoAttestedAt: new Date(),
-      lines: {
-        create: items.map((it) => ({
-          handle: it.sku ?? '',
-          title: it.name ?? 'Item',
-          bundleLabel: it.description ?? '',
-          unitCents: BigInt(dollarsToCents(it.unit_amount?.value)),
-          qty: parseInt(it.quantity ?? '1', 10) || 1,
-        })),
-      },
+      lines: { create: orderLines },
     },
     select: { id: true, paypalOrderId: true, paypalCaptureId: true },
   });
+
+  // Draft consumed — drop it so the table doesn't grow. Idempotent: a later
+  // re-run (e.g. a webhook, once re-enabled) returns early on the capture-id
+  // check above, so it never needs the draft again.
+  if (draft) {
+    prisma.walletOrderDraft.delete({ where: { paypalOrderId } }).catch(() => {});
+  }
 
   // Wallet-flow path skips preCreateOrder so we record both events here
   await recordOrderEvent({
@@ -494,7 +528,7 @@ export async function createOrderFromPayPal(
   // practitioners placing their first order.
   await onFirstOrder({
     email,
-    firstCompound: items[0]?.name,
+    firstCompound: orderLines[0]?.title,
   }).catch((err) =>
     console.warn('[orders] onFirstOrder hook failed (non-fatal)', err),
   );

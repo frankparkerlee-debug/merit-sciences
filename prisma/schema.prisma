@@ -46,6 +46,27 @@ model Coa {
   @@map("coas")
 }
 
+// ─── Wallet order draft ───────────────────────────────────────────────
+// The card checkout pre-creates the full Order (with buyer + shipping)
+// at /api/paypal/create-order. The WALLET flow (PayPal button / Apple /
+// Google Pay) has no buyer form, so it can't — and the capture response
+// drops the line items. We stash the real cart lines + money here, keyed
+// by the PayPal order id, so createOrderFromPayPal can rebuild a wallet
+// order with real products instead of an empty shell.
+model WalletOrderDraft {
+  paypalOrderId String   @id
+  lines         Json // [{ handle, title, bundleLabel, unitCents, qty, imageUrl }]
+  subtotalCents Int
+  shippingCents Int
+  discountCents Int
+  totalCents    Int
+  discountCode  String?
+  affiliateId   String?
+  createdAt     DateTime @default(now())
+
+  @@map("wallet_order_drafts")
+}
+
 // ─── Affiliate ────────────────────────────────────────────────────────
 // An approved promoter. One row per person/business that drives traffic.
 
