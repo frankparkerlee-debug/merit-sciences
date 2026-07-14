@@ -20,6 +20,8 @@ export function WelcomeOfferBar() {
   useEffect(() => {
     try {
       if (localStorage.getItem(DISMISS_KEY)) return;
+      // First-order offer only — once the buyer has checked out, retire it.
+      if (localStorage.getItem('merit_welcome_used')) return;
       const c = localStorage.getItem('merit_welcome_code');
       if (c) setCode(c.toUpperCase());
     } catch {

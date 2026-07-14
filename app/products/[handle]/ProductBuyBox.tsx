@@ -44,7 +44,12 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
   const add = useCart((s) => s.add);
   const openDrawer = useCart((s) => s.openDrawer);
 
-  const selected = bundles[selectedIdx];
+  // Pack tiles are one-time sizes only. Subscribe is a purchase TYPE (the radio
+  // below), not a selectable pack — keeping it out of the tiles stops the bug
+  // where picking "Subscribe" then "One-time" charged the 10%-off subscribe
+  // price on a single non-recurring order (and let the referral stack on it).
+  const packBundles = bundles.filter((b) => !b.label.toLowerCase().includes('subscribe'));
+  const selected = packBundles[selectedIdx] ?? packBundles[0];
   // MUST match the live `bacteriostatic-water` product price ($19.99). This was
   // a stale $9.99 hardcode that sold BAC water at half price on every PDP add —
   // losing money on every order. TODO: source from the DB product so it can't
@@ -57,19 +62,17 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
 
   const subtotalCents = effectiveBundle.priceCents + (addBacWater ? bacWaterCents : 0);
 
-  // Referral pricing (display only): an active ?ref= visitor sees the buyer
-  // discount on a one-time purchase, with the pre-referral price struck
-  // through. The discount is actually applied by the auto-filled code at
-  // checkout, so the cart still carries retail. Skipped for practitioners
-  // (own pricing) and Subscribe (a separate discount layer).
+  // Referral / welcome discounts apply at CHECKOUT (auto-filled code) — never
+  // baked into the PDP price. The storefront always shows full retail so the
+  // header, tiles, add-to-cart, and cart line all match; we only surface a small
+  // badge that a discount will apply. (Previously the header re-priced to the
+  // discounted number while the cart carried retail — the mismatch you saw — and
+  // it stacked a second 10% on the already-discounted subscribe price.)
   const referralActive =
     referralPct > 0 && !product.isPractitionerPricing && purchaseType === 'onetime';
-  const referralPriceCents = referralActive
-    ? Math.round((effectiveBundle.priceCents * (100 - referralPct)) / 100)
-    : effectiveBundle.priceCents;
 
   // Compute savings %
-  const singleBundle = bundles[0];
+  const singleBundle = packBundles[0];
   const savingsPct =
     selected.vials > 0 && singleBundle
       ? Math.round((1 - (selected.priceCents / selected.vials) / singleBundle.priceCents) * 100)
@@ -300,25 +303,20 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       <div className="pt-2 border-t border-cobalt/10">
         <div className="flex items-baseline gap-3 flex-wrap">
           <span className="font-display text-3xl lg:text-4xl font-black text-ink">
-            {money(referralActive ? referralPriceCents : effectiveBundle.priceCents)}
+            {money(effectiveBundle.priceCents)}
           </span>
-          {/* Referral strikethrough — active ?ref= visitor sees the buyer
-              discount; the pre-referral price is struck through. The % is
-              applied for real by the auto-filled code at checkout. */}
+          {/* Referral: badge only. The discount applies at checkout via the
+              auto-filled code — we never re-price the header (that made the big
+              number diverge from what the cart actually charges). */}
           {referralActive && (
-            <>
-              <span className="text-lg text-ink-muted line-through font-semibold">
-                {money(effectiveBundle.priceCents)}
-              </span>
-              <span className="bg-cobalt text-white text-[11px] font-bold tracking-[0.12em] uppercase px-2 py-0.5 rounded">
-                {referralPct}% off · referral
-              </span>
-            </>
+            <span className="bg-cobalt text-white text-[11px] font-bold tracking-[0.12em] uppercase px-2 py-0.5 rounded">
+              {referralPct}% referral · applied at checkout
+            </span>
           )}
           {/* Bundle savings strikethrough (existing) — applies to 3-pack /
               6-pack vs Single, on either tier. Hidden when a referral
               discount is showing so we don't stack two strikethroughs. */}
-          {savingsPct > 0 && selectedIdx > 0 && purchaseType === 'onetime' && !referralActive && (
+          {savingsPct > 0 && selectedIdx > 0 && purchaseType === 'onetime' && (
             <>
               <span className="text-lg text-ink-muted line-through font-semibold">
                 {money(singleBundle.priceCents * selected.vials)}
@@ -362,10 +360,9 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
             {selected.label}
           </span>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-          {bundles.map((b, i) => {
-            const isBestDeal = i === 2; // 6-Pack is the best deal
-            const isSubscribe = b.label.toLowerCase().includes('subscribe');
+        <div className="grid grid-cols-3 gap-2">
+          {packBundles.map((b, i) => {
+            const isBestDeal = i === packBundles.length - 1; // 6-Pack is the best deal
             const isActive = selectedIdx === i && purchaseType === 'onetime';
             const perVial = b.vials > 0 ? Math.round(b.priceCents / b.vials) : b.priceCents;
             // Dollar savings vs Single. Drives concrete value perception
@@ -379,11 +376,10 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
                 type="button"
                 onClick={() => {
                   setSelectedIdx(i);
-                  if (isSubscribe) setPurchaseType('subscribe');
-                  else setPurchaseType('onetime');
+                  setPurchaseType('onetime');
                 }}
                 className={`relative text-left rounded-xl p-3 transition border-2 ${
-                  isActive || (isSubscribe && purchaseType === 'subscribe')
+                  isActive
                     ? 'border-cobalt bg-cobalt/5'
                     : 'border-cobalt/15 hover:border-cobalt/40 bg-white'
                 }`}
@@ -397,7 +393,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
                 <p className="font-display text-base font-bold text-ink">
                   {money(b.priceCents)}
                 </p>
-                {!isSubscribe && b.vials > 1 && dollarSaveCents > 0 && (
+                {b.vials > 1 && dollarSaveCents > 0 && (
                   <>
                     <p className="text-[10px] text-ink-soft mt-0.5">
                       {money(perVial)} / vial
@@ -407,14 +403,9 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
                     </p>
                   </>
                 )}
-                {!isSubscribe && b.vials === 1 && (
+                {b.vials === 1 && (
                   <p className="text-[10px] text-ink-soft mt-0.5">
                     {money(perVial)} / vial
-                  </p>
-                )}
-                {isSubscribe && (
-                  <p className="text-[10px] text-cobalt font-bold mt-0.5">
-                    {dollarSaveCents > 0 ? `Save ${money(dollarSaveCents)}/mo` : 'Save 10%'}
                   </p>
                 )}
               </button>
