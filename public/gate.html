@@ -124,6 +124,22 @@
   </script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1012608588376068&ev=PageView&noscript=1" /></noscript>
 
+  <!-- Reddit Pixel — stays inert until the real Advertiser ID is pasted below.
+       Get it from Reddit Ads Manager → Events Manager → your Pixel (looks like
+       't2_xxxxxxx' or 'a2_xxxxxxx'). Replace REDDIT_ADVERTISER_ID and it goes
+       live; the funnel's PageVisit + (on email submit) Lead events then feed
+       Reddit's conversion optimization, exactly like the Meta pixel. -->
+  <script>
+    (function () {
+      var RDT_ID = 'REDDIT_ADVERTISER_ID';
+      if (RDT_ID && RDT_ID.indexOf('REDDIT_') === -1) {
+        !function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement("script");t.src="https://www.redditstatic.com/ads/pixel.js";t.async=!0;var s=d.getElementsByTagName("script")[0];s.parentNode.insertBefore(t,s)}}(window,document);
+        rdt('init', RDT_ID);
+        rdt('track', 'PageVisit');
+      }
+    })();
+  </script>
+
   <main class="card">
     <div class="brand">MERIT</div>
     <div class="eyebrow">20% off · first order</div>
@@ -156,8 +172,9 @@
         btn.disabled = true;
         btn.textContent = 'Unlocking…';
 
-        // Top-of-funnel conversion signal for Meta optimization.
+        // Top-of-funnel conversion signal for Meta + Reddit optimization.
         try { if (window.fbq) fbq('track', 'Lead'); } catch (_) {}
+        try { if (window.rdt) rdt('track', 'Lead'); } catch (_) {}
 
         try {
           var res = await fetch('/api/gate-enter', {
