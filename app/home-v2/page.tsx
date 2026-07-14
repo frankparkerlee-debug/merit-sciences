@@ -239,7 +239,7 @@ export default async function HomeV2() {
               ['In your hands in 48 hours', 'Cold-chain and tracked from Dallas — not two weeks from overseas.'],
               ['Made in a sterile US facility', 'ISO-certified, USP <797> cleanroom, released by a licensed pharmacist.'],
               ['Labeled to clinical standard', 'Compound, dose, lot, and handling on every vial. No unmarked grey-market glass.'],
-              ['Verified ≥99% purity', 'Independently HPLC-tested, COA in every box, acetate salt — never TFA.'],
+              ['Verified ≥99% purity', 'Independently HPLC-tested, COA a QR-scan away on every label, acetate salt — never TFA.'],
             ].map(([t, b]) => (
               <li key={t} className="flex gap-3.5">
                 <span className="mt-1 flex-none w-5 h-5 rounded-full bg-cobalt/12 text-cobalt flex items-center justify-center">

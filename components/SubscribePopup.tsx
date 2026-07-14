@@ -260,7 +260,7 @@ export function SubscribePopup() {
                 Get 20% off<br />your first order<span className="text-cobalt-soft">.</span>
               </h2>
               <p className="text-base sm:text-lg text-cream/75 mb-8 leading-relaxed max-w-lg mx-auto">
-                Pharmacy-grade research compounds — HPLC-tested to ≥99%, a COA in every box. Join the list for your code plus restock alerts.
+                Pharmacy-grade research compounds — HPLC-tested to ≥99%, a QR on every label to pull the COA. Join the list for your code plus restock alerts.
               </p>
               <form onSubmit={handleSubmit} className="max-w-md mx-auto">
                 <div className="flex flex-col sm:flex-row gap-3">

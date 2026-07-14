@@ -82,10 +82,10 @@ export async function generateMetadata({ params }: Props) {
   const url = abs(`/products/${p.handle}`);
   const image = abs(productImage(p.imageUrl));
 
-  const title = `${name} ${p.vialSize} — ≥99% HPLC, COA Included | Merit Sciences`;
+  const title = `${name} ${p.vialSize} — ≥99% HPLC, Scan-to-Verify COA | Merit Sciences`;
   const entity = cls ? `${name}: ${cls.charAt(0).toLowerCase()}${cls.slice(1)}. ` : '';
   const description =
-    `${entity}${name} ${p.vialSize} research compound — HPLC-tested ≥99% purity, lot COA in every order, ships 48hr from Dallas. Research use only — not for human or veterinary use.`;
+    `${entity}${name} ${p.vialSize} research compound — HPLC-tested ≥99% purity, scan-to-verify COA on every label, ships 48hr from Dallas. Research use only — not for human or veterinary use.`;
 
   return {
     title,

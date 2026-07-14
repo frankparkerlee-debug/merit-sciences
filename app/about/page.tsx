@@ -226,7 +226,7 @@ export default function AboutPage() {
             <Audience
               tag="Researchers"
               title="Buy direct"
-              body="Lot-documented research compounds at a fair price, with the COA in every box. Browse the full catalog and order direct — no account required."
+              body="Lot-documented research compounds at a fair price — a QR on every label pulls that lot's COA. Browse the full catalog and order direct — no account required."
               cta="Browse the catalog"
               href="/catalog"
             />
