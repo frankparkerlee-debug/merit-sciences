@@ -4,6 +4,7 @@ import { verifyPayPalWebhook, getPayPalOrder } from '@/lib/paypal';
 import { tierForOrderCount } from '@/lib/affiliate';
 import { createOrderFromPayPal, issueOrderConfirmationEmail } from '@/lib/orders';
 import { sendMetaPurchase } from '@/lib/meta-capi';
+import { notifyAffiliateOfSale } from '@/lib/affiliate-sale-email';
 
 export const runtime = 'nodejs';
 
@@ -163,7 +164,18 @@ async function handleCaptureCompleted(event: any) {
   }).catch(() => {});
 
   // ── Affiliate commission ─────────────────────────────────────────
-  if (!affiliateId) return;
+  // Fallback: typed-code orders (no ?ref= cookie) carry no affiliate in
+  // custom_id, but order-persistence already saved it on the order. Use that
+  // so code-driven sales credit live.
+  let resolvedAffiliateId = affiliateId;
+  if (!resolvedAffiliateId) {
+    const persistedAff = await prisma.order.findUnique({
+      where: { paypalOrderId: orderId },
+      select: { affiliateId: true },
+    });
+    resolvedAffiliateId = persistedAff?.affiliateId ?? null;
+  }
+  if (!resolvedAffiliateId) return;
 
   // PayPal omits payer.email_address on Advanced Card Fields captures, so the
   // card flow arrives here with no payerEmail. Fall back to the persisted
@@ -181,7 +193,7 @@ async function handleCaptureCompleted(event: any) {
 
   // Resolve affiliate and confirm ACTIVE
   const affiliate = await prisma.affiliate.findUnique({
-    where: { id: affiliateId },
+    where: { id: resolvedAffiliateId },
     select: { id: true, email: true, status: true },
   });
   if (!affiliate || affiliate.status !== 'ACTIVE') return;
@@ -269,6 +281,11 @@ async function handleCaptureCompleted(event: any) {
   } catch (err: any) {
     if (err?.code === 'P2002') return; // already processed
     throw err;
+  }
+
+  // Momentum email — non-blocking; skip $0 self-purchase rows.
+  if (commissionCents > 0) {
+    void notifyAffiliateOfSale(affiliate.id, { commissionCents, orderTotalCents, rateBp }).catch(() => {});
   }
 }
 

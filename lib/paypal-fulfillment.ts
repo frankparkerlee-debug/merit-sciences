@@ -2,6 +2,7 @@ import { prisma } from './db';
 import { tierForOrderCount } from './affiliate';
 import { createOrderFromPayPal, issueOrderConfirmationEmail } from './orders';
 import { sendMetaPurchase } from './meta-capi';
+import { notifyAffiliateOfSale } from './affiliate-sale-email';
 
 /**
  * Everything that must happen once a PayPal capture is COMPLETED: persist/
@@ -93,7 +94,17 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
 
   let attribution: { a?: string | null; c?: string | null } = {};
   if (pu.custom_id) { try { attribution = JSON.parse(pu.custom_id); } catch { /* ignore */ } }
-  const affiliateId = attribution.a ?? null;
+  let affiliateId = attribution.a ?? null;
+  // Fallback: buyers who TYPE a code (no ?ref= cookie) carry no affiliate in
+  // custom_id, but order-persistence already resolved the code → Order.affiliateId.
+  // Use it so code-driven sales earn live, not only via a manual backfill.
+  if (!affiliateId) {
+    const persistedAff = await prisma.order.findUnique({
+      where: { paypalOrderId: orderId },
+      select: { affiliateId: true },
+    });
+    affiliateId = persistedAff?.affiliateId ?? null;
+  }
   if (!affiliateId) return 0;
 
   const payerEmail = (paypalOrder.payer?.email_address ?? '').toLowerCase();
@@ -173,6 +184,11 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
   } catch (err: any) {
     if (err?.code === 'P2002') return 0; // already processed
     throw err;
+  }
+
+  // Momentum email — non-blocking; skip $0 self-purchase rows.
+  if (commissionCents > 0) {
+    void notifyAffiliateOfSale(affiliate.id, { commissionCents, orderTotalCents, rateBp }).catch(() => {});
   }
   return commissionCents;
 }
