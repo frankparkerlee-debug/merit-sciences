@@ -136,7 +136,7 @@ export default function AffiliateLandingPage() {
               num="03"
               eyebrow="You earn"
               headline="Forever, on every order"
-              body="First purchase pays you 15–25%. Every reorder by that same customer — months and years later — pays you again. No re-attribution needed."
+              body="First purchase pays you a flat 20%. Every reorder by that same customer — months and years later — pays you again. No re-attribution needed."
             />
           </ol>
         </div>
