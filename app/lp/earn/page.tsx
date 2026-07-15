@@ -41,7 +41,7 @@ export default function EarnPage() {
           </h1>
           <p className="mt-6 text-base sm:text-lg text-white/80 leading-relaxed max-w-xl">
             Share your code — your people save {D}%, and you earn{' '}
-            <strong className="text-white">15–25%</strong> on every order they ever place. We give
+            <strong className="text-white">a flat 20%</strong> on every order they ever place. We give
             you the captions, the assets, and a simple playbook. You just share.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
@@ -68,7 +68,7 @@ export default function EarnPage() {
       {/* ───────── STATS ───────── */}
       <section className="bg-white border-b border-cobalt/10">
         <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-cobalt/10">
-          <Stat top="UP TO" big="25%" label="On every order" sub="Tier up as your volume grows." />
+          <Stat top="FLAT" big="20%" label="On every order" sub="One rate, from your first sale." />
           <Stat top="EVERY REORDER" big="∞" label="Evergreen earnings" sub="One referral pays you for that customer's lifetime." accent />
           <Stat top="THEY SAVE" big={`${D}%`} label="For your audience" sub="Your code, applied instantly at checkout." />
         </div>
@@ -81,7 +81,7 @@ export default function EarnPage() {
           <ol className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Step num="01" eyebrow="You share" head="Your custom code" body="Pick something memorable at sign-up. Drop it in your bio, a story, a video description, a DM." />
             <Step num="02" eyebrow="They save" head={`${D}% off, instantly`} body={`Your audience enters your code at checkout and ${D}% comes off — a real reason to choose Merit.`} />
-            <Step num="03" eyebrow="You earn" head="Forever, on every order" body="Their first order pays you 15–25%. Every reorder, months later, pays you again — no re-attribution." />
+            <Step num="03" eyebrow="You earn" head="Forever, on every order" body="Their first order pays you a flat 20%. Every reorder, months later, pays you again — no re-attribution." />
           </ol>
         </div>
       </section>
@@ -95,14 +95,14 @@ export default function EarnPage() {
               What 50 referrals looks like<span className="text-cobalt-soft">.</span>
             </h2>
             <p className="text-white/75 leading-relaxed">
-              Refer 50 customers in a month at a $150 average order — that&rsquo;s the Partner tier (20%).
+              Refer 50 customers in a month at a $150 average order — every order pays a flat 20%.
               Here&rsquo;s month one, and month twelve as they reorder.
             </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 lg:p-8">
             <Row l="Customers referred" v="50" />
             <Row l="Avg order" v="$150" />
-            <Row l="Your tier" v="Partner · 20%" />
+            <Row l="Commission" v="20% flat" />
             <div className="my-3 border-t border-white/10" />
             <Row l="Month 1 commission" v="$1,500" />
             <Row l="Month 12 cumulative" v="$13,200+" hi sub="If 60% reorder monthly" />
@@ -110,8 +110,8 @@ export default function EarnPage() {
         </div>
         <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-12 pb-8">
           <p className="text-[11px] text-white/40 italic max-w-2xl leading-relaxed">
-            Illustrative, based on the Partner-tier rate. Actual earnings depend on referral volume,
-            repeat purchases, and your tier — not a guarantee.
+            Illustrative, at the flat 20% rate. Actual earnings depend on referral volume
+            and repeat purchases — not a guarantee.
           </p>
         </div>
       </section>
@@ -148,16 +148,14 @@ export default function EarnPage() {
       {/* ───────── TIERS ───────── */}
       <section className="bg-cream/40 border-b border-cobalt/10">
         <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-12 py-12 lg:py-16">
-          <SectionHead eyebrow="Commission tiers" title="Grow the audience, grow the rate" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {AFFILIATE_PROGRAM.tiers.map((t, i) => (
+          <SectionHead eyebrow="Your commission" title="One flat rate, forever" />
+          <div className="grid grid-cols-1 max-w-xs">
+            {AFFILIATE_PROGRAM.tiers.map((t) => (
               <div
                 key={t.name}
-                className={`rounded-2xl bg-white p-6 lg:p-7 ${
-                  i === 1 ? 'border-2 border-cobalt ring-4 ring-cobalt/10' : 'border border-cobalt/15'
-                }`}
+                className="rounded-2xl bg-white p-6 lg:p-7 border-2 border-cobalt ring-4 ring-cobalt/10"
               >
-                <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">{t.name}</p>
+                <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">Every affiliate</p>
                 <p
                   className="font-display font-black text-ink tracking-[-0.04em] leading-none"
                   style={{ fontSize: 'clamp(40px, 6vw, 64px)' }}
@@ -166,9 +164,7 @@ export default function EarnPage() {
                   <span className="text-cobalt-soft">%</span>
                 </p>
                 <p className="text-[13px] text-ink-soft mt-2">
-                  {t.maxOrders === null
-                    ? `${t.minOrders}+ orders / mo`
-                    : `${t.minOrders}–${t.maxOrders} orders / mo`}
+                  Every order · forever
                 </p>
               </div>
             ))}

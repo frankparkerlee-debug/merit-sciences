@@ -65,9 +65,8 @@ export const AFFILIATE_PROGRAM = {
   selfDiscountPct: 15,
   // Tier thresholds (orders in trailing 30 days)
   tiers: [
-    { name: 'Affiliate', commissionPct: 15, minOrders: 0,  maxOrders: 25 },
-    { name: 'Partner',   commissionPct: 20, minOrders: 26, maxOrders: 75 },
-    { name: 'Elite',     commissionPct: 25, minOrders: 76, maxOrders: null as number | null },
+    // Flat 20% for every affiliate — no tiers, no thresholds (locked 2026-07-14).
+    { name: 'Partner', commissionPct: 20, minOrders: 0, maxOrders: null as number | null },
   ],
   cookieWindowDays: 30,
   payoutMinUsd: 50,

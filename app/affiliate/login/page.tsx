@@ -111,12 +111,12 @@ export default async function AffiliateLoginPage({
             <span className="text-cobalt-soft">For life.</span>
           </h2>
           <p className="text-sm sm:text-base text-white/75 leading-relaxed mb-7 max-w-[420px]">
-            Evergreen commissions. Custom discount codes. Your audience gets 10% off. You earn 15&ndash;25% on every order &mdash; forever.
+            Evergreen commissions. Custom discount codes. Your audience gets 10% off. You earn a flat 20% on every order &mdash; forever.
           </p>
 
           {/* Three quick stats */}
           <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[440px] border-t border-white/10 pt-6">
-            <Stat n="15-25%" label="Tier commission" />
+            <Stat n="20%" label="Commission" />
             <Stat n="∞" label="Evergreen lock" />
             <Stat n="10%" label="Customers save" />
           </div>

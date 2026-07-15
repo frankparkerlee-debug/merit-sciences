@@ -5,7 +5,7 @@ import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
 export const metadata = {
   title: 'Become a Merit Sciences Affiliate',
   description:
-    'Earn up to 25% on every order — forever. Your audience saves 10%. Open sign-up, monthly PayPal payouts, no approval queue.',
+    'Earn 20% on every order — forever. Your audience saves 10%. Open sign-up, monthly PayPal payouts, no approval queue.',
 };
 
 export default function AffiliateLandingPage() {
@@ -48,7 +48,7 @@ export default function AffiliateLandingPage() {
           </h1>
           <p className="mt-8 text-base sm:text-lg lg:text-xl text-white/85 leading-relaxed max-w-2xl">
             Every customer you bring to Merit Sciences pays you for life —
-            first order and every reorder, at <strong className="text-white">15% to 25%</strong> commission.
+            first order and every reorder, at a flat <strong className="text-white">20%</strong> commission.
             Your audience uses your code at checkout and saves <strong className="text-white">{AFFILIATE_PROGRAM.buyerDiscountPct}%</strong> instantly.
           </p>
 
@@ -80,10 +80,10 @@ export default function AffiliateLandingPage() {
         <div className="max-w-[1300px] mx-auto px-5 sm:px-6 lg:px-12 py-12 lg:py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-cobalt/10">
             <BigStat
-              top="UP TO"
-              number="25%"
+              top="FLAT"
+              number="20%"
               label="Commission on every order"
-              detail="Tier up as your monthly volume grows."
+              detail="One rate, from your very first sale."
               accent="ink"
             />
             <BigStat
@@ -159,7 +159,7 @@ export default function AffiliateLandingPage() {
               </h2>
               <p className="text-base text-white/80 leading-relaxed">
                 Say you refer 50 customers in a month. They each spend $150
-                on average. That puts you in the <strong className="text-white">Partner tier (20%)</strong>.
+                on average, and every order pays you a flat <strong className="text-white">20%</strong>.
                 Here&apos;s what month one looks like — and what
                 month twelve looks like as those customers reorder.
               </p>
@@ -168,7 +168,7 @@ export default function AffiliateLandingPage() {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 lg:p-8">
               <ExampleRow label="Customers referred" value="50" highlight={false} />
               <ExampleRow label="Avg order size" value="$150" highlight={false} />
-              <ExampleRow label="Your tier" value="Partner · 20%" highlight={false} />
+              <ExampleRow label="Commission rate" value="20% flat" highlight={false} />
               <div className="my-3 border-t border-white/10" />
               <ExampleRow label="Month 1 commission" value="$1,500" highlight={false} />
               <ExampleRow
@@ -180,9 +180,9 @@ export default function AffiliateLandingPage() {
             </div>
           </div>
           <p className="text-[11px] text-white/45 italic mt-6 max-w-2xl">
-            Illustrative example based on the Partner tier rate. Actual
-            earnings depend on referral volume, repeat-purchase behavior,
-            and your current tier each month.
+            Illustrative example at the flat 20% rate. Actual
+            earnings depend on referral volume and repeat-purchase
+            behavior — not a guarantee.
           </p>
         </div>
       </section>
@@ -241,7 +241,7 @@ export default function AffiliateLandingPage() {
                 You save {AFFILIATE_PROGRAM.selfDiscountPct}% on every Merit order you place yourself.
               </h3>
               <p className="text-[13px] text-ink-soft mt-1">
-                Partner perk. No commission on your own purchases (can&apos;t pay yourself),
+                Your perk. No commission on your own purchases (can&apos;t pay yourself),
                 but you keep the discount, every time, forever.
               </p>
             </div>
@@ -254,23 +254,23 @@ export default function AffiliateLandingPage() {
         <div className="max-w-[1300px] mx-auto px-5 sm:px-6 lg:px-12 py-12 lg:py-16">
           <div className="max-w-2xl mb-8 lg:mb-10">
             <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-              — Commission tiers
+              — Your commission
             </p>
             <h2
               className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
               style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
             >
-              Tier up by month<span className="text-cobalt">.</span>
+              One flat rate. Forever<span className="text-cobalt">.</span>
             </h2>
             <p className="mt-3 text-sm sm:text-base text-ink-soft leading-relaxed">
-              Your tier is recalculated by your trailing 30-day order volume.
-              Grow the audience, grow the rate.
+              No tiers, no thresholds, no rate that resets. Every order you
+              drive pays the same — your first sale and your thousandth.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
-            {AFFILIATE_PROGRAM.tiers.map((t, i) => (
-              <TierCard key={t.name} tier={t} highlight={i === 1} />
+          <div className="grid grid-cols-1 max-w-sm">
+            {AFFILIATE_PROGRAM.tiers.map((t) => (
+              <TierCard key={t.name} tier={t} highlight />
             ))}
           </div>
         </div>
@@ -463,7 +463,7 @@ function TierCard({
     >
       {highlight && (
         <span className="absolute -top-3 left-6 bg-cobalt text-white text-[9px] font-bold tracking-[0.22em] uppercase px-2.5 py-1 rounded">
-          Sweet spot
+          Every affiliate
         </span>
       )}
       <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
@@ -480,12 +480,10 @@ function TierCard({
       </p>
       <div className="pt-4 border-t border-cobalt/10">
         <p className="text-[11px] tracking-[0.14em] uppercase text-ink-muted font-bold">
-          Volume range
+          From day one
         </p>
         <p className="font-display text-base lg:text-lg font-extrabold text-ink mt-1">
-          {tier.maxOrders === null
-            ? `${tier.minOrders}+ orders / month`
-            : `${tier.minOrders}–${tier.maxOrders} orders / month`}
+          Every order · forever
         </p>
       </div>
     </div>
