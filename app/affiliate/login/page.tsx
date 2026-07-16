@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createServerSupabase } from '@/lib/supabase-server';
+import { getCurrentAffiliate } from '@/lib/affiliate-session';
 import { LoginForm } from './LoginForm';
 
 export const metadata = {
@@ -16,10 +16,13 @@ export default async function AffiliateLoginPage({
 }: {
   searchParams: Promise<{ sent?: string; error?: string; next?: string; email?: string }>;
 }) {
-  // If already authenticated, jump straight to dashboard
-  const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) redirect('/affiliate/dashboard');
+  // If already signed in AS AN AFFILIATE, jump to the dashboard. Must use the
+  // SAME resolver the dashboard uses (getCurrentAffiliate) — NOT raw getUser().
+  // A Supabase session with no matching Affiliate row (e.g. a stale admin /
+  // practitioner / test session) otherwise ping-pongs: login sees a user →
+  // dashboard sees no affiliate → back to login → ERR_TOO_MANY_REDIRECTS.
+  const current = await getCurrentAffiliate();
+  if (current) redirect('/affiliate/dashboard');
 
   const sp = await searchParams;
   const sent = sp.sent === '1';
