@@ -42,9 +42,9 @@ export default function AffiliateLandingPage() {
             className="font-display font-black text-white tracking-[-0.04em] leading-[0.92] max-w-5xl"
             style={{ fontSize: 'clamp(40px, 8vw, 112px)' }}
           >
-            Earn forever<span className="text-cobalt-soft">.</span>
+            Get paid to share
             <br />
-            <span className="text-white/85">Your audience saves now<span className="text-cobalt-soft">.</span></span>
+            <span className="text-cobalt-soft">what you trust.</span>
           </h1>
           <p className="mt-8 text-base sm:text-lg lg:text-xl text-white/85 leading-relaxed max-w-2xl">
             Every customer you bring to Merit Sciences pays you for life —
@@ -69,6 +69,12 @@ export default function AffiliateLandingPage() {
             >
               I already have an account &rarr;
             </a>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-7 text-[12px] font-bold tracking-[0.07em] uppercase text-white/65">
+            <span>✓ Free to join</span>
+            <span>✓ Live in 60 seconds</span>
+            <span>✓ No approval queue</span>
           </div>
         </div>
       </section>
@@ -277,6 +283,52 @@ export default function AffiliateLandingPage() {
       </section>
 
       {/* ═══════════════ SIGN-UP FORM ═══════════════ */}
+      {/* ═══════════════ MID-PAGE CTA + FAQ ═══════════════ */}
+      <section className="bg-white">
+        <div className="max-w-[1300px] mx-auto px-5 sm:px-6 lg:px-12 pt-14 lg:pt-16 text-center">
+          <a
+            href="#signup"
+            className="inline-flex items-center gap-2 bg-cobalt text-white px-8 py-4 rounded-xl text-base font-bold tracking-tight hover:opacity-90 transition shadow-lg"
+          >
+            Get your link — free, 60 seconds
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </a>
+        </div>
+      </section>
+
+      <section className="bg-white border-b border-cobalt/10">
+        <div className="max-w-[820px] mx-auto px-5 sm:px-6 lg:px-12 py-12 lg:py-16">
+          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">— Questions</p>
+          <h2
+            className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-8"
+            style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
+          >
+            The honest answers<span className="text-cobalt">.</span>
+          </h2>
+          <div className="space-y-3">
+            <Faq
+              q="Is this MLM or a pyramid scheme?"
+              a="No. No downline, no recruitment quota, no buy-in — ever. You earn a flat 20% on real orders the people you refer actually place. That's the whole program."
+            />
+            <Faq
+              q="Do I need a big following?"
+              a="No. 500 followers or 500,000 — the rate is the same 20%. Refer one person and you earn on their orders for as long as they keep buying."
+            />
+            <Faq
+              q="When and how do I get paid?"
+              a="Monthly, by PayPal, once you clear a $50 minimum. Each commission clears a 30-day refund window first, then it's payable."
+            />
+            <Faq
+              q="What am I allowed to say?"
+              a="We hand you approved captions and a simple do/don't playbook. You promote the Merit brand — never product or health claims — so every post stays on-brand and worry-free."
+            />
+          </div>
+        </div>
+      </section>
+
       <section id="signup" className="bg-white scroll-mt-12">
         <div className="max-w-[640px] mx-auto px-5 sm:px-6 lg:px-8 py-14 lg:py-20">
           <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
@@ -309,6 +361,14 @@ export default function AffiliateLandingPage() {
           </p>
         </div>
       </section>
+
+      {/* Sticky mobile CTA — most recruit traffic is mobile */}
+      <a
+        href="#signup"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-cobalt text-white text-center text-[15px] font-bold py-4 shadow-[0_-8px_24px_rgba(0,0,0,0.18)]"
+      >
+        Sign up free — live in 60 seconds →
+      </a>
     </main>
   );
 }
@@ -442,6 +502,17 @@ function Differentiator({
       <p className="font-display text-[15px] lg:text-base font-extrabold text-ink leading-snug">
         {ours}
       </p>
+    </div>
+  );
+}
+
+function Faq({ q, a }: { q: string; a: string }) {
+  return (
+    <div className="bg-cream/50 border border-cobalt/12 rounded-2xl p-5 lg:p-6">
+      <p className="font-display text-base lg:text-lg font-extrabold text-ink leading-snug mb-1.5">
+        {q}
+      </p>
+      <p className="text-sm text-ink-soft leading-relaxed">{a}</p>
     </div>
   );
 }

@@ -235,7 +235,7 @@ function inputClass(hasError: boolean): string {
 
 function SuccessState({ data }: { data: SuccessResult }) {
   const { name, slug, discountCode } = data.affiliate;
-  const referralUrl = `https://merit-sciences.onrender.com?ref=${slug}`;
+  const referralUrl = `https://meritsciences.com/?ref=${slug}`;
   return (
     <div className="bg-white border border-cobalt/15 rounded-2xl overflow-hidden">
       <div className="h-1 bg-gradient-to-r from-cobalt via-[#5078FF] to-cobalt" />
