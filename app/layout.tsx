@@ -5,6 +5,7 @@ import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { CartDrawer } from '@/components/CartDrawer';
 import { SubscribePopup } from '@/components/SubscribePopup';
+import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { ChromeGate } from '@/components/ChromeGate';
 import { WelcomeOfferBar } from '@/components/WelcomeOfferBar';
 import { PostHogProvider } from '@/components/PostHogProvider';
@@ -173,6 +174,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {/* Exit-intent / timed subscribe popup → 10%-off capture. Self-gates
                 on transactional/account routes + frequency-caps via localStorage. */}
             <SubscribePopup />
+            {/* Soft conversational entry — opens a WhatsApp thread so a hesitant
+                buyer can talk to a human before checkout. Inert until
+                NEXT_PUBLIC_WHATSAPP_NUMBER is set. Inside ChromeGate so it never
+                shows on the clean-room ad LPs. */}
+            <WhatsAppButton />
           </ChromeGate>
         </PostHogProvider>
       </body>
