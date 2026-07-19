@@ -810,6 +810,9 @@ export type PostDeliveryData = {
   primaryProductTitle: string;      // first item in the order, for personalization
   lookupUrl: string;
   catalogUrl: string;
+  // Signed /reorder/<token> deep link (lib/reorder.ts) — rebuilds this order's
+  // cart at current prices and lands on /checkout. One click, no re-picking.
+  reorderUrl?: string;
   crossSell?: CrossSellProduct[];
 };
 
@@ -844,7 +847,8 @@ export function renderPostDeliveryFollowUp(d: PostDeliveryData): { subject: stri
       We don&rsquo;t do dosing advice or human-outcome claims &mdash; refer to your own literature. We just make sure the compound itself is exactly what the label says.
     </p>
 
-    ${ctaButton('Browse related compounds', d.catalogUrl)}
+    ${d.reorderUrl ? ctaButton('Reorder in one click', d.reorderUrl) : ctaButton('Browse related compounds', d.catalogUrl)}
+    ${d.reorderUrl ? `<p style="margin:-12px 0 24px 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};text-align:center;">Same lineup, current lot — cart rebuilds itself, you just confirm. Or <a href="${escapeHtml(d.catalogUrl)}" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">browse the catalog</a>.</p>` : ''}
 
     ${renderCrossSell('Pair with', d.crossSell ?? [])}
 
@@ -870,7 +874,7 @@ We don't do dosing advice or human-outcome claims. We just ship clean lots.
 
 Order: ${d.paypalOrderId}
 Details: ${d.lookupUrl}
-
+${d.reorderUrl ? `\nReorder in one click (cart rebuilds itself): ${d.reorderUrl}` : ''}
 Browse related: ${d.catalogUrl}
 
 — Merit Sciences`;

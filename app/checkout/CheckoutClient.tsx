@@ -205,10 +205,12 @@ export function CheckoutClient({
   // 10% shows AND the code is visible — the buyer can still remove it.
   const autoAppliedRef = useRef(false);
 
-  // Auto-apply the WELCOME20 first-order code stashed by the /access gate.
-  // Runs BEFORE the referral auto-apply and shares autoAppliedRef, so the
-  // ad-funnel code wins (matches the server: ad-funnel codes override ?ref).
-  // Without this, the gate promised "20% off" but the buyer hit full price.
+  // Auto-apply the stashed promo code (merit_welcome_code) — written by the
+  // /access ad gate AND by any email link carrying ?code= (site-wide capture
+  // in components/DiscountCodeCapture.tsx). Runs BEFORE the referral
+  // auto-apply and shares autoAppliedRef, so the promised code wins
+  // (matches the server: funnel codes override ?ref). Without this, the
+  // gate/email promised "20% off" but the buyer hit full price.
   useEffect(() => {
     if (autoAppliedRef.current) return;
     if (!hydrated || lines.length === 0 || appliedCode) return;

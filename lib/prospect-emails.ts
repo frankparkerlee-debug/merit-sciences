@@ -4,6 +4,10 @@
  * with the 20% as a quiet throughline. Voice = confident, a bit funny, never
  * coupon-desperate.
  *
+ * Every CTA carries `?code=` — DiscountCodeCapture stashes it on landing and
+ * checkout auto-applies it, so the subscriber never types the code. The copy
+ * leans on that ("it applies itself").
+ *
  * Each render fn returns { subject, html, text } so it slots into the admin
  * preview (/admin/email-previews) and the drip cron (lib/prospect-journey.ts)
  * unchanged.
@@ -26,6 +30,10 @@ import {
 const CATALOG = `${SITE}/catalog`;
 const COA = `${SITE}/coa`;
 
+// Ride the code along on every CTA — landing on ANY page with ?code= stashes
+// it for checkout auto-apply (components/DiscountCodeCapture.tsx).
+const withCode = (base: string, code: string) => `${base}?code=${encodeURIComponent(code)}`;
+
 export type ProspectEmailData = { code: string; unsubscribeUrl?: string };
 type Rendered = { subject: string; html: string; text: string };
 
@@ -35,6 +43,7 @@ function build(subject: string, eyebrow: string, body: string, text: string, d: 
 
 /* ── 0 · Welcome (day 0 reference — the instant signup email covers this live) ── */
 export function renderProspectWelcome(d: ProspectEmailData): Rendered {
+  const shop = withCode(CATALOG, d.code);
   return build(
     "You're in — and your 20% is ready",
     'Welcome',
@@ -42,15 +51,16 @@ export function renderProspectWelcome(d: ProspectEmailData): Rendered {
       p("You joined the Merit list, which tells me one thing: you actually care where your compounds come from. That instinct is rare. Keep it.") +
       p('One line: every Merit lot is HPLC-tested to <strong>≥99% purity</strong>, made in the USA, and on your porch in 48 hours.') +
       codeChip(d.code) +
-      cta("See what's inside →", CATALOG) +
-      quiet('No spam. Just the occasional note actually worth opening.'),
-    `You're on the Merit list. Every lot is HPLC-tested to ≥99% purity, US-made, shipped in 48 hours.\nYour code: ${d.code} — 20% off your first order.\nSee what's inside: ${CATALOG}`,
+      cta("See what's inside →", shop) +
+      quiet('Tap the button and the code applies itself at checkout — nothing to type. No spam, just the occasional note actually worth opening.'),
+    `You're on the Merit list. Every lot is HPLC-tested to ≥99% purity, US-made, shipped in 48 hours.\nYour code ${d.code} (20% off your first order) applies automatically through this link:\n${shop}`,
     d,
   );
 }
 
 /* ── 1 · Proof ───────────────────────────────────────────────────────────── */
 export function renderProspectProof(d: ProspectEmailData): Rendered {
+  const results = withCode(COA, d.code);
   return build(
     'The test most suppliers hope you skip',
     'Proof, not promises',
@@ -60,15 +70,16 @@ export function renderProspectProof(d: ProspectEmailData): Rendered {
         '<strong>Lot MRT-2603-03 · Tirzepatide 30mg</strong><br>HPLC purity: <strong>99.827%</strong> &nbsp;·&nbsp; Identity: conforms<br>Independently tested — verifiable by lot number',
       ) +
       p(`We even put the whole library online — ${a('every lot we’ve shipped', COA)}, searchable by the number on your bottle.`) +
-      cta('Browse the lab results →', COA) +
-      quiet(`Your 20% (<strong>${d.code}</strong>) is still here whenever you’re ready.`),
-    `Anyone can say 99%. Merit hands you the receipt — every lot ships with its COA (HPLC trace, purity, lot #). The whole library is searchable online.\nSee it: ${COA}\nYour code: ${d.code}`,
+      cta('Browse the lab results →', results) +
+      quiet(`Your 20% (<strong>${d.code}</strong>) rides along on that button and applies itself at checkout.`),
+    `Anyone can say 99%. Merit hands you the receipt — every lot ships with its COA (HPLC trace, purity, lot #). The whole library is searchable online.\nSee it (your ${d.code} applies automatically): ${results}`,
     d,
   );
 }
 
 /* ── 2 · Don't buy off Telegram (the funny one) ──────────────────────────── */
 export function renderProspectTelegram(d: ProspectEmailData): Rendered {
+  const shop = withCode(CATALOG, d.code);
   return build(
     "Please don't buy peptides off Telegram",
     'A public service announcement',
@@ -82,15 +93,16 @@ export function renderProspectTelegram(d: ProspectEmailData): Rendered {
         ['Ships from', 'a crypto wallet', 'a pharmacy in Dallas'],
       ]) +
       p('Not hypothetical: last month we held back a whole Semax lot because it came back as the <em>wrong molecule</em>. The group chat would’ve shipped it to you with a fire emoji.') +
-      cta('Buy like a grown-up →', CATALOG) +
-      quiet(`20% off your first tested, traceable order: <strong>${d.code}</strong>`),
-    `That guy in the group chat is not a lab. No COA, no lot number, no idea what's in the vial. Merit: HPLC COA on every lot, identity confirmed or it doesn't ship, from a pharmacy in Dallas.\nBuy like a grown-up: ${CATALOG}\nCode: ${d.code}`,
+      cta('Buy like a grown-up →', shop) +
+      quiet(`20% off your first tested, traceable order — <strong>${d.code}</strong> is baked into the button.`),
+    `That guy in the group chat is not a lab. No COA, no lot number, no idea what's in the vial. Merit: HPLC COA on every lot, identity confirmed or it doesn't ship, from a pharmacy in Dallas.\nBuy like a grown-up (${d.code} applies automatically): ${shop}`,
     d,
   );
 }
 
 /* ── 3 · Sourcing ────────────────────────────────────────────────────────── */
 export function renderProspectSourcing(d: ProspectEmailData): Rendered {
+  const shop = withCode(CATALOG, d.code);
   return build(
     'Not a garage. A pharmacy.',
     'Where it comes from',
@@ -98,14 +110,15 @@ export function renderProspectSourcing(d: ProspectEmailData): Rendered {
       p('Most of what’s sold online is bulk-imported, repackaged in someone’s spare room, and sold on a guess.') +
       p('Merit is sourced and handled in a US pharmacy environment, under pharmacist oversight, with a COA on every lot. The difference is the part you can’t see in a product photo — so we document it instead of asking you to assume it.') +
       stat('48 hrs', 'sealed, tested, and shipped from Dallas') +
-      cta('See how a Merit lot is made →', CATALOG),
-    `Most online compounds are bulk-imported and sold on a guess. Merit is sourced + handled in a US pharmacy environment, pharmacist oversight, COA on every lot, shipped from Dallas in 48 hours.\n${CATALOG}`,
+      cta('See how a Merit lot is made →', shop),
+    `Most online compounds are bulk-imported and sold on a guess. Merit is sourced + handled in a US pharmacy environment, pharmacist oversight, COA on every lot, shipped from Dallas in 48 hours.\n${shop}`,
     d,
   );
 }
 
 /* ── 4 · Vetting ─────────────────────────────────────────────────────────── */
 export function renderProspectVetting(d: ProspectEmailData): Rendered {
+  const shop = withCode(CATALOG, d.code);
   return build(
     'Smart people ask these 4 questions',
     'For the careful ones',
@@ -115,14 +128,15 @@ export function renderProspectVetting(d: ProspectEmailData): Rendered {
         '✓ Is <strong>every</strong> lot third-party tested?<br>✓ Is the COA <strong>published</strong>, not just promised?<br>✓ Is it made in the USA?<br>✓ Is it sold for research, clearly and honestly?',
       ) +
       p('Merit is a yes on all four. If a supplier dodges even one of them — that’s your answer.') +
-      cta('Browse with confidence →', CATALOG),
-    `Four questions separate the real from the risky: every lot tested? COA published? made in USA? sold for research, honestly? Merit is yes on all four.\nBrowse: ${CATALOG}`,
+      cta('Browse with confidence →', shop),
+    `Four questions separate the real from the risky: every lot tested? COA published? made in USA? sold for research, honestly? Merit is yes on all four.\nBrowse: ${shop}`,
     d,
   );
 }
 
 /* ── 5 · What ships ──────────────────────────────────────────────────────── */
 export function renderProspectShipping(d: ProspectEmailData): Rendered {
+  const shop = withCode(CATALOG, d.code);
   return build(
     'What actually shows up at your door',
     'The unboxing',
@@ -130,55 +144,58 @@ export function renderProspectShipping(d: ProspectEmailData): Rendered {
       p('No mystery baggies. No hand-written Sharpie labels. No “should arrive in 3–5 weeks (maybe).”') +
       p('A Merit order arrives as a sealed, lot-labeled vial with a scannable QR that pulls up its exact COA — shipped from Dallas, usually on your porch in 48 hours.') +
       proof('On every vial:<br>• The compound + dose<br>• The lot number<br>• A QR → the exact HPLC result') +
-      cta('See what ships →', CATALOG) +
-      quiet(`Still holding your 20%: <strong>${d.code}</strong>`),
-    `A Merit order shows up sealed and lot-labeled, with a QR to its exact COA, shipped from Dallas in ~48 hours. No mystery baggies.\nSee what ships: ${CATALOG}\nCode: ${d.code}`,
+      cta('See what ships →', shop) +
+      quiet(`Still holding your 20%: <strong>${d.code}</strong> — it applies itself when you use the button.`),
+    `A Merit order shows up sealed and lot-labeled, with a QR to its exact COA, shipped from Dallas in ~48 hours. No mystery baggies.\nSee what ships (${d.code} applies automatically): ${shop}`,
     d,
   );
 }
 
 /* ── 6 · Did we lose you? (the re-engagement one) ────────────────────────── */
 export function renderProspectReengage(d: ProspectEmailData): Rendered {
+  const shop = withCode(CATALOG, d.code);
   return build(
     'Did we lose you?',
     'Checking in',
     h('Did we lose you? Or are you just busy?') +
       p('You joined the list, we sent a few (genuinely useful, we like to think) emails, and then… crickets. No judgment — inboxes are a warzone.') +
-      p('Quick gut check. If it’s a “not right now,” all good, we’ll be here. If it’s a “I completely forgot I had 20% off,” well — you have 20% off.') +
+      p('Quick gut check. If it’s a “not right now,” all good, we’ll be here. If it’s a “I completely forgot I had 20% off,” well — you have 20% off, and the button below applies it for you.') +
       codeChip(d.code) +
       p(`And if it’s a “please stop,” there’s a one-tap unsubscribe right down there, zero hard feelings.`) +
-      cta('Okay, show me the goods →', CATALOG),
-    `Did we lose you, or are you just busy? If you forgot you had 20% off — you have 20% off (${d.code}). If you're done, one-tap unsubscribe below, no hard feelings.\n${CATALOG}`,
+      cta('Okay, show me the goods →', shop),
+    `Did we lose you, or are you just busy? If you forgot you had 20% off — you have 20% off, and it applies automatically through this link:\n${shop}\nIf you're done, one-tap unsubscribe below, no hard feelings.`,
     d,
   );
 }
 
 /* ── 7 · Social proof ────────────────────────────────────────────────────── */
 export function renderProspectSocialProof(d: ProspectEmailData): Rendered {
+  const shop = withCode(CATALOG, d.code);
   return build(
     'The people who source from Merit',
     'Good company',
     h('You’re not the only careful one.') +
       p('Merit’s people tend to be the ones who read the label, check the source, and refuse to gamble on quality — researchers, the detail-obsessed, and the ones who got burned by a sketchy vendor once and swore never again.') +
       p('If that sounds like you, you’ll feel right at home.') +
-      cta('See the lineup →', CATALOG) +
-      quiet(`Your 20% is still on: <strong>${d.code}</strong>`),
-    `Merit's customers read the label, check the source, and won't gamble on quality. If that's you, you'll feel at home.\nSee the lineup: ${CATALOG} · Code: ${d.code}`,
+      cta('See the lineup →', shop) +
+      quiet(`Your 20% is still on — <strong>${d.code}</strong>, baked into the button.`),
+    `Merit's customers read the label, check the source, and won't gamble on quality. If that's you, you'll feel at home.\nSee the lineup (${d.code} applies automatically): ${shop}`,
     d,
   );
 }
 
 /* ── 8 · Last call ───────────────────────────────────────────────────────── */
 export function renderProspectLastCall(d: ProspectEmailData): Rendered {
+  const shop = withCode(CATALOG, d.code);
   return build(
     'Your 20% is about to expire (last call)',
     'Before it slips your mind',
     h('Your 20% is getting lonely.') +
       p('No pressure — but your first-order 20% has been sitting in your inbox for a few weeks, and it won’t wait forever.') +
-      p('Whenever you’re ready, every lot comes with the same things: a published COA, ≥99% purity, and a 48-hour ship from Dallas. The hard part is on us. The first step is on you.') +
+      p('Whenever you’re ready, every lot comes with the same things: a published COA, ≥99% purity, and a 48-hour ship from Dallas. The hard part is on us. The first step — one tap, code included — is on you.') +
       codeChip(d.code) +
-      cta("Use it before it's gone →", CATALOG),
-    `Your first-order 20% won't wait forever. Every lot: published COA, ≥99% purity, 48-hour ship from Dallas.\nUse ${d.code}: ${CATALOG}`,
+      cta("Use it before it's gone →", shop),
+    `Your first-order 20% won't wait forever. Every lot: published COA, ≥99% purity, 48-hour ship from Dallas.\nOne tap, ${d.code} applies automatically: ${shop}`,
     d,
   );
 }

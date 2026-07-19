@@ -9,6 +9,7 @@ import { ChromeGate } from '@/components/ChromeGate';
 import { WelcomeOfferBar } from '@/components/WelcomeOfferBar';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import { MarketingPixels } from '@/components/MarketingPixels';
+import { DiscountCodeCapture } from '@/components/DiscountCodeCapture';
 import { getStoreSettings } from '@/lib/store-settings';
 
 const inter = Inter({
@@ -157,6 +158,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_SCHEMA) }} />
         {/* Meta + TikTok ad pixels. Env-gated — no-op until IDs are set. */}
         <MarketingPixels />
+        {/* Email-link code capture: ?code=X on any page → localStorage →
+            checkout auto-applies it. Renders nothing. */}
+        <DiscountCodeCapture />
         {/* PostHog: autocapture + pageviews across the whole app. No-ops
             until NEXT_PUBLIC_POSTHOG_KEY is set in Render. */}
         <PostHogProvider>
