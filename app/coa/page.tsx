@@ -1,9 +1,11 @@
+import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { Chromatogram } from './Chromatogram';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
-  title: 'Lab results · Merit Sciences',
+  // Root template appends "· Merit Sciences" — don't duplicate it here.
+  title: 'Lab results — per-lot COA library',
   description:
     'Every Merit batch is independently HPLC-verified before release. Find your lot by compound or lot number — purity, identity, and appearance, with lab and manufacturer identifiers redacted to protect supply-chain integrity.',
 };
@@ -140,16 +142,25 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     Verified · passed
                   </span>
-                  {c.fileUrl && (
-                    <a
-                      href={c.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  <div className="flex items-center gap-3">
+                    {c.fileUrl && (
+                      <a
+                        href={c.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-cobalt hover:underline"
+                      >
+                        View report →
+                      </a>
+                    )}
+                    {/* Stable per-lot permalink — the URL the label QR resolves to */}
+                    <Link
+                      href={`/coa/${encodeURIComponent(c.lotId)}`}
                       className="text-xs font-bold text-cobalt hover:underline"
                     >
-                      View report →
-                    </a>
-                  )}
+                      Lot page →
+                    </Link>
+                  </div>
                 </div>
               </div>
               );

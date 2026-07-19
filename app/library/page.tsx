@@ -4,7 +4,8 @@ import { MONOGRAPHS } from '@/lib/monographs';
 import { LibraryBrowser, type LibEntry } from '@/components/library/LibraryBrowser';
 
 export const metadata: Metadata = {
-  title: 'Research Library · Merit Sciences',
+  // Root template appends "· Merit Sciences" — don't duplicate it here.
+  title: 'Research Library',
   description:
     'Compound monographs with mechanism of action and published research, reconstitution protocols with a live calculator, and COA/HPLC/mass-spec explainers — the reference library for the research community. For research use only.',
   alternates: { canonical: 'https://meritsciences.com/library' },

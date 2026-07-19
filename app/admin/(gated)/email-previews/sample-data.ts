@@ -124,30 +124,30 @@ const SAMPLE_CROSS_SELL = [
     title: 'Wolverine Blend',
     oneLiner: 'Tissue repair blend, lyophilized',
     priceCents: 9500,
-    imageUrl: 'https://merit-sciences.onrender.com/products/sku-bpc-10mg-tb-10mg-wolverine-20mg.webp',
-    url: 'https://merit-sciences.onrender.com/products/bpc-157-tb-500',
+    imageUrl: 'https://meritsciences.com/products/sku-bpc-10mg-tb-10mg-wolverine-20mg.webp',
+    url: 'https://meritsciences.com/products/bpc-157-tb-500',
   },
   {
     handle: 'ipamorelin',
     title: 'Ipamorelin',
     oneLiner: 'GHRH peptide, 10mg lyophilized vial',
     priceCents: 6500,
-    imageUrl: 'https://merit-sciences.onrender.com/products/sku-ipamorelin-10mg.webp',
-    url: 'https://merit-sciences.onrender.com/products/ipamorelin',
+    imageUrl: 'https://meritsciences.com/products/sku-ipamorelin-10mg.webp',
+    url: 'https://meritsciences.com/products/ipamorelin',
   },
   {
     handle: 'nad-500mg',
     title: 'NAD+ 500mg',
     oneLiner: 'Cellular research, single vial',
     priceCents: 8500,
-    imageUrl: 'https://merit-sciences.onrender.com/products/sku-nad-500mg.webp',
-    url: 'https://merit-sciences.onrender.com/products/nad-500mg',
+    imageUrl: 'https://meritsciences.com/products/sku-nad-500mg.webp',
+    url: 'https://meritsciences.com/products/nad-500mg',
   },
 ];
 
 export function sampleDataFor(key: TemplateKey): Record<string, any> {
-  const lookupUrl = 'https://merit-sciences.onrender.com/orders/preview?token=sample';
-  const catalogUrl = 'https://merit-sciences.onrender.com/catalog';
+  const lookupUrl = 'https://meritsciences.com/orders/preview?token=sample';
+  const catalogUrl = 'https://meritsciences.com/catalog';
 
   switch (key) {
     case 'prospect_welcome':
@@ -230,7 +230,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
         customerName: 'Alex Sample',
         lines: SAMPLE_LINES_ABANDONED,
         subtotalCents: 78000,
-        recoveryUrl: 'https://merit-sciences.onrender.com/checkout?recover=sample',
+        recoveryUrl: 'https://meritsciences.com/checkout?recover=sample',
         discountCode: 'COMEBACK10',
         discountPercent: 10,
         crossSell: SAMPLE_CROSS_SELL,

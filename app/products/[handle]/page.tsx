@@ -82,7 +82,9 @@ export async function generateMetadata({ params }: Props) {
   const url = abs(`/products/${p.handle}`);
   const image = abs(productImage(p.imageUrl));
 
-  const title = `${name} ${p.vialSize} — ≥99% HPLC, Scan-to-Verify COA | Merit Sciences`;
+  // No "| Merit Sciences" here — the root layout's title template appends
+  // "· Merit Sciences" (doubling it produced "… | Merit Sciences · Merit Sciences").
+  const title = `${name} ${p.vialSize} — ≥99% HPLC, Scan-to-Verify COA`;
   const entity = cls ? `${name}: ${cls.charAt(0).toLowerCase()}${cls.slice(1)}. ` : '';
   const description =
     `${entity}${name} ${p.vialSize} research compound — HPLC-tested ≥99% purity, scan-to-verify COA on every label, ships 48hr from Dallas. Research use only — not for human or veterinary use.`;

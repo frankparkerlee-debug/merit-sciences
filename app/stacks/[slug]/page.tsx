@@ -24,8 +24,10 @@ export function generateMetadata({ params }: Props) {
   const stack = getStack(params.slug);
   if (!stack) return { title: 'Stack' };
   return {
-    title: `${stack.name} · Merit Sciences`,
+    // Root template appends "· Merit Sciences" — don't duplicate it here.
+    title: stack.name,
     description: stack.description,
+    alternates: { canonical: `https://meritsciences.com/stacks/${stack.slug}` },
   };
 }
 

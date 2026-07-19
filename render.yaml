@@ -8,7 +8,9 @@ services:
     region: oregon           # closest to Dallas warehouse for cold-start latency
     buildCommand: npm install && npm run build
     startCommand: npm run start
-    healthCheckPath: /
+    # /api/health is exempt from middleware — the onrender→meritsciences.com
+    # 301 in middleware.ts would otherwise redirect the probe and fail deploys.
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
@@ -24,8 +26,11 @@ services:
         sync: false
       # NEXT_PUBLIC_SITE_URL — used to build success/cancel URLs for
       # Stripe. Defaults to the request origin if not set.
+      # Canonical public origin — used for PayPal return URLs, auth callbacks,
+      # email links, and affiliate referral links. MUST be the custom domain;
+      # the onrender.com URL now 301s to it (middleware.ts).
       - key: NEXT_PUBLIC_SITE_URL
-        value: https://merit-sciences.onrender.com
+        value: https://meritsciences.com
       - key: PAYPAL_CLIENT_ID
         sync: false
       - key: PAYPAL_CLIENT_SECRET

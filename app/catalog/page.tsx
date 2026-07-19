@@ -11,7 +11,11 @@ function sizeWeight(s: string): number {
 }
 import { CatalogClient } from './CatalogClient';
 
-export const metadata = { title: 'Catalog' };
+export const metadata = {
+  title: 'Catalog',
+  description:
+    'The full Merit Sciences catalog — pharmacy-grade research compounds, HPLC-tested ≥99% per lot with a scannable COA on every label. Browse by pathway family or build a stack. Ships 48hr from Dallas.',
+};
 // Force-dynamic — see app/page.tsx for rationale (Supabase pool cap).
 export const dynamic = 'force-dynamic';
 

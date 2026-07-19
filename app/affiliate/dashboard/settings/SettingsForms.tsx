@@ -11,7 +11,7 @@ import {
 } from './actions';
 import type { CurrentAffiliate } from '@/lib/affiliate-session';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://merit-sciences.onrender.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com';
 
 export function SettingsForms({ affiliate }: { affiliate: CurrentAffiliate }) {
   return (

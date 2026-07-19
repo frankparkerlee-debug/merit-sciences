@@ -67,6 +67,21 @@ function isCleanPath(p: string): boolean {
 }
 
 export async function middleware(req: NextRequest) {
+  // ── Canonical-host redirect: onrender.com → meritsciences.com ──────────
+  // The Render subdomain serves the same app and was getting indexed as a
+  // duplicate site, splitting SEO authority. 301 every page request to the
+  // canonical domain (path + query preserved). /api/* is excluded by the
+  // matcher, so ShipStation/PayPal/cron integrations pointed at the onrender
+  // URL keep working — and the Render health probe lives at /api/health.
+  const reqHost = (req.headers.get('host') || '').toLowerCase().split(':')[0];
+  if (reqHost === 'merit-sciences.onrender.com') {
+    const canonical = req.nextUrl.clone();
+    canonical.protocol = 'https:';
+    canonical.host = 'meritsciences.com';
+    canonical.port = '';
+    return NextResponse.redirect(canonical, 301);
+  }
+
   // ── Clean-room gate domain (e.g. trymerit.co) ──────────────────────────
   // Serve the static email wall for EVERY page path on this host. /api/* and
   // dotted asset paths (incl. /gate.html itself) are excluded by the matcher,

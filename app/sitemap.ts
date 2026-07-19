@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { prisma } from '@/lib/db';
 import { listProducts } from '@/lib/catalog';
 import { STACK_TEMPLATES } from '@/lib/catalog-meta';
 import { ARTICLES } from '@/lib/library';
@@ -49,6 +50,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /* keep static + stack routes even if product enumeration fails */
   }
 
+  // Per-lot COA pages (/coa/[lot]) — the primary-source surface for
+  // "{compound} lot {id} COA" queries and the QR-verify deep links.
+  // Resilient: a DB blip just omits them.
+  let coaRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const lots = await prisma.coa.findMany({
+      select: { lotId: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+    });
+    const seen = new Set<string>();
+    coaRoutes = lots
+      .filter((l) => {
+        const key = l.lotId.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((l) => ({
+        url: `${BASE}/coa/${encodeURIComponent(l.lotId)}`,
+        lastModified: l.createdAt,
+        changeFrequency: 'yearly' as const,
+        priority: 0.5,
+      }));
+  } catch {
+    /* omit lot pages if the DB is unreachable */
+  }
+
   const stackRoutes: MetadataRoute.Sitemap = STACK_TEMPLATES.map((s) => ({
     url: `${BASE}/stacks/${s.slug}`,
     lastModified: now,
@@ -74,5 +103,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...productRoutes, ...stackRoutes, ...monographRoutes, ...libraryRoutes];
+  return [...staticRoutes, ...productRoutes, ...stackRoutes, ...monographRoutes, ...libraryRoutes, ...coaRoutes];
 }

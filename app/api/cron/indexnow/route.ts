@@ -6,6 +6,7 @@
  * always submit; product URLs are added when the DB is reachable.
  */
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 import { submitToIndexNow } from '@/lib/indexnow';
 import { MONOGRAPHS } from '@/lib/monographs';
 import { ARTICLES } from '@/lib/library';
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
     `${BASE}/library`,
     `${BASE}/catalog`,
     `${BASE}/coa`,
+    `${BASE}/stacks`,
     `${BASE}/practitioners`,
     ...MONOGRAPHS.map((m) => `${BASE}/library/${m.slug}`),
     ...ARTICLES.map((a) => `${BASE}/library/${a.slug}`),
@@ -42,6 +44,20 @@ export async function GET(request: Request) {
     urls.push(...products.map((p) => `${BASE}/products/${p.handle}`));
   } catch {
     /* submit the static + library set even if product enumeration fails */
+  }
+
+  // Per-lot COA pages — freshest-changing surface (new lots post regularly).
+  try {
+    const lots = await prisma.coa.findMany({ select: { lotId: true }, take: 500 });
+    const seen = new Set<string>();
+    for (const l of lots) {
+      const key = l.lotId.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      urls.push(`${BASE}/coa/${encodeURIComponent(l.lotId)}`);
+    }
+  } catch {
+    /* omit lot pages if the DB is unreachable */
   }
 
   try {

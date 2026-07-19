@@ -32,7 +32,7 @@ import {
 const LOOKUP_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://merit-sciences.onrender.com').replace(/\/$/, '');
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
 }
 
 /**
@@ -966,7 +966,7 @@ function escapeHtml(s: string): string {
 }
 
 function siteOrigin(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://merit-sciences.onrender.com').replace(/\/$/, '');
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
 }
 
 export async function issueOrderLookupEmail(

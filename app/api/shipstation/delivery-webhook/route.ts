@@ -82,7 +82,7 @@ export async function POST(req: Request) {
  * from a browser or curl without crafting a POST body, e.g.:
  *
  *   curl -u merit-store:PASSWORD \
- *     "https://merit-sciences.onrender.com/api/shipstation/delivery-webhook?tracking_number=1Z..."
+ *     "https://meritsciences.com/api/shipstation/delivery-webhook?tracking_number=1Z..."
  */
 export async function GET(req: Request) {
   return POST(req);

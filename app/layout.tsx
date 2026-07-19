@@ -107,9 +107,15 @@ export const metadata: Metadata = {
     shortcut: '/favicon.png',
     apple: '/apple-icon.png',
   },
+  // Self-referential canonical on every page: './' resolves against
+  // metadataBase + the current route, so /catalog canonicalizes to
+  // https://meritsciences.com/catalog etc. Pages with an explicit canonical
+  // (PDPs, monographs) override this. Kills the onrender.com duplicate-host
+  // signal alongside the middleware 301.
+  alternates: { canonical: './' },
   openGraph: {
     type: 'website',
-    url: 'https://merit-sciences.onrender.com',
+    url: 'https://meritsciences.com',
     siteName: 'Merit Sciences',
     title: 'Merit Sciences · Lab-verified compounds',
     // OG description — GENERIC only (no molecule names): this rides on the

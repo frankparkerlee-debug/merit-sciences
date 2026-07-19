@@ -111,7 +111,7 @@ export default async function AffiliateDashboardPage() {
   const nextTier = AFFILIATE_PROGRAM.tiers.find((t) => t.minOrders > last30OrderCount);
   const ordersToNextTier = nextTier ? nextTier.minOrders - last30OrderCount : 0;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://merit-sciences.onrender.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com';
   const referralUrl = `${siteUrl}/?ref=${affiliate.slug}`;
   const discountCodePublic = affiliate.discountCode.toUpperCase();
 
@@ -213,7 +213,7 @@ export default async function AffiliateDashboardPage() {
           <ShareCard
             label="Your referral link"
             value={referralUrl}
-            hint="Click goes to merit-sciences.onrender.com and sets a 30-day cookie. First-time purchase locks the customer to you forever."
+            hint="Click goes to meritsciences.com and sets a 30-day cookie. First-time purchase locks the customer to you forever."
           />
           <ShareCard
             label="Your discount code"

@@ -32,10 +32,11 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   }
 
   const a = getArticle(params.slug);
-  if (!a) return { title: 'Not found · Merit Sciences' };
+  if (!a) return { title: 'Not found' };
   const desc = a.excerpt || `${a.title} — Merit Sciences Research Library.`;
   return {
-    title: `${a.title} · Merit Sciences`,
+    // Root template appends "· Merit Sciences" — don't duplicate it here.
+    title: a.title,
     description: desc,
     alternates: { canonical: `https://meritsciences.com/library/${a.slug}` },
     openGraph: { title: a.title, description: desc, type: 'article', url: `https://meritsciences.com/library/${a.slug}` },
