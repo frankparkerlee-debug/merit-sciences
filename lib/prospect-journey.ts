@@ -77,9 +77,18 @@ export async function unsubscribeNewsletter(email: string, token: string): Promi
   }
   if (!valid) return false;
   try {
-    await prisma.newsletterSubscriber.updateMany({
+    // Upsert, not updateMany: customer-lifecycle emails (lib/customer-journey)
+    // go to buyers who may never have joined the newsletter — their unsub click
+    // must still CREATE a suppression row, or we'd keep emailing them.
+    await prisma.newsletterSubscriber.upsert({
       where: { email: e },
-      data: { isSubscribed: false, unsubscribedAt: new Date() },
+      update: { isSubscribed: false, unsubscribedAt: new Date() },
+      create: {
+        email: e,
+        source: 'unsubscribe',
+        isSubscribed: false,
+        unsubscribedAt: new Date(),
+      },
     });
     return true;
   } catch (err) {
@@ -99,7 +108,13 @@ export async function tickProspects(now: Date = new Date()): Promise<{
   skipped: number;
   done: number;
   errors: number;
+  cap: number;
 }> {
+  // Daily send ceiling — protects Resend sender reputation while the 800+
+  // backlog warms up. Raise (or effectively disable with a big number) via
+  // PROSPECT_DAILY_CAP once bounce/complaint rates prove out.
+  const cap = Math.max(1, parseInt(process.env.PROSPECT_DAILY_CAP || '100', 10) || 100);
+
   const subs = await prisma.newsletterSubscriber.findMany({
     where: {
       isSubscribed: true,
@@ -112,7 +127,9 @@ export async function tickProspects(now: Date = new Date()): Promise<{
     // ordering would starve the oldest rows forever; this rotates the queue so
     // no one is stranded across daily runs.
     orderBy: [{ lastSentAt: { sort: 'asc', nulls: 'first' } }],
-    take: 250,
+    // Headroom over the cap so skipped rows (not-yet-due, already-customers)
+    // don't starve the sendable ones.
+    take: Math.min(cap * 4, 1000),
   });
 
   let sent = 0;
@@ -121,6 +138,8 @@ export async function tickProspects(now: Date = new Date()): Promise<{
   let errors = 0;
 
   for (const s of subs) {
+    if (sent >= cap) break;
+
     const lastIdx = s.lastSentKey ? SEQUENCE.findIndex((x) => x.key === s.lastSentKey) : -1;
     const step = SEQUENCE[lastIdx + 1];
     if (!step) {
@@ -131,7 +150,18 @@ export async function tickProspects(now: Date = new Date()): Promise<{
     // Due only once (drip timer + step.day) has passed. dripStartedAt is set to
     // "today" for the existing backlog (SQL backfill) so nobody gets blasted for
     // an old signup date; new signups anchor at their signup instead.
-    const anchor = s.dripStartedAt ?? s.createdAt;
+    // Self-heal: if a row somehow has NO dripStartedAt (missed backfill, old
+    // import path), anchor it to NOW and persist — otherwise the ?? createdAt
+    // fallback marks every beat instantly due and compresses the 24-day arc
+    // into 8 back-to-back daily sends.
+    let anchor = s.dripStartedAt;
+    if (!anchor) {
+      anchor = now;
+      await prisma.newsletterSubscriber.update({
+        where: { id: s.id },
+        data: { dripStartedAt: anchor },
+      });
+    }
     if (addDays(anchor, step.day) > now) {
       skipped++;
       continue;
@@ -164,7 +194,7 @@ export async function tickProspects(now: Date = new Date()): Promise<{
     });
   }
 
-  return { sent, skipped, done, errors };
+  return { sent, skipped, done, errors, cap };
 }
 
 function addDays(d: Date, n: number): Date {

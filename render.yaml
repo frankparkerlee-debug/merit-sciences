@@ -74,7 +74,17 @@ services:
       # reuse the existing value for the abandoned-cart cron.
       - key: CRON_SECRET
         sync: false
+      # ─── Customer lifecycle emails ──────────────────────────────────
+      # Post-delivery follow-up + replenishment + win-back with one-click
+      # reorder links (lib/customer-journey.ts). Add a DAILY Render Cron Job
+      # hitting /api/cron/customer-emails with the CRON_SECRET bearer to arm.
+      # Dedupe + suppression are built in; no env flag needed beyond the secret.
       # ─── Prospect email drip ────────────────────────────────────────
+      # First-run backlog is throttled to PROSPECT_DAILY_CAP sends/day
+      # (default 100) to warm the Resend domain; raise once bounce rates
+      # prove out.
+      - key: PROSPECT_DAILY_CAP
+        sync: false
       # Nurtures newsletter/gate leads who haven't purchased (lib/prospect-
       # emails.ts). Add a DAILY Render Cron Job hitting /api/cron/prospect-emails
       # with the CRON_SECRET bearer to arm it. Suppresses anyone in `customers`;
