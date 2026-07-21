@@ -906,3 +906,26 @@ model StoreSettings {
 
   @@map("store_settings")
 }
+
+// Per-(email, sequence) enrollment for the compound education sequences
+// (lib/sequence-journey.ts). Keyed by EMAIL, not a subscriber FK, so a
+// customer who never joined the newsletter can still be enrolled from a
+// product email or on-site click. Table created via Supabase SQL (pooler
+// can't db push) — keep columns in lockstep. beatIndex = last-sent beat
+// (-1 = enrolled, nothing sent yet). status: active | completed | stopped.
+model SequenceEnrollment {
+  id          String    @id @default(cuid())
+  email       String
+  sequenceKey String
+  beatIndex   Int       @default(-1)
+  status      String    @default("active")
+  source      String    @default("manual") // interest-picker | onsite | manual
+  startedAt   DateTime  @default(now())
+  lastSentAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([email, sequenceKey])
+  @@index([status, lastSentAt])
+  @@index([email])
+  @@map("sequence_enrollments")
+}

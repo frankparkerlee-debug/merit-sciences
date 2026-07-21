@@ -74,6 +74,14 @@ services:
       # reuse the existing value for the abandoned-cart cron.
       - key: CRON_SECRET
         sync: false
+      # ─── Compound education sequences ───────────────────────────────
+      # 4-beat per-compound track on the approved-counterpart angle
+      # (lib/sequence-journey.ts). DAILY Render Cron → /api/cron/product-sequences
+      # (CRON_SECRET bearer). Enrollment is driven by the self-segmentation
+      # broadcast — /api/cron/interest-picker?tag=<key> — and by on-site clicks.
+      # SEQUENCE_DAILY_CAP (default 120) throttles the send rate.
+      - key: SEQUENCE_DAILY_CAP
+        sync: false
       # ─── Customer lifecycle emails ──────────────────────────────────
       # Post-delivery follow-up + replenishment + win-back with one-click
       # reorder links (lib/customer-journey.ts). Add a DAILY Render Cron Job
