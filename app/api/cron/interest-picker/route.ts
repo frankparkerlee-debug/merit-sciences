@@ -18,20 +18,22 @@ import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { unsubToken, unsubUrl } from '@/lib/prospect-journey';
 import { renderInterestPicker, type PickerLane } from '@/lib/interest-picker-email';
-import { LANE_HERO, sequenceKeyFor } from '@/lib/approved-counterparts';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
 
-// The four lanes surfaced in the picker (the other sequences are reachable
-// on-site / via direct links). label + sub are research-framed, never outcomes.
-const LANES: { lane: keyof typeof LANE_HERO; label: string; sub: string }[] = [
-  { lane: 'weight', label: 'Weight & GLP-1s', sub: 'Tirzepatide, the Mounjaro molecule' },
-  { lane: 'metabolic', label: 'Body composition', sub: 'Tesamorelin, an FDA-approved molecule' },
-  { lane: 'vitality', label: 'Vitality', sub: 'PT-141, the Vyleesi molecule' },
-  { lane: 'gh', label: 'GH axis', sub: 'Sermorelin, a former Rx molecule' },
+// The six mechanism-class lanes → the category (cat-*) sequences. label + sub
+// are research-framed, never outcomes. Each tap enrolls the recipient in that
+// class's education sequence and lands them on the class hero PDP.
+const LANES: { key: string; label: string; sub: string }[] = [
+  { key: 'cat-incretin', label: 'Weight & GLP-1s', sub: 'the Ozempic / Mounjaro class' },
+  { key: 'cat-cellular', label: 'NAD⁺ & longevity', sub: 'cellular-energy pathways' },
+  { key: 'cat-gh-axis', label: 'Growth-hormone axis', sub: 'secretagogues + IGF-1' },
+  { key: 'cat-repair', label: 'Tissue repair', sub: 'BPC-157, GHK-Cu & blends' },
+  { key: 'cat-neuro', label: 'Neuropeptides', sub: 'Selank & Semax' },
+  { key: 'cat-melanocortin', label: 'Vitality', sub: 'PT-141 & melanocortin' },
 ];
 
 function laneLinksFor(email: string): PickerLane[] {
@@ -40,7 +42,7 @@ function laneLinksFor(email: string): PickerLane[] {
   return LANES.map((l) => ({
     label: l.label,
     sub: l.sub,
-    href: `${SITE}/enroll?seq=${sequenceKeyFor(LANE_HERO[l.lane])}&e=${e}&t=${t}`,
+    href: `${SITE}/enroll?seq=${l.key}&e=${e}&t=${t}`,
   }));
 }
 

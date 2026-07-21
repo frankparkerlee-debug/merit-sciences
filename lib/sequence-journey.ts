@@ -15,8 +15,15 @@ import 'server-only';
 import { prisma } from './db';
 import { sendEmail } from './email';
 import { unsubUrl } from './prospect-journey';
-import { renderSequenceBeat, BEAT_DAYS, BEAT_COUNT, type SequenceCtx } from './product-sequences';
-import { counterpartForSequenceKey, sequenceKeyFor } from './approved-counterparts';
+import {
+  resolveSequenceBeat,
+  sequenceExists,
+  laneFor,
+  BEAT_DAYS,
+  BEAT_COUNT,
+  type SequenceCtx,
+} from './sequences-registry';
+import { sequenceKeyFor } from './approved-counterparts';
 
 const DEFAULT_CODE = 'WELCOME20';
 const DAILY_CAP = () => Math.max(1, parseInt(process.env.SEQUENCE_DAILY_CAP || '120', 10) || 120);
@@ -39,8 +46,7 @@ export async function enrollInSequence(
   source = 'manual',
 ): Promise<{ ok: boolean; already?: boolean; error?: string }> {
   const email = (emailRaw || '').trim().toLowerCase();
-  const c = counterpartForSequenceKey(sequenceKey);
-  if (!email || !c) return { ok: false, error: 'invalid email or sequence' };
+  if (!email || !sequenceExists(sequenceKey)) return { ok: false, error: 'invalid email or sequence' };
 
   try {
     const existing = await prisma.sequenceEnrollment.findUnique({
@@ -54,7 +60,7 @@ export async function enrollInSequence(
     });
 
     // Durable interest tag for future segmentation (best-effort).
-    const tag = `interest-${c.lane}`;
+    const tag = `interest-${laneFor(sequenceKey) ?? 'unknown'}`;
     await prisma.newsletterSubscriber
       .upsert({
         where: { email },
@@ -95,8 +101,7 @@ export async function tickSequences(now: Date = new Date()): Promise<SequenceTic
       continue;
     }
 
-    const c = counterpartForSequenceKey(e.sequenceKey);
-    if (!c) {
+    if (!sequenceExists(e.sequenceKey)) {
       // Sequence retired / handle removed — retire the enrollment quietly.
       await prisma.sequenceEnrollment.update({ where: { id: e.id }, data: { status: 'stopped' } });
       skipped++;
@@ -120,7 +125,7 @@ export async function tickSequences(now: Date = new Date()): Promise<SequenceTic
     }
 
     const ctx: SequenceCtx = { code: DEFAULT_CODE, unsubscribeUrl: unsubUrl(e.email) };
-    const beat = renderSequenceBeat(c, nextIndex, ctx);
+    const beat = resolveSequenceBeat(e.sequenceKey, nextIndex, ctx);
     if (!beat) { skipped++; continue; }
 
     try {

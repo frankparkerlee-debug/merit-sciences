@@ -17,7 +17,7 @@
 import { NextResponse } from 'next/server';
 import { unsubToken } from '@/lib/prospect-journey';
 import { enrollInSequence } from '@/lib/sequence-journey';
-import { counterpartForSequenceKey } from '@/lib/approved-counterparts';
+import { sequenceExists, redirectHandleFor } from '@/lib/sequences-registry';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -31,12 +31,14 @@ export async function GET(request: Request) {
   const email = (url.searchParams.get('e') || '').trim().toLowerCase();
   const token = (url.searchParams.get('t') || '').trim();
 
-  const c = counterpartForSequenceKey(seq);
+  const handle = redirectHandleFor(seq); // compound self, or category hero PDP
 
   // Bad params → send them to the catalog rather than an error page.
-  if (!c || !email || !token) {
+  if (!sequenceExists(seq) || !handle || !email || !token) {
     return NextResponse.redirect(`${SITE}/catalog?code=${CODE}`, 302);
   }
+
+  const dest = `${SITE}/products/${handle}?code=${CODE}`;
 
   // Verify the email-bound token (constant-time).
   let valid = false;
@@ -45,13 +47,12 @@ export async function GET(request: Request) {
   } catch {
     valid = false;
   }
-  if (!valid) {
-    return NextResponse.redirect(`${SITE}/products/${c.handle}?code=${CODE}`, 302);
-  }
+  // Even on a bad token, land them on the relevant PDP (never an error wall) —
+  // we just don't enroll.
+  if (!valid) return NextResponse.redirect(dest, 302);
 
   // Idempotent enroll (never blocks the redirect on failure).
   await enrollInSequence(email, seq, 'interest-picker').catch(() => {});
 
-  // Land on the compound PDP with the code riding along.
-  return NextResponse.redirect(`${SITE}/products/${c.handle}?code=${CODE}`, 302);
+  return NextResponse.redirect(dest, 302);
 }
