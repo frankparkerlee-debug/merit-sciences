@@ -23,13 +23,31 @@ export type TemplateKey =
   | 'prospect_shipping'
   | 'prospect_reengage'
   | 'prospect_social_proof'
-  | 'prospect_last_call';
+  | 'prospect_last_call'
+  // Customer lifecycle (post-purchase revenue)
+  | 'replenishment'
+  | 'winback'
+  // Broadcasts
+  | 'lab_report'
+  | 'interest_picker'
+  // Compound education sequences (approved-counterpart) — tirzepatide = the
+  // trial-rich exemplar; sermorelin beat 2 = the no-trial branch
+  | 'seq_tirzepatide_1'
+  | 'seq_tirzepatide_2'
+  | 'seq_tirzepatide_3'
+  | 'seq_tirzepatide_4'
+  | 'seq_sermorelin_2'
+  // Category (mechanism-class) sequences — NAD⁺/cellular exemplar
+  | 'cat_cellular_1'
+  | 'cat_cellular_2'
+  | 'cat_cellular_3'
+  | 'cat_cellular_4';
 
 export type TemplateMeta = {
   key: TemplateKey;
   label: string;
   description: string;
-  group: 'transactional' | 'marketing' | 'prospect';
+  group: 'transactional' | 'marketing' | 'prospect' | 'sequences';
 };
 
 export const TEMPLATES: TemplateMeta[] = [
@@ -100,6 +118,43 @@ export const TEMPLATES: TemplateMeta[] = [
   { key: 'prospect_reengage', label: '6 · Did we lose you?', description: 'Day 14. The witty re-engagement nudge.', group: 'prospect' },
   { key: 'prospect_social_proof', label: '7 · Good company', description: 'Day 18. Who sources from Merit.', group: 'prospect' },
   { key: 'prospect_last_call', label: '8 · Last call', description: 'Day 24. Final value + the 20%. Branches out the moment they buy.', group: 'prospect' },
+  // ── Customer lifecycle + broadcasts (post-purchase revenue engine)
+  {
+    key: 'replenishment',
+    label: 'Replenishment (+35d)',
+    description: 'Vial plausibly running low → one-click reorder rebuilds the exact order. No discount by design. Trigger: daily customer-emails cron.',
+    group: 'marketing',
+  },
+  {
+    key: 'winback',
+    label: 'Win-back (+75d)',
+    description: 'Lapsed customer, latest order only. New-lots angle + one-click rebuild. Trigger: daily customer-emails cron.',
+    group: 'marketing',
+  },
+  {
+    key: 'lab_report',
+    label: 'The Lab Report (broadcast)',
+    description: 'Recurring issue: new lots first, running purity ledger, reply-to-vote. Manually fired: /api/cron/lab-report?tag=…',
+    group: 'marketing',
+  },
+  {
+    key: 'interest_picker',
+    label: 'Interest picker (broadcast)',
+    description: 'The self-segmentation activator — six one-tap mechanism-class lanes; each tap enrolls that subscriber in the class sequence. Manually fired: /api/cron/interest-picker?tag=…',
+    group: 'marketing',
+  },
+  // ── Compound + category education sequences (BEAT_DAYS 0/2/4/6; daily
+  //    product-sequences cron). Tirzepatide = trial-rich exemplar; sermorelin
+  //    beat 2 = the no-trial branch; NAD⁺ class = category exemplar.
+  { key: 'seq_tirzepatide_1', label: 'Tirzepatide · 1 identity', description: 'Day 0. "The molecule inside Mounjaro/Zepbound" — borrowed recognition, RUO line.', group: 'sequences' },
+  { key: 'seq_tirzepatide_2', label: 'Tirzepatide · 2 the data', description: 'Day 2. SURMOUNT-1 22.5%, attributed to the APPROVED drug. The compliance-critical beat.', group: 'sequences' },
+  { key: 'seq_tirzepatide_3', label: 'Tirzepatide · 3 the angle', description: 'Day 4. Same molecule + per-lot COA + price gap.', group: 'sequences' },
+  { key: 'seq_tirzepatide_4', label: 'Tirzepatide · 4 the receipt', description: 'Day 6. COA library proof → shop, code baked into the buttons.', group: 'sequences' },
+  { key: 'seq_sermorelin_2', label: 'Sermorelin · 2 (no-trial branch)', description: 'The beat-2 variant for compounds without a headline trial — leads with the approval history (Geref).', group: 'sequences' },
+  { key: 'cat_cellular_1', label: 'NAD⁺ class · 1 pathway', description: 'Day 0. The mechanism class, no compound hype.', group: 'sequences' },
+  { key: 'cat_cellular_2', label: 'NAD⁺ class · 2 roster', description: 'Day 2. NAD⁺/MOTS-c/5-Amino-1MQ/Epitalon + what research explores for each (read from research-data.ts).', group: 'sequences' },
+  { key: 'cat_cellular_3', label: 'NAD⁺ class · 3 the angle', description: 'Day 4. Same pathway, the per-lot COA receipt included.', group: 'sequences' },
+  { key: 'cat_cellular_4', label: 'NAD⁺ class · 4 the receipt', description: 'Day 6. Check any lot in the class → shop, code baked in.', group: 'sequences' },
 ];
 
 const SAMPLE_LINES = [
@@ -159,7 +214,52 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
     case 'prospect_reengage':
     case 'prospect_social_proof':
     case 'prospect_last_call':
+    // Compound + category sequence beats — the renderer only needs the ctx
+    // (code + unsub); the beat content comes from the compound/category data.
+    case 'seq_tirzepatide_1':
+    case 'seq_tirzepatide_2':
+    case 'seq_tirzepatide_3':
+    case 'seq_tirzepatide_4':
+    case 'seq_sermorelin_2':
+    case 'cat_cellular_1':
+    case 'cat_cellular_2':
+    case 'cat_cellular_3':
+    case 'cat_cellular_4':
       return { code: 'WELCOME20', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample' };
+    case 'replenishment':
+    case 'winback':
+      return {
+        firstName: 'Alex',
+        primaryProductTitle: 'Tirzepatide 30mg',
+        reorderUrl: 'https://meritsciences.com/reorder/sample.signature',
+        unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample',
+      };
+    case 'lab_report':
+      return {
+        issueLabel: 'July 2026',
+        lots: [
+          { compound: 'Tirzepatide 30mg', lotId: 'MRT-2607-02', purity: '99.6%', testedDate: 'Jul 5, 2026' },
+          { compound: 'NAD⁺ 500mg', lotId: 'MRT-2606-08', purity: '99.1%', testedDate: 'Jun 28, 2026' },
+          { compound: 'Semaglutide 10mg', lotId: 'MRT-2607-05', purity: '99.4%', testedDate: 'Jul 12, 2026' },
+        ],
+        totalPublished: 77,
+        meanPurity: '99.43%',
+        voteOptions: ['Cagrilintide', 'KPV', 'SS-31'],
+        code: 'WELCOME20',
+        unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample',
+      };
+    case 'interest_picker':
+      return {
+        lanes: [
+          { label: 'Weight & GLP-1s', sub: 'the Ozempic / Mounjaro class', href: 'https://meritsciences.com/enroll?seq=cat-incretin&e=you@example.com&t=sample' },
+          { label: 'NAD⁺ & longevity', sub: 'cellular-energy pathways', href: 'https://meritsciences.com/enroll?seq=cat-cellular&e=you@example.com&t=sample' },
+          { label: 'Growth-hormone axis', sub: 'secretagogues + IGF-1', href: 'https://meritsciences.com/enroll?seq=cat-gh-axis&e=you@example.com&t=sample' },
+          { label: 'Tissue repair', sub: 'BPC-157, GHK-Cu & blends', href: 'https://meritsciences.com/enroll?seq=cat-repair&e=you@example.com&t=sample' },
+          { label: 'Neuropeptides', sub: 'Selank & Semax', href: 'https://meritsciences.com/enroll?seq=cat-neuro&e=you@example.com&t=sample' },
+          { label: 'Vitality', sub: 'PT-141 & melanocortin', href: 'https://meritsciences.com/enroll?seq=cat-melanocortin&e=you@example.com&t=sample' },
+        ],
+        unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample',
+      };
     case 'order_confirmation':
       return {
         orderId: 'cuid-preview',

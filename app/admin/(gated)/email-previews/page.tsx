@@ -9,6 +9,7 @@ export default function EmailPreviewsPage() {
   const transactional = TEMPLATES.filter((t) => t.group === 'transactional');
   const marketing = TEMPLATES.filter((t) => t.group === 'marketing');
   const prospect = TEMPLATES.filter((t) => t.group === 'prospect');
+  const sequences = TEMPLATES.filter((t) => t.group === 'sequences');
 
   return (
     <main className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
@@ -38,6 +39,11 @@ export default function EmailPreviewsPage() {
       {/* Prospect nurture track */}
       <Section title="Prospect nurture — LIVE" subtitle="Subscriber who hasn't purchased: instant welcome + an 8-email funnel (timer starts today for the whole backlog, one email/day max, a few witty). Trust through craft. Branches out the moment they buy.">
         <Grid templates={prospect} />
+      </Section>
+
+      {/* Compound + category education sequences */}
+      <Section title="Compound & category sequences" subtitle="The approved-counterpart angle: outcomes attributed to the FDA-approved reference drug's trial, never a Merit vial; RUO on every beat. Tirzepatide shows all 4 beats; the sermorelin beat-2 shows the no-trial branch; NAD⁺ shows the category (mechanism-class) template. Email + on-site only — never paid ads.">
+        <Grid templates={sequences} />
       </Section>
     </main>
   );

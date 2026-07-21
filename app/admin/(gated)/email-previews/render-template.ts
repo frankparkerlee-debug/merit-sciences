@@ -27,6 +27,10 @@ import {
   renderProspectSocialProof,
   renderProspectLastCall,
 } from '@/lib/prospect-emails';
+import { renderReplenishment, renderWinBack } from '@/lib/customer-emails';
+import { renderLabReport } from '@/lib/lab-report-email';
+import { renderInterestPicker } from '@/lib/interest-picker-email';
+import { resolveSequenceBeat } from '@/lib/sequences-registry';
 import { sampleDataFor, type TemplateKey } from './sample-data';
 
 export function renderTemplate(key: TemplateKey): { subject: string; html: string; text: string } | null {
@@ -67,6 +71,35 @@ export function renderTemplate(key: TemplateKey): { subject: string; html: strin
       return renderProspectSocialProof(data as any);
     case 'prospect_last_call':
       return renderProspectLastCall(data as any);
+    // ── Customer lifecycle + broadcasts
+    case 'replenishment':
+      return renderReplenishment(data as any);
+    case 'winback':
+      return renderWinBack(data as any);
+    case 'lab_report':
+      return renderLabReport(data as any);
+    case 'interest_picker':
+      return renderInterestPicker(data as any);
+    // ── Compound sequences (approved-counterpart) — resolve via the registry
+    case 'seq_tirzepatide_1':
+      return resolveSequenceBeat('seq-ly3298176', 0, data as any);
+    case 'seq_tirzepatide_2':
+      return resolveSequenceBeat('seq-ly3298176', 1, data as any);
+    case 'seq_tirzepatide_3':
+      return resolveSequenceBeat('seq-ly3298176', 2, data as any);
+    case 'seq_tirzepatide_4':
+      return resolveSequenceBeat('seq-ly3298176', 3, data as any);
+    case 'seq_sermorelin_2':
+      return resolveSequenceBeat('seq-sermorelin', 1, data as any);
+    // ── Category (mechanism-class) sequences
+    case 'cat_cellular_1':
+      return resolveSequenceBeat('cat-cellular', 0, data as any);
+    case 'cat_cellular_2':
+      return resolveSequenceBeat('cat-cellular', 1, data as any);
+    case 'cat_cellular_3':
+      return resolveSequenceBeat('cat-cellular', 2, data as any);
+    case 'cat_cellular_4':
+      return resolveSequenceBeat('cat-cellular', 3, data as any);
     default:
       return null;
   }
