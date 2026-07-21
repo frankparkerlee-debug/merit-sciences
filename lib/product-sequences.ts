@@ -15,7 +15,7 @@
  * that keeps it science-reporting instead of an unapproved-drug claim.
  */
 import 'server-only';
-import { wrapMarketingEmail, h, p, cta, quiet, proof, SITE } from './marketing-email-shell';
+import { wrapMarketingEmail, h, p, cta, quiet, proof, heroImg, SITE } from './marketing-email-shell';
 import type { Counterpart } from './approved-counterparts';
 
 export const BEAT_DAYS = [0, 2, 4, 6]; // days after enrollment each beat is due
@@ -24,7 +24,15 @@ export const BEAT_COUNT = BEAT_DAYS.length;
 export type SequenceCtx = {
   code?: string;          // promo to ride the CTAs (optional)
   unsubscribeUrl: string;
+  // One branded visual per email (deliverability discipline — no image walls).
+  heroImageUrl?: string;                       // the compound's vial render
+  memberImages?: { src: string; alt: string }[]; // category roster thumbnails
 };
+
+// Shared hero block — renders nothing when no image resolved (DB blip etc.).
+export function seqHero(ctx: SequenceCtx, alt: string): string {
+  return ctx.heroImageUrl ? heroImg(ctx.heroImageUrl, alt) : '';
+}
 
 type Rendered = { subject: string; html: string; text: string };
 
@@ -54,6 +62,7 @@ function beatIdentity(c: Counterpart, ctx: SequenceCtx): Rendered {
     subject,
     eyebrow: `Know your compound · ${c.compound}`,
     bodyHtml:
+      seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h(`You&rsquo;ve heard of ${brandPhrase(c)}. Meet the molecule inside it.`) +
       p(`<strong>${c.compound}</strong>${c.aka ? ` (${c.aka})` : ''} is the active compound behind ${brandPhrase(c)}. ${c.approvalNote}`) +
       p('The name on the box is marketing. The molecule is chemistry — and chemistry is what Merit sells, pharmacy-grade and verified per lot.') +
@@ -79,6 +88,7 @@ function beatData(c: Counterpart, ctx: SequenceCtx): Rendered {
       subject,
       eyebrow: `The clinical record · ${c.compound}`,
       bodyHtml:
+        seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
         h(`The number everyone quotes — and where it actually comes from.`) +
         p(`In <strong>${t.name}</strong> (${t.source}), ${t.sponsorDrug} produced a <strong>${t.stat}</strong> — ${t.detail}.`) +
         proof(`<strong>${t.name}</strong><br>${t.sponsorDrug}<br>${t.stat} · ${t.detail}<br><span style="opacity:0.7">${t.source}</span>`) +
@@ -101,6 +111,7 @@ ${RUO}
     subject,
     eyebrow: `The record · ${c.compound}`,
     bodyHtml:
+      seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h('An approval history most research compounds can’t claim.') +
       p(c.approvalNote) +
       p(`Regulatory history like that is rare in this space. Merit sells the same molecule as a research compound — pharmacy-grade, HPLC-verified, with the COA public per lot.`) +
@@ -124,6 +135,7 @@ function beatAngle(c: Counterpart, ctx: SequenceCtx): Rendered {
     subject,
     eyebrow: `Why Merit · ${c.compound}`,
     bodyHtml:
+      seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h('Same molecule. The part the brand name hides.') +
       p(c.meritAngle) +
       proof('Every Merit lot:<br>• HPLC-verified ≥99% before release<br>• Identity confirmed — or it doesn’t ship<br>• A per-lot COA behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from Dallas') +
@@ -149,6 +161,7 @@ function beatReceipt(c: Counterpart, ctx: SequenceCtx): Rendered {
     subject,
     eyebrow: `The proof · ${c.compound}`,
     bodyHtml:
+      seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h('Don’t take our word for it. Take the lab’s.') +
       p(`Every ${c.compound} lot we ship is in the public library — scan the label or search the lot number and read the HPLC result yourself. That&rsquo;s the whole point of Merit.`) +
       cta('Browse the lab results →', coaUrl(ctx.code)) +

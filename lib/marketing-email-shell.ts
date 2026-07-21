@@ -148,6 +148,32 @@ export function stat(value: string, caption: string): string {
 }
 
 /** Inline cobalt link. */
+/**
+ * Full-width hero image — the one visual per email. 528px content width
+ * (600 card − 36px×2 padding); width attr for Outlook, style for the rest.
+ * Relative srcs are absolutized against the canonical site origin so images
+ * always load from meritsciences.com in the inbox.
+ */
+export function heroImg(src: string, alt: string): string {
+  const abs = src.startsWith('http') ? src : `${SITE_URL}${src.startsWith('/') ? '' : '/'}${src}`;
+  return `<img src="${abs}" alt="${alt.replace(/"/g, '&quot;')}" width="528" style="display:block;width:100%;max-width:528px;height:auto;border-radius:12px;margin:0 0 20px 0;" />`;
+}
+
+/**
+ * Row of product/vial thumbnails on a cream tile (up to 4). Used by roster
+ * beats and cross-class emails — the "meet the lineup" visual.
+ */
+export function vialStrip(items: { src: string; alt: string }[]): string {
+  const cells = items
+    .slice(0, 4)
+    .map((i) => {
+      const abs = i.src.startsWith('http') ? i.src : `${SITE_URL}${i.src.startsWith('/') ? '' : '/'}${i.src}`;
+      return `<td align="center" style="padding:6px;"><img src="${abs}" alt="${i.alt.replace(/"/g, '&quot;')}" width="108" style="display:block;width:108px;max-width:100%;height:auto;" /></td>`;
+    })
+    .join('');
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:${CREAM};border:1px solid ${CREAM_EDGE};border-radius:12px;margin:0 0 20px 0;"><tr>${cells}</tr></table>`;
+}
+
 export function a(label: string, href: string): string {
   return `<a href="${esc(href)}" style="color:${COBALT};text-decoration:underline;font-weight:700;">${label}</a>`;
 }

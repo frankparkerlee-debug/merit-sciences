@@ -9,7 +9,8 @@
  * connective copy, so no new claims are introduced.
  */
 import 'server-only';
-import { wrapMarketingEmail, h, p, cta, quiet, proof, SITE } from './marketing-email-shell';
+import { wrapMarketingEmail, h, p, cta, quiet, proof, vialStrip, SITE } from './marketing-email-shell';
+import { seqHero } from './product-sequences';
 import type { CompoundCategory } from './compound-categories';
 import { RESEARCH_DATA } from './research-data';
 import type { SequenceCtx } from './product-sequences';
@@ -58,6 +59,7 @@ function beatPathway(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
     subject,
     eyebrow: `The pathway · ${cat.name}`,
     bodyHtml:
+      seqHero(ctx, `${cat.name} — Merit Sciences research compounds`) +
       h(cat.name + '.') +
       p(cat.tagline + (cat.classContext ? ` ${cat.classContext}` : '')) +
       p('There are several compounds in this class in the research literature. Merit stocks them pharmacy-grade, each with a per-lot COA — so you can study the pathway without gambling on the source.') +
@@ -81,6 +83,10 @@ function beatRoster(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
     subject,
     eyebrow: `The roster · ${cat.name}`,
     bodyHtml:
+      // The lineup shot: member vial thumbnails when resolved, else the hero.
+      (ctx.memberImages?.length
+        ? vialStrip(ctx.memberImages)
+        : seqHero(ctx, `${cat.name} — Merit Sciences research compounds`)) +
       h('The compounds researchers actually reach for here.') +
       p(`A quick map of the ${cat.name.toLowerCase()} class and what the published research explores for each:`) +
       proof(rosterRows(cat)) +
@@ -106,6 +112,7 @@ function beatAngle(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
     subject,
     eyebrow: `Why Merit · ${cat.name}`,
     bodyHtml:
+      seqHero(ctx, `${cat.name} — Merit Sciences research compounds`) +
       h('The part a product photo can’t show you.') +
       p(`Anyone can list ${cat.name.toLowerCase()} compounds. The question is whether what’s in the vial is what the label says — and whether they’ll show you. Merit does, per lot.`) +
       proof('Every Merit lot:<br>• HPLC-verified ≥99% before release<br>• Identity confirmed — or it doesn’t ship<br>• A per-lot COA behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from Dallas') +
@@ -129,6 +136,7 @@ function beatReceipt(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
     subject,
     eyebrow: `The proof · ${cat.name}`,
     bodyHtml:
+      seqHero(ctx, `${cat.name} — Merit Sciences research compounds`) +
       h('Don’t take our word for it. Take the lab’s.') +
       p(`Every lot we ship — across the whole ${cat.name.toLowerCase()} class — is in the public library. Scan a label or search the lot number and read the HPLC result yourself.`) +
       cta('Browse the lab results →', coaUrl(ctx.code)) +

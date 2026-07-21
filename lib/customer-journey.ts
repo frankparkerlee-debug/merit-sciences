@@ -131,7 +131,7 @@ async function tickReplenishment(now: Date): Promise<BeatResult> {
       status: { in: [...OK_STATUSES] },
       paidAt: { gte: daysAgo(now, 70), lte: daysAgo(now, 35) },
     },
-    include: { lines: { select: { title: true } } },
+    include: { lines: { select: { title: true, imageUrl: true } } },
     orderBy: { paidAt: 'asc' },
     take: BEAT_CAP * 3,
   });
@@ -148,6 +148,7 @@ async function tickReplenishment(now: Date): Promise<BeatResult> {
         primaryProductTitle: o.lines[0]?.title || 'your last order',
         reorderUrl: reorderUrlFor(o.id),
         unsubscribeUrl: unsubUrl(o.customerEmail),
+        productImageUrl: o.lines[0]?.imageUrl ?? undefined,
       });
       const res = await sendEmail({ to: o.customerEmail, subject, html, text });
       if (!res.ok) throw new Error(res.error);
@@ -169,7 +170,7 @@ async function tickWinback(now: Date): Promise<BeatResult> {
       status: { in: [...OK_STATUSES] },
       paidAt: { gte: daysAgo(now, 180), lte: daysAgo(now, 75) },
     },
-    include: { lines: { select: { title: true } } },
+    include: { lines: { select: { title: true, imageUrl: true } } },
     orderBy: { paidAt: 'asc' },
     take: BEAT_CAP * 3,
   });
@@ -186,6 +187,7 @@ async function tickWinback(now: Date): Promise<BeatResult> {
         primaryProductTitle: o.lines[0]?.title || 'your last order',
         reorderUrl: reorderUrlFor(o.id),
         unsubscribeUrl: unsubUrl(o.customerEmail),
+        productImageUrl: o.lines[0]?.imageUrl ?? undefined,
       });
       const res = await sendEmail({ to: o.customerEmail, subject, html, text });
       if (!res.ok) throw new Error(res.error);

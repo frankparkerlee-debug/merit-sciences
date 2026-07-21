@@ -8,7 +8,7 @@
  * engagement + the segmentation signal in one.
  */
 import 'server-only';
-import { wrapMarketingEmail, h, p, cta, quiet } from './marketing-email-shell';
+import { wrapMarketingEmail, h, p, cta, quiet, heroImg } from './marketing-email-shell';
 
 export type PickerLane = { label: string; sub: string; href: string };
 
@@ -26,6 +26,7 @@ export function renderInterestPicker(d: {
     subject,
     eyebrow: 'Point us in a direction',
     bodyHtml:
+      heroImg('/brand/hero-A-cluster.webp', 'The Merit Sciences research compound lineup') +
       h('What brought you to Merit?') +
       p('You&rsquo;re on the list because you care where compounds come from. Tell us which corner of the catalog you&rsquo;re actually here for, and we&rsquo;ll send you the real story on it — the approved-drug lineage, the published trials, and the lab receipts. One tap, no form:') +
       laneButtons +

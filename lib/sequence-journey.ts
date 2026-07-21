@@ -23,7 +23,10 @@ import {
   BEAT_COUNT,
   type SequenceCtx,
 } from './sequences-registry';
-import { sequenceKeyFor } from './approved-counterparts';
+import { sequenceKeyFor, counterpartForSequenceKey } from './approved-counterparts';
+import { categoryForKey } from './compound-categories';
+import { listProducts } from './catalog';
+import { productImage } from './product-types';
 
 const DEFAULT_CODE = 'WELCOME20';
 const DAILY_CAP = () => Math.max(1, parseInt(process.env.SEQUENCE_DAILY_CAP || '120', 10) || 120);
@@ -80,6 +83,31 @@ export type SequenceTickResult = { sent: number; skipped: number; completed: num
 
 export async function tickSequences(now: Date = new Date()): Promise<SequenceTickResult> {
   const cap = DAILY_CAP();
+
+  // Resolve branded vial imagery once per run (cached + resilient — a DB blip
+  // just means this run's emails go out typographic).
+  const imageByHandle = new Map<string, string>();
+  try {
+    const products = await listProducts({ status: 'active' });
+    for (const p of products) imageByHandle.set(p.handle, productImage(p.imageUrl));
+  } catch {
+    /* send without imagery */
+  }
+  const imagesFor = (key: string): Pick<SequenceCtx, 'heroImageUrl' | 'memberImages'> => {
+    const compound = counterpartForSequenceKey(key);
+    if (compound) return { heroImageUrl: imageByHandle.get(compound.handle) };
+    const category = categoryForKey(key);
+    if (category) {
+      return {
+        heroImageUrl: imageByHandle.get(category.heroHandle),
+        memberImages: category.members
+          .map((m) => ({ src: imageByHandle.get(m.handle) || '', alt: `${m.name} research vial` }))
+          .filter((i) => i.src),
+      };
+    }
+    return {};
+  };
+
   const rows = await prisma.sequenceEnrollment.findMany({
     where: { status: 'active' },
     orderBy: [{ lastSentAt: { sort: 'asc', nulls: 'first' } }],
@@ -124,7 +152,11 @@ export async function tickSequences(now: Date = new Date()): Promise<SequenceTic
       continue;
     }
 
-    const ctx: SequenceCtx = { code: DEFAULT_CODE, unsubscribeUrl: unsubUrl(e.email) };
+    const ctx: SequenceCtx = {
+      code: DEFAULT_CODE,
+      unsubscribeUrl: unsubUrl(e.email),
+      ...imagesFor(e.sequenceKey),
+    };
     const beat = resolveSequenceBeat(e.sequenceKey, nextIndex, ctx);
     if (!beat) { skipped++; continue; }
 

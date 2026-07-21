@@ -14,14 +14,20 @@
  * these are promotional sends to customers, not transactional notices).
  */
 import 'server-only';
-import { wrapMarketingEmail, h, p, cta, quiet, proof, SITE } from './marketing-email-shell';
+import { wrapMarketingEmail, h, p, cta, quiet, proof, heroImg, SITE } from './marketing-email-shell';
 
 export type CustomerEmailData = {
   firstName: string;
   primaryProductTitle: string;   // headline item of the referenced order
   reorderUrl: string;            // signed /reorder/<token> deep link
   unsubscribeUrl: string;
+  // The order's own vial render (OrderLine.imageUrl snapshot) — "your product"
+  // beats any stock shot for a reorder nudge.
+  productImageUrl?: string;
 };
+
+const hero = (d: CustomerEmailData) =>
+  d.productImageUrl ? heroImg(d.productImageUrl, `${d.primaryProductTitle} — Merit Sciences research vial`) : '';
 
 type Rendered = { subject: string; html: string; text: string };
 
@@ -32,6 +38,7 @@ export function renderReplenishment(d: CustomerEmailData): Rendered {
     subject,
     eyebrow: 'Resupply',
     bodyHtml:
+      hero(d) +
       h('About that lot from a few weeks back.') +
       p(
         `${d.firstName}, quick math on our side says your <strong>${d.primaryProductTitle}</strong> supply from that order is probably getting thin right about now.`,
@@ -65,6 +72,7 @@ export function renderWinBack(d: CustomerEmailData): Rendered {
     subject,
     eyebrow: 'Since you were here',
     bodyHtml:
+      hero(d) +
       h('The catalog kept moving.') +
       p(
         `${d.firstName}, it&rsquo;s been a while since your last Merit order. Since then: fresh lots posted to the public COA library, same ≥99% HPLC bar, same 48-hour Dallas dispatch.`,

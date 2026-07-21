@@ -15,6 +15,7 @@
 import 'server-only';
 import {
   wrapMarketingEmail,
+  heroImg,
   h,
   p,
   cta,
@@ -47,7 +48,8 @@ export function renderProspectWelcome(d: ProspectEmailData): Rendered {
   return build(
     "You're in — and your 20% is ready",
     'Welcome',
-    h('You found the good stuff.') +
+    heroImg('/brand/hero-A-cluster.webp', 'The Merit Sciences research compound lineup') +
+      h('You found the good stuff.') +
       p("You joined the Merit list, which tells me one thing: you actually care where your compounds come from. That instinct is rare. Keep it.") +
       p('One line: every Merit lot is HPLC-tested to <strong>≥99% purity</strong>, made in the USA, and on your porch in 48 hours.') +
       codeChip(d.code) +
@@ -64,7 +66,8 @@ export function renderProspectProof(d: ProspectEmailData): Rendered {
   return build(
     'The test most suppliers hope you skip',
     'Proof, not promises',
-    h('Anyone can say 99%. We hand you the receipt.') +
+    heroImg('/brand/scene-lab.webp', 'Inside the lab — HPLC verification at Merit Sciences') +
+      h('Anyone can say 99%. We hand you the receipt.') +
       p('Every Merit lot ships with its Certificate of Analysis — the HPLC trace, the measured purity, the lot number. Because <em>“trust us”</em> is not a standard.') +
       proof(
         '<strong>Lot MRT-2603-03 · Tirzepatide 30mg</strong><br>HPLC purity: <strong>99.827%</strong> &nbsp;·&nbsp; Identity: conforms<br>Independently tested — verifiable by lot number',
@@ -140,7 +143,8 @@ export function renderProspectShipping(d: ProspectEmailData): Rendered {
   return build(
     'What actually shows up at your door',
     'The unboxing',
-    h('Sealed, labeled, and boring — on purpose.') +
+    heroImg('/brand/merit-vial-hero.webp', 'A sealed, lot-labeled Merit Sciences research vial') +
+      h('Sealed, labeled, and boring — on purpose.') +
       p('No mystery baggies. No hand-written Sharpie labels. No “should arrive in 3–5 weeks (maybe).”') +
       p('A Merit order arrives as a sealed, lot-labeled vial with a scannable QR that pulls up its exact COA — shipped from Dallas, usually on your porch in 48 hours.') +
       proof('On every vial:<br>• The compound + dose<br>• The lot number<br>• A QR → the exact HPLC result') +

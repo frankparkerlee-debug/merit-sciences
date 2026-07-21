@@ -13,7 +13,7 @@
  * Sent by /api/cron/lab-report — manually triggered, tag-deduped, batched.
  */
 import 'server-only';
-import { wrapMarketingEmail, h, p, cta, quiet, proof, SITE } from './marketing-email-shell';
+import { wrapMarketingEmail, h, p, cta, quiet, proof, heroImg, SITE } from './marketing-email-shell';
 
 export type LabReportLot = {
   compound: string;
@@ -85,6 +85,7 @@ export function renderLabReport(d: LabReportData): { subject: string; html: stri
     subject,
     eyebrow: `The Lab Report · ${d.issueLabel}`,
     bodyHtml:
+      heroImg('/brand/scene-lab.webp', 'Inside the lab — Merit Sciences quality control') +
       h('The receipts, before anyone else sees them.') +
       lotsBlock +
       cta('Browse the new lab results →', coaUrl) +
