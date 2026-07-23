@@ -42,6 +42,8 @@ const nextConfig = {
     // tirzepatide-10mg / retatrutide-10mg are live and must NOT move.
     const p = (from, to) => ({ source: `/products/${from}`, destination: `/products/${to}`, permanent: true });
     const gone = (from) => ({ source: `/products/${from}`, destination: '/catalog', permanent: true });
+    const lib = (from, to) => ({ source: `/library/${from}`, destination: `/library/${to}`, permanent: true });
+    const libIndex = (from) => ({ source: `/library/${from}`, destination: '/library', permanent: true });
     return [
       // ── Renamed / re-handled products (old → its live equivalent) ──
       p('tirzepatide-30mg', 'ly3298176'),      // 30mg now lives at the code handle
@@ -97,6 +99,30 @@ const nextConfig = {
       { source: '/pages/terms-of-service', destination: '/terms', permanent: true },
       { source: '/pages/frequently-asked-questions', destination: '/catalog', permanent: true },
       { source: '/pages/:slug*', destination: '/', permanent: true },
+
+      // ── Retired reconstitution protocols (removed 2026-07-23) ──────────
+      // The 16 Protocol articles were unpublished — step-by-step preparation
+      // procedures don't belong on a research-use-only catalog. These URLs
+      // were indexed, so they 308 to the matching compound monograph (same
+      // compound, same search intent, no procedure) rather than 404ing and
+      // dumping their ranking equity. The 4 with no monograph go to /library.
+      lib('tirzepatide-reconstitution-protocol', 'tirzepatide'),
+      lib('ly3437943-reconstitution-protocol', 'retatrutide'),
+      lib('tesamorelin-reconstitution-protocol', 'tesamorelin'),
+      lib('bpc-157-tb-500-blend-reconstitution-protocol', 'bpc-157-tb-500'),
+      lib('bpc-157-reconstitution-protocol', 'bpc-157-tb-500'),
+      lib('thymosin-alpha-1-reconstitution-protocol', 'thymosin-alpha-1'),
+      lib('nad-reconstitution-protocol', 'nad'),
+      lib('ghk-cu-reconstitution-protocol', 'ghk-cu'),
+      lib('mots-c-reconstitution-protocol', 'mots-c'),
+      lib('epitalon-reconstitution-protocol', 'epitalon'),
+      lib('semax-reconstitution-protocol', 'semax'),
+      lib('glow-blend-reconstitution-protocol', 'glow-blend'),
+      lib('klow-blend-reconstitution-protocol', 'klow-blend'),
+      // No monograph for these compounds → library index.
+      libIndex('cjc-1295-ipamorelin-reconstitution-protocol'),
+      libIndex('glutathione-reconstitution-protocol'),
+      libIndex('kpv-reconstitution-protocol'),
     ];
   },
 };

@@ -7,18 +7,18 @@ export const metadata: Metadata = {
   // Root template appends "· Merit Sciences" — don't duplicate it here.
   title: 'Research Library',
   description:
-    'Compound monographs with mechanism of action and published research, reconstitution protocols with a live calculator, and COA/HPLC/mass-spec explainers — the reference library for the research community. For research use only.',
+    'Compound monographs with mechanism of action and published research, trial summaries, and COA/HPLC/mass-spec explainers — the reference library for the research community. For research use only.',
   alternates: { canonical: 'https://meritsciences.com/library' },
 };
 
-const KIND_RANK: Record<LibEntry['kind'], number> = { Compound: 0, Protocol: 1, Guide: 2, Research: 3 };
+const KIND_RANK: Record<LibEntry['kind'], number> = { Compound: 0, Guide: 1, Research: 2 };
 
 function buildEntries(): LibEntry[] {
   const monos: LibEntry[] = MONOGRAPHS.map((m) => ({
-    slug: m.slug, title: m.title, kind: 'Compound', excerpt: m.excerpt, aka: m.aka, hasCalc: false,
+    slug: m.slug, title: m.title, kind: 'Compound', excerpt: m.excerpt, aka: m.aka,
   }));
   const arts: LibEntry[] = ARTICLES.map((a) => ({
-    slug: a.slug, title: a.title, kind: a.category, excerpt: a.excerpt, aka: [], hasCalc: !!a.calc,
+    slug: a.slug, title: a.title, kind: a.category, excerpt: a.excerpt, aka: [],
   }));
   return [...monos, ...arts].sort(
     (a, b) => KIND_RANK[a.kind] - KIND_RANK[b.kind] || a.title.localeCompare(b.title),
@@ -38,7 +38,7 @@ export default function LibraryIndex() {
           </h1>
           <p className="text-base text-ink-soft leading-relaxed max-w-2xl">
             {entries.length} references for the research community — {MONOGRAPHS.length} compound monographs
-            with mechanism and published research, reconstitution protocols with a live calculator, and how
+            with mechanism and published research, summaries of the published trials, and how
             we test every lot. For research use only.
           </p>
         </div>

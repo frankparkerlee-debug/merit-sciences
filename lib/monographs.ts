@@ -22,18 +22,16 @@ export type CompoundMeta = {
   aka: string[]; // synonyms — search + schema "sameAs"/alternateName
   tagline: string; // one line for cards + meta description lead
   product?: ProductRef; // matching active product (conservative productization)
-  protocolSlug?: string; // matching reconstitution protocol article
   relatedSlugs?: string[]; // trial deep-dives / evidence summaries
 };
 
-// ── The 20 compounds. slug ≠ protocol slug (no collision). ────────────────
+// ── The 20 compounds. ─────────────────────────────────────────────────────
 export const COMPOUND_META: CompoundMeta[] = [
   {
     key: 'ly3298176', slug: 'tirzepatide', title: 'Tirzepatide',
     aka: ['LY3298176', 'GIP/GLP-1 receptor agonist', 'dual incretin agonist'],
     tagline: 'The dual GIP/GLP-1 receptor agonist studied in the SURMOUNT and SURPASS programs.',
     product: { handle: 'tirzepatide-10mg', fromPrice: 75, purity: '≥99%', vialSize: '10 mg' },
-    protocolSlug: 'tirzepatide-reconstitution-protocol',
     relatedSlugs: ['surmount-1-tirzepatide-obesity-research', 'surpass-2-tirzepatide-vs-semaglutide'],
   },
   {
@@ -41,7 +39,6 @@ export const COMPOUND_META: CompoundMeta[] = [
     aka: ['LY3437943', 'triple agonist', 'GIP/GLP-1/glucagon agonist'],
     tagline: 'The first triple GIP/GLP-1/glucagon receptor agonist to clear Phase 2 trials.',
     product: { handle: 'retatrutide-10mg', fromPrice: 100, purity: '≥99%', vialSize: '10 mg' },
-    protocolSlug: 'ly3437943-reconstitution-protocol',
     relatedSlugs: ['ly3437943-triple-1-research-summary'],
   },
   {
@@ -56,14 +53,12 @@ export const COMPOUND_META: CompoundMeta[] = [
     aka: ['TH9507', 'stabilized GHRH analog'],
     tagline: 'A stabilized growth-hormone-releasing-hormone analog studied for visceral adiposity.',
     product: { handle: 'th9507', fromPrice: 87, purity: '≥99%', vialSize: '10 mg' },
-    protocolSlug: 'tesamorelin-reconstitution-protocol',
   },
   {
     key: 'bpc-157-tb-500', slug: 'bpc-157-tb-500', title: 'BPC-157 + TB-500 (Wolverine)',
     aka: ['Wolverine blend', 'BPC-157', 'TB-500', 'Thymosin Beta-4 fragment'],
     tagline: 'A co-formulation of two repair-pathway peptides in a single lyophilized vial.',
     product: { handle: 'bpc-10mg-tb-10mg-wolverine-20mg', fromPrice: 100, purity: '≥99%', vialSize: '20 mg' },
-    protocolSlug: 'bpc-157-tb-500-blend-reconstitution-protocol',
     relatedSlugs: ['bpc-157-preclinical-evidence'],
   },
   {
@@ -71,7 +66,6 @@ export const COMPOUND_META: CompoundMeta[] = [
     aka: ['Tα1', 'Zadaxin', 'thymalfasin'],
     tagline: 'A 28-amino-acid immunomodulatory peptide approved abroad as Zadaxin.',
     product: { handle: 'thymosin-alpha-1', fromPrice: 132, purity: '≥99%', vialSize: '10 mg' },
-    protocolSlug: 'thymosin-alpha-1-reconstitution-protocol',
   },
   {
     key: 'aod-9604', slug: 'aod-9604', title: 'AOD-9604',
@@ -96,7 +90,6 @@ export const COMPOUND_META: CompoundMeta[] = [
     aka: ['nicotinamide adenine dinucleotide', 'NAD'],
     tagline: 'The central redox coenzyme studied across cellular-energy and aging models.',
     product: { handle: 'nad-500mg', fromPrice: 85, purity: '≥99%', vialSize: '500 mg' },
-    protocolSlug: 'nad-reconstitution-protocol',
     relatedSlugs: ['nad-cellular-aging-research'],
   },
   {
@@ -104,21 +97,18 @@ export const COMPOUND_META: CompoundMeta[] = [
     aka: ['copper tripeptide-1', 'copper peptide', 'GHK'],
     tagline: 'A copper-binding tripeptide studied for skin remodeling and repair signaling.',
     product: { handle: 'ghk-cu', fromPrice: 86, purity: '≥99%', vialSize: '100 mg' },
-    protocolSlug: 'ghk-cu-reconstitution-protocol',
   },
   {
     key: 'mots-c', slug: 'mots-c', title: 'MOTS-c',
     aka: ['mitochondrial-derived peptide', 'mitochondrial ORF of the 12S rRNA-c'],
     tagline: 'A mitochondrial-derived peptide studied in metabolic-regulation models.',
     product: { handle: 'mots-c', fromPrice: 138, purity: '≥99%', vialSize: '40 mg' },
-    protocolSlug: 'mots-c-reconstitution-protocol',
   },
   {
     key: 'epitalon', slug: 'epitalon', title: 'Epitalon',
     aka: ['Epithalon', 'AEDG peptide'],
     tagline: 'A synthetic tetrapeptide investigated for telomerase and circadian signaling.',
     product: { handle: 'epitalon', fromPrice: 115, purity: '≥99%', vialSize: '50 mg' },
-    protocolSlug: 'epitalon-reconstitution-protocol',
   },
   {
     key: 'selank', slug: 'selank', title: 'Selank',
@@ -131,7 +121,6 @@ export const COMPOUND_META: CompoundMeta[] = [
     aka: ['ACTH(4-10) analog', 'Met-Glu-His-Phe-Pro-Gly-Pro'],
     tagline: 'A synthetic ACTH(4-10) analog studied in neuroprotection and BDNF models.',
     product: { handle: 'semax', fromPrice: 56, purity: '≥99%', vialSize: '10 mg' },
-    protocolSlug: 'semax-reconstitution-protocol',
   },
   {
     key: 'pt-141', slug: 'pt-141', title: 'PT-141',
@@ -156,14 +145,12 @@ export const COMPOUND_META: CompoundMeta[] = [
     aka: ['GLOW', 'skin blend'],
     tagline: 'A three-peptide repair + skin-signaling co-formulation in one vial.',
     product: { handle: 'bpc157-ghk-cu-50-tb500-glow-70mg', fromPrice: 145, purity: '≥99%', vialSize: '70 mg' },
-    protocolSlug: 'glow-blend-reconstitution-protocol',
   },
   {
     key: 'klow', slug: 'klow-blend', title: 'KLOW Blend (BPC-157 · GHK-Cu · TB-500 · KPV)',
     aka: ['KLOW', 'four-peptide blend'],
     tagline: 'A four-peptide repair blend adding the KPV tripeptide to the GLOW base.',
     product: { handle: 'klow', fromPrice: 175, purity: '≥99%', vialSize: '80 mg' },
-    protocolSlug: 'klow-blend-reconstitution-protocol',
   },
 ];
 
@@ -182,7 +169,6 @@ export const MONOGRAPH_EXTRAS: Record<string, { keyFindings?: string[]; faqs?: F
       { q: 'What is tirzepatide?', a: 'Tirzepatide (research code LY3298176) is a synthetic dual agonist that activates both the GIP and GLP-1 receptors. It is the compound studied in the SURMOUNT (obesity) and SURPASS (type-2-diabetes) clinical-trial programs. Merit supplies it as a lyophilized research compound for research use only — not for human or veterinary use.' },
       { q: 'How does tirzepatide work?', a: 'It is a "dual incretin" — a single peptide engineered to activate two gut-hormone receptors at once (GIP and GLP-1). Published trials attribute its effect size relative to single-receptor GLP-1 agonists to this combined mechanism. Mechanistic descriptions here summarize published findings and are not clinical claims.' },
       { q: 'What did the tirzepatide trials show?', a: 'In SURMOUNT-1, the highest-dose arm showed a mean body-weight reduction of about 20.9% over 72 weeks versus ~3.1% on placebo. In SURPASS-2, it produced greater HbA1c and weight reductions than semaglutide 1 mg. See the linked SURMOUNT-1 and SURPASS-2 summaries for trial design and full outcomes.' },
-      { q: 'How is tirzepatide reconstituted for research?', a: 'A lyophilized vial is reconstituted with bacteriostatic water; concentration equals vial mass divided by diluent volume. See the Tirzepatide reconstitution protocol for a step-by-step guide and a research calculator. This is reference information for laboratory handling, not a dosing recommendation.' },
       { q: 'Is Merit tirzepatide for human use?', a: 'No. It is sold strictly for research use only — not for human or veterinary use, and not for diagnostic or therapeutic use. Every lot ships with a certificate of analysis documenting ≥99% HPLC purity.' },
     ],
   },
@@ -213,12 +199,9 @@ function autoFaqs(m: CompoundMeta, r: ResearchData): Faq[] {
   if (r.halfLife) {
     faqs.push({ q: `What is the half-life of ${m.title}?`, a: `${r.halfLife} Values reflect preclinical or research-context reports, not clinical pharmacokinetics.` });
   }
-  if (m.protocolSlug) {
-    faqs.push({
-      q: `How is ${m.title} reconstituted for research?`,
-      a: `A lyophilized vial is reconstituted with bacteriostatic water; concentration equals vial mass divided by diluent volume. See the ${m.title} reconstitution protocol for a step-by-step guide and a research calculator.`,
-    });
-  }
+  // NOTE: no "how is it reconstituted" FAQ. Preparation procedures are not
+  // published (see lib/library.ts) — and this text feeds FAQPage JSON-LD, so
+  // anything here is a public claim Google and AI engines read directly.
   faqs.push({
     q: `Is Merit ${m.title} for human use?`,
     a: `No. It is sold strictly for research use only — not for human or veterinary use, and not for diagnostic or therapeutic use. Every lot ships with a certificate of analysis documenting ${m.product?.purity ?? '≥99%'} HPLC purity.`,

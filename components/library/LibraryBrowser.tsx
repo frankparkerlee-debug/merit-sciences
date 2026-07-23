@@ -6,23 +6,20 @@ import Link from 'next/link';
 export type LibEntry = {
   slug: string;
   title: string;
-  kind: 'Compound' | 'Protocol' | 'Guide' | 'Research';
+  kind: 'Compound' | 'Guide' | 'Research';
   excerpt: string;
   aka: string[];
-  hasCalc: boolean;
 };
 
 const FILTERS: { key: 'all' | LibEntry['kind']; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'Compound', label: 'Compounds' },
-  { key: 'Protocol', label: 'Protocols' },
   { key: 'Guide', label: 'Guides' },
   { key: 'Research', label: 'Trials' },
 ];
 
 const KIND_BADGE: Record<LibEntry['kind'], string> = {
   Compound: 'bg-cobalt/10 text-cobalt',
-  Protocol: 'bg-cobalt/10 text-cobalt',
   Guide: 'bg-ink/[0.07] text-ink-soft',
   Research: 'bg-star/20 text-[#8a6410]',
 };
@@ -69,7 +66,7 @@ export function LibraryBrowser({ entries }: { entries: LibEntry[] }) {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search compounds, protocols, guides…"
+            placeholder="Search compounds, guides, trials…"
             aria-label="Search the research library"
             className="w-full rounded-xl border border-cobalt/20 bg-white pl-10 pr-9 py-2.5 text-[15px] text-ink placeholder:text-ink-muted outline-none focus:border-cobalt"
           />
@@ -120,7 +117,7 @@ export function LibraryBrowser({ entries }: { entries: LibEntry[] }) {
               className="group rounded-2xl border border-cobalt/12 bg-white p-5 hover:border-cobalt/40 hover:shadow-sm transition flex flex-col"
             >
               <span className={`self-start mb-2 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${KIND_BADGE[e.kind]}`}>
-                {e.kind}{e.hasCalc ? ' · Calculator' : ''}
+                {e.kind}
               </span>
               <h3 className="font-display font-extrabold text-ink leading-tight group-hover:text-cobalt transition">{e.title}</h3>
               {e.excerpt && <p className="mt-2 text-[13px] text-ink-soft leading-relaxed line-clamp-3">{e.excerpt}</p>}

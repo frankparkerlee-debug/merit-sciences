@@ -85,7 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  // Research Library — static article pages (reconstitution protocols, testing
+  // Research Library — static article pages (testing
   // guides, trial summaries). Real molecule names live here → strong SEO surface.
   const libraryRoutes: MetadataRoute.Sitemap = ARTICLES.map((a) => ({
     url: `${BASE}/library/${a.slug}`,
@@ -95,7 +95,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Compound monographs — the primary SEO/AEO surface (real molecule names,
-  // mechanism + cited research). Higher priority than protocol/guide articles.
+  // mechanism + cited research). Higher priority than guide articles.
   const monographRoutes: MetadataRoute.Sitemap = MONOGRAPHS.map((m) => ({
     url: `${BASE}/library/${m.slug}`,
     lastModified: now,

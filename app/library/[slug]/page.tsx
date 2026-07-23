@@ -5,7 +5,6 @@ import { ARTICLES, getArticle, CATEGORY_META } from '@/lib/library';
 import { getMonograph, MONOGRAPHS } from '@/lib/monographs';
 import { monographSchemas } from '@/lib/library-schema';
 import { MonographView } from '@/components/library/Monograph';
-import { ReconstitutionCalculator } from '@/components/ReconstitutionCalculator';
 
 export const dynamic = 'error'; // fully static
 const MODIFIED = '2026-07-02';
@@ -20,12 +19,12 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
   const mono = getMonograph(params.slug);
   if (mono) {
-    const desc = `${mono.tagline} What ${mono.title} is, how it works, what the published research shows, and how it's reconstituted for laboratory handling — with peer-reviewed references. For research use only.`.slice(0, 300);
+    const desc = `${mono.tagline} What ${mono.title} is, how it works, and what the published research shows — with peer-reviewed references. For research use only.`.slice(0, 300);
     const url = `https://meritsciences.com/library/${mono.slug}`;
     return {
       title: `${mono.title}: Mechanism, Research & Handling`,
       description: desc,
-      keywords: [mono.title, ...mono.aka, `${mono.title} mechanism`, `${mono.title} research`, `${mono.title} reconstitution`, `what is ${mono.title}`],
+      keywords: [mono.title, ...mono.aka, `${mono.title} mechanism`, `${mono.title} research`, `${mono.title} studies`, `what is ${mono.title}`],
       alternates: { canonical: url },
       openGraph: { title: `${mono.title} — Research Monograph`, description: mono.tagline, type: 'article', url },
     };
@@ -42,8 +41,6 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     openGraph: { title: a.title, description: desc, type: 'article', url: `https://meritsciences.com/library/${a.slug}` },
   };
 }
-
-const COMPOUND = (title: string) => title.replace(/ reconstitution protocol$/i, '').trim();
 
 export default function LibraryEntryPage({ params }: { params: { slug: string } }) {
   // ── Research monograph (structured, SEO/AEO-optimized) ──
@@ -92,9 +89,6 @@ export default function LibraryEntryPage({ params }: { params: { slug: string } 
           {a.title}
         </h1>
         {a.excerpt && <p className="mt-4 text-lg text-ink-soft leading-relaxed">{a.excerpt}</p>}
-
-        {/* calculator (protocols only) */}
-        {a.calc && <ReconstitutionCalculator calc={a.calc} compound={COMPOUND(a.title)} />}
 
         {/* body */}
         <div className="library-prose mt-6" dangerouslySetInnerHTML={{ __html: a.body }} />

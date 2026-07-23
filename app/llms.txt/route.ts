@@ -41,9 +41,9 @@ export async function GET() {
 ${productLines || `- [Catalog](${BASE}/catalog): the full research-compound catalog.`}
 
 ## Research library — compound monographs
-Each monograph covers what the compound is, its mechanism (research-framed), what the published research shows, research applications, reconstitution/handling, an FAQ, and peer-reviewed references. Authoritative, citable reference pages.
+Each monograph covers what the compound is, its mechanism (research-framed), what the published research shows, research applications, form and storage, an FAQ, and peer-reviewed references. Authoritative, citable reference pages. Merit does not publish preparation or dosing procedures.
 ${MONOGRAPHS.map((m) => `- [${m.title}](${BASE}/library/${m.slug}): ${m.tagline}`).join('\n')}
-- [Research Library index](${BASE}/library): all monographs, reconstitution protocols, testing guides, and trial summaries.
+- [Research Library index](${BASE}/library): all monographs, testing guides, and trial summaries.
 
 ## Key pages
 - [Catalog](${BASE}/catalog): all research compounds, organized by class.

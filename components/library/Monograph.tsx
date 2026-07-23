@@ -27,7 +27,6 @@ function Fact({ label, value }: { label: string; value?: string }) {
 export function MonographView({ m }: { m: Mono }) {
   const r = m.research;
   const related = [
-    ...(m.protocolSlug ? [{ slug: m.protocolSlug, kind: 'Protocol' as const }] : []),
     ...(m.relatedSlugs ?? []).map((slug) => ({ slug, kind: 'Research' as const })),
   ]
     .map((x) => ({ ...x, article: getArticle(x.slug) }))
@@ -104,22 +103,13 @@ export function MonographView({ m }: { m: Mono }) {
       {/* productization — mid-article, after value is established */}
       {m.product && <ProductCallout title={m.title} product={m.product} />}
 
-      {/* handling */}
-      <Section id="handling" heading={`Handling & reconstitution`}>
+      {/* storage — preparation procedures are deliberately not published */}
+      <Section id="handling" heading="Form & storage">
         <p>
-          {m.title} ships as a sealed, lyophilized (freeze-dried) powder and is reconstituted with
-          bacteriostatic water for laboratory handling. {r.solubility ?? ''} Concentration equals vial
-          mass divided by diluent volume.
+          {m.title} ships as a sealed, lyophilized (freeze-dried) powder. {r.solubility ?? ''} Store
+          sealed, light-protected, and follow your institution&rsquo;s handling procedures for
+          research materials.
         </p>
-        {m.protocolSlug && getArticle(m.protocolSlug) && (
-          <p>
-            See the{' '}
-            <Link href={`/library/${m.protocolSlug}`} className="text-cobalt underline font-medium">
-              {getArticle(m.protocolSlug)!.title}
-            </Link>{' '}
-            for a step-by-step guide and an interactive research calculator (vial size → diluent → draw volume).
-          </p>
-        )}
       </Section>
 
       {/* FAQ */}
