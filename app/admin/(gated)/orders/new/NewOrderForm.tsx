@@ -318,6 +318,22 @@ export function NewOrderForm({ products }: { products: ProductOption[] }) {
             </div>
             <p className="text-[10px] text-ink-soft mt-1">Enter dollar amount (e.g. 15.00)</p>
           </div>
+          <div className="sm:col-span-2">
+            <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-soft mb-1">
+              Payment
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <label className="flex items-start gap-2 rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink flex-1 cursor-pointer">
+                <input type="radio" name="paymentMode" value="paid" defaultChecked className="mt-0.5 accent-cobalt" />
+                <span><strong>Already paid</strong> — record only (money collected elsewhere)</span>
+              </label>
+              <label className="flex items-start gap-2 rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink flex-1 cursor-pointer">
+                <input type="radio" name="paymentMode" value="invoice" className="mt-0.5 accent-cobalt" />
+                <span><strong>Send pay link</strong> — email the customer a secure PayPal link to pay</span>
+              </label>
+            </div>
+            <p className="text-[10px] text-ink-soft mt-1">&ldquo;Send pay link&rdquo; creates the order as <em>Awaiting payment</em> and emails the customer; it auto-marks Paid + sends a receipt when they pay. (Status below is ignored in that mode.)</p>
+          </div>
           <div>
             <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-soft mb-1">
               Status

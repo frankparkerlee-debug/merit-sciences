@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db';
 import { StatusPanel, NotesForm } from './OrderDetailClient';
 import { Timeline } from './Timeline';
 import { CommentForm } from './CommentForm';
+import { PayLinkPanel } from './PayLinkPanel';
+import { payUrlFor } from '@/lib/pay-link';
 
 export const metadata = { title: 'Order detail — Merit Admin' };
 export const dynamic = 'force-dynamic';
@@ -152,6 +154,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             refundedCents={Number(order.refundedCents)}
             paypalOrderId={order.paypalOrderId}
           />
+
+          {order.status === 'PENDING_PAYMENT' && (
+            <PayLinkPanel orderId={order.id} payUrl={payUrlFor(order.id)} />
+          )}
 
           {/* PayPal refs */}
           <section className="rounded-2xl border border-cobalt/15 bg-white p-5 text-sm">

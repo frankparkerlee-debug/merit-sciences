@@ -237,6 +237,80 @@ export type OrderConfirmationData = {
   crossSell?: CrossSellProduct[]; // optional 3-product grid below the receipt
 };
 
+export type PaymentRequestData = {
+  customerName: string;
+  orderRef: string;                 // internal order reference for the subject/footer
+  payUrl: string;                   // signed /pay/<token> link
+  lines: { title: string; bundleLabel: string; qty: number; unitCents: number }[];
+  subtotalCents: number;
+  shippingCents: number;
+  discountCents: number;
+  discountCode?: string | null;
+  totalCents: number;
+};
+
+/**
+ * Payment request — sent when an admin creates an order for a customer to pay
+ * (wholesale / quote / phone order). One button → the self-serve pay page.
+ * No discount-code CTA and no marketing; this is a transactional "here's your
+ * order, tap to pay" note.
+ */
+export function renderPaymentRequest(d: PaymentRequestData): { subject: string; html: string; text: string } {
+  const firstName = d.customerName.split(/\s+/)[0] || 'there';
+  const lineRows = d.lines.map((l) => `
+    <tr>
+      <td style="padding:12px 0;border-bottom:1px solid ${COLOR_BORDER};font-size:14px;line-height:20px;color:${COLOR_INK};">
+        <strong>${escapeHtml(l.title)}</strong><br />
+        <span style="color:${COLOR_TEXT_SOFT};font-size:12px;">${escapeHtml(l.bundleLabel)} &middot; Qty ${l.qty}</span>
+      </td>
+      <td align="right" style="padding:12px 0;border-bottom:1px solid ${COLOR_BORDER};font-size:14px;color:${COLOR_INK};font-weight:700;white-space:nowrap;vertical-align:top;">
+        ${fmtMoney(Number(l.unitCents) * l.qty)}
+      </td>
+    </tr>`).join('');
+  const discountRow = Number(d.discountCents) > 0 ? `
+    <tr><td style="padding:6px 0;font-size:13px;color:#1A8B3F;">Discount${d.discountCode ? ` (${escapeHtml(d.discountCode)})` : ''}</td>
+    <td align="right" style="padding:6px 0;font-size:13px;color:#1A8B3F;font-weight:700;">-${fmtMoney(d.discountCents)}</td></tr>` : '';
+
+  const body = `
+    ${headline(`Your order is ready, ${firstName}`)}
+    <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
+      We&rsquo;ve put together the order below. Tap the button to pay securely &mdash; card, Apple Pay, or Google Pay &mdash; and we&rsquo;ll ship it from Dallas, usually within 24 hours of payment.
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:8px;">
+      ${lineRows}
+      <tr><td style="padding:10px 0 4px 0;font-size:13px;color:${COLOR_TEXT_SOFT};">Subtotal</td><td align="right" style="padding:10px 0 4px 0;font-size:13px;color:${COLOR_INK};">${fmtMoney(d.subtotalCents)}</td></tr>
+      ${discountRow}
+      <tr><td style="padding:4px 0;font-size:13px;color:${COLOR_TEXT_SOFT};">Shipping</td><td align="right" style="padding:4px 0;font-size:13px;color:${COLOR_INK};">${fmtMoney(d.shippingCents)}</td></tr>
+      <tr><td style="padding:10px 0 0 0;font-size:16px;font-weight:800;color:${COLOR_INK};border-top:2px solid ${COLOR_INK};">Total</td>
+      <td align="right" style="padding:10px 0 0 0;font-size:16px;font-weight:800;color:${COLOR_INK};border-top:2px solid ${COLOR_INK};">${fmtMoney(d.totalCents)}</td></tr>
+    </table>
+    <div style="margin:26px 0;">${ctaButton('Pay now →', d.payUrl)}</div>
+    <p style="margin:0 0 8px 0;font-size:12px;line-height:19px;color:${COLOR_TEXT_SOFT};">
+      Or paste this link into your browser:<br /><a href="${escapeHtml(d.payUrl)}" style="color:${COLOR_COBALT};word-break:break-all;">${escapeHtml(d.payUrl)}</a>
+    </p>
+    <p style="margin:18px 0 0 0;font-size:12px;line-height:19px;color:${COLOR_TEXT_SOFT};">
+      For research use only &mdash; not for human or veterinary use. Questions? Just reply to this email.
+    </p>`;
+
+  const text = `Your order is ready, ${firstName}.
+
+${d.lines.map((l) => `  ${l.title} (${l.bundleLabel}) x${l.qty} — ${fmtMoney(Number(l.unitCents) * l.qty)}`).join('\n')}
+  Subtotal: ${fmtMoney(d.subtotalCents)}${Number(d.discountCents) > 0 ? `\n  Discount: -${fmtMoney(d.discountCents)}` : ''}
+  Shipping: ${fmtMoney(d.shippingCents)}
+  Total: ${fmtMoney(d.totalCents)}
+
+Pay securely here: ${d.payUrl}
+
+For research use only. Reply with any questions.
+— Merit Sciences`;
+
+  return {
+    subject: `Complete your Merit Sciences order — ${fmtMoney(d.totalCents)}`,
+    html: shell({ preheader: `Tap to pay securely — ${fmtMoney(d.totalCents)}, ships from Dallas within 24h of payment.`, eyebrow: 'Payment request', body }),
+    text,
+  };
+}
+
 export function renderOrderConfirmation(d: OrderConfirmationData): { subject: string; html: string; text: string } {
   const firstName = d.customerName.split(/\s+/)[0] || 'there';
 

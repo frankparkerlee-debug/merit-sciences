@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 import { validateDiscountCode } from '@/lib/discount';
+import { issuePaymentRequestEmail } from '@/lib/orders';
 
 export type ManualOrderResult =
   | { ok: true; orderId: string }
@@ -91,10 +92,18 @@ export async function createManualOrder(
 
   const totalCents = Math.max(0, subtotalCents - discountCents + shippingCents);
 
+  // ── Payment mode ──────────────────────────────────────────────────
+  // 'paid'    = record an order money was already collected on (default).
+  // 'invoice' = create it UNPAID and email the customer a self-serve pay
+  //             link — they pay via PayPal, it auto-flips to PAID + receipt.
+  const paymentMode = String(formData.get('paymentMode') ?? 'paid').trim() === 'invoice' ? 'invoice' : 'paid';
+
   // ── Order metadata ────────────────────────────────────────────────
   const statusInput = String(formData.get('status') ?? 'PAID').trim();
   const validStatuses = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELED'];
-  const status = validStatuses.includes(statusInput) ? statusInput : 'PAID';
+  const status = paymentMode === 'invoice'
+    ? 'PENDING_PAYMENT'
+    : (validStatuses.includes(statusInput) ? statusInput : 'PAID');
   const internalNotes = String(formData.get('internalNotes') ?? '').trim() || null;
 
   // ── Write to DB ───────────────────────────────────────────────────
@@ -129,8 +138,11 @@ export async function createManualOrder(
       shippingPhone: customerPhone,
       shippingEmail: customerEmail,
       internalNotes,
-      ruoAttested: true,
-      ruoAttestedAt: new Date(),
+      // For an invoice order the CUSTOMER attests RUO when they tick the box
+      // on the pay page (pay-link/create records it); for a recorded-paid
+      // order the admin is standing in for a completed sale.
+      ruoAttested: paymentMode === 'paid',
+      ruoAttestedAt: paymentMode === 'paid' ? new Date() : null,
       paidAt: new Date(),
       lines: {
         create: lines.map((l) => ({
@@ -144,13 +156,24 @@ export async function createManualOrder(
       events: {
         create: {
           kind: 'ADMIN_COMMENT',
-          message: `Manual order created by ${admin.email ?? 'admin'}.`,
+          message: paymentMode === 'invoice'
+            ? `Invoice order created by ${admin.email ?? 'admin'} — awaiting customer payment (pay link).`
+            : `Manual order created by ${admin.email ?? 'admin'}.`,
           actorEmail: admin.email ?? null,
         },
       },
     },
     select: { id: true },
   });
+
+  // Invoice mode: email the customer their self-serve pay link right now so
+  // there's no manual PayPal invoice to send. Non-fatal — the link is also
+  // shown on the order page for copy/resend if the email hiccups.
+  if (paymentMode === 'invoice') {
+    await issuePaymentRequestEmail(order.id).catch((err) =>
+      console.error('[manual-order] payment-request email failed', err),
+    );
+  }
 
   redirect(`/admin/orders/${order.id}`);
 }

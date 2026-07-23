@@ -21,7 +21,9 @@ import { randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { onFirstOrder } from '@/lib/practitioner-journey';
+import { payUrlFor } from '@/lib/pay-link';
 import {
+  renderPaymentRequest,
   renderOrderConfirmation,
   renderOrderLookupLink,
   renderShipmentNotification,
@@ -599,6 +601,58 @@ export async function getCrossSellProducts(
  * Resend failures (e.g. "domain not verified") in the UI instead of
  * silently logging.
  */
+/**
+ * Emails a customer a self-serve pay link for a PENDING_PAYMENT order (created
+ * by the admin as an invoice). One tap → the /pay/<token> page → PayPal →
+ * order auto-promotes to PAID + receipt. Replaces sending a manual PayPal
+ * invoice. Idempotent to call again (admin "resend" on the order page).
+ */
+export async function issuePaymentRequestEmail(
+  orderId: string,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { lines: true },
+  });
+  if (!order) return { ok: false, error: 'Order not found' };
+
+  const { subject, html, text } = renderPaymentRequest({
+    customerName: order.customerName,
+    orderRef: order.paypalOrderId,
+    payUrl: payUrlFor(order.id),
+    lines: order.lines.map((l) => ({
+      title: l.title,
+      bundleLabel: l.bundleLabel,
+      qty: l.qty,
+      unitCents: Number(l.unitCents),
+    })),
+    subtotalCents: Number(order.subtotalCents),
+    shippingCents: Number(order.shippingCents),
+    discountCents: Number(order.discountCents),
+    discountCode: order.discountCode,
+    totalCents: Number(order.totalCents),
+  });
+
+  const result = await sendEmail({
+    to: order.customerEmail,
+    subject,
+    html,
+    text,
+    tags: [{ name: 'type', value: 'payment_request' }, { name: 'order_id', value: order.id }],
+  });
+
+  await recordOrderEvent({
+    orderId,
+    kind: result.ok ? 'CONFIRMATION_EMAIL_SENT' : 'EMAIL_FAILED',
+    message: result.ok
+      ? `Payment request (pay link) sent to ${order.customerEmail}.`
+      : `Payment request email failed: ${result.error}`,
+    metadata: result.ok ? { email_id: result.id, kind: 'payment_request' } : { error: result.error },
+  });
+
+  return result;
+}
+
 export async function issueOrderConfirmationEmail(
   orderId: string,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {

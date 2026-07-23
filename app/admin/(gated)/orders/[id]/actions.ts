@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
-import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issueAdminOrderNotification, issueRefundEmail, issueCancellationEmail, recordOrderEvent } from '@/lib/orders';
+import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issuePaymentRequestEmail, issueAdminOrderNotification, issueRefundEmail, issueCancellationEmail, recordOrderEvent } from '@/lib/orders';
 import { getAccessToken } from '@/lib/paypal';
 import { syncOrderTrackingToPayPal } from '@/lib/paypal-tracking';
 
@@ -380,6 +380,19 @@ export async function forceResendConfirmation(_prev: ActionResult | null, formDa
     return { ok: false, error: `Email send failed: ${result.error}` };
   }
   return { ok: true, message: `Confirmation email re-sent (Resend id: ${result.id})` };
+}
+
+/* ─── Resend the pay link to the customer (invoice / awaiting-payment order) ─── */
+export async function resendPaymentRequest(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+  const orderId = String(formData.get('orderId') ?? '');
+  if (!orderId) return { ok: false, error: 'Missing order ID' };
+
+  const result = await issuePaymentRequestEmail(orderId);
+  if (!result.ok) return { ok: false, error: `Email send failed: ${result.error}` };
+  revalidatePath(`/admin/orders/${orderId}`);
+  return { ok: true, message: `Pay link re-sent to the customer.` };
 }
 
 /* ─── Re-check PayPal capture (escape hatch when webhook hasn't fired) ─── */
