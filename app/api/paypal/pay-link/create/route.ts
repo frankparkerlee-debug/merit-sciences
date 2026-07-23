@@ -52,17 +52,23 @@ export async function POST(req: Request) {
       shippingCents: Number(order.shippingCents),
       discountCents: Number(order.discountCents),
       totalCents: Number(order.totalCents),
+      // COMPLIANCE — cloak every line for the Merchant-of-Record account,
+      // identical to the storefront checkout (app/api/paypal/create-order):
+      // PayPal only ever sees a generic "Dietary supplement" line with a
+      // randomized numeric SKU — never the compound name or a revealing
+      // handle. The real product detail lives only in our own Order record +
+      // the Merit-branded pay page / confirmation email (both read our DB).
       items: order.lines.map((l) => ({
-        name: l.title.slice(0, 127),
-        description: l.bundleLabel?.slice(0, 127) || undefined,
+        name: 'Dietary supplement',
+        description: 'Dietary supplement',
         quantity: l.qty,
         unitCents: Number(l.unitCents),
-        sku: l.handle.slice(0, 127),
+        sku: String(Math.floor(1e11 + Math.random() * 9e11)),
       })),
       // Carries affiliate + code attribution into fulfillment (custom_id),
       // matching the storefront checkout so commission credits correctly.
       customId: JSON.stringify({ a: order.affiliateId ?? null, c: order.discountCode ?? null }),
-      description: `Merit Sciences order ${order.paypalOrderId}`,
+      description: 'Merit',
       returnUrl: payUrl,
       cancelUrl: payUrl,
       // SET the admin-entered ship-to so PayPal/wallet can't override where a
