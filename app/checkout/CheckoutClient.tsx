@@ -756,8 +756,7 @@ function WalletTriad({
   const [eligibility, setEligibility] = useState<{
     applepay: boolean | null;
     googlepay: boolean | null;
-    paypal: boolean | null;
-  }>({ applepay: null, googlepay: null, paypal: null });
+  }>({ applepay: null, googlepay: null });
 
   useEffect(() => {
     if (!isResolved) return;
@@ -770,7 +769,6 @@ function WalletTriad({
           ? !!pp.Buttons({ fundingSource: 'applepay' }).isEligible?.()
           : false,
         googlepay: !!pp.Buttons({ fundingSource: 'googlepay' }).isEligible?.(),
-        paypal: !!pp.Buttons({ fundingSource: 'paypal' }).isEligible?.(),
       });
     } catch (err) {
       console.error('[paypal] eligibility check failed', err);
@@ -778,7 +776,7 @@ function WalletTriad({
   }, [isResolved, applePayEnabled]);
 
   const anyWalletAvailable =
-    eligibility.applepay === true || eligibility.googlepay === true || eligibility.paypal === true;
+    eligibility.applepay === true || eligibility.googlepay === true;
 
   return (
     <div className="space-y-3">
@@ -814,19 +812,10 @@ function WalletTriad({
         </div>
       </div>
 
-      {/* PayPal always renders if eligible (basically always) */}
-      {eligibility.paypal !== false && (
-        <div>
-          <PayPalButtons
-            fundingSource="paypal"
-            style={{ layout: 'horizontal', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
-            createOrder={createOrder}
-            onApprove={onApprove}
-            onError={onError}
-            onClick={onClick}
-          />
-        </div>
-      )}
+      {/* PayPal-account (wallet) button intentionally removed 2026-07-28.
+          Card fields + Apple Pay + Google Pay still process through the same
+          PayPal SDK — this only drops the pay-with-PayPal-balance funding
+          source, not the underlying processor. */}
 
       {/* Status indicators — show which wallets are/aren't available on this device */}
       {isResolved && (
@@ -847,10 +836,6 @@ function WalletTriad({
             label="Google Pay"
             state={eligibility.googlepay ? 'available' : 'unavailable'}
             unavailableReason="Requires Chrome with a saved card in Google Pay"
-          />
-          <EligibilityLine
-            label="PayPal"
-            state={eligibility.paypal === false ? 'unavailable' : 'available'}
           />
         </div>
       )}
