@@ -289,25 +289,22 @@ export function CheckoutClient({
     setCodeError(null);
   }
 
-  // Apple Pay requires PayPal domain verification.
-  // ✓ meritsciences.com DNS cut over from Shopify to Render
-  // ✓ apple-developer-merchantid-domain-association file hosted at /.well-known/
-  // ✓ PayPal "Verify Domain" succeeded on 2026-06-15
-  const APPLE_PAY_ENABLED = true;
-
   // PayPal SDK options.
   //
-  // IMPORTANT — applepay + googlepay belong in `components`, NOT in
-  // `enable-funding`. PayPal returns
-  //   "Invalid query value for enable-funding: googlepay"
-  // if you put them in enable-funding. We learned this the hard way.
+  // Apple Pay + Google Pay were REMOVED 2026-07-28: they never actually
+  // rendered for buyers, and on the current PayPal account both report
+  // isEligible() === false. Loading their components only cost bytes and
+  // put dead "unavailable" copy in front of buyers.
+  //
+  // `card-fields` (Advanced Card Processing / ACDC) is still requested, but
+  // it only renders when the PayPal ACCOUNT is approved for it — see
+  // CardSection below, which gates on isEligible() so the form appears
+  // automatically once ACDC is enabled and never renders as an empty shell.
   //
   // `disable-funding` opts OUT of funding sources we don't want to show
-  // (Pay-Later messaging, PayPal Credit, Venmo). PayPal button comes
+  // (Pay-Later messaging, PayPal Credit, Venmo). The PayPal button comes
   // from the default 'paypal' funding source — implicit.
-  const components = APPLE_PAY_ENABLED
-    ? 'buttons,card-fields,applepay,googlepay'
-    : 'buttons,card-fields,googlepay';
+  const components = 'buttons,card-fields';
 
   // Prefer the server-sourced client id (runtime PAYPAL_CLIENT_ID, passed as a
   // prop) so the button always matches the account we capture against. Fall
@@ -552,49 +549,35 @@ export function CheckoutClient({
           </div>
         ) : (
           <PayPalScriptProvider options={paypalOptions} deferLoading={false}>
-            {/* ── Express checkout: Apple Pay + Google Pay + PayPal ── */}
+            {/* ── Primary: PayPal button. Also takes guest cards, which is
+                    what keeps checkout alive while ACDC is off. ── */}
             <PaymentSection
-              eyebrow="Express checkout"
-              title="One-tap pay"
-              description="Fastest way to check out — uses the wallet your device already has. Shipping and contact info pulled from your wallet."
+              eyebrow="Secure payment"
+              title="Pay with PayPal or card"
+              description="Checkout is handled by PayPal. Pay from your PayPal balance, or choose “Debit or Credit Card” to pay as a guest with Visa, Mastercard, Amex, or Discover — no PayPal account needed."
             >
-              <WalletTriad
+              <PayPalPayButton
                 createOrder={createOrderForWallet}
                 onApprove={onApprove}
                 onError={onError}
                 onClick={onWalletClick}
-                applePayEnabled={APPLE_PAY_ENABLED}
               />
             </PaymentSection>
 
-            {/* ── Divider ── */}
-            <div className="flex items-center gap-3 my-1">
-              <div className="flex-1 h-px bg-cobalt/15" />
-              <span className="text-[10px] tracking-[0.22em] uppercase font-bold text-ink-soft">
-                or
-              </span>
-              <div className="flex-1 h-px bg-cobalt/15" />
-            </div>
-
-            {/* ── Manual card entry with full buyer info ── */}
-            <PaymentSection
-              eyebrow="Pay with card"
-              title="Card payment"
-              description="Visa, Mastercard, Amex, Discover. We collect shipping + contact info here, then PayPal handles the card encryption."
-            >
-              <PayPalCardFieldsProvider
-                createOrder={createOrderForCard}
-                onApprove={onApprove}
-                onError={onError}
-              >
-                <FullCardForm
-                  form={form}
-                  setForm={setForm}
-                  ruoRef={ruoRef}
-                  onValidationError={setFormError}
-                />
-              </PayPalCardFieldsProvider>
-            </PaymentSection>
+            {/* ── Inline card form. Renders ONLY when the PayPal account is
+                    approved for Advanced Card Processing (ACDC). Gating on
+                    isEligible() means: no dead "Visa/Mastercard/Amex" header
+                    over an empty form when the entitlement is missing, and it
+                    comes back on its own the moment ACDC is switched on. ── */}
+            <CardSection
+              createOrder={createOrderForCard}
+              onApprove={onApprove}
+              onError={onError}
+              form={form}
+              setForm={setForm}
+              ruoRef={ruoRef}
+              onValidationError={setFormError}
+            />
           </PayPalScriptProvider>
         )}
 
@@ -713,7 +696,7 @@ export function CheckoutClient({
         </div>
 
         <p className="text-[11px] text-ink-soft/70 mt-4 leading-relaxed">
-          US shipping only. Free over $300. Card details encrypted end-to-end by PayPal — we never see or store them. Wallet payments pull shipping from your device&rsquo;s saved address.
+          US shipping only. Free over $300. Card details are encrypted end-to-end by PayPal — we never see or store them.
         </p>
       </aside>
     </div>
@@ -735,162 +718,101 @@ function RUOAttestation() {
   );
 }
 
-/* ─── Wallet triad: AP + GP side-by-side, PayPal full-width below ─── */
+/* ─── PayPal button — the one funding source that works without ACDC ─── */
 
-type WalletHandlers = {
+type PayHandlers = {
   createOrder: () => Promise<string>;
   onApprove: (data: { orderID: string }) => Promise<void>;
   onError: (err: any) => void;
   onClick: (data: any, actions: any) => any;
-  applePayEnabled: boolean;
 };
 
-function WalletTriad({
-  createOrder, onApprove, onError, onClick, applePayEnabled,
-}: WalletHandlers) {
-  const [{ isResolved }] = usePayPalScriptReducer();
-  // Eligibility flags computed once the SDK script resolves.
-  // PayPal's SDK silently hides wallet buttons when the buyer's
-  // browser/device isn't eligible — we surface that as visible status
-  // so it's clear the integration is wired, just not usable here.
-  const [eligibility, setEligibility] = useState<{
-    applepay: boolean | null;
-    googlepay: boolean | null;
-    paypal: boolean | null;
-  }>({ applepay: null, googlepay: null, paypal: null });
-
-  useEffect(() => {
-    if (!isResolved) return;
-    // window.paypal is exposed by the loaded SDK script
-    const pp = (window as any).paypal;
-    if (!pp?.Buttons) return;
-    try {
-      setEligibility({
-        applepay: applePayEnabled
-          ? !!pp.Buttons({ fundingSource: 'applepay' }).isEligible?.()
-          : false,
-        googlepay: !!pp.Buttons({ fundingSource: 'googlepay' }).isEligible?.(),
-        paypal: !!pp.Buttons({ fundingSource: 'paypal' }).isEligible?.(),
-      });
-    } catch (err) {
-      console.error('[paypal] eligibility check failed', err);
-    }
-  }, [isResolved, applePayEnabled]);
-
-  const anyWalletAvailable =
-    eligibility.applepay === true || eligibility.googlepay === true || eligibility.paypal === true;
-
+function PayPalPayButton({ createOrder, onApprove, onError, onClick }: PayHandlers) {
   return (
-    <div className="space-y-3">
-      {/* Always render the wallet buttons. PayPal's SDK has its own
-          internal eligibility gate — if the browser/device can't actually
-          process Apple Pay or Google Pay, PayPal returns nothing from
-          the render and the slot stays empty. Our state-based isEligible()
-          check was double-gating and could leave both buttons hidden
-          even on supported devices when the script-resolved race
-          condition went wrong. */}
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-        {applePayEnabled && (
-          <div>
-            <PayPalButtons
-              fundingSource={'applepay' as any}
-              style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
-              createOrder={createOrder}
-              onApprove={onApprove}
-              onError={onError}
-              onClick={onClick}
-            />
-          </div>
-        )}
-        <div>
-          <PayPalButtons
-            fundingSource={'googlepay' as any}
-            style={{ layout: 'horizontal', height: 48, color: 'black', shape: 'rect' }}
-            createOrder={createOrder}
-            onApprove={onApprove}
-            onError={onError}
-            onClick={onClick}
-          />
-        </div>
-      </div>
-
-      {/* PayPal always renders if eligible (basically always) */}
-      {eligibility.paypal !== false && (
-        <div>
-          <PayPalButtons
-            fundingSource="paypal"
-            style={{ layout: 'horizontal', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
-            createOrder={createOrder}
-            onApprove={onApprove}
-            onError={onError}
-            onClick={onClick}
-          />
-        </div>
-      )}
-
-      {/* Status indicators — show which wallets are/aren't available on this device */}
-      {isResolved && (
-        <div className="border-t border-cobalt/10 pt-3 mt-3 space-y-1.5">
-          <EligibilityLine
-            label="Apple Pay"
-            state={
-              !applePayEnabled
-                ? 'pending'
-                : eligibility.applepay
-                ? 'available'
-                : 'unavailable'
-            }
-            unavailableReason="Requires Safari on iOS/iPadOS/macOS"
-            pendingReason="Activates after meritsciences.com cuts over from Shopify to Render"
-          />
-          <EligibilityLine
-            label="Google Pay"
-            state={eligibility.googlepay ? 'available' : 'unavailable'}
-            unavailableReason="Requires Chrome with a saved card in Google Pay"
-          />
-          <EligibilityLine
-            label="PayPal"
-            state={eligibility.paypal === false ? 'unavailable' : 'available'}
-          />
-        </div>
-      )}
-
-      {!anyWalletAvailable && isResolved && (
-        <p className="text-xs text-ink-soft pt-2 leading-relaxed">
-          No express checkout options available on this browser — use <strong className="text-ink">Pay with card</strong> below.
-        </p>
-      )}
-    </div>
+    <PayPalButtons
+      fundingSource="paypal"
+      style={{ layout: 'vertical', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
+      createOrder={createOrder}
+      onApprove={onApprove}
+      onError={onError}
+      onClick={onClick}
+    />
   );
 }
 
-function EligibilityLine({
-  label,
-  state,
-  unavailableReason,
-  pendingReason,
+/* ─── Inline card fields — gated on ACDC account eligibility ───────────
+ *
+ * PayPal renders card-fields only when the MERCHANT ACCOUNT is approved for
+ * Advanced Card Processing. Without that entitlement the provider still
+ * mounts but the number/expiry/CVV iframes never populate — buyers got a
+ * "Visa, Mastercard, Amex, Discover" heading sitting above an empty box,
+ * with no way to pay by card and no error to explain it.
+ *
+ * So we ask the SDK directly (CardFields().isEligible()) and render nothing
+ * until it answers yes. Correct on any account, and it restores itself the
+ * moment ACDC is switched on — no code change, no redeploy.
+ */
+function CardSection({
+  createOrder, onApprove, onError, form, setForm, ruoRef, onValidationError,
 }: {
-  label: string;
-  state: 'available' | 'unavailable' | 'pending';
-  unavailableReason?: string;
-  pendingReason?: string;
+  createOrder: () => Promise<string>;
+  onApprove: (data: { orderID: string }) => Promise<void>;
+  onError: (err: any) => void;
+  form: CheckoutFormState;
+  setForm: (f: CheckoutFormState) => void;
+  ruoRef: React.RefObject<HTMLDivElement>;
+  onValidationError: (msg: string | null) => void;
 }) {
-  const icon =
-    state === 'available' ? '✓' : state === 'unavailable' ? '–' : '○';
-  const cls =
-    state === 'available'
-      ? 'text-emerald-700'
-      : state === 'unavailable'
-      ? 'text-ink-soft/60'
-      : 'text-amber-700';
-  const reason =
-    state === 'unavailable' ? unavailableReason : state === 'pending' ? pendingReason : null;
+  const [{ isResolved }] = usePayPalScriptReducer();
+  const [eligible, setEligible] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!isResolved) return;
+    const pp = (window as any).paypal;
+    if (!pp?.CardFields) { setEligible(false); return; }
+    try {
+      const cf = pp.CardFields({ createOrder, onApprove, onError });
+      setEligible(!!cf?.isEligible?.());
+    } catch (err) {
+      console.error('[paypal/card-fields] eligibility check failed', err);
+      setEligible(false);
+    }
+    // Eligibility is an ACCOUNT capability — it can't change between renders,
+    // so this runs once the script resolves and never re-checks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isResolved]);
+
+  if (eligible !== true) return null;
+
   return (
-    <div className="flex items-baseline gap-2 text-[11px]">
-      <span className={`font-bold tabular-nums ${cls}`}>{icon}</span>
-      <span className={`font-bold ${cls}`}>{label}</span>
-      {reason && <span className="text-ink-soft/70">— {reason}</span>}
-    </div>
+    <>
+      <div className="flex items-center gap-3 my-1">
+        <div className="flex-1 h-px bg-cobalt/15" />
+        <span className="text-[10px] tracking-[0.22em] uppercase font-bold text-ink-soft">
+          or
+        </span>
+        <div className="flex-1 h-px bg-cobalt/15" />
+      </div>
+
+      <PaymentSection
+        eyebrow="Pay with card"
+        title="Card payment"
+        description="Visa, Mastercard, Amex, Discover. We collect shipping + contact info here, then PayPal handles the card encryption."
+      >
+        <PayPalCardFieldsProvider
+          createOrder={createOrder}
+          onApprove={onApprove}
+          onError={onError}
+        >
+          <FullCardForm
+            form={form}
+            setForm={setForm}
+            ruoRef={ruoRef}
+            onValidationError={onValidationError}
+          />
+        </PayPalCardFieldsProvider>
+      </PaymentSection>
+    </>
   );
 }
 

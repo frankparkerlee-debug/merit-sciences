@@ -124,7 +124,7 @@ export function PayClient({
         </PayPalScriptProvider>
       </div>
       {!ruo && <p className="text-[11px] text-ink-muted text-center mt-2">Tick the box above to enable payment.</p>}
-      <p className="text-[11px] text-ink-muted text-center mt-4">Secure payment for <strong>${totalUsd}</strong> via PayPal — card, Apple Pay &amp; Google Pay accepted. We never see your card details.</p>
+      <p className="text-[11px] text-ink-muted text-center mt-4">Secure payment for <strong>${totalUsd}</strong> via PayPal — pay with your PayPal balance or any major debit/credit card as a guest. We never see your card details.</p>
     </div>
   );
 }
