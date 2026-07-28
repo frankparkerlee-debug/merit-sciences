@@ -554,7 +554,7 @@ export function CheckoutClient({
             <PaymentSection
               eyebrow="Secure payment"
               title="Pay with PayPal or card"
-              description="Checkout is handled by PayPal. Pay from your PayPal balance, or choose “Debit or Credit Card” to pay as a guest with Visa, Mastercard, Amex, or Discover — no PayPal account needed."
+              description="Payments are processed by PayPal. Pay from your PayPal balance, or choose Debit or Credit Card to check out as a guest with Visa, Mastercard, Amex, or Discover — no PayPal account needed."
             >
               <PayPalPayButton
                 createOrder={createOrderForWallet}
@@ -729,14 +729,31 @@ type PayHandlers = {
 
 function PayPalPayButton({ createOrder, onApprove, onError, onClick }: PayHandlers) {
   return (
-    <PayPalButtons
-      fundingSource="paypal"
-      style={{ layout: 'vertical', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
-      createOrder={createOrder}
-      onApprove={onApprove}
-      onError={onError}
-      onClick={onClick}
-    />
+    <div className="space-y-2.5">
+      <PayPalButtons
+        fundingSource="paypal"
+        style={{ layout: 'vertical', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={onError}
+        onClick={onClick}
+      />
+      {/* Standalone "Debit or Credit Card" button.
+       *
+       * This is the CARD funding source — PayPal's own hosted card form —
+       * NOT card-fields/ACDC. It needs no Advanced Card Processing
+       * entitlement (verified eligible on the current account while
+       * card-fields is not), so it gives buyers a real, visible card option
+       * today instead of burying it inside the PayPal button's flow. */}
+      <PayPalButtons
+        fundingSource="card"
+        style={{ layout: 'vertical', height: 48, color: 'black', shape: 'rect' }}
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={onError}
+        onClick={onClick}
+      />
+    </div>
   );
 }
 
