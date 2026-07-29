@@ -46,6 +46,22 @@ export default async function CheckoutPage() {
 
   return (
     <main className="bg-cream min-h-screen pb-24">
+      {/* Warm the PayPal connection while the page renders.
+       *
+       * The SDK script isn't requested until React hydrates and
+       * PayPalScriptProvider mounts — by then DNS + TCP + TLS to paypal.com
+       * still have to happen before a single byte arrives (measured TTFB
+       * 0.35–0.52s). Preconnecting overlaps that handshake with render, so
+       * the pay buttons paint materially sooner.
+       *
+       * Deliberately scoped to /checkout — NOT the root layout. A site-wide
+       * preconnect would open a connection to PayPal from every page on the
+       * domain, which is both wasted work and needless exposure. */}
+      <link rel="preconnect" href="https://www.paypal.com" />
+      <link rel="preconnect" href="https://www.paypalobjects.com" />
+      <link rel="dns-prefetch" href="https://www.paypal.com" />
+      <link rel="dns-prefetch" href="https://www.paypalobjects.com" />
+
       <div className="border-b border-cobalt/10 bg-white">
         <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
           <Link

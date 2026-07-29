@@ -728,32 +728,22 @@ type PayHandlers = {
 };
 
 function PayPalPayButton({ createOrder, onApprove, onError, onClick }: PayHandlers) {
+  // ONE <PayPalButtons> with no fundingSource — PayPal's vertical layout
+  // renders every eligible source (here: PayPal + "Debit or Credit Card",
+  // since paylater/credit/venmo are disabled) inside a SINGLE iframe.
+  //
+  // Rendering them as two pinned funding sources meant two separate zoid
+  // iframes, i.e. two round trips to paypal.com before the buyer saw a pay
+  // button. This halves that. The card option still needs no ACDC — it's the
+  // hosted card flow, which is eligible on this account.
   return (
-    <div className="space-y-2.5">
-      <PayPalButtons
-        fundingSource="paypal"
-        style={{ layout: 'vertical', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
-        createOrder={createOrder}
-        onApprove={onApprove}
-        onError={onError}
-        onClick={onClick}
-      />
-      {/* Standalone "Debit or Credit Card" button.
-       *
-       * This is the CARD funding source — PayPal's own hosted card form —
-       * NOT card-fields/ACDC. It needs no Advanced Card Processing
-       * entitlement (verified eligible on the current account while
-       * card-fields is not), so it gives buyers a real, visible card option
-       * today instead of burying it inside the PayPal button's flow. */}
-      <PayPalButtons
-        fundingSource="card"
-        style={{ layout: 'vertical', height: 48, color: 'black', shape: 'rect' }}
-        createOrder={createOrder}
-        onApprove={onApprove}
-        onError={onError}
-        onClick={onClick}
-      />
-    </div>
+    <PayPalButtons
+      style={{ layout: 'vertical', height: 48, color: 'gold', shape: 'rect', label: 'paypal' }}
+      createOrder={createOrder}
+      onApprove={onApprove}
+      onError={onError}
+      onClick={onClick}
+    />
   );
 }
 
