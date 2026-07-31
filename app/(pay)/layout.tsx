@@ -66,9 +66,13 @@ export default function PayRootLayout({ children }: { children: React.ReactNode 
       <body className="font-sans">
         <MarketingPixels />
         <PostHogProvider>
-          <div className="bg-steel text-white text-center py-2 text-[10.5px] font-semibold tracking-[0.12em] uppercase">
-            For Research Use Only · Not For Human or Veterinary Use · Not FDA-Approved
-          </div>
+          {/* No RUO banner on payment surfaces. The attestation that actually
+              carries legal weight sits at the point of purchase — the buyer
+              confirms it in the checkout body copy when placing the order —
+              and the eligibility clause is in the Terms. A category banner
+              across the top of the payment domain adds no protection the
+              attestation doesn't already provide, and reads as a category
+              signal on the one surface kept deliberately neutral. */}
           <main>{children}</main>
         </PostHogProvider>
       </body>
