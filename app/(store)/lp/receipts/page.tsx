@@ -1,5 +1,5 @@
 import { LpEmailCapture } from '@/components/lp/LpEmailCapture';
-import { Chromatogram } from '@/app/coa/Chromatogram';
+import { Chromatogram } from '@/app/(store)/coa/Chromatogram';
 
 export const metadata = {
   title: 'Merit Sciences · The Receipts',

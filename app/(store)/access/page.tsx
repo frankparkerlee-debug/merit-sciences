@@ -62,41 +62,27 @@ export default function AccessPage() {
       {/* Centered offer card */}
       <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-col items-center px-6 py-16 text-center">
         <p className="mb-6 font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-cobalt-soft">
-          American Made · Lab-Tested
+          American Made · Third-Party Tested
         </p>
 
         <h1
-          className="font-display font-black leading-[0.96] tracking-[-0.03em] text-cream"
-          style={{ fontSize: 'clamp(36px, 7.2vw, 70px)' }}
+          className="font-display font-black leading-[0.98] tracking-[-0.03em] text-cream"
+          style={{ fontSize: 'clamp(38px, 7.4vw, 68px)' }}
         >
-          You research everything.
+          Lab-tested compounds,
           <br />
-          Then you trusted{' '}
-          <span className="whitespace-nowrap text-cream/45 line-through decoration-cobalt-soft decoration-[5px]">
-            a group chat
-          </span>
-          .
-          <br />
-          <span className="text-cobalt-soft">Now it&apos;s lab-tested.</span>
+          <span className="text-cobalt-soft">shipped from Dallas.</span>
         </h1>
 
-        <p className="mt-7 max-w-lg text-lg leading-relaxed text-cream/70">
-          Merit is American made and independently tested —
-          shipped from Dallas in 48 hours. The opposite of a stranger and a Venmo.
+        <p className="mt-6 max-w-md text-lg leading-relaxed text-cream/70">
+          American-made and independently tested. Your first order is 20% off.
         </p>
 
-        <p className="mt-6 text-base font-semibold text-cream/90">
-          Confirm you’re a researcher to enter — add your email for 20% off.
-        </p>
-
-        <div className="mt-5">
+        <div className="mt-7">
           <EnterButton href="/catalog" label="Enter the catalog" code="WELCOME20" />
         </div>
 
-        <p className="mt-5 text-xs leading-relaxed text-cream/40">
-          American made · independently lab-tested · research use only. No spam —
-          add your email and your 20% code lands instantly.
-        </p>
+        <p className="mt-5 text-xs text-cream/40">Research use only.</p>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
-import { AffiliateSignupForm } from '@/app/affiliate/AffiliateSignupForm';
+import { AffiliateSignupForm } from '@/app/(store)/affiliate/AffiliateSignupForm';
 
 export const metadata = {
   title: 'Earn with Merit · Partner Program',

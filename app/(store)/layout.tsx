@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
-import './globals.css';
+import '../globals.css';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { CartDrawer } from '@/components/CartDrawer';
