@@ -56,7 +56,12 @@ export function isPaymentPath(pathname: string): boolean {
     pathname.startsWith('/checkout/') ||
     pathname.startsWith('/pay/') ||
     pathname === '/reorder' ||
-    pathname.startsWith('/reorder/')
+    pathname.startsWith('/reorder/') ||
+    // Policies must be reachable from checkout (card network requirement) and
+    // the rewritten root gives the domain an honest face instead of a 404.
+    pathname === '/legal' ||
+    pathname.startsWith('/legal/') ||
+    pathname === '/pay-home'
   );
 }
 

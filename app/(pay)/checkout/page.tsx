@@ -5,7 +5,7 @@ import { getProduct } from '@/lib/catalog';
 import { getStoreSettings } from '@/lib/store-settings';
 import { CheckoutClient } from './CheckoutClient';
 import { CheckoutBridge } from './CheckoutBridge';
-import { PaymentShellHeader } from '@/components/PaymentShell';
+import { PaymentShellHeader, PaymentShellFooter } from '@/components/PaymentShell';
 import { checkoutOrigin, isCheckoutHostname } from '@/lib/checkout-domain';
 
 /**
@@ -130,6 +130,7 @@ export default async function CheckoutPage({
           handoffToken={handoffToken}
         />
       </section>
+      <PaymentShellFooter />
     </main>
   );
 }

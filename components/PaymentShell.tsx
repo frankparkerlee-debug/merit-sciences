@@ -56,3 +56,38 @@ export function PaymentShellHeader() {
     </header>
   );
 }
+
+/**
+ * Policy + contact footer for payment surfaces.
+ *
+ * Card network rules require the checkout page to make refunds/returns,
+ * privacy, terms and delivery policies reachable, plus a contact method.
+ * Before this, the payment domain carried NO links at all — "Terms" was plain
+ * text and every policy path 404'd. That's a straightforward compliance gap a
+ * reviewer would catch immediately.
+ *
+ * Links point at /legal/* ON THIS DOMAIN, so nothing leads back to the store.
+ */
+export function PaymentShellFooter() {
+  const email =
+    process.env.CHECKOUT_SUPPORT_EMAIL?.trim() ||
+    process.env.SUPPORT_EMAIL?.trim() ||
+    'rx@meritsciences.com';
+
+  return (
+    <footer className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 mt-12 pt-6 border-t border-cobalt/10">
+      <nav className="flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-ink-soft mb-3">
+        <a href="/legal/terms" className="hover:text-ink">Terms of Service</a>
+        <a href="/legal/privacy" className="hover:text-ink">Privacy Policy</a>
+        <a href="/legal/returns" className="hover:text-ink">Refunds &amp; Returns</a>
+        <a href="/legal/shipping" className="hover:text-ink">Shipping</a>
+        <a href={`mailto:${email}`} className="hover:text-ink">Contact</a>
+      </nav>
+      <p className="text-[11px] text-ink-muted leading-relaxed pb-10">
+        US shipping only · All prices in USD · Card details are encrypted end-to-end by
+        PayPal and never seen or stored by us. Supplied for laboratory research use only —
+        not for human or veterinary use.
+      </p>
+    </footer>
+  );
+}

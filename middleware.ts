@@ -96,6 +96,14 @@ export async function middleware(req: NextRequest) {
   // bare domain) goes back to the storefront, so the checkout host never
   // exposes catalog content and can't be indexed as a duplicate store.
   if (isCheckoutHostname(reqHost)) {
+    // Root → the payment-domain landing page. Rewritten (not redirected) so
+    // the URL stays meritcheckout.com/ and nothing points elsewhere. It can't
+    // live at app/(pay)/page.tsx because the storefront homepage owns "/".
+    if (req.nextUrl.pathname === '/') {
+      const home = req.nextUrl.clone();
+      home.pathname = '/pay-home';
+      return NextResponse.rewrite(home);
+    }
     if (!isPaymentPath(req.nextUrl.pathname)) {
       // DEAD-END, not a redirect home.
       //

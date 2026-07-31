@@ -5,7 +5,7 @@ import { verifyPayToken } from '@/lib/pay-link';
 import { PayClient } from './PayClient';
 import { headers } from 'next/headers';
 import { isCheckoutHostname } from '@/lib/checkout-domain';
-import { PaymentShellHeader } from '@/components/PaymentShell';
+import { PaymentShellHeader, PaymentShellFooter } from '@/components/PaymentShell';
 
 /**
  * Customer pay page for an admin-created order — the self-serve alternative to
@@ -103,6 +103,7 @@ export default async function PayPage({ params }: Props) {
           </>
         )}
       </section>
+      <PaymentShellFooter />
     </main>
   );
 }
