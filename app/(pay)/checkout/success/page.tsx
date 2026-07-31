@@ -7,7 +7,7 @@ import { isCheckoutHostname, supportEmailFor } from '@/lib/checkout-domain';
 
 export const metadata = {
   title: 'Order confirmed',
-  description: 'Your Merit Sciences order has been received.',
+  description: 'Your Merit order has been received.',
   robots: { index: false, follow: false },
 };
 

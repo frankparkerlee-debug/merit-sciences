@@ -16,7 +16,7 @@ import { checkoutOrigin, isCheckoutHostname } from '@/lib/checkout-domain';
  * storefront — exactly the association this domain exists to remove.
  */
 export const metadata = {
-  // `absolute` bypasses the root title template ("%s · Merit Sciences").
+  // `absolute` bypasses the storefront title template.
   title: { absolute: 'Secure checkout' },
   description: null,
   robots: { index: false, follow: false, nocache: true },

@@ -122,7 +122,7 @@ function policies(email: string): Record<string, Policy> {
       sections: [
         {
           p: [
-            'These terms apply to orders placed through this checkout, which is operated by Merit Sciences. Placing an order means you accept them.',
+            'These terms apply to orders placed through this checkout, which is operated by Merit. Placing an order means you accept them.',
           ],
         },
         {
