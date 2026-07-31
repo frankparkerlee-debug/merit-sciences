@@ -5,6 +5,7 @@ import { getProduct } from '@/lib/catalog';
 import { getStoreSettings } from '@/lib/store-settings';
 import { CheckoutClient } from './CheckoutClient';
 import { CheckoutBridge } from './CheckoutBridge';
+import { PaymentShellHeader } from '@/components/PaymentShell';
 import { checkoutOrigin } from '@/lib/checkout-handoff';
 
 /**
@@ -15,10 +16,20 @@ import { checkoutOrigin } from '@/lib/checkout-handoff';
  * storefront — exactly the association this domain exists to remove.
  */
 export const metadata = {
-  title: 'Checkout — Merit Sciences',
+  // `absolute` bypasses the root title template ("%s · Merit Sciences").
+  title: { absolute: 'Secure checkout' },
+  description: null,
   robots: { index: false, follow: false, nocache: true },
   alternates: { canonical: null },
-  openGraph: { url: null, title: 'Secure checkout', description: null, images: null },
+  // Everything below is inherited storefront metadata that has no business on
+  // an anonymized payment page — the keywords tag in particular listed
+  // "sterile compounds, COA, HPLC verified, bacteriostatic water".
+  keywords: null,
+  authors: null,
+  creator: null,
+  publisher: null,
+  openGraph: null,
+  twitter: null,
 };
 
 export const dynamic = 'force-dynamic';
@@ -53,10 +64,6 @@ export default async function CheckoutPage({
   // Handoff token minted by the storefront — CheckoutClient redeems it on
   // mount to rebuild cart + affiliate cookie + promo on this origin.
   const handoffToken = typeof searchParams?.c === 'string' ? searchParams.c : null;
-
-  // When a separate checkout domain is configured, this page is served on it —
-  // so it must not link back to the storefront.
-  const splitCheckout = checkoutOrigin() !== null;
   // Referral auto-discount: if the visitor arrived via an affiliate link,
   // pre-fill that affiliate's code so the 10% applies automatically and
   // shows in the discount box (removable).
@@ -108,36 +115,7 @@ export default async function CheckoutPage({
       <link rel="dns-prefetch" href="https://www.paypal.com" />
       <link rel="dns-prefetch" href="https://www.paypalobjects.com" />
 
-      {/* On the split checkout domain the chrome carries NO outbound link to
-          the storefront — the wordmark is plain text and "Keep shopping" is
-          dropped. A live hyperlink here would hand every visitor (and anything
-          reading the page) a direct path back to the catalog, which is the one
-          association this domain exists to avoid. Buyers still have the back
-          button, and every order email links them home. */}
-      <div className="border-b border-cobalt/10 bg-white">
-        <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
-          {splitCheckout ? (
-            <span className="font-display font-black text-ink text-lg tracking-[-0.02em]">
-              Merit Sciences
-            </span>
-          ) : (
-            <Link
-              href="/"
-              className="font-display font-black text-ink text-lg tracking-[-0.02em]"
-            >
-              Merit Sciences
-            </Link>
-          )}
-          {!splitCheckout && (
-            <Link
-              href="/catalog"
-              className="text-xs font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition"
-            >
-              ← Keep shopping
-            </Link>
-          )}
-        </div>
-      </div>
+      <PaymentShellHeader />
 
       <section className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 pt-10">
         <p className="text-[10px] tracking-[0.28em] uppercase text-cobalt font-bold mb-3">
