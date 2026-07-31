@@ -44,16 +44,16 @@ export function CheckoutBridge() {
         });
         const data = await res.json();
         if (data?.url) {
-          // Navigate via an anchor with rel="noreferrer" rather than
-          // location.replace, so the browser sends NO Referer on the hop.
-          // Otherwise the checkout domain (and anything it loads) would
-          // receive the full storefront URL the buyer came from — the exact
-          // association this split exists to remove. Same tab, no opener.
-          const a = document.createElement('a');
-          a.href = data.url;
-          a.rel = 'noreferrer noopener';
-          document.body.appendChild(a);
-          a.click();
+          // REPLACE, not push. This page is a pass-through — leaving it in
+          // history means Back from the checkout domain lands here and gets
+          // auto-forwarded again, trapping the buyer with no way back to the
+          // store. replace() drops it, so Back returns them to the product
+          // page they came from.
+          //
+          // The Referer is suppressed by a `Referrer-Policy: no-referrer`
+          // response header set on this route in middleware.ts — so the
+          // checkout domain still learns nothing about where they came from.
+          window.location.replace(data.url);
           return;
         }
         setFailed(true);

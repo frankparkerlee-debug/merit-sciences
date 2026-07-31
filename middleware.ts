@@ -7,7 +7,7 @@ import {
   encodeAttrCookie,
   hasAttributionParams,
 } from '@/lib/attribution';
-import { isCheckoutHostname, isPaymentPath } from '@/lib/checkout-domain';
+import { isCheckoutHostname, isPaymentPath, checkoutOrigin } from '@/lib/checkout-domain';
 
 /**
  * Affiliate click tracking.
@@ -163,6 +163,19 @@ export async function middleware(req: NextRequest) {
     }
     return res;
   };
+
+  // ── Bridge page: suppress the Referer on the hop to the checkout domain ──
+  // /checkout on the STOREFRONT renders CheckoutBridge, which forwards to the
+  // checkout domain. Sending this header lets the bridge use
+  // location.replace() — which leaves NO history entry, so Back from checkout
+  // returns the buyer to the product page instead of hitting the bridge and
+  // being auto-forwarded again (a trap: they could never get back to the
+  // store) — while still leaking no referrer.
+  if (pathname === '/checkout' && checkoutOrigin() && !isCheckoutHostname(reqHost)) {
+    const res = NextResponse.next();
+    res.headers.set('Referrer-Policy', 'no-referrer');
+    return withAttr(res);
+  }
 
   const ref = searchParams.get('ref');
 
