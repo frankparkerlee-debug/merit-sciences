@@ -85,8 +85,7 @@ export function PaymentShellFooter() {
       </nav>
       <p className="text-[11px] text-ink-muted leading-relaxed pb-10">
         US shipping only · All prices in USD · Card details are encrypted end-to-end by
-        PayPal and never seen or stored by us. Supplied for laboratory research use only —
-        not for human or veterinary use.
+        PayPal and never seen or stored by us.
       </p>
     </footer>
   );
