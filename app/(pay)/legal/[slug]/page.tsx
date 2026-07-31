@@ -76,12 +76,32 @@ export default function PayLegalPage({ params }: { params: { slug: string } }) {
     notFound();
   }
 
-  // The shared policy source lists info@meritpeptides.com (the legacy contact,
-  // still live). That address is fine on the storefront, but on the PAYMENT
-  // domain it publishes a domain containing "peptides" onto the one surface a
-  // processor reviews — worse than any of the storefront references we removed.
-  // Swap it for the payment-domain contact here; the storefront keeps its own.
-  html = html.replace(/info@meritpeptides\.com/g, contactEmail());
+  // ── Domain de-linking for the payment surface ────────────────────────────
+  // The shared policy source is written for the storefront and names its
+  // domains. On the payment domain those are pure connectivity: they tell a
+  // reader (or a processor) exactly which store this checkout belongs to.
+  // Rewritten here at render time; the storefront copies keep the real
+  // references, which is where they belong and where they're accurate.
+  //
+  // NOTE: the ENTITY name ("Merit Sciences") is deliberately left intact.
+  // These are binding terms with a governing-law clause — they must identify
+  // who the buyer is actually contracting with. Stripping the counterparty
+  // would make them unenforceable, which is a worse compliance problem than
+  // the one we're solving.
+  html = html
+    .replace(/info@meritpeptides\.com/g, contactEmail())
+    .replace(
+      /operates the meritsciences\.com storefront and related research-compound services/g,
+      'operates this checkout and related research-compound services',
+    )
+    .replace(
+      /use of meritsciences\.com and the products and services we offer through it/g,
+      'use of this checkout and the products and services we offer through it',
+    )
+    .replace(/visitors to meritsciences\.com/g, 'visitors to the Services')
+    // Backstop for any remaining bare mention.
+    .replace(/meritsciences\.com/g, 'the Services')
+    .replace(/meritpeptides\.com/g, 'the Services');
 
   return (
     <>
