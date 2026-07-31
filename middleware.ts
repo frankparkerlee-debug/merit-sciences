@@ -7,6 +7,7 @@ import {
   encodeAttrCookie,
   hasAttributionParams,
 } from '@/lib/attribution';
+import { isCheckoutHostname, isPaymentPath } from '@/lib/checkout-domain';
 
 /**
  * Affiliate click tracking.
@@ -52,41 +53,12 @@ function isGateHost(host: string): boolean {
 }
 
 // ── Split checkout domain (PayPal requirement) ─────────────────────────────
-// PayPal requires checkout to run on a domain separate from the catalog. Set
-// CHECKOUT_ORIGIN in Render (e.g. https://meritcheckout.com) once its DNS is
-// live; leave it unset and everything below is inert, so this ships dark.
+// The checkout host is a PAYMENT SURFACE ONLY. Without this fence the new
+// domain serves the entire storefront — a second indexable copy of the store,
+// with the catalog sitting on the domain PayPal is watching.
 //
-// The checkout host is a PAYMENT SURFACE ONLY — it must never serve the
-// catalog, or we'd have two indexable copies of the store AND put compound
-// names back on the domain PayPal is watching. Every non-payment path is
-// 301'd home.
-const CHECKOUT_HOST = (() => {
-  const raw = process.env.CHECKOUT_ORIGIN?.trim();
-  if (!raw) return null;
-  try {
-    return new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`).host.toLowerCase();
-  } catch {
-    return null;
-  }
-})();
-
-function isCheckoutHost(host: string): boolean {
-  if (!CHECKOUT_HOST) return false;
-  const h = host.toLowerCase().split(':')[0];
-  const c = CHECKOUT_HOST.split(':')[0];
-  return h === c || h === `www.${c}`;
-}
-
-/** The only paths the checkout domain is allowed to serve. */
-function isPaymentPath(p: string): boolean {
-  return (
-    p === '/checkout' ||
-    p.startsWith('/checkout/') ||
-    p.startsWith('/pay/') ||
-    p === '/reorder' ||
-    p.startsWith('/reorder/')
-  );
-}
+// Armed by CHECKOUT_HOST (or derived from CHECKOUT_ORIGIN). See
+// lib/checkout-domain.ts for why those are two separate switches.
 
 // Paid-platform ad/link crawlers (Meta + ByteDance/TikTok). When reviewing an
 // ad they crawl its destination — and would otherwise reach the compound
@@ -123,7 +95,7 @@ export async function middleware(req: NextRequest) {
   // Anything else that lands here (crawler, stray link, someone typing the
   // bare domain) goes back to the storefront, so the checkout host never
   // exposes catalog content and can't be indexed as a duplicate store.
-  if (isCheckoutHost(reqHost)) {
+  if (isCheckoutHostname(reqHost)) {
     if (!isPaymentPath(req.nextUrl.pathname)) {
       const home = req.nextUrl.clone();
       home.protocol = 'https:';

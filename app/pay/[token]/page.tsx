@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { verifyPayToken } from '@/lib/pay-link';
 import { PayClient } from './PayClient';
-import { checkoutOrigin } from '@/lib/checkout-handoff';
+import { headers } from 'next/headers';
+import { isCheckoutHostname } from '@/lib/checkout-domain';
 import { PaymentShellHeader } from '@/components/PaymentShell';
 
 /**
@@ -127,7 +128,7 @@ function Done({ title, body }: { title: string; body: string }) {
       </div>
       <h1 className="font-display font-black text-ink text-2xl tracking-tight mb-3">{title}</h1>
       <p className="text-sm text-ink-soft leading-relaxed">{body}</p>
-      {checkoutOrigin() === null && (
+      {!isCheckoutHostname(headers().get('host')) && (
         <Link href="/catalog" className="inline-block mt-6 text-sm font-bold text-cobalt hover:underline">Browse the catalog →</Link>
       )}
     </div>

@@ -6,7 +6,7 @@ import { getStoreSettings } from '@/lib/store-settings';
 import { CheckoutClient } from './CheckoutClient';
 import { CheckoutBridge } from './CheckoutBridge';
 import { PaymentShellHeader } from '@/components/PaymentShell';
-import { checkoutOrigin } from '@/lib/checkout-handoff';
+import { checkoutOrigin, isCheckoutHostname } from '@/lib/checkout-domain';
 
 /**
  * Payment surfaces must never be indexed, and must never emit a canonical or
@@ -41,17 +41,11 @@ export const dynamic = 'force-dynamic';
  * affiliate + promo across and forwards.
  */
 function needsBridge(): boolean {
-  const origin = checkoutOrigin();
-  if (!origin) return false; // not split — behave exactly as before
-  let checkoutHost: string;
-  try {
-    checkoutHost = new URL(origin).host.toLowerCase().split(':')[0];
-  } catch {
-    return false;
-  }
-  const host = (headers().get('host') || '').toLowerCase().split(':')[0];
-  const onCheckoutDomain = host === checkoutHost || host === `www.${checkoutHost}`;
-  return !onCheckoutDomain;
+  // Split only matters once CHECKOUT_ORIGIN is set (that is the redirect
+  // switch). If this request already arrived on the checkout host, serve
+  // checkout rather than bouncing it.
+  if (!checkoutOrigin()) return false;
+  return !isCheckoutHostname(headers().get('host'));
 }
 
 export default async function CheckoutPage({

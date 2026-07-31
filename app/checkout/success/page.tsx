@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { money } from '@/lib/catalog';
 import { ClearCartOnMount } from './ClearCartOnMount';
-import { checkoutOrigin } from '@/lib/checkout-handoff';
+import { headers } from 'next/headers';
+import { isCheckoutHostname } from '@/lib/checkout-domain';
 
 export const metadata = {
   title: 'Order confirmed',
@@ -186,7 +187,7 @@ export default async function CheckoutSuccessPage({
         {/* No "continue shopping" link on the split checkout domain — it would
             be a direct outbound path to the catalog from the payment surface.
             The confirmation email carries the store link instead. */}
-        {checkoutOrigin() === null && (
+        {!isCheckoutHostname(headers().get('host')) && (
           <Link
             href="/catalog"
             className="block text-center text-white py-3.5 rounded-xl text-base font-bold shadow-md hover:opacity-95 transition"

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { isCheckoutHostname } from '@/lib/checkout-domain';
 import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Nav } from '@/components/Nav';
@@ -150,30 +151,9 @@ export const metadata: Metadata = {
   },
 };
 
-/**
- * True when this request is being served on the split checkout domain
- * (CHECKOUT_ORIGIN). Middleware already restricts that host to payment paths;
- * this additionally strips the storefront chrome so the payment domain carries
- * no navigation back to the catalog.
- */
-function onCheckoutDomain(): boolean {
-  const raw = process.env.CHECKOUT_ORIGIN?.trim();
-  if (!raw) return false;
-  let checkoutHost: string;
-  try {
-    checkoutHost = new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`).host
-      .toLowerCase()
-      .split(':')[0];
-  } catch {
-    return false;
-  }
-  const host = (headers().get('host') || '').toLowerCase().split(':')[0];
-  return host === checkoutHost || host === `www.${checkoutHost}`;
-}
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const settings = await getStoreSettings();
-  const bareChrome = onCheckoutDomain();
+  const bareChrome = isCheckoutHostname(headers().get('host'));
   return (
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable}`}>
       <body className="font-sans">

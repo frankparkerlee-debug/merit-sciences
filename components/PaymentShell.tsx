@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { checkoutOrigin } from '@/lib/checkout-handoff';
+import { headers } from 'next/headers';
+import { isCheckoutHostname } from '@/lib/checkout-domain';
 
 /**
  * Header for payment surfaces (/checkout, /pay, /checkout/success).
@@ -17,7 +18,9 @@ import { checkoutOrigin } from '@/lib/checkout-handoff';
  * changes for the current single-domain store.
  */
 export function PaymentShellHeader() {
-  const split = checkoutOrigin() !== null;
+  // Host-aware: suppress the link only when this request is actually being
+  // served on the checkout domain, so the storefront is never affected.
+  const split = isCheckoutHostname(headers().get('host'));
 
   const wordmark = (
     <span className="font-display font-black text-ink text-lg tracking-[-0.02em]">

@@ -25,6 +25,7 @@
 import 'server-only';
 import { randomBytes } from 'crypto';
 import { prisma } from './db';
+import { checkoutOrigin } from './checkout-domain';
 
 /** Handoffs are consumed seconds after issue; 30 min is generous slack. */
 const TTL_MS = 30 * 60 * 1000;
@@ -55,17 +56,10 @@ export type HandoffPayload = {
  * nothing until the env var is set, so it can be deployed and verified before
  * the domain exists — and rolled back by clearing one variable.
  */
-export function checkoutOrigin(): string | null {
-  const raw = process.env.CHECKOUT_ORIGIN?.trim();
-  if (!raw) return null;
-  const withScheme = /^https?:\/\//.test(raw) ? raw : `https://${raw}`;
-  return withScheme.replace(/\/$/, '');
-}
-
-/** True when checkout lives on a different origin than the storefront. */
-export function isSplitCheckout(): boolean {
-  return checkoutOrigin() !== null;
-}
+// Domain config lives in lib/checkout-domain.ts (no prisma / no `server-only`)
+// so the edge middleware can import it too. Re-exported here for callers that
+// already depend on this module.
+export { checkoutOrigin, checkoutHost, isCheckoutHostname, isSplitCheckout } from './checkout-domain';
 
 function newToken(): string {
   return randomBytes(24).toString('base64url'); // 32 chars, URL-safe
