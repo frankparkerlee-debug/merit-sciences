@@ -47,6 +47,16 @@ const POLICIES: Record<string, { file: string; title: string; subtitle: string; 
   },
 };
 
+/** Contact shown on payment surfaces. Compliance requires a reachable
+ *  address; set CHECKOUT_SUPPORT_EMAIL to one on the checkout domain. */
+function contactEmail(): string {
+  return (
+    process.env.CHECKOUT_SUPPORT_EMAIL?.trim() ||
+    process.env.SUPPORT_EMAIL?.trim() ||
+    'rx@meritsciences.com'
+  );
+}
+
 export function generateStaticParams() {
   return Object.keys(POLICIES).map((slug) => ({ slug }));
 }
@@ -65,6 +75,13 @@ export default function PayLegalPage({ params }: { params: { slug: string } }) {
   } catch {
     notFound();
   }
+
+  // The shared policy source lists info@meritpeptides.com (the legacy contact,
+  // still live). That address is fine on the storefront, but on the PAYMENT
+  // domain it publishes a domain containing "peptides" onto the one surface a
+  // processor reviews — worse than any of the storefront references we removed.
+  // Swap it for the payment-domain contact here; the storefront keeps its own.
+  html = html.replace(/info@meritpeptides\.com/g, contactEmail());
 
   return (
     <>

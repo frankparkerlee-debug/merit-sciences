@@ -551,7 +551,7 @@ export default async function ProductPage({ params }: Props) {
             </div>
             <div className="bg-ink/80 px-3 sm:px-5 py-3 sm:py-4 text-center">
               <span className="font-bold text-white/85 block leading-none">Compounding Rx</span>
-              <span className="text-[9px] text-white/40 tracking-[0.12em] uppercase font-bold">503A</span>
+              <span className="text-[9px] text-white/40 tracking-[0.12em] uppercase font-bold">Rx required</span>
             </div>
 
             {/* Rows */}

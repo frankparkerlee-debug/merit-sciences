@@ -9,13 +9,13 @@
     "title": "Returns & refunds",
     "updated_at": "2026-06-17",
     "source": "merit-authored",
-    "note": "Replaces generic e-comm boilerplate. Specific to sealed sterile vials shipped from a 503B facility — no general change-of-mind returns, 7-day claim window for damaged/wrong/lost/defective."
+    "note": "Replaces generic e-comm boilerplate. Specific to sealed sterile vials shipped from an ISO-certified US facility — no general change-of-mind returns, 7-day claim window for damaged/wrong/lost/defective."
   },
   "shipping": {
     "title": "Shipping",
     "updated_at": "2026-06-17",
     "source": "merit-authored",
-    "note": "US-only, ships from Dallas 503B partner facility, ambient lyophilized stable, USPS/UPS, $100 free-shipping threshold."
+    "note": "US-only, ships from the Dallas ISO-certified US facility, ambient lyophilized stable, USPS/UPS, $100 free-shipping threshold."
   },
   "terms": {
     "title": "Terms of service",

@@ -68,7 +68,7 @@ export default function ProtocolPage() {
               Now you can.
             </h1>
             <p className="text-cream/60 text-base leading-relaxed mb-1.5 max-w-md">
-              Licensed 503A pharmacy. Third-party verified, every lot.
+              ISO-certified US facility. Third-party verified, every lot.
             </p>
             <p className="text-cream/35 text-sm leading-relaxed max-w-md">
               No appointment. Ships from Dallas in 48 hours.
@@ -80,7 +80,7 @@ export default function ProtocolPage() {
           </div>
 
           <p className="text-cream/18 text-[10px] mt-5 leading-relaxed max-w-md">
-            Research use only. 503A licensed compounding pharmacy. Active APIs sourced from a 503B registered outsourcing facility.
+            Research use only. Compounds sourced and handled in an ISO-certified US facility under licensed pharmacist oversight.
           </p>
 
         </div>
@@ -88,7 +88,7 @@ export default function ProtocolPage() {
 
       <div className="relative z-10 px-6 py-5 border-t border-white/5">
         <p className="max-w-2xl text-[10px] text-cream/12 leading-relaxed">
-          Merit Sciences research compounds are for research use only. Not for human or veterinary use. Not evaluated or approved by the FDA. Available to qualified researchers and licensed practitioners only. By proceeding, you confirm eligibility. Merit Sciences is a licensed 503A compounding pharmacy. Active pharmaceutical ingredients sourced from a 503B licensed outsourcing facility.
+          Merit Sciences research compounds are for research use only. Not for human or veterinary use. Not evaluated or approved by the FDA. Available to qualified researchers and licensed practitioners only. By proceeding, you confirm eligibility. Merit Sciences compounds are sourced and handled in an ISO-certified US facility under licensed pharmacist oversight.
         </p>
       </div>
 
