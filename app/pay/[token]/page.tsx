@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { verifyPayToken } from '@/lib/pay-link';
 import { PayClient } from './PayClient';
+import { checkoutOrigin } from '@/lib/checkout-handoff';
 
 /**
  * Customer pay page for an admin-created order — the self-serve alternative to
@@ -13,7 +14,11 @@ import { PayClient } from './PayClient';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Complete your order — Merit Sciences',
-  robots: { index: false, follow: false },
+  robots: { index: false, follow: false, nocache: true },
+  // Suppress the layout's self-referential canonical + og:url — both resolve
+  // to meritsciences.com and would link the payment domain back to the store.
+  alternates: { canonical: null },
+  openGraph: { url: null, title: 'Complete your order', description: null, images: null },
 };
 
 type Props = { params: { token: string } };
@@ -41,9 +46,17 @@ export default async function PayPage({ params }: Props) {
   return (
     <main className="bg-cream min-h-screen">
       <section className="max-w-[560px] mx-auto px-5 sm:px-6 pt-12 pb-16">
-        <Link href="/" className="inline-block mb-8">
-          <span className="font-display font-black text-ink text-lg tracking-[-0.02em]">Merit Sciences</span>
-        </Link>
+        {/* Wordmark is plain text on the split checkout domain — no outbound
+            path from a payment surface to the catalog. */}
+        {checkoutOrigin() === null ? (
+          <Link href="/" className="inline-block mb-8">
+            <span className="font-display font-black text-ink text-lg tracking-[-0.02em]">Merit Sciences</span>
+          </Link>
+        ) : (
+          <span className="inline-block mb-8 font-display font-black text-ink text-lg tracking-[-0.02em]">
+            Merit Sciences
+          </span>
+        )}
 
         {paid ? (
           <Done title="This order is paid." body="Thanks — your payment is in and we're on it. A receipt is in your inbox; reply to it any time with questions." />
@@ -116,7 +129,9 @@ function Done({ title, body }: { title: string; body: string }) {
       </div>
       <h1 className="font-display font-black text-ink text-2xl tracking-tight mb-3">{title}</h1>
       <p className="text-sm text-ink-soft leading-relaxed">{body}</p>
-      <Link href="/catalog" className="inline-block mt-6 text-sm font-bold text-cobalt hover:underline">Browse the catalog →</Link>
+      {checkoutOrigin() === null && (
+        <Link href="/catalog" className="inline-block mt-6 text-sm font-bold text-cobalt hover:underline">Browse the catalog →</Link>
+      )}
     </div>
   );
 }

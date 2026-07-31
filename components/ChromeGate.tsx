@@ -16,6 +16,11 @@ import { usePathname } from 'next/navigation';
  */
 const BARE_PREFIXES = ['/access', '/lp'];
 
+// NOTE: the split checkout domain is handled SERVER-side in app/layout.tsx,
+// not here. Gating chrome in this client component only hides it visually —
+// Nav/Footer markup would still be serialized into the RSC payload, so the
+// catalog links would remain in the page source. The layout skips rendering
+// them entirely on that host instead.
 export function ChromeGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
   const isBare = BARE_PREFIXES.some(

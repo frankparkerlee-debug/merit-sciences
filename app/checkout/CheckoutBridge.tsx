@@ -44,7 +44,16 @@ export function CheckoutBridge() {
         });
         const data = await res.json();
         if (data?.url) {
-          window.location.replace(data.url);
+          // Navigate via an anchor with rel="noreferrer" rather than
+          // location.replace, so the browser sends NO Referer on the hop.
+          // Otherwise the checkout domain (and anything it loads) would
+          // receive the full storefront URL the buyer came from — the exact
+          // association this split exists to remove. Same tab, no opener.
+          const a = document.createElement('a');
+          a.href = data.url;
+          a.rel = 'noreferrer noopener';
+          document.body.appendChild(a);
+          a.click();
           return;
         }
         setFailed(true);

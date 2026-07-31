@@ -7,8 +7,18 @@ import { CheckoutClient } from './CheckoutClient';
 import { CheckoutBridge } from './CheckoutBridge';
 import { checkoutOrigin } from '@/lib/checkout-handoff';
 
+/**
+ * Payment surfaces must never be indexed, and must never emit a canonical or
+ * og:url pointing at meritsciences.com. The root layout sets a self-referential
+ * canonical against metadataBase (meritsciences.com), which on the split
+ * checkout domain would publish a machine-readable link straight back to the
+ * storefront — exactly the association this domain exists to remove.
+ */
 export const metadata = {
   title: 'Checkout — Merit Sciences',
+  robots: { index: false, follow: false, nocache: true },
+  alternates: { canonical: null },
+  openGraph: { url: null, title: 'Secure checkout', description: null, images: null },
 };
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +53,10 @@ export default async function CheckoutPage({
   // Handoff token minted by the storefront — CheckoutClient redeems it on
   // mount to rebuild cart + affiliate cookie + promo on this origin.
   const handoffToken = typeof searchParams?.c === 'string' ? searchParams.c : null;
+
+  // When a separate checkout domain is configured, this page is served on it —
+  // so it must not link back to the storefront.
+  const splitCheckout = checkoutOrigin() !== null;
   // Referral auto-discount: if the visitor arrived via an affiliate link,
   // pre-fill that affiliate's code so the 10% applies automatically and
   // shows in the discount box (removable).
@@ -94,20 +108,34 @@ export default async function CheckoutPage({
       <link rel="dns-prefetch" href="https://www.paypal.com" />
       <link rel="dns-prefetch" href="https://www.paypalobjects.com" />
 
+      {/* On the split checkout domain the chrome carries NO outbound link to
+          the storefront — the wordmark is plain text and "Keep shopping" is
+          dropped. A live hyperlink here would hand every visitor (and anything
+          reading the page) a direct path back to the catalog, which is the one
+          association this domain exists to avoid. Buyers still have the back
+          button, and every order email links them home. */}
       <div className="border-b border-cobalt/10 bg-white">
         <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
-          <Link
-            href="/"
-            className="font-display font-black text-ink text-lg tracking-[-0.02em]"
-          >
-            Merit Sciences
-          </Link>
-          <Link
-            href="/catalog"
-            className="text-xs font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition"
-          >
-            ← Keep shopping
-          </Link>
+          {splitCheckout ? (
+            <span className="font-display font-black text-ink text-lg tracking-[-0.02em]">
+              Merit Sciences
+            </span>
+          ) : (
+            <Link
+              href="/"
+              className="font-display font-black text-ink text-lg tracking-[-0.02em]"
+            >
+              Merit Sciences
+            </Link>
+          )}
+          {!splitCheckout && (
+            <Link
+              href="/catalog"
+              className="text-xs font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition"
+            >
+              ← Keep shopping
+            </Link>
+          )}
         </div>
       </div>
 

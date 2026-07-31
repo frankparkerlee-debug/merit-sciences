@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Nav } from '@/components/Nav';
@@ -149,13 +150,40 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * True when this request is being served on the split checkout domain
+ * (CHECKOUT_ORIGIN). Middleware already restricts that host to payment paths;
+ * this additionally strips the storefront chrome so the payment domain carries
+ * no navigation back to the catalog.
+ */
+function onCheckoutDomain(): boolean {
+  const raw = process.env.CHECKOUT_ORIGIN?.trim();
+  if (!raw) return false;
+  let checkoutHost: string;
+  try {
+    checkoutHost = new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`).host
+      .toLowerCase()
+      .split(':')[0];
+  } catch {
+    return false;
+  }
+  const host = (headers().get('host') || '').toLowerCase().split(':')[0];
+  return host === checkoutHost || host === `www.${checkoutHost}`;
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const settings = await getStoreSettings();
+  const bareChrome = onCheckoutDomain();
   return (
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable}`}>
       <body className="font-sans">
-        {/* Site-wide Organization + WebSite JSON-LD (entity + sitelinks search). */}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_SCHEMA) }} />
+        {/* Site-wide Organization + WebSite JSON-LD (entity + sitelinks search).
+            Suppressed on the split checkout domain: it embeds meritsciences.com
+            URLs, which would be a live machine-readable link from the payment
+            domain straight back to the store. */}
+        {!bareChrome && (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_SCHEMA) }} />
+        )}
         {/* Meta + TikTok ad pixels. Env-gated — no-op until IDs are set. */}
         <MarketingPixels />
         {/* Email-link code capture: ?code=X on any page → localStorage →
@@ -170,11 +198,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {/* ChromeGate strips Nav/Footer/cart/popup on clean-room ad
               landing routes (/access) so paid-ad crawlers see no catalog
               links. The RUO banner above and <main> below always render. */}
-          <ChromeGate>
-            <Nav />
-            <WelcomeOfferBar />
-          </ChromeGate>
+          {/* On the split checkout domain the storefront chrome is skipped
+              SERVER-side — not hidden client-side — so Nav/Footer markup and
+              their /catalog links never enter the RSC payload either. */}
+          {!bareChrome && (
+            <ChromeGate>
+              <Nav />
+              <WelcomeOfferBar />
+            </ChromeGate>
+          )}
           <main>{children}</main>
+          {!bareChrome && (
           <ChromeGate>
             <Footer />
             {/* Global slide-in cart drawer — opens whenever the cart store's
@@ -184,6 +218,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 on transactional/account routes + frequency-caps via localStorage. */}
             <SubscribePopup />
           </ChromeGate>
+          )}
         </PostHogProvider>
       </body>
     </html>
