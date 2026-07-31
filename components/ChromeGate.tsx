@@ -14,13 +14,19 @@ import { usePathname } from 'next/navigation';
  * The global "Research Use Only" banner and <main> stay (they live outside
  * this gate in the root layout). Keep BARE_PREFIXES tight — only true ad LPs.
  */
-const BARE_PREFIXES = ['/access', '/lp'];
+// Payment surfaces get no storefront chrome ON ANY DOMAIN. Two reasons:
+//   1. On the split checkout domain, Nav/Footer would put live /catalog links
+//      on the payment host — the one association it exists to remove.
+//   2. On the storefront it's simply better checkout UX: fewer exits from the
+//      page where the buyer is deciding to pay.
+//
+// Deliberately path-based (client) rather than host-based (server): reading
+// the request host requires headers() in the ROOT layout, which forces dynamic
+// rendering across the whole app and breaks the 36 statically-exported
+// /library pages that declare `dynamic = 'error'`. Payment pages are
+// force-dynamic and read the host directly where they need it.
+const BARE_PREFIXES = ['/access', '/lp', '/checkout', '/pay', '/reorder'];
 
-// NOTE: the split checkout domain is handled SERVER-side in app/layout.tsx,
-// not here. Gating chrome in this client component only hides it visually —
-// Nav/Footer markup would still be serialized into the RSC payload, so the
-// catalog links would remain in the page source. The layout skips rendering
-// them entirely on that host instead.
 export function ChromeGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
   const isBare = BARE_PREFIXES.some(

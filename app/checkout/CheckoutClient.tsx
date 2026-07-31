@@ -545,7 +545,7 @@ export function CheckoutClient({
       return;
     }
     failCheckout(
-      'We couldn’t confirm whether your payment completed. Please don’t pay again yet — check your inbox for a Merit receipt first. If nothing arrives within a few minutes, try again or email rx@meritsciences.com and we’ll verify instantly.',
+      'We couldn’t confirm whether your payment completed. Please don’t pay again yet — check your inbox for a Merit receipt first. If nothing arrives within a few minutes, try again or reply to your order confirmation email and we’ll verify instantly.',
     );
   }
 
@@ -564,7 +564,7 @@ export function CheckoutClient({
       return;
     }
     failCheckout(
-      'Something interrupted the payment window. If you completed payment, don’t pay again — check your inbox for a Merit receipt, or email rx@meritsciences.com and we’ll verify. Otherwise, you can simply try again.',
+      'Something interrupted the payment window. If you completed payment, don’t pay again — check your inbox for a Merit receipt, or reply to it and we’ll verify. Otherwise, you can simply try again.',
     );
   }
 

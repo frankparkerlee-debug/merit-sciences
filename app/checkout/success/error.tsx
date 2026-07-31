@@ -75,12 +75,7 @@ export default function SuccessError({ error }: { error: Error & { digest?: stri
           </Link>
           <p className="text-center text-[12px] text-ink-muted mt-6">
             Questions? Email{' '}
-            <a
-              href="mailto:rx@meritsciences.com"
-              className="text-cobalt font-bold underline-offset-2 hover:underline"
-            >
-              rx@meritsciences.com
-            </a>
+            your order confirmation email
           </p>
         </div>
       </section>

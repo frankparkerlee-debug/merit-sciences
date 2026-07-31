@@ -64,3 +64,19 @@ export function isPaymentPath(pathname: string): boolean {
 export function isSplitCheckout(): boolean {
   return checkoutOrigin() !== null;
 }
+
+/**
+ * Support address to show on payment surfaces.
+ *
+ * On the checkout domain the storefront address (rx@meritsciences.com) would
+ * name the store on a page that must not reference it, so it's suppressed —
+ * callers fall back to "reply to your order confirmation email", which works
+ * without publishing any domain. Set CHECKOUT_SUPPORT_EMAIL to show a real
+ * address there once one exists on the checkout domain.
+ */
+export function supportEmailFor(host: string | null | undefined): string | null {
+  if (!isCheckoutHostname(host)) {
+    return process.env.SUPPORT_EMAIL?.trim() || 'rx@meritsciences.com';
+  }
+  return process.env.CHECKOUT_SUPPORT_EMAIL?.trim() || null;
+}

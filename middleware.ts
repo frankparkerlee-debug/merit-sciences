@@ -97,11 +97,21 @@ export async function middleware(req: NextRequest) {
   // exposes catalog content and can't be indexed as a duplicate store.
   if (isCheckoutHostname(reqHost)) {
     if (!isPaymentPath(req.nextUrl.pathname)) {
-      const home = req.nextUrl.clone();
-      home.protocol = 'https:';
-      home.host = 'meritsciences.com';
-      home.port = '';
-      return NextResponse.redirect(home, 301);
+      // DEAD-END, not a redirect home.
+      //
+      // This used to 301 to meritsciences.com, which defeated the point: a
+      // crawler (or anyone) hitting any path here was handed the storefront
+      // address, making the association machine-discoverable from the payment
+      // domain itself. The checkout host must terminate — it never names or
+      // points at the store.
+      return new NextResponse('Not found', {
+        status: 404,
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          'x-robots-tag': 'noindex, nofollow, noarchive',
+          'referrer-policy': 'no-referrer',
+        },
+      });
     }
     // Payment path — serve it, and skip the affiliate/attribution cookie
     // logic below: those cookies belong to the storefront origin and are
@@ -209,5 +219,14 @@ export const config = {
   // /api/* routes (the track-click route would otherwise self-loop).
   matcher: [
     '/((?!api|_next/static|_next/image|favicon|robots\\.txt|sitemap\\.xml|.*\\..*).*)',
+    // Explicitly matched so the checkout-domain fence can 404 them. They are
+    // excluded from the pattern above (it skips any dotted path), which meant
+    // meritcheckout.com/sitemap.xml served the FULL storefront sitemap —
+    // every product URL — straight off the payment domain. Same for
+    // robots.txt and llms.txt, which enumerate the library.
+    // On the storefront these fall through untouched.
+    '/sitemap.xml',
+    '/robots.txt',
+    '/llms.txt',
   ],
 };

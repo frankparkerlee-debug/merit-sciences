@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { money } from '@/lib/catalog';
 import { ClearCartOnMount } from './ClearCartOnMount';
 import { headers } from 'next/headers';
-import { isCheckoutHostname } from '@/lib/checkout-domain';
+import { isCheckoutHostname, supportEmailFor } from '@/lib/checkout-domain';
 
 export const metadata = {
   title: 'Order confirmed',
@@ -201,10 +201,19 @@ export default async function CheckoutSuccessPage({
         )}
 
         <p className="text-center text-[12px] text-ink-muted mt-6">
-          Questions? Email{' '}
-          <a href="mailto:rx@meritsciences.com" className="text-cobalt font-bold underline-offset-2 hover:underline">
-            rx@meritsciences.com
-          </a>
+          {supportEmailFor(headers().get('host')) ? (
+            <>
+              Questions? Email{' '}
+              <a
+                href={`mailto:${supportEmailFor(headers().get('host'))}`}
+                className="text-cobalt font-bold underline-offset-2 hover:underline"
+              >
+                {supportEmailFor(headers().get('host'))}
+              </a>
+            </>
+          ) : (
+            <>Questions? Just reply to your order confirmation email.</>
+          )}
         </p>
       </section>
     </main>
