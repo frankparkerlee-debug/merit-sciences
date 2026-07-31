@@ -82,10 +82,6 @@ export default function PayHomePage() {
           </p>
         </div>
 
-        <p className="mt-8 text-[12px] text-ink-muted leading-relaxed">
-          Products are supplied for laboratory research use only — not for human or
-          veterinary use, and not for diagnostic or therapeutic use.
-        </p>
       </section>
     </>
   );
