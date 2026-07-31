@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { preCreateOrder } from '@/lib/orders';
 import { getPractitionerSession } from '@/lib/practitioner-session';
 import { ATTR_COOKIE, decodeAttrCookie } from '@/lib/attribution';
+import { checkoutOrigin } from '@/lib/checkout-handoff';
 
 export const runtime = 'nodejs';
 
@@ -288,6 +289,9 @@ export async function POST(req: Request) {
         ? `${forwardedProto}://${forwardedHost}`
         : `${url.protocol}//${url.host}`);
   const origin = /^https?:\/\//.test(rawOrigin) ? rawOrigin : `https://${rawOrigin}`;
+  // Where checkout actually lives. Falls back to `origin` when the split
+  // domain isn't configured, i.e. unchanged behaviour.
+  const checkoutBase = checkoutOrigin() ?? origin;
 
   // ── If card-flow buyer info supplied, validate it ───────────────
   let shippingName: string | undefined;
@@ -377,8 +381,12 @@ export async function POST(req: Request) {
       })),
       customId,
       description: 'Merit',
-      returnUrl: `${origin}/checkout/success`,
-      cancelUrl: `${origin}/checkout/cancel`,
+      // Return/cancel must land on the origin that OWNS checkout. When
+      // CHECKOUT_ORIGIN is set (PayPal's split-domain requirement) that's the
+      // checkout domain — sending the buyer back to the storefront would drop
+      // them on the bridge and bounce them through a second handoff.
+      returnUrl: `${checkoutBase}/checkout/success`,
+      cancelUrl: `${checkoutBase}/checkout/cancel`,
       // Card flow only — wallet flows leave these undefined
       shippingName,
       shippingAddress: shippingAddress as any,

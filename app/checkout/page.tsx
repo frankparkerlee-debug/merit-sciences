@@ -1,8 +1,11 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { getActiveReferral } from '@/lib/referral';
 import { getProduct } from '@/lib/catalog';
 import { getStoreSettings } from '@/lib/store-settings';
 import { CheckoutClient } from './CheckoutClient';
+import { CheckoutBridge } from './CheckoutBridge';
+import { checkoutOrigin } from '@/lib/checkout-handoff';
 
 export const metadata = {
   title: 'Checkout — Merit Sciences',
@@ -10,7 +13,36 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function CheckoutPage() {
+/**
+ * True when CHECKOUT_ORIGIN is set AND this request did NOT arrive on it —
+ * i.e. a buyer hit /checkout on the storefront while checkout lives on the
+ * separate PayPal-required domain. They get the bridge, which carries cart +
+ * affiliate + promo across and forwards.
+ */
+function needsBridge(): boolean {
+  const origin = checkoutOrigin();
+  if (!origin) return false; // not split — behave exactly as before
+  let checkoutHost: string;
+  try {
+    checkoutHost = new URL(origin).host.toLowerCase().split(':')[0];
+  } catch {
+    return false;
+  }
+  const host = (headers().get('host') || '').toLowerCase().split(':')[0];
+  const onCheckoutDomain = host === checkoutHost || host === `www.${checkoutHost}`;
+  return !onCheckoutDomain;
+}
+
+export default async function CheckoutPage({
+  searchParams,
+}: {
+  searchParams?: { c?: string };
+}) {
+  if (needsBridge()) return <CheckoutBridge />;
+
+  // Handoff token minted by the storefront — CheckoutClient redeems it on
+  // mount to rebuild cart + affiliate cookie + promo on this origin.
+  const handoffToken = typeof searchParams?.c === 'string' ? searchParams.c : null;
   // Referral auto-discount: if the visitor arrived via an affiliate link,
   // pre-fill that affiliate's code so the 10% applies automatically and
   // shows in the discount box (removable).
@@ -95,6 +127,7 @@ export default async function CheckoutPage() {
           bacWaterProduct={bacWaterProduct}
           freeShippingThresholdCents={settings.freeShippingThreshold}
           paypalClientId={paypalClientId}
+          handoffToken={handoffToken}
         />
       </section>
     </main>

@@ -51,6 +51,43 @@ function isGateHost(host: string): boolean {
   return GATE_HOSTS.some((g) => h === g || h === `www.${g}`);
 }
 
+// ── Split checkout domain (PayPal requirement) ─────────────────────────────
+// PayPal requires checkout to run on a domain separate from the catalog. Set
+// CHECKOUT_ORIGIN in Render (e.g. https://meritcheckout.com) once its DNS is
+// live; leave it unset and everything below is inert, so this ships dark.
+//
+// The checkout host is a PAYMENT SURFACE ONLY — it must never serve the
+// catalog, or we'd have two indexable copies of the store AND put compound
+// names back on the domain PayPal is watching. Every non-payment path is
+// 301'd home.
+const CHECKOUT_HOST = (() => {
+  const raw = process.env.CHECKOUT_ORIGIN?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`).host.toLowerCase();
+  } catch {
+    return null;
+  }
+})();
+
+function isCheckoutHost(host: string): boolean {
+  if (!CHECKOUT_HOST) return false;
+  const h = host.toLowerCase().split(':')[0];
+  const c = CHECKOUT_HOST.split(':')[0];
+  return h === c || h === `www.${c}`;
+}
+
+/** The only paths the checkout domain is allowed to serve. */
+function isPaymentPath(p: string): boolean {
+  return (
+    p === '/checkout' ||
+    p.startsWith('/checkout/') ||
+    p.startsWith('/pay/') ||
+    p === '/reorder' ||
+    p.startsWith('/reorder/')
+  );
+}
+
 // Paid-platform ad/link crawlers (Meta + ByteDance/TikTok). When reviewing an
 // ad they crawl its destination — and would otherwise reach the compound
 // catalog on meritsciences.com and reject the ad under the drug policy. We
@@ -80,6 +117,24 @@ export async function middleware(req: NextRequest) {
     canonical.host = 'meritsciences.com';
     canonical.port = '';
     return NextResponse.redirect(canonical, 301);
+  }
+
+  // ── Split checkout domain: payment paths only ──────────────────────────
+  // Anything else that lands here (crawler, stray link, someone typing the
+  // bare domain) goes back to the storefront, so the checkout host never
+  // exposes catalog content and can't be indexed as a duplicate store.
+  if (isCheckoutHost(reqHost)) {
+    if (!isPaymentPath(req.nextUrl.pathname)) {
+      const home = req.nextUrl.clone();
+      home.protocol = 'https:';
+      home.host = 'meritsciences.com';
+      home.port = '';
+      return NextResponse.redirect(home, 301);
+    }
+    // Payment path — serve it, and skip the affiliate/attribution cookie
+    // logic below: those cookies belong to the storefront origin and are
+    // carried across by the handoff row instead (lib/checkout-handoff.ts).
+    return NextResponse.next();
   }
 
   // ── Clean-room gate domain (e.g. trymerit.co) ──────────────────────────

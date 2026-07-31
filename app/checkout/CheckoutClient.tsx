@@ -55,6 +55,7 @@ export function CheckoutClient({
   bacWaterProduct = null,
   freeShippingThresholdCents = 35_000,
   paypalClientId = '',
+  handoffToken = null,
 }: {
   autoReferralCode?: string | null;
   bacWaterProduct?: { handle: string; title: string; unitCents: number; imageUrl?: string } | null;
@@ -66,6 +67,12 @@ export function CheckoutClient({
    * back to the build-time NEXT_PUBLIC_PAYPAL_CLIENT_ID when not supplied.
    */
   paypalClientId?: string;
+  /**
+   * Handoff token (?c=) minted by the storefront when checkout runs on the
+   * separate PayPal-required domain. Redeemed on mount to rebuild the cart,
+   * the affiliate/attribution cookies, and the promo code on THIS origin.
+   */
+  handoffToken?: string | null;
 }) {
   const router = useRouter();
   const lines = useCart((s) => s.lines);
@@ -205,14 +212,74 @@ export function CheckoutClient({
   // 10% shows AND the code is visible — the buyer can still remove it.
   const autoAppliedRef = useRef(false);
 
+  // ── Cross-domain handoff redemption ──────────────────────────────────────
+  // On the split checkout domain the buyer arrives with NOTHING: cart, promo
+  // and the affiliate/attribution cookies are all scoped to the storefront
+  // origin. Redeem the token to rebuild them here. The claim endpoint re-sets
+  // merit_ref / merit_attr as first-party cookies, so create-order resolves
+  // the affiliate exactly as it does on the storefront — no changes to the
+  // money path.
+  const [claimPending, setClaimPending] = useState<boolean>(!!handoffToken);
+  const claimedRef = useRef(false);
+
+  useEffect(() => {
+    if (!handoffToken || claimedRef.current) return;
+    claimedRef.current = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/checkout/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: handoffToken }),
+        });
+        const data = await res.json();
+        // Only replace the local cart when the handoff actually carried one —
+        // an expired token must never wipe a cart the buyer already has here.
+        if (Array.isArray(data?.lines) && data.lines.length > 0) {
+          clear();
+          for (const l of data.lines as CartLine[]) {
+            add(
+              {
+                handle: l.handle,
+                title: l.title,
+                bundleLabel: l.bundleLabel,
+                unitCents: l.unitCents,
+                imageUrl: l.imageUrl,
+                componentHandles: (l as any).componentHandles,
+              } as Omit<CartLine, 'qty'>,
+              l.qty,
+            );
+          }
+        }
+        if (data?.welcomeCode) {
+          try { localStorage.setItem('merit_welcome_code', data.welcomeCode); } catch { /* private mode */ }
+        }
+      } catch {
+        /* fall through — buyer keeps whatever cart exists on this origin */
+      } finally {
+        setClaimPending(false);
+        // Drop ?c= so a refresh or a shared URL can't replay the token.
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('c');
+          window.history.replaceState({}, '', url.pathname + url.search);
+        } catch { /* non-fatal */ }
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handoffToken]);
+
   // Auto-apply the stashed promo code (merit_welcome_code) — written by the
   // /access ad gate AND by any email link carrying ?code= (site-wide capture
   // in components/DiscountCodeCapture.tsx). Runs BEFORE the referral
   // auto-apply and shares autoAppliedRef, so the promised code wins
   // (matches the server: funnel codes override ?ref). Without this, the
   // gate/email promised "20% off" but the buyer hit full price.
+  //
+  // Waits on claimPending so a handed-off code isn't missed by racing the
+  // localStorage write above.
   useEffect(() => {
-    if (autoAppliedRef.current) return;
+    if (autoAppliedRef.current || claimPending) return;
     if (!hydrated || lines.length === 0 || appliedCode) return;
     let welcome: string | null = null;
     try { welcome = localStorage.getItem('merit_welcome_code'); } catch { /* private mode */ }
@@ -220,7 +287,7 @@ export function CheckoutClient({
     autoAppliedRef.current = true;
     applyCode(welcome, { silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, lines.length, appliedCode]);
+  }, [hydrated, lines.length, appliedCode, claimPending]);
 
   useEffect(() => {
     if (autoAppliedRef.current) return;

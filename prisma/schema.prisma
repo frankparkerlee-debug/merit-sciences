@@ -53,6 +53,38 @@ model Coa {
 // drops the line items. We stash the real cart lines + money here, keyed
 // by the PayPal order id, so createOrderFromPayPal can rebuild a wallet
 // order with real products instead of an empty shell.
+/// Cross-domain checkout handoff.
+///
+/// PayPal requires checkout to live on a separate domain from the catalog.
+/// Cart (localStorage), the affiliate `merit_ref` cookie, the `merit_attr`
+/// attribution cookie and the `merit_welcome_code` discount are ALL
+/// origin-scoped — none of them survive the jump to another domain. Without
+/// this record the buyer would land on checkout with an empty cart, no
+/// discount, and no affiliate attribution (silently unpaid commissions).
+///
+/// So the storefront writes everything it knows into one short-lived,
+/// single-use row and passes only an opaque token in the URL. The checkout
+/// domain reads it back server-side. Nothing sensitive rides in the query
+/// string, and a leaked/replayed token is useless once consumed or expired.
+model CheckoutHandoff {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  /// CartLine[] — same shape the cart store persists.
+  lines       Json
+  /// Affiliate slug from the `merit_ref` cookie (attribution + commission).
+  refSlug     String?
+  /// First-touch traffic attribution from the `merit_attr` cookie.
+  attr        String?
+  /// Auto-apply promo stashed by DiscountCodeCapture / the /access gate.
+  welcomeCode String?
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  consumedAt  DateTime?
+
+  @@index([expiresAt])
+  @@map("checkout_handoffs")
+}
+
 model WalletOrderDraft {
   paypalOrderId String   @id
   lines         Json // [{ handle, title, bundleLabel, unitCents, qty, imageUrl }]

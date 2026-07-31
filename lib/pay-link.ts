@@ -41,6 +41,12 @@ export function verifyPayToken(token: string): string | null {
 }
 
 export function payUrlFor(orderId: string): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
+  // /pay is a payment surface, so it follows CHECKOUT_ORIGIN when the split
+  // checkout domain is configured. Kept as a plain env read (no import of
+  // lib/checkout-handoff) so this module stays dependency-free — it's used in
+  // admin server components and email rendering alike.
+  const raw = process.env.CHECKOUT_ORIGIN?.trim() || process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com';
+  const withScheme = /^https?:\/\//.test(raw) ? raw : `https://${raw}`;
+  const base = withScheme.replace(/\/$/, '');
   return `${base}/pay/${buildPayToken(orderId)}`;
 }

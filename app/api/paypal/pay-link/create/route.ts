@@ -17,6 +17,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createPayPalOrder } from '@/lib/paypal';
 import { verifyPayToken, buildPayToken } from '@/lib/pay-link';
+import { checkoutOrigin } from '@/lib/checkout-handoff';
 
 export const runtime = 'nodejs';
 
@@ -43,7 +44,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Order has no line items.' }, { status: 422 });
   }
 
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
+  // Pay links are a payment surface — they belong on the checkout domain when
+  // one is configured (PayPal's split-domain requirement), falling back to the
+  // storefront origin otherwise.
+  const base = (
+    checkoutOrigin() || process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com'
+  ).replace(/\/$/, '');
   const payUrl = `${base}/pay/${buildPayToken(order.id)}`;
 
   try {
