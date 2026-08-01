@@ -7,6 +7,7 @@ import { CheckoutClient } from './CheckoutClient';
 import { CheckoutBridge } from './CheckoutBridge';
 import { PaymentShellHeader, PaymentShellFooter } from '@/components/PaymentShell';
 import { checkoutOrigin, isCheckoutHostname } from '@/lib/checkout-domain';
+import { paymentsProvider } from '@/lib/stripe';
 
 /**
  * Payment surfaces must never be indexed, and must never emit a canonical or
@@ -73,6 +74,12 @@ export default async function CheckoutPage({
   const paypalClientId =
     process.env.PAYPAL_CLIENT_ID || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
 
+  // Which processor checkout presents. PAYMENTS_PROVIDER=stripe switches to
+  // the Stripe Payment Element; anything else keeps PayPal. Read at request
+  // time (this page is force-dynamic) so flipping it needs no rebuild.
+  const provider = paymentsProvider();
+  const stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY?.trim() ?? '';
+
   // BAC water cross-sell — resolve the real product so the checkout
   // reconstitution nudge adds the correct handle/price/image. Null if the
   // product isn't stocked (the nudge then simply doesn't render).
@@ -128,6 +135,8 @@ export default async function CheckoutPage({
           freeShippingThresholdCents={settings.freeShippingThreshold}
           paypalClientId={paypalClientId}
           handoffToken={handoffToken}
+          provider={provider}
+          stripePublishableKey={stripePublishableKey}
         />
       </section>
       <PaymentShellFooter />

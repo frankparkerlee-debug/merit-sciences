@@ -17,6 +17,7 @@ import {
 import { useCart, type CartLine } from '@/lib/cart';
 import { track, identify, trackPurchase, trackInitiateCheckout } from '@/lib/analytics';
 import { US_STATES } from './us-states';
+import { StripeCheckout } from './StripeCheckout';
 
 const FLAT_SHIPPING = 999;
 
@@ -56,6 +57,8 @@ export function CheckoutClient({
   freeShippingThresholdCents = 35_000,
   paypalClientId = '',
   handoffToken = null,
+  provider = 'paypal',
+  stripePublishableKey = '',
 }: {
   autoReferralCode?: string | null;
   bacWaterProduct?: { handle: string; title: string; unitCents: number; imageUrl?: string } | null;
@@ -73,6 +76,9 @@ export function CheckoutClient({
    * the affiliate/attribution cookies, and the promo code on THIS origin.
    */
   handoffToken?: string | null;
+  /** Which processor to present. Set by PAYMENTS_PROVIDER on the server. */
+  provider?: 'paypal' | 'stripe';
+  stripePublishableKey?: string;
 }) {
   const router = useRouter();
   const lines = useCart((s) => s.lines);
@@ -608,7 +614,26 @@ export function CheckoutClient({
           <RUOAttestation />
         </div>
 
-        {!resolvedPaypalClientId ? (
+        {provider === 'stripe' ? (
+          /* ── Stripe (interim processor) ──────────────────────────────
+             Replaces the whole PayPal block rather than sitting beside it:
+             presenting two processors would split the buyer's trust and
+             double the surfaces to keep anonymized. */
+          <PaymentSection
+            eyebrow="Secure payment"
+            title="Pay by card"
+            description="Visa, Mastercard, Amex, and Discover. Card details are encrypted end-to-end and never seen or stored by us."
+          >
+            <StripeCheckout
+              publishableKey={stripePublishableKey}
+              lines={lines}
+              amountCents={localTotalCents}
+              discountCode={appliedCode}
+              ruoAttested={form.ruoAttested}
+              onError={setFormError}
+            />
+          </PaymentSection>
+        ) : !resolvedPaypalClientId ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
             <p className="text-sm text-amber-900">
               Payment processor not configured. Set PAYPAL_CLIENT_ID (server) or NEXT_PUBLIC_PAYPAL_CLIENT_ID.
