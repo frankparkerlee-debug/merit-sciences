@@ -1,6 +1,7 @@
 import { prisma } from './db';
 import { tierForOrderCount } from './affiliate';
 import { createOrderFromPayPal, issueOrderConfirmationEmail } from './orders';
+import { notifyOpsOfOrder } from './ops-notify';
 import { sendMetaPurchase } from './meta-capi';
 import { notifyAffiliateOfSale } from './affiliate-sale-email';
 
@@ -37,7 +38,7 @@ export async function fulfillCapturedOrder(
   const affiliateId = attribution.a ?? null;
   const discountCode = attribution.c ?? null;
 
-  // 1) Persist / promote the order (PENDING_PAYMENT → PAID) + confirmation email
+  // 1) Persist / promote the order (PENDING_PAYMENT → PAID) + emails
   let persisted: { order: { id: string }; isNew: boolean } | null = null;
   try {
     const result = await createOrderFromPayPal(paypalOrder, {
@@ -46,11 +47,25 @@ export async function fulfillCapturedOrder(
     });
     if (result) {
       persisted = result;
+
+      // Customer confirmation — only on first promotion, since a redelivered
+      // webhook must not send the buyer a second receipt. AWAITED: it was
+      // fire-and-forget, which risks losing the send if the process turns over
+      // before the promise settles.
       if (result.isNew) {
-        issueOrderConfirmationEmail(result.order.id).catch((err) =>
+        await issueOrderConfirmationEmail(result.order.id).catch((err) =>
           console.error('[fulfill] confirmation email failed', err),
         );
       }
+
+      // Ops notification — NOT gated on isNew. notifyOpsOfOrder is idempotent
+      // on the ADMIN_NOTIFIED event, so a redelivered webhook can't double-send,
+      // while an order whose first notification failed still gets one here.
+      // Sequential after the customer email so the two never race into Resend's
+      // rate limiter — the failure mode that made ops emails vanish silently.
+      await notifyOpsOfOrder(result.order.id).catch((err) =>
+        console.error('[fulfill] ops notification failed', err),
+      );
     }
   } catch (err) {
     console.error('[fulfill] order persistence failed', err);

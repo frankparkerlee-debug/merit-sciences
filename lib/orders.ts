@@ -719,26 +719,21 @@ export async function issueOrderConfirmationEmail(
   });
 
   // Fire customer email + admin notification in parallel
-  const [customerResult, adminResult] = await Promise.all([
-    sendEmail({
-      to: order.customerEmail,
-      subject,
-      html,
-      text,
-      tags: [
-        { name: 'type', value: 'order_confirmation' },
-        { name: 'order_id', value: order.id },
-      ],
-    }),
-    // Result is captured, not discarded. This previously swallowed the outcome
-    // entirely: issueAdminOrderNotification RETURNS { ok: false } rather than
-    // throwing, so .catch() never fired and a non-delivering ops notification
-    // left no trace anywhere — no log, no event, nothing.
-    issueAdminOrderNotification(orderId, 'new_order').catch((err) => ({
-      ok: false as const,
-      error: err instanceof Error ? err.message : String(err),
-    })),
-  ]);
+  // Customer confirmation ONLY. The ops notification deliberately does not
+  // ride along here any more: it used to, which meant the fulfillment team was
+  // told only when the customer email path also ran, and the two sends raced
+  // each other into Resend's rate limiter. It now has its own guaranteed path
+  // in lib/ops-notify.ts, driven by fulfillment and backstopped by a sweep.
+  const customerResult = await sendEmail({
+    to: order.customerEmail,
+    subject,
+    html,
+    text,
+    tags: [
+      { name: 'type', value: 'order_confirmation' },
+      { name: 'order_id', value: order.id },
+    ],
+  });
 
   if (customerResult.ok) {
     await recordOrderEvent({
@@ -753,26 +748,6 @@ export async function issueOrderConfirmationEmail(
       kind: 'EMAIL_FAILED',
       message: `Confirmation email failed: ${customerResult.error}`,
       metadata: { to: order.customerEmail, error: customerResult.error },
-    });
-  }
-
-  // Record the ops notification too. ADMIN_NOTIFIED existed in the enum but
-  // nothing wrote it, so a sale that never reached the team looked identical
-  // in the timeline to one that did.
-  if (adminResult.ok) {
-    await recordOrderEvent({
-      orderId,
-      kind: 'ADMIN_NOTIFIED',
-      message: `Ops notified: ${adminResult.to.join(', ')}.`,
-      metadata: { email_id: adminResult.id, to: adminResult.to, type: 'admin_new_order' },
-    });
-  } else {
-    console.error('[email] ops notification NOT sent:', adminResult.error);
-    await recordOrderEvent({
-      orderId,
-      kind: 'EMAIL_FAILED',
-      message: `Ops notification NOT sent: ${adminResult.error}`,
-      metadata: { type: 'admin_new_order', error: adminResult.error },
     });
   }
 

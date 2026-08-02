@@ -49,6 +49,13 @@ export async function GET() {
     !!secretMode && !!publishableMode && secretMode.split('_')[1] !== publishableMode.split('_')[1];
 
   return NextResponse.json({
+    // Which commit is actually SERVING this request. Render injects
+    // RENDER_GIT_COMMIT at build time. Included because three separate
+    // debugging rounds on 2026-08-02 were spent reasoning about production
+    // behaviour from code that had never been deployed — the live SHA makes
+    // that a one-second check instead of forensics on event timestamps.
+    commit: (process.env.RENDER_GIT_COMMIT ?? '').slice(0, 7) || 'unknown',
+    branch: process.env.RENDER_GIT_BRANCH ?? null,
     provider,
     reason: (() => {
       const n = (raw ?? '').trim().replace(/^["']|["']$/g, '').toLowerCase();
