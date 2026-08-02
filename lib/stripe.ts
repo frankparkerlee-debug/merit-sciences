@@ -1,7 +1,8 @@
 /**
  * Stripe — interim card processing while a permanent high-risk acquirer is
- * sourced. Runs alongside PayPal; which one the checkout offers is controlled
- * by PAYMENTS_PROVIDER (see paymentsProvider() below), so this ships dark.
+ * sourced. Runs alongside PayPal; which one the checkout offers is decided by
+ * paymentsProvider() below — normally by which processor has credentials, with
+ * PAYMENTS_PROVIDER available as an explicit override.
  *
  * ── ANONYMIZATION ────────────────────────────────────────────────────────
  * Stripe sees materially LESS than PayPal did, and that is structural rather
@@ -32,13 +33,48 @@
 import 'server-only';
 import Stripe from 'stripe';
 
-/** Which processor the checkout should present. Defaults to PayPal. */
+/**
+ * Which processor the checkout should present.
+ *
+ * Resolution order:
+ *   1. An explicit PAYMENTS_PROVIDER, if it clearly says "stripe" or "paypal".
+ *   2. Otherwise: whichever processor actually has credentials.
+ *
+ * Step 2 exists because step 1 was a single point of failure. On 2026-08-01 the
+ * PayPal keys were removed and PAYMENTS_PROVIDER=stripe did not reach the
+ * running process, so checkout resolved to a processor with no credentials and
+ * went down — the page rendered "Payment processor not configured" while both
+ * Stripe keys sat right there in the environment. A configured processor should
+ * never be dark because a *third* variable failed to arrive. Now the keys
+ * themselves are the signal, and PAYMENTS_PROVIDER is only an override.
+ *
+ * normalize() strips quotes and zero-width characters: env values are pasted by
+ * hand, and neither a literal `"stripe"` nor a stray U+200B survives a bare
+ * === comparison (String.prototype.trim removes neither).
+ */
 export function paymentsProvider(): 'paypal' | 'stripe' {
-  return process.env.PAYMENTS_PROVIDER?.trim().toLowerCase() === 'stripe' ? 'stripe' : 'paypal';
+  const explicit = normalizeEnv(process.env.PAYMENTS_PROVIDER);
+  if (explicit === 'stripe') return 'stripe';
+  if (explicit === 'paypal') return 'paypal';
+  return stripeEnabled() ? 'stripe' : 'paypal';
+}
+
+/** Lowercase, strip surrounding quotes, drop zero-width/BOM characters. */
+function normalizeEnv(v: string | undefined): string {
+  return (v ?? '')
+    .replace(/[​-‍﻿]/g, '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .trim()
+    .toLowerCase();
 }
 
 export function stripeEnabled(): boolean {
   return !!process.env.STRIPE_SECRET_KEY?.trim();
+}
+
+export function paypalEnabled(): boolean {
+  return !!process.env.PAYPAL_CLIENT_ID?.trim() && !!process.env.PAYPAL_CLIENT_SECRET?.trim();
 }
 
 let _client: Stripe | null = null;
