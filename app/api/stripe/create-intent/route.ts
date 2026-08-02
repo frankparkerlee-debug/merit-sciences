@@ -15,6 +15,7 @@
  * lib/stripe.ts.
  */
 import { NextResponse } from 'next/server';
+import { createHash, randomUUID } from 'crypto';
 import { stripe, createPaymentIntent, stripeEnabled } from '@/lib/stripe';
 import { preCreateOrder } from '@/lib/orders';
 import { sanitizeCartLines, priceCart, isPriceError } from '@/lib/checkout-pricing';
@@ -81,6 +82,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Order total must be greater than zero.' }, { status: 400 });
   }
 
+  // Idempotency key for the create call. Two properties are required:
+  //
+  //   unique per attempt  — otherwise Stripe rejects the reused key and NO
+  //                         checkout succeeds. This is exactly what happened
+  //                         when the key was `pi_${orderId}` and orderId was
+  //                         the constant "pending".
+  //   stable per retry    — so a network retry of one submit reuses the intent
+  //                         rather than opening a second.
+  //
+  // attemptId is a nonce the checkout form mints once per mount. Folding the
+  // priced cart in as well means an edited cart under the same attemptId still
+  // produces a NEW key — reusing a key with changed parameters is itself an
+  // error, so content must be part of the identity.
+  const attemptId = String(body?.attemptId ?? '').slice(0, 64) || randomUUID();
+  const fingerprint = createHash('sha256')
+    .update(
+      [
+        attemptId,
+        buyer.email,
+        priced.totalCents,
+        priced.discountCode ?? '',
+        priced.lines.map((l) => `${l.handle}:${l.qty}:${l.unitCents}`).join(','),
+      ].join('|'),
+    )
+    .digest('hex')
+    .slice(0, 48);
+
   try {
     // 1. Open the intent — only an amount is needed, so this can happen before
     //    the order row exists.
@@ -90,6 +118,7 @@ export async function POST(req: Request) {
       customerEmail: buyer.email,
       affiliateId: priced.affiliateId,
       discountCode: priced.discountCode,
+      idempotencyKey: `pi_${fingerprint}`,
     });
 
     // 2. Persist the order keyed to the PaymentIntent id. Storing it here (not
@@ -146,7 +175,28 @@ export async function POST(req: Request) {
       attributionVia: priced.attributionVia,
     });
   } catch (err: any) {
-    console.error('[stripe/create-intent] failed:', err?.message ?? err);
+    // Log Stripe's own type/code, not just the message. The generic response
+    // below hid a total outage for hours: every create call was failing on a
+    // reused idempotency key and the only symptom visible anywhere was
+    // "Could not start checkout".
+    console.error('[stripe/create-intent] failed:', {
+      type: err?.type,
+      code: err?.code,
+      message: err?.message ?? String(err),
+    });
+
+    // Surface the two cases the buyer can actually act on. Everything else
+    // stays generic — decline reasons and internal errors are not the buyer's
+    // to debug, and detail here leaks to anyone who can POST.
+    if (err?.type === 'StripeCardError') {
+      return NextResponse.json({ error: err.message ?? 'Your card was declined.' }, { status: 402 });
+    }
+    if (err?.type === 'StripeIdempotencyError') {
+      return NextResponse.json(
+        { error: 'This checkout was already started. Refresh the page and try again.' },
+        { status: 409 },
+      );
+    }
     return NextResponse.json(
       { error: 'Could not start checkout. Try again in a moment.' },
       { status: 500 },

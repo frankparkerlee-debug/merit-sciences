@@ -105,6 +105,17 @@ export type CreateIntentArgs = {
   customerEmail: string;
   affiliateId?: string | null;
   discountCode?: string | null;
+  /**
+   * Idempotency key for the create call, supplied by the caller.
+   *
+   * MUST be unique per distinct checkout attempt. This was previously derived
+   * from `orderId`, which is the literal string "pending" at create time —
+   * every checkout therefore sent Stripe the same key, so the first order of
+   * any 24-hour window succeeded and every subsequent one failed with
+   * "Could not start checkout". See /api/stripe/create-intent for how the key
+   * is now built (per-attempt nonce + a fingerprint of the priced cart).
+   */
+  idempotencyKey: string;
 };
 
 /**
@@ -132,9 +143,11 @@ export async function createPaymentIntent(args: CreateIntentArgs): Promise<Strip
         discountCode: args.discountCode ?? '',
       },
     },
-    // Idempotent per order: a double-submit or retry reuses the same intent
-    // instead of creating a second charge.
-    { idempotencyKey: `pi_${args.orderId}` },
+    // Idempotent per ATTEMPT: a retry of the same submit reuses the intent
+    // instead of opening a second one. The caller owns key construction — see
+    // CreateIntentArgs.idempotencyKey for why this must not be derived from
+    // orderId.
+    { idempotencyKey: args.idempotencyKey },
   );
 }
 

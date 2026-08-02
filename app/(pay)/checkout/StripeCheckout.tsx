@@ -79,6 +79,17 @@ function StripeForm({ lines, discountCode, ruoAttested, onError }: Props) {
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const submittingRef = useRef(false);
+  // Per-checkout nonce backing the server's Stripe idempotency key. Minted
+  // once per mount so a retry of the same submit reuses the intent, while a
+  // fresh checkout always gets a new one. crypto.randomUUID needs a secure
+  // context; the fallback keeps older/insecure contexts working.
+  const attemptIdRef = useRef<string>('');
+  if (!attemptIdRef.current) {
+    attemptIdRef.current =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `a${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -123,6 +134,7 @@ function StripeForm({ lines, discountCode, ruoAttested, onError }: Props) {
           lines,
           discountCode,
           ruoAttested: true,
+          attemptId: attemptIdRef.current,
           buyer: {
             email: email.trim(),
             phone: phone.trim(),
