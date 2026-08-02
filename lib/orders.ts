@@ -719,7 +719,7 @@ export async function issueOrderConfirmationEmail(
   });
 
   // Fire customer email + admin notification in parallel
-  const [customerResult] = await Promise.all([
+  const [customerResult, adminResult] = await Promise.all([
     sendEmail({
       to: order.customerEmail,
       subject,
@@ -730,9 +730,14 @@ export async function issueOrderConfirmationEmail(
         { name: 'order_id', value: order.id },
       ],
     }),
-    issueAdminOrderNotification(orderId, 'new_order').catch((err) => {
-      console.error('[email] admin notification failed', err);
-    }),
+    // Result is captured, not discarded. This previously swallowed the outcome
+    // entirely: issueAdminOrderNotification RETURNS { ok: false } rather than
+    // throwing, so .catch() never fired and a non-delivering ops notification
+    // left no trace anywhere — no log, no event, nothing.
+    issueAdminOrderNotification(orderId, 'new_order').catch((err) => ({
+      ok: false as const,
+      error: err instanceof Error ? err.message : String(err),
+    })),
   ]);
 
   if (customerResult.ok) {
@@ -748,6 +753,26 @@ export async function issueOrderConfirmationEmail(
       kind: 'EMAIL_FAILED',
       message: `Confirmation email failed: ${customerResult.error}`,
       metadata: { to: order.customerEmail, error: customerResult.error },
+    });
+  }
+
+  // Record the ops notification too. ADMIN_NOTIFIED existed in the enum but
+  // nothing wrote it, so a sale that never reached the team looked identical
+  // in the timeline to one that did.
+  if (adminResult.ok) {
+    await recordOrderEvent({
+      orderId,
+      kind: 'ADMIN_NOTIFIED',
+      message: `Ops notified: ${adminResult.to.join(', ')}.`,
+      metadata: { email_id: adminResult.id, to: adminResult.to, type: 'admin_new_order' },
+    });
+  } else {
+    console.error('[email] ops notification NOT sent:', adminResult.error);
+    await recordOrderEvent({
+      orderId,
+      kind: 'EMAIL_FAILED',
+      message: `Ops notification NOT sent: ${adminResult.error}`,
+      metadata: { type: 'admin_new_order', error: adminResult.error },
     });
   }
 
@@ -933,7 +958,7 @@ export async function issueCancellationEmail(
 export async function issueAdminOrderNotification(
   orderId: string,
   kind: 'new_order' | 'shipped',
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; id: string; to: string[] } | { ok: false; error: string }> {
   const admins = (process.env.ADMIN_EMAILS ?? '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
@@ -1021,7 +1046,7 @@ export async function issueAdminOrderNotification(
     `Admin: ${adminUrl}`,
   ];
 
-  return sendEmail({
+  const result = await sendEmail({
     to: admins,
     subject,
     html,
@@ -1031,6 +1056,11 @@ export async function issueAdminOrderNotification(
       { name: 'order_id', value: order.id },
     ],
   });
+
+  // Return the recipients on success so the caller can record WHO was told —
+  // "the ops email didn't arrive" is otherwise impossible to distinguish from
+  // "it went to an address nobody reads".
+  return result.ok ? { ...result, to: admins } : result;
 }
 
 function escapeHtml(s: string): string {
