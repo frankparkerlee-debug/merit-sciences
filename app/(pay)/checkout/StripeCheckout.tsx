@@ -72,7 +72,7 @@ export function StripeCheckout(props: Props) {
   );
 }
 
-function StripeForm({ lines, discountCode, ruoAttested, onError }: Props) {
+function StripeForm({ lines, amountCents, discountCode, ruoAttested, onError }: Props) {
   const stripe = useStripe();
   const elements = useElements();
   const [email, setEmail] = useState('');
@@ -98,6 +98,17 @@ function StripeForm({ lines, discountCode, ruoAttested, onError }: Props) {
     onError(null);
     if (!ruoAttested) {
       onError('Please confirm the research-use-only attestation before paying.');
+      return;
+    }
+    // Mirror the server's minimum so a deep-discount cart fails here, before
+    // the buyer fills in card details. The server re-checks — this is only to
+    // avoid a pointless round trip. Kept as a literal because lib/stripe.ts is
+    // server-only and cannot be imported into a client component.
+    if (amountCents < 50) {
+      onError(
+        `Order total is $${(amountCents / 100).toFixed(2)}, below the $0.50 card minimum. ` +
+          `Add an item, or use a smaller discount.`,
+      );
       return;
     }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {

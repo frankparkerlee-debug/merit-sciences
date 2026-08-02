@@ -69,6 +69,14 @@ function normalizeEnv(v: string | undefined): string {
     .toLowerCase();
 }
 
+/**
+ * Stripe's minimum chargeable amount for USD. A PaymentIntent below this is
+ * rejected at create time, so it must be checked BEFORE the create call —
+ * otherwise the failure surfaces as an opaque 500. Deep-discount codes are the
+ * realistic way to land here: a 99%-off code on a $19.99 item totals $0.20.
+ */
+export const STRIPE_MIN_CHARGE_CENTS = 50;
+
 export function stripeEnabled(): boolean {
   return !!process.env.STRIPE_SECRET_KEY?.trim();
 }

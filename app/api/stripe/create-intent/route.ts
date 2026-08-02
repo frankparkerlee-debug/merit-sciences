@@ -16,7 +16,12 @@
  */
 import { NextResponse } from 'next/server';
 import { createHash, randomUUID } from 'crypto';
-import { stripe, createPaymentIntent, stripeEnabled } from '@/lib/stripe';
+import {
+  stripe,
+  createPaymentIntent,
+  stripeEnabled,
+  STRIPE_MIN_CHARGE_CENTS,
+} from '@/lib/stripe';
 import { preCreateOrder } from '@/lib/orders';
 import { sanitizeCartLines, priceCart, isPriceError } from '@/lib/checkout-pricing';
 
@@ -80,6 +85,21 @@ export async function POST(req: Request) {
   }
   if (priced.totalCents <= 0) {
     return NextResponse.json({ error: 'Order total must be greater than zero.' }, { status: 400 });
+  }
+  // Stripe rejects any charge below $0.50 USD. Without this check the create
+  // call throws and the buyer sees the generic "Could not start checkout",
+  // which is indistinguishable from an outage — a near-100%-off code silently
+  // looked like a broken site. Fail here with something actionable instead.
+  if (priced.totalCents < STRIPE_MIN_CHARGE_CENTS) {
+    return NextResponse.json(
+      {
+        error:
+          `Order total is $${(priced.totalCents / 100).toFixed(2)}, below the $0.50 card minimum. ` +
+          `Add an item, or use a smaller discount.`,
+        field: 'discountCode',
+      },
+      { status: 400 },
+    );
   }
 
   // Idempotency key for the create call. Two properties are required:
