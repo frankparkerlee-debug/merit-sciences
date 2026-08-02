@@ -176,13 +176,17 @@ export function CheckoutClient({
     if (!opts?.silent) setCodeError(null);
     setCodeApplying(true);
     try {
-      // Use a lightweight discount-only validation flow: call create-order
-      // with ruoAttested=true (we don't actually use the order, we
-      // just want the server to validate the code and report back).
-      const res = await fetch('/api/paypal/create-order', {
+      // Processor-neutral quote: validates the code and returns totals without
+      // creating an order. Deliberately NOT a payment route — this used to POST
+      // to /api/paypal/create-order and discard the order, which tied discount
+      // codes to PayPal's credentials and broke every code when they were
+      // removed. credentials:'same-origin' carries merit_ref so an affiliate
+      // cookie is honoured in the quote exactly as it is at payment.
+      const res = await fetch('/api/checkout/price', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lines, discountCode: code, ruoAttested: true }),
+        credentials: 'same-origin',
+        body: JSON.stringify({ lines, discountCode: code }),
       });
       const data = await res.json();
       if (!res.ok) {
