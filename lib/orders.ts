@@ -18,6 +18,21 @@
 
 import 'server-only';
 import { randomBytes } from 'node:crypto';
+
+/**
+ * Which processor handled a payment, for human-readable timeline entries.
+ *
+ * Derived from the id because the columns are still named paypalOrderId /
+ * paypalCaptureId for both processors — every consumer (admin, lookup,
+ * attribution, commission ledger) keys off them, so Stripe reuses them rather
+ * than forcing a migration (see lib/stripe.ts). Stripe ids carry an object
+ * prefix; PayPal's are bare alphanumerics, so the prefix is an unambiguous
+ * signal. Without this the admin timeline read "captured via PayPal webhook"
+ * on Stripe orders.
+ */
+function processorLabel(processorId: string | null | undefined): 'Stripe' | 'PayPal' {
+  return /^(pi|ch|py|txn|seti)_/.test(processorId ?? '') ? 'Stripe' : 'PayPal';
+}
 import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { onFirstOrder } from '@/lib/practitioner-journey';
@@ -368,8 +383,12 @@ export async function createOrderFromPayPal(
       await recordOrderEvent({
         orderId: promoted.id,
         kind: 'PAYMENT_CAPTURED',
-        message: `Payment captured via PayPal webhook. Capture ID ${captureId}.`,
-        metadata: { capture_id: captureId, source: 'webhook' },
+        message: `Payment captured via ${processorLabel(captureId)} webhook. Capture ID ${captureId}.`,
+        metadata: {
+          capture_id: captureId,
+          source: 'webhook',
+          processor: processorLabel(captureId).toLowerCase(),
+        },
       });
       // Practitioner journey: if this email is in an ONBOARDING journey,
       // exit it and start RETENTION. No-op for non-practitioner buyers.
@@ -521,8 +540,12 @@ export async function createOrderFromPayPal(
   await recordOrderEvent({
     orderId: order.id,
     kind: 'PAYMENT_CAPTURED',
-    message: `Payment captured via PayPal webhook. Capture ID ${captureId}.`,
-    metadata: { capture_id: captureId, source: 'webhook' },
+    message: `Payment captured via ${processorLabel(captureId)} webhook. Capture ID ${captureId}.`,
+    metadata: {
+      capture_id: captureId,
+      source: 'webhook',
+      processor: processorLabel(captureId).toLowerCase(),
+    },
   });
 
   // Practitioner journey — same hook as the card-flow path. No-op for
