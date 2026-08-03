@@ -78,5 +78,50 @@ export async function GET() {
       ].filter(Boolean),
     },
     paypal: { configured: paypalOk },
+    ops: opsRecipients(),
   });
+}
+
+/**
+ * Shape of ADMIN_EMAILS as the running process sees it.
+ *
+ * Ops notifications and the /admin gate both read this one variable, and when
+ * it is empty BOTH fail silently — no new-order email, and nobody can log in.
+ * On 2026-08-02 it read as empty in production while being present in Render's
+ * UI, and there was no way to tell "absent" from "present but unparseable"
+ * without shipping a probe.
+ *
+ * Addresses are masked because this endpoint is unauthenticated. The masked
+ * form still shows whether the RIGHT mailbox is on the list, which is the
+ * question actually being asked.
+ */
+function opsRecipients() {
+  const raw = process.env.ADMIN_EMAILS;
+  const parsed = (raw ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  return {
+    count: parsed.length,
+    masked: parsed.map(maskEmail),
+    rawLength: raw === undefined ? null : raw.length,
+    // A value pasted with surrounding quotes splits into fragments that carry
+    // a stray " on the first and last entries, so those two never match — the
+    // failure looks identical to "not set" in every UI.
+    looksQuoted: /^["'].*["']$/.test((raw ?? '').trim()),
+    warnings: [
+      parsed.length === 0 &&
+        'ADMIN_EMAILS is empty — ops notifications will not send AND /admin is locked to everyone.',
+    ].filter(Boolean),
+  };
+}
+
+/** `frank.parker.lee@gmail.com` → `f***e@gmail.com` */
+function maskEmail(e: string): string {
+  const [user, domain] = e.split('@');
+  if (!domain) return '***';
+  const head = user.slice(0, 1);
+  const tail = user.length > 1 ? user.slice(-1) : '';
+  return `${head}***${tail}@${domain}`;
 }
