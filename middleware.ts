@@ -7,7 +7,12 @@ import {
   encodeAttrCookie,
   hasAttributionParams,
 } from '@/lib/attribution';
-import { isCheckoutHostname, isPaymentPath, checkoutOrigin } from '@/lib/checkout-domain';
+import {
+  isCheckoutHostname,
+  isPaymentPath,
+  isSupplyPath,
+  checkoutOrigin,
+} from '@/lib/checkout-domain';
 
 /**
  * Affiliate click tracking.
@@ -96,15 +101,15 @@ export async function middleware(req: NextRequest) {
   // bare domain) goes back to the storefront, so the checkout host never
   // exposes catalog content and can't be indexed as a duplicate store.
   if (isCheckoutHostname(reqHost)) {
-    // Root → the payment-domain landing page. Rewritten (not redirected) so
-    // the URL stays meritcheckout.com/ and nothing points elsewhere. It can't
-    // live at app/(pay)/page.tsx because the storefront homepage owns "/".
+    // Root → the supply storefront home. Rewritten (not redirected) so the URL
+    // stays meritcheckout.com/ and nothing points elsewhere. It can't live at
+    // app/(pay)/page.tsx because the storefront homepage owns "/".
     if (req.nextUrl.pathname === '/') {
       const home = req.nextUrl.clone();
-      home.pathname = '/pay-home';
+      home.pathname = '/supply';
       return NextResponse.rewrite(home);
     }
-    if (!isPaymentPath(req.nextUrl.pathname)) {
+    if (!isPaymentPath(req.nextUrl.pathname) && !isSupplyPath(req.nextUrl.pathname)) {
       // DEAD-END, not a redirect home.
       //
       // This used to 301 to meritsciences.com, which defeated the point: a
@@ -125,6 +130,21 @@ export async function middleware(req: NextRequest) {
     // logic below: those cookies belong to the storefront origin and are
     // carried across by the handoff row instead (lib/checkout-handoff.ts).
     return NextResponse.next();
+  }
+
+  // ── Supply line is checkout-domain ONLY ────────────────────────────────
+  // The mirror of the fence above. Route groups isolate layouts, not hosts, so
+  // app/(pay)/shop/... would otherwise answer on meritsciences.com too and put
+  // a clinic wound-care catalog on the peptide brand. Same dead-end treatment:
+  // no redirect, because a redirect would name the other domain.
+  if (isSupplyPath(req.nextUrl.pathname)) {
+    return new NextResponse('Not found', {
+      status: 404,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        'x-robots-tag': 'noindex, nofollow, noarchive',
+      },
+    });
   }
 
   // ── Clean-room gate domain (e.g. trymerit.co) ──────────────────────────

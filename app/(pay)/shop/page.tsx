@@ -1,0 +1,86 @@
+import Link from 'next/link';
+import type { Metadata } from 'next';
+import { SupplyHeader, SupplyFooter } from '@/components/SupplyShell';
+import { SupplyProductCard } from '@/components/SupplyProductCard';
+import { listSupplyProducts, SUPPLY_CATEGORIES } from '@/lib/supply';
+import type { SupplyCategory } from '@/lib/generated/prisma';
+
+export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Shop clinical supply',
+};
+
+const VALID = new Set(SUPPLY_CATEGORIES.map((c) => c.key));
+
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const sp = await searchParams;
+  // Validate against the enum rather than passing the raw param to Prisma —
+  // an unknown value would otherwise throw at the query rather than simply
+  // showing everything.
+  const raw = (sp.category ?? '').toUpperCase() as SupplyCategory;
+  const active = VALID.has(raw) ? raw : undefined;
+
+  const products = await listSupplyProducts({ category: active });
+
+  return (
+    <>
+      <SupplyHeader />
+
+      <div className="mx-auto max-w-6xl px-5 py-10">
+        <h1 className="text-[30px] font-extrabold tracking-tight text-ink">
+          {active ? SUPPLY_CATEGORIES.find((c) => c.key === active)?.label : 'All products'}
+        </h1>
+        <p className="mt-2 text-[14px] text-ink-soft">
+          {products.length} product{products.length === 1 ? '' : 's'} · priced per box · free
+          shipping over $300
+        </p>
+
+        <nav className="mt-6 flex flex-wrap gap-2">
+          <FilterPill href="/shop" label="All" active={!active} />
+          {SUPPLY_CATEGORIES.map((c) => (
+            <FilterPill
+              key={c.key}
+              href={`/shop?category=${c.key}`}
+              label={c.label}
+              active={active === c.key}
+            />
+          ))}
+        </nav>
+
+        {products.length === 0 ? (
+          <p className="mt-16 text-[15px] text-ink-muted">
+            Nothing here yet. Check back shortly.
+          </p>
+        ) : (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {products.map((p) => (
+              <SupplyProductCard key={p.handle} p={p} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <SupplyFooter />
+    </>
+  );
+}
+
+function FilterPill({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={
+        active
+          ? 'rounded-full bg-ink px-4 py-1.5 text-[12px] font-bold uppercase tracking-wider text-white'
+          : 'rounded-full border border-ink/15 px-4 py-1.5 text-[12px] font-bold uppercase tracking-wider text-ink-soft transition hover:border-ink/40 hover:text-ink'
+      }
+    >
+      {label}
+    </Link>
+  );
+}

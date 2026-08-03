@@ -49,7 +49,7 @@ export function isCheckoutHostname(host: string | null | undefined): boolean {
   return h === configured || h === `www.${configured}`;
 }
 
-/** The only paths the checkout domain may serve. Everything else 301s home. */
+/** Payment paths. Servable on the checkout domain. */
 export function isPaymentPath(pathname: string): boolean {
   return (
     pathname === '/checkout' ||
@@ -62,6 +62,30 @@ export function isPaymentPath(pathname: string): boolean {
     pathname === '/legal' ||
     pathname.startsWith('/legal/') ||
     pathname === '/pay-home'
+  );
+}
+
+/**
+ * Supply-line paths — the clinic storefront (collagen / wound care / DME) that
+ * lives ONLY on the checkout domain.
+ *
+ * This exists because Next.js route groups isolate layouts, not hostnames.
+ * app/(pay)/shop/... answers on every host the app serves, so without an
+ * explicit check the wound-care catalog would also be reachable at
+ * meritsciences.com/shop — the exact leak the split-domain work was done to
+ * prevent, just running the other direction. The middleware therefore fences
+ * BOTH ways: these paths are servable on the checkout host and 404 on the
+ * storefront host.
+ *
+ * NOT including '/': that is the storefront homepage on meritsciences.com and
+ * is rewritten to /supply on the checkout host before this is consulted.
+ */
+export function isSupplyPath(pathname: string): boolean {
+  return (
+    pathname === '/supply' ||
+    pathname.startsWith('/supply/') ||
+    pathname === '/shop' ||
+    pathname.startsWith('/shop/')
   );
 }
 
