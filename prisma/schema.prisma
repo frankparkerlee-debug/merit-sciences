@@ -103,61 +103,61 @@ model WalletOrderDraft {
 // An approved promoter. One row per person/business that drives traffic.
 
 model Affiliate {
-  id                   String          @id @default(cuid())
-  email                String          @unique
-  name                 String
+  id                    String          @id @default(cuid())
+  email                 String          @unique
+  name                  String
   // Public referral slug used in URLs (e.g. meritsciences.com?ref=alice)
   // Lowercase, alphanumeric + hyphen, 3-30 chars
-  slug                 String          @unique
+  slug                  String          @unique
   // Custom discount code the affiliate sets at sign-up (e.g. "ParkerLee10",
   // "Founder"). Buyers type this at checkout to get 10% off; affiliate
   // earns commission. Lowercase, alphanumeric + hyphen, 3-30 chars.
   // Mapped to a Stripe Coupon when Stripe Checkout is wired.
-  discountCode         String          @unique
+  discountCode          String          @unique
   // Lifecycle. Open sign-up: ACTIVE by default; SUSPENDED for fraud/TOS.
-  status               AffiliateStatus @default(ACTIVE)
+  status                AffiliateStatus @default(ACTIVE)
   // PayPal payout destination — the email the affiliate's commission
   // checks are sent to via PayPal Payouts. Set on the affiliate
   // settings page; required before they can be paid.
-  paypalEmail          String?
+  paypalEmail           String?
   // LEGACY Stripe Connect fields — unused since the PayPal payout
   // migration. Kept nullable so the column drop isn't a breaking change.
-  stripeAccountId      String?         @unique
-  stripeChargesEnabled Boolean         @default(false)
+  stripeAccountId       String?         @unique
+  stripeChargesEnabled  Boolean         @default(false)
   // Stripe Coupon + PromotionCode that back the buyer-facing discount.
   // Created lazily on affiliate signup (10% off, duration=forever).
   // Code-based attribution looks up Affiliate by stripePromotionCodeId
   // when the buyer uses the discount at Stripe Checkout.
-  stripeCouponId          String? @unique
-  stripePromotionCodeId   String? @unique
+  stripeCouponId        String?         @unique
+  stripePromotionCodeId String?         @unique
   // Supabase Auth user id (auth.users.id). Set on first sign-in.
   // Use this — NOT email — as the join key to look up the affiliate
   // for an authenticated request. Email is mutable and Supabase Auth
   // is the source of truth for it; using userId means email changes
   // just work without complex reconciliation.
-  supabaseUserId          String? @unique
+  supabaseUserId        String?         @unique
   // Optional fields collected at signup — surfaced to admin for fraud
   // review but no longer a gate to activation
-  socialUrl            String?         // primary platform (Instagram, TikTok, etc.)
-  audienceSize         Int?            // self-reported
-  pitch                String?         @db.Text
+  socialUrl             String? // primary platform (Instagram, TikTok, etc.)
+  audienceSize          Int? // self-reported
+  pitch                 String?         @db.Text
   // Audit
-  createdAt            DateTime        @default(now())
-  suspendedAt          DateTime?
-  suspendReason        String?         @db.Text
+  createdAt             DateTime        @default(now())
+  suspendedAt           DateTime?
+  suspendReason         String?         @db.Text
 
   // Relations
-  clicks            Click[]
-  customerLinks     CustomerAffiliateLink[]
-  orderCommissions  OrderCommission[]
-  payouts           Payout[]
+  clicks           Click[]
+  customerLinks    CustomerAffiliateLink[]
+  orderCommissions OrderCommission[]
+  payouts          Payout[]
 
   @@index([status])
   @@map("affiliates")
 }
 
 enum AffiliateStatus {
-  ACTIVE    // can earn commissions, default on sign-up
+  ACTIVE // can earn commissions, default on sign-up
   SUSPENDED // admin disabled (fraud, TOS violation)
 
   @@map("affiliate_status")
@@ -201,13 +201,13 @@ model CustomerAffiliateLink {
   customerEmail        String    @unique
   // External processor IDs are recorded for traceability but no longer
   // the unique key. Either or both can be set per row.
-  paypalPayerId        String?   // PayPal payer.payer_id (when available)
-  customerStripeId     String?   // Legacy — kept while Stripe path is removed
+  paypalPayerId        String? // PayPal payer.payer_id (when available)
+  customerStripeId     String? // Legacy — kept while Stripe path is removed
   affiliateId          String
   affiliate            Affiliate @relation(fields: [affiliateId], references: [id])
   // Audit
   lockedAt             DateTime  @default(now())
-  sourceCookieId       String?   // which click led to the attribution
+  sourceCookieId       String? // which click led to the attribution
   sourceClickAt        DateTime? // when the click happened
   // Denormalized for fast tier calculation later. Avoids joining
   // on every commission calc.
@@ -245,7 +245,7 @@ model OrderCommission {
   affiliate        Affiliate             @relation(fields: [affiliateId], references: [id])
   // Money — Stripe convention: integer cents
   orderTotalCents  BigInt // gross order subtotal (commissionable base)
-  commissionRateBp Int    // basis points: 1500 = 15%, 2000 = 20%, 2500 = 25%
+  commissionRateBp Int // basis points: 1500 = 15%, 2000 = 20%, 2500 = 25%
   commissionCents  BigInt // computed at order time, locks in this rate
   // Status — paid, unpaid, or clawed back
   status           CommissionStatus      @default(PENDING)
@@ -265,9 +265,9 @@ model OrderCommission {
 }
 
 enum CommissionStatus {
-  PENDING     // earned, not yet eligible for payout (refund window open)
-  PAYABLE     // refund window passed, ready to include in payout batch
-  PAID        // included in a completed payout
+  PENDING // earned, not yet eligible for payout (refund window open)
+  PAYABLE // refund window passed, ready to include in payout batch
+  PAID // included in a completed payout
   CLAWED_BACK // order was refunded, commission reversed
 
   @@map("commission_status")
@@ -304,10 +304,10 @@ model Payout {
 }
 
 enum PayoutStatus {
-  PENDING    // batch created, not yet sent to Stripe
+  PENDING // batch created, not yet sent to Stripe
   PROCESSING // Stripe Transfer initiated
-  PAID       // Stripe confirmed transfer success
-  FAILED     // Stripe transfer failed — needs admin attention
+  PAID // Stripe confirmed transfer success
+  FAILED // Stripe transfer failed — needs admin attention
 
   @@map("payout_status")
 }
@@ -319,14 +319,14 @@ enum PayoutStatus {
 // the same customer may or may not have an affiliate locked.
 
 model Customer {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  name            String
-  phone           String?
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String
+  phone          String?
   // If the customer ever signs into an account, we link via Supabase Auth
-  supabaseUserId  String?  @unique
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  supabaseUserId String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   orders Order[]
 
@@ -362,7 +362,7 @@ model OrderAttribution {
 }
 
 model Order {
-  id                String      @id @default(cuid())
+  id              String  @id @default(cuid())
   // External PayPal references.
   // - paypalOrderId is set when /api/paypal/create-order returns (we
   //   pre-create the Order row so buyer info from the card form is
@@ -370,79 +370,79 @@ model Order {
   //   response after Advanced Card Fields capture).
   // - paypalCaptureId is set later when PAYMENT.CAPTURE.COMPLETED
   //   webhook fires. Nullable until capture confirmed.
-  paypalOrderId     String      @unique
-  paypalCaptureId   String?     @unique
-  paypalPayerId     String?
+  paypalOrderId   String  @unique
+  paypalCaptureId String? @unique
+  paypalPayerId   String?
 
   // Customer link
-  customerId        String
-  customer          Customer    @relation(fields: [customerId], references: [id])
-  customerEmail     String      // denormalized for fast filter/search
-  customerName      String      // snapshot at order time
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  customerEmail String // denormalized for fast filter/search
+  customerName  String // snapshot at order time
 
   // Status state machine
-  status            OrderStatus @default(PAID)
+  status OrderStatus @default(PAID)
 
   // Money — integer cents (BigInt for safety on Postgres)
-  subtotalCents     BigInt
-  shippingCents     BigInt
-  discountCents     BigInt      @default(0)
-  totalCents        BigInt      // what was charged
-  currency          String      @default("USD")
+  subtotalCents BigInt
+  shippingCents BigInt
+  discountCents BigInt @default(0)
+  totalCents    BigInt // what was charged
+  currency      String @default("USD")
 
   // Affiliate context (if any) — denormalized; OrderCommission has the
   // commission ledger row keyed by paypalCaptureId
-  discountCode      String?     // code typed at checkout (uppercase)
-  affiliateId       String?     // affiliate credited (may differ from
-                                // code if evergreen lock took over)
+  discountCode String? // code typed at checkout (uppercase)
+  affiliateId  String? // affiliate credited (may differ from
+  // code if evergreen lock took over)
 
   // Shipping address (snapshotted JSON — we don't normalize because
   // each order is a point-in-time record)
-  shippingFullName  String
-  shippingLine1     String
-  shippingLine2     String?
-  shippingCity      String
-  shippingState     String      // 2-char state code
-  shippingZip       String
-  shippingCountry   String      @default("US")
-  shippingPhone     String?
-  shippingEmail     String
+  shippingFullName String
+  shippingLine1    String
+  shippingLine2    String?
+  shippingCity     String
+  shippingState    String // 2-char state code
+  shippingZip      String
+  shippingCountry  String  @default("US")
+  shippingPhone    String?
+  shippingEmail    String
 
   // Billing address (often same as shipping; we still snapshot)
-  billingLine1      String?
-  billingLine2      String?
-  billingCity       String?
-  billingState      String?
-  billingZip        String?
-  billingCountry    String?     @default("US")
+  billingLine1   String?
+  billingLine2   String?
+  billingCity    String?
+  billingState   String?
+  billingZip     String?
+  billingCountry String? @default("US")
 
   // Tracking — set by admin when order ships
-  shippingCarrier   String?     // 'usps' | 'ups' | 'fedex' | 'dhl' | other
-  trackingNumber   String?
-  trackingUrl       String?     // auto-generated from carrier + number
+  shippingCarrier     String? // 'usps' | 'ups' | 'fedex' | 'dhl' | other
+  trackingNumber      String?
+  trackingUrl         String? // auto-generated from carrier + number
   estimatedDeliveryAt DateTime?
 
   // RUO attestation — always true on our flow (gated by checkout), but
   // we record the IP + timestamp at the moment for compliance records
-  ruoAttested       Boolean     @default(true)
-  ruoAttestedIp     String?
-  ruoAttestedAt     DateTime?
+  ruoAttested   Boolean   @default(true)
+  ruoAttestedIp String?
+  ruoAttestedAt DateTime?
 
   // Internal admin notes (not shown to customer)
-  internalNotes     String?     @db.Text
+  internalNotes String? @db.Text
 
   // Lifecycle timestamps
-  createdAt         DateTime    @default(now())
-  paidAt            DateTime    @default(now())
-  processingAt      DateTime?
-  shippedAt         DateTime?
-  deliveredAt       DateTime?
-  canceledAt        DateTime?
-  refundedAt        DateTime?
+  createdAt    DateTime  @default(now())
+  paidAt       DateTime  @default(now())
+  processingAt DateTime?
+  shippedAt    DateTime?
+  deliveredAt  DateTime?
+  canceledAt   DateTime?
+  refundedAt   DateTime?
 
   // Running total of refunds against this order (in cents). Incremented
   // on every full or partial refund. Net amount paid = totalCents - refundedCents.
-  refundedCents     BigInt      @default(0)
+  refundedCents BigInt @default(0)
 
   // When this order's tracking number was pushed to PayPal's Add Tracking
   // API (seller-protection signal; wins item-not-received disputes). Null =
@@ -450,9 +450,9 @@ model Order {
   paypalTrackingSyncedAt DateTime?
 
   // Relations
-  lines             OrderLine[]
-  lookupTokens      OrderLookupToken[]
-  events            OrderEvent[]
+  lines        OrderLine[]
+  lookupTokens OrderLookupToken[]
+  events       OrderEvent[]
 
   @@index([customerEmail])
   @@index([status, createdAt])
@@ -461,14 +461,14 @@ model Order {
 }
 
 enum OrderStatus {
-  PENDING_PAYMENT       // pre-created at checkout, waiting for capture webhook
-  PAID                  // money in, not yet picked
-  PROCESSING            // picking / fulfilling
-  SHIPPED               // tracking number assigned, package out the door
-  DELIVERED             // carrier confirmed delivery (manual or webhook)
-  CANCELED              // canceled before shipping
-  REFUNDED              // full refund issued
-  PARTIALLY_REFUNDED    // partial refund issued (rare for this catalog)
+  PENDING_PAYMENT // pre-created at checkout, waiting for capture webhook
+  PAID // money in, not yet picked
+  PROCESSING // picking / fulfilling
+  SHIPPED // tracking number assigned, package out the door
+  DELIVERED // carrier confirmed delivery (manual or webhook)
+  CANCELED // canceled before shipping
+  REFUNDED // full refund issued
+  PARTIALLY_REFUNDED // partial refund issued (rare for this catalog)
 
   @@map("order_status")
 }
@@ -479,17 +479,17 @@ enum OrderStatus {
 // because products and prices change but the order doesn't.
 
 model OrderLine {
-  id           String @id @default(cuid())
-  orderId      String
-  order        Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  handle       String // product handle for warehouse pick (e.g. 'bpc-157')
-  title        String // snapshot at purchase
-  bundleLabel  String // e.g. 'Single vial' or 'Subscribe · Every month'
-  unitCents    BigInt
-  qty          Int
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  handle      String // product handle for warehouse pick (e.g. 'bpc-157')
+  title       String // snapshot at purchase
+  bundleLabel String // e.g. 'Single vial' or 'Subscribe · Every month'
+  unitCents   BigInt
+  qty         Int
   // Snapshot for fulfillment — components of a stack
-  components   String[] @default([])
-  imageUrl     String?
+  components  String[] @default([])
+  imageUrl    String?
 
   @@index([orderId])
   @@map("order_lines")
@@ -501,19 +501,19 @@ model OrderLine {
 // their order detail page without an account.
 
 model OrderLookupToken {
-  id          String   @id @default(cuid())
+  id        String    @id @default(cuid())
   // The opaque token included in the magic link
-  token       String   @unique
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  orderId   String
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   // Email the link was sent to — must match Order.customerEmail
-  email       String
+  email     String
   // Lifecycle
-  createdAt   DateTime @default(now())
-  expiresAt   DateTime
-  usedAt      DateTime?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
   // Where the request came from — useful for fraud / abuse review
-  requestIp   String?
+  requestIp String?
 
   @@index([orderId])
   @@index([expiresAt])
@@ -531,41 +531,41 @@ model OrderLookupToken {
 // vs "System captured payment."
 
 model OrderEvent {
-  id          String         @id @default(cuid())
-  orderId     String
-  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id         String         @id @default(cuid())
+  orderId    String
+  order      Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   // What happened
-  kind        OrderEventKind
+  kind       OrderEventKind
   // Human-readable summary rendered in the timeline
-  message     String         @db.Text
+  message    String         @db.Text
   // Structured payload for richer rendering (tracking #, email id,
   // refund amount, etc.). Avoids parsing the message string.
-  metadata    Json?
+  metadata   Json?
   // Admin who triggered the event. NULL for system events
   // (webhook, scheduled email, etc.)
-  actorEmail  String?
-  createdAt   DateTime       @default(now())
+  actorEmail String?
+  createdAt  DateTime       @default(now())
 
   @@index([orderId, createdAt])
   @@map("order_events")
 }
 
 enum OrderEventKind {
-  ORDER_PLACED             // customer completed checkout
-  PAYMENT_CAPTURED         // PayPal capture confirmed (webhook or recheck)
-  CONFIRMATION_EMAIL_SENT  // customer order confirmation
-  ADMIN_NOTIFIED           // ops team notification email fired
-  MARKED_PROCESSING        // admin clicked Mark Processing
-  LABEL_PURCHASED          // recorded when ShipStation pushes back (future)
-  MARKED_SHIPPED           // admin marked shipped + entered tracking
-  SHIPMENT_EMAIL_SENT      // customer shipment notification
-  MARKED_DELIVERED         // admin marked delivered
-  MARKED_CANCELED          // admin canceled (no money movement)
-  REFUND_FULL              // PayPal full refund issued
-  REFUND_PARTIAL           // PayPal partial refund issued
-  COMMISSION_CLAWED_BACK   // affiliate commission rolled back on refund
-  ADMIN_COMMENT            // free-text note from an admin
-  EMAIL_FAILED             // any email send returned not-ok from Resend
+  ORDER_PLACED // customer completed checkout
+  PAYMENT_CAPTURED // PayPal capture confirmed (webhook or recheck)
+  CONFIRMATION_EMAIL_SENT // customer order confirmation
+  ADMIN_NOTIFIED // ops team notification email fired
+  MARKED_PROCESSING // admin clicked Mark Processing
+  LABEL_PURCHASED // recorded when ShipStation pushes back (future)
+  MARKED_SHIPPED // admin marked shipped + entered tracking
+  SHIPMENT_EMAIL_SENT // customer shipment notification
+  MARKED_DELIVERED // admin marked delivered
+  MARKED_CANCELED // admin canceled (no money movement)
+  REFUND_FULL // PayPal full refund issued
+  REFUND_PARTIAL // PayPal partial refund issued
+  COMMISSION_CLAWED_BACK // affiliate commission rolled back on refund
+  ADMIN_COMMENT // free-text note from an admin
+  EMAIL_FAILED // any email send returned not-ok from Resend
 
   @@map("order_event_kind")
 }
@@ -576,21 +576,21 @@ enum OrderEventKind {
 // the admin UI. Lookup at checkout is case-insensitive on `code`.
 
 model Discount {
-  id              String         @id @default(cuid())
+  id               String         @id @default(cuid())
   // Case-insensitive code; stored lowercase, unique
-  code            String         @unique
+  code             String         @unique
   // Display title shown in admin lists; if null fall back to code
-  title           String?
-  type            DiscountType
+  title            String?
+  type             DiscountType
   // PERCENT: basis points (10% = 1000, 25% = 2500, max 10000)
   // FIXED_AMOUNT: cents off the order
   // FREE_SHIPPING: value not used (set to 0)
-  value           Int
-  method          DiscountMethod @default(CODE)
+  value            Int
+  method           DiscountMethod @default(CODE)
   // Eligibility / restrictions
   minPurchaseCents BigInt?
   minQuantity      Int?
-  maxUses          Int?           // null = unlimited
+  maxUses          Int? // null = unlimited
   oncePerCustomer  Boolean        @default(false)
   // Bonus: stack free shipping on top of the main discount type. Lets
   // codes like "WELCOME20" give 20% off subtotal AND zero shipping in
@@ -600,16 +600,16 @@ model Discount {
   // Optional restriction to a single customer email
   customerEmail    String?
   // Schedule
-  startsAt        DateTime        @default(now())
-  endsAt          DateTime?
+  startsAt         DateTime       @default(now())
+  endsAt           DateTime?
   // Lifecycle
-  status          DiscountStatus  @default(ACTIVE)
+  status           DiscountStatus @default(ACTIVE)
   // Denormalized usage counter — incremented when an order successfully
   // applies this code. Authoritative count is COUNT(orders WHERE discountCode=this.code).
-  usedCount       Int             @default(0)
+  usedCount        Int            @default(0)
   // Audit
-  createdAt       DateTime        @default(now())
-  createdByEmail  String?
+  createdAt        DateTime       @default(now())
+  createdByEmail   String?
 
   @@index([status, startsAt])
   @@map("discounts")
@@ -624,8 +624,8 @@ enum DiscountType {
 }
 
 enum DiscountMethod {
-  CODE         // customer types code at checkout
-  AUTOMATIC    // applied at checkout when conditions match
+  CODE // customer types code at checkout
+  AUTOMATIC // applied at checkout when conditions match
 
   @@map("discount_method")
 }
@@ -649,13 +649,13 @@ enum DiscountStatus {
 
 model Product {
   // Handle = URL slug = primary key (stable across renames)
-  handle              String   @id
+  handle              String        @id
   title               String
   compound            String
   eyebrow             String
   vialSize            String
   format              ProductFormat
-  oneLiner            String   @db.Text
+  oneLiner            String        @db.Text
   // Retail price = priceCents (kept as-is for storefront compatibility).
   // Customers always see this unless they're logged into the physician
   // portal, in which case they see physicianPriceCents instead.
@@ -668,37 +668,37 @@ model Product {
   costCents           Int?
   // On-hand inventory (units in stock with zero lead time). Updated by
   // the inventory CSV importer + by ShipStation shipment events later.
-  stockQty            Int                  @default(0)
+  stockQty            Int           @default(0)
 
   // Bundle SKUs (3-pack, subscribe, etc) — array of { label, vials, priceCents }
-  bundles             Json?
+  bundles Json?
 
   // Spec block (flattened from spec.* in legacy JSON)
-  specCas             String?
-  specMw              String?
-  specFormula         String?
-  specSequence        String?  @db.Text
-  specAminoAcids      Int?
+  specCas        String?
+  specMw         String?
+  specFormula    String?
+  specSequence   String? @db.Text
+  specAminoAcids Int?
 
   // Lot info (flattened from lot.* in legacy JSON)
-  lotId               String
-  lotPurity           String
-  lotTestedDate       String   // ISO date string; left as String to match existing
-  lotBud              String
-  lotCoaUrl           String?
+  lotId         String
+  lotPurity     String
+  lotTestedDate String // ISO date string; left as String to match existing
+  lotBud        String
+  lotCoaUrl     String?
 
-  segment             ProductSegment
-  channel             ProductChannel
-  shopifySuspended    Boolean        @default(false)
-  status              ProductStatus  @default(ACTIVE)
+  segment          ProductSegment
+  channel          ProductChannel
+  shopifySuspended Boolean        @default(false)
+  status           ProductStatus  @default(ACTIVE)
 
   // Primary image + gallery
-  imageUrl            String?
-  images              String[]       @default([])
+  imageUrl String?
+  images   String[] @default([])
 
   // Audit
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Back-relation for per-practitioner price overrides on this SKU.
   practitionerPriceOverrides PractitionerPriceOverride[]
@@ -726,8 +726,8 @@ enum ProductSegment {
 }
 
 enum ProductChannel {
-  RUA       // research use only — public storefront
-  CLINIC    // clinic-only gated
+  RUA // research use only — public storefront
+  CLINIC // clinic-only gated
   BOTH
 
   @@map("product_channel")
@@ -754,29 +754,29 @@ enum ProductStatus {
 // marketing audit trail.
 
 model NewsletterSubscriber {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  firstName       String?
-  lastName        String?
+  id             String    @id @default(cuid())
+  email          String    @unique
+  firstName      String?
+  lastName       String?
   // Where they came from: popup, footer, shopify-import, csv-import, manual
-  source          String   @default("manual")
+  source         String    @default("manual")
   // Free-form tags from Shopify imports (newsletter, popup-signup, discount-10, etc.)
-  tags            String[] @default([])
+  tags           String[]  @default([])
   // Subscription state
-  isSubscribed    Boolean  @default(true)
-  unsubscribedAt  DateTime?
+  isSubscribed   Boolean   @default(true)
+  unsubscribedAt DateTime?
   // Prospect drip pointer (lib/prospect-journey.ts): which nurture email was
   // last sent + when. Advanced by /api/cron/prospect-emails. NULL = brand-new,
   // starts at the first drip beat. Added via Supabase SQL (pooler can't
   // migrate) — keep the ALTER in lockstep with these two fields.
-  lastSentKey     String?
-  lastSentAt      DateTime?
+  lastSentKey    String?
+  lastSentAt     DateTime?
   // When the drip clock starts for this subscriber. Backfilled to "today" for
   // the existing backlog so day offsets count from now, not an old signup date.
   // New signups get it set to now() at capture. Falls back to createdAt if null.
-  dripStartedAt   DateTime?
+  dripStartedAt  DateTime?
   // Audit
-  createdAt       DateTime @default(now())
+  createdAt      DateTime  @default(now())
 
   @@index([source])
   @@index([isSubscribed])
@@ -788,34 +788,34 @@ model NewsletterSubscriber {
 // approval email + grants portal pricing access) or rejects. Stored
 // so we have an audit log even if the Resend admin notification fails.
 model PractitionerApplication {
-  id              String    @id @default(cuid())
-  practiceName    String
-  providerName    String
-  credentials     String    // MD, DO, NP, PA, DC, PharmD, ND, DMD/DDS, Other
-  state           String
-  licenseNumber   String
-  npi             String
-  email           String
-  phone           String?
-  specialty       String?
-  monthlyVolume   String?
-  notes           String?
+  id                 String    @id @default(cuid())
+  practiceName       String
+  providerName       String
+  credentials        String // MD, DO, NP, PA, DC, PharmD, ND, DMD/DDS, Other
+  state              String
+  licenseNumber      String
+  npi                String
+  email              String
+  phone              String?
+  specialty          String?
+  monthlyVolume      String?
+  notes              String?
   // Workflow
-  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED
-  reviewedAt      DateTime?
-  reviewerEmail   String?
-  reviewerNote    String?
+  status             String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedAt         DateTime?
+  reviewerEmail      String?
+  reviewerNote       String?
   // Per-practice pricing — book-level multiplier in basis points.
   // 10000 = no change (standard physician tier). 9500 = 5% below
   // standard. 10800 = 8% above standard. Applied to physicianPriceCents
   // by the pricing resolver waterfall in lib/pricing.ts.
-  priceMultiplierBps Int    @default(10000)
+  priceMultiplierBps Int       @default(10000)
   // Audit
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   // Per-SKU price pins for this practice. Overrides the multiplier above.
-  priceOverrides  PractitionerPriceOverride[]
+  priceOverrides PractitionerPriceOverride[]
 
   @@index([status])
   @@index([createdAt])
@@ -835,8 +835,8 @@ model PractitionerPriceOverride {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  application   PractitionerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  product       Product                 @relation(fields: [productHandle], references: [handle], onDelete: Cascade)
+  application PractitionerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  product     Product                 @relation(fields: [productHandle], references: [handle], onDelete: Cascade)
 
   @@unique([applicationId, productHandle])
   @@index([applicationId])
@@ -856,32 +856,32 @@ model PractitionerPriceOverride {
 //   • status COMPLETED when RETENTION sequence finishes (last email
 //     sent). Or PAUSED if the practitioner unsubscribes.
 model PractitionerJourney {
-  id              String    @id @default(cuid())
-  email           String    @unique
+  id             String    @id @default(cuid())
+  email          String    @unique
   // What we know about them — populated from the lead form or, once
   // they apply, from the PractitionerApplication.
-  firstName       String?
-  practiceName    String?
+  firstName      String?
+  practiceName   String?
   // Current phase + position
-  phase           String    @default("PROSPECT") // PROSPECT | AWAITING_APPROVAL | ONBOARDING | RETENTION | COMPLETED | PAUSED
+  phase          String    @default("PROSPECT") // PROSPECT | AWAITING_APPROVAL | ONBOARDING | RETENTION | COMPLETED | PAUSED
   // Which email in the current phase to send next (0-indexed). Resets
   // to 0 when phase changes.
-  nextEmailIndex  Int       @default(0)
+  nextEmailIndex Int       @default(0)
   // When the current phase started — used to compute dayOffset
-  phaseStartedAt  DateTime  @default(now())
+  phaseStartedAt DateTime  @default(now())
   // When the next email is due to send
-  nextDueAt       DateTime  @default(now())
+  nextDueAt      DateTime  @default(now())
   // Last email key actually sent + when
-  lastSentKey     String?
-  lastSentAt      DateTime?
+  lastSentKey    String?
+  lastSentAt     DateTime?
   // Free-text context for the templates (first compound ordered, etc.)
-  firstCompound   String?
+  firstCompound  String?
   // Unsubscribe token (random) for one-click unsubscribe links
-  unsubToken      String    @unique @default(cuid())
+  unsubToken     String    @unique @default(cuid())
   // Audit
-  source          String    @default("lead-form") // lead-form | application | approval | first-order | manual
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  source         String    @default("lead-form") // lead-form | application | approval | first-order | manual
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([phase, nextDueAt])
   @@index([email])
@@ -896,27 +896,27 @@ model PractitionerJourney {
 // paid order lands, reopened if they build a new cart later. Powers the
 // abandoned-cart panel in /admin/analytics and the opt-in recovery email.
 model AbandonedCart {
-  id            String   @id @default(cuid())
-  email         String   @unique
+  id            String              @id @default(cuid())
+  email         String              @unique
   // Snapshot of CartLine[] — { handle, title, bundleLabel, unitCents, qty, imageUrl?, components? }
   lines         Json
-  itemCount     Int      @default(0)
-  subtotalCents Int      @default(0)
+  itemCount     Int                 @default(0)
+  subtotalCents Int                 @default(0)
   // Referral carried from the merit_ref cookie so a recovered checkout keeps
   // its discount + affiliate attribution. slug re-seeds the cookie on recovery.
   referralCode  String?
   referralSlug  String?
   // Where the email was captured (checkout, …)
-  source        String   @default("checkout")
+  source        String              @default("checkout")
   status        AbandonedCartStatus @default(OPEN)
   recoveredAt   DateTime?
   // Recovery-email bookkeeping (one nudge in v1 — emailCount gate prevents re-spam)
-  emailCount    Int      @default(0)
+  emailCount    Int                 @default(0)
   lastEmailedAt DateTime?
   // Opaque token for the one-click "return to your cart" link (cross-device)
-  recoverToken  String   @unique @default(cuid())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  recoverToken  String              @unique @default(cuid())
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   @@index([status, updatedAt])
   @@map("abandoned_carts")
@@ -960,4 +960,72 @@ model SequenceEnrollment {
   @@index([status, lastSentAt])
   @@index([email])
   @@map("sequence_enrollments")
+}
+
+// ─── Supply line: collagen + wound care + DME ────────────────────────────
+//
+// A SEPARATE model from Product, deliberately. Product is peptide-shaped —
+// compound, vialSize, format (LYOPHILIZED/RECONSTITUTED), lotPurity, lotBud
+// and lotTestedDate are all required, and none of them mean anything for a
+// collagen dressing. Widening them to optional would turn ~950 call sites
+// across the peptide storefront into null-checks for no benefit to that
+// catalog, and the alternative — writing junk into required lot fields —
+// would corrupt the COA surface that /coa and the label pipeline read.
+//
+// The seam is small because it sits below the parts that are already
+// generic: cart lines and order lines are denormalized to
+// (handle, title, bundleLabel, unitCents, qty), so checkout, orders,
+// fulfilment and ShipStation need no knowledge of which table a line
+// originated from. Only pricing has to resolve the handle, and it branches
+// on which table owns it.
+//
+// Table created via Supabase SQL (the pooled DATABASE_URL can't db push) —
+// keep columns in lockstep with this block.
+model SupplyProduct {
+  handle      String         @id
+  title       String
+  eyebrow     String?
+  category    SupplyCategory
+  brand       String?
+  oneLiner    String         @db.Text
+  description String?        @db.Text
+
+  priceCents       Int
+  compareAtCents   Int?
+  // Clinic/practitioner pricing. Same rule as the peptide catalog: NEVER
+  // exposed to retail buyers, resolved server-side from the session.
+  clinicPriceCents Int?
+  costCents        Int?
+
+  sku         String? @unique
+  size        String? // "4 in x 4 in"
+  unitsPerBox Int?
+  sterile     Boolean @default(true)
+  // Many advanced wound dressings are Rx-only devices. Gates the PDP badge
+  // and the checkout copy — this line is NOT research-use-only, and must
+  // never inherit the peptide catalog's RUO attestation.
+  rxOnly      Boolean @default(false)
+  // Reimbursement code (e.g. A6021 for a collagen dressing ≤16 sq in).
+  hcpcsCode   String?
+
+  manufacturer String?
+  imageUrl     String?
+  stockQty     Int           @default(0)
+  status       ProductStatus @default(DRAFT)
+  sortOrder    Int           @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, status])
+  @@index([status, sortOrder])
+  @@map("supply_products")
+}
+
+enum SupplyCategory {
+  COLLAGEN
+  WOUND_CARE
+  DME
+
+  @@map("supply_category")
 }
