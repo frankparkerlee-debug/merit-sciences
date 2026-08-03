@@ -969,10 +969,14 @@ export async function issueAdminOrderNotification(
 
   const adminUrl = `${siteOrigin()}/admin/orders/${order.id}`;
 
+  // Subject deliberately reads like internal mail, not a notification blast.
+  // The previous form — "[Merit] New paid order · $29.98 · Name" — combined a
+  // bracketed tag with a currency amount, which is a textbook promotional
+  // pattern; these were landing in spam while the customer receipt did not.
   const subject =
     kind === 'new_order'
-      ? `[Merit] New paid order · ${dollars(order.totalCents)} · ${order.customerName}`
-      : `[Merit] Shipped · ${order.paypalOrderId.slice(0, 10)} · ${order.customerName}`;
+      ? `New order from ${order.customerName} (${dollars(order.totalCents)})`
+      : `Shipped: ${order.customerName}`;
 
   const heading =
     kind === 'new_order' ? 'New paid order — ready to fulfill' : 'Order marked shipped';
@@ -1021,21 +1025,45 @@ export async function issueAdminOrderNotification(
     `Admin: ${adminUrl}`,
   ];
 
-  const result = await sendEmail({
-    to: admins,
-    subject,
-    html,
-    text: textParts.join('\n'),
-    tags: [
-      { name: 'type', value: kind === 'new_order' ? 'admin_new_order' : 'admin_shipped' },
-      { name: 'order_id', value: order.id },
-    ],
-  });
+  // ONE MESSAGE PER RECIPIENT, not one message addressed to all three.
+  //
+  // A single email with several addresses in To: is a bulk signal to Gmail and
+  // Workspace, and it was part of why these landed in spam while the 1:1
+  // customer receipt did not. Sending individually also isolates recipients:
+  // a bad mailbox on one domain can no longer affect delivery to the others,
+  // and a bounce is attributable to one address instead of the whole send.
+  //
+  // Sequential with a gap, because a burst of three would be the exact thing
+  // that trips Resend's rate limiter.
+  const delivered: string[] = [];
+  const failures: string[] = [];
 
-  // Return the recipients on success so the caller can record WHO was told —
-  // "the ops email didn't arrive" is otherwise impossible to distinguish from
-  // "it went to an address nobody reads".
-  return result.ok ? { ...result, to: admins } : result;
+  for (const admin of admins) {
+    const result = await sendEmail({
+      to: admin,
+      subject,
+      html,
+      text: textParts.join('\n'),
+      tags: [
+        { name: 'type', value: kind === 'new_order' ? 'admin_new_order' : 'admin_shipped' },
+        { name: 'order_id', value: order.id },
+      ],
+    });
+    if (result.ok) delivered.push(admin);
+    else failures.push(`${admin}: ${result.error}`);
+    if (admins.length > 1) await new Promise((r) => setTimeout(r, 600));
+  }
+
+  // Partial success counts as success — the team was reached. Recording WHO
+  // was reached is what makes "the ops email didn't arrive" distinguishable
+  // from "it went to an address nobody reads".
+  if (delivered.length > 0) {
+    if (failures.length > 0) {
+      console.error(`[email] ops notification partially failed — ${failures.join('; ')}`);
+    }
+    return { ok: true, id: `ops_${order.id}`, to: delivered };
+  }
+  return { ok: false, error: failures.join('; ') || 'No admin recipients' };
 }
 
 function escapeHtml(s: string): string {
