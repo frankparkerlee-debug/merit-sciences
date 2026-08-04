@@ -14,6 +14,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3014,
       "autoPort": true
+    },
+    {
+      "name": "merit-supply",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "CHECKOUT_HOST=localhost next dev -p 3021"],
+      "port": 3021,
+      "autoPort": false
     }
   ]
 }

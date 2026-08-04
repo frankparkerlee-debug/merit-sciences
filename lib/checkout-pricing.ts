@@ -134,6 +134,25 @@ export async function priceCart(args: {
 
   const subtotalCents = lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0);
 
+  // ── Discount-eligible subtotal ─────────────────────────────────────────
+  // Supply-line products (collagen dressings, compression, wound care) are
+  // NEVER discountable, and the discount is computed against the peptide
+  // subtotal only.
+  //
+  // This is a compliance rule, not a merchandising preference. These items are
+  // billed by the purchasing clinic to a payer, and a discount on an item
+  // reimbursed by a federal healthcare program has to satisfy the Anti-Kickback
+  // Statute discount safe harbor — which requires the discount be disclosed and
+  // accurately reported by the buyer on its cost report or claim. A percentage
+  // code applied silently at checkout does none of that. Cheaper to make these
+  // ineligible than to build disclosure plumbing for a promo code.
+  //
+  // Identified by the `supply:` handle prefix set in SupplyAddToCart, the same
+  // convention the cart already uses for `stack:`.
+  const discountableCents = lines
+    .filter((l) => !l.handle.startsWith('supply:'))
+    .reduce((sum, l) => sum + l.unitCents * l.qty, 0);
+
   // ── Discount + attribution ─────────────────────────────────────────────
   let affiliateId: string | null = null;
   let affiliateSlug: string | null = null;
@@ -143,15 +162,27 @@ export async function priceCart(args: {
   let attributionVia: 'discount_code' | 'cookie' | null = null;
 
   if (discountCodeInput) {
-    const cartQuantity = lines.reduce((sum, l) => sum + l.qty, 0);
+    if (discountableCents <= 0) {
+      return {
+        error: 'Discount codes cannot be applied to clinical supply orders.',
+        field: 'discountCode',
+        status: 400,
+      };
+    }
+    const cartQuantity = lines
+      .filter((l) => !l.handle.startsWith('supply:'))
+      .reduce((sum, l) => sum + l.qty, 0);
+    // Validated against the DISCOUNTABLE subtotal, not the cart total — a
+    // minimum-spend code must not be unlocked by supply lines it can't apply to.
     const v = await validateDiscountCode(discountCodeInput, {
-      subtotalCents,
+      subtotalCents: discountableCents,
       buyerEmail: args.buyerEmail ?? null,
       cartQuantity,
     });
     if (!v.ok) return { error: v.error, field: 'discountCode', status: 400 };
     discountCode = v.code;
-    discountCents = v.discountCents;
+    // Clamped: a fixed-amount code must never eat into the supply lines.
+    discountCents = Math.min(v.discountCents, discountableCents);
     freeShipping = v.freeShipping;
     if (v.source === 'affiliate') {
       // Affiliate codes carry their own attribution — this wins over ?ref=.
