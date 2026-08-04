@@ -14,6 +14,7 @@ type CoaRow = {
   id: string;
   compound: string;
   lotId: string;
+  coaNumber: string | null;
   purity: string;
   identity: string | null;
   appearance: string | null;
@@ -42,14 +43,16 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
             OR: [
               { compound: { contains: q, mode: 'insensitive' } },
               { lotId: { contains: q, mode: 'insensitive' } },
+              { coaNumber: { contains: q, mode: 'insensitive' } },
               { identity: { contains: q, mode: 'insensitive' } },
             ],
           }
         : undefined,
-      orderBy: [{ compound: 'asc' }, { createdAt: 'desc' }],
+      // Lots with a published certificate lead — they're the strongest proof.
+      orderBy: [{ createdAt: 'desc' }, { compound: 'asc' }],
       take: 500,
       select: {
-        id: true, compound: true, lotId: true, purity: true,
+        id: true, compound: true, lotId: true, coaNumber: true, purity: true,
         identity: true, appearance: true, testedDate: true, fileUrl: true,
       },
     });
@@ -133,11 +136,12 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                 )}
                 <dl className="mt-3 space-y-1.5 text-[13px]">
                   <Row label="Lot">{c.lotId}</Row>
+                  {c.coaNumber && <Row label="COA #">{c.coaNumber}</Row>}
                   {c.identity && <Row label="Identity">{c.identity}</Row>}
                   {c.appearance && <Row label="Appearance">{c.appearance}</Row>}
                   {fmtDate(c.testedDate) && <Row label="Tested">{fmtDate(c.testedDate)}</Row>}
                 </dl>
-                <div className="mt-3 flex items-center justify-between border-t border-cobalt/8 pt-3">
+                <div className="mt-3 flex items-center justify-between gap-3 border-t border-cobalt/8 pt-3">
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     Verified · passed
@@ -150,12 +154,13 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                         rel="noopener noreferrer"
                         className="text-xs font-bold text-cobalt hover:underline"
                       >
-                        View report →
+                        Full certificate (PDF) →
                       </a>
                     )}
-                    {/* Stable per-lot permalink — the URL the label QR resolves to */}
+                    {/* Stable permalink — the URL the label QR resolves to. One lot
+                        can cover several SKUs, so the COA number keys it when present. */}
                     <Link
-                      href={`/coa/${encodeURIComponent(c.lotId)}`}
+                      href={`/coa/${encodeURIComponent(c.coaNumber ?? c.lotId)}`}
                       className="text-xs font-bold text-cobalt hover:underline"
                     >
                       Lot page →
@@ -174,17 +179,20 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
         <div className="max-w-[1000px] mx-auto px-5 sm:px-6 lg:px-8 py-12">
           <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">— How we verify</p>
           <h2 className="font-display text-2xl font-black text-ink tracking-tight mb-6">
-            Three independent checks. Zero exceptions<span className="text-cobalt">.</span>
+            A full QC panel. Zero exceptions<span className="text-cobalt">.</span>
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Check title="HPLC purity" body="High-performance liquid chromatography measures the exact purity of every lot before release." />
-            <Check title="Mass-spec identity" body="Mass spectrometry confirms the compound is what the label says it is — no substitutions." />
-            <Check title="Heavy metals + endotoxin" body="Screened for heavy-metal and endotoxin contamination to research-grade thresholds." />
+            <Check title="Identity confirmation" body="Each lot is confirmed against a reference standard — the compound is what the label says it is, with no substitutions." />
+            <Check title="Heavy metals + endotoxin" body="Elemental impurities by ICP-MS, plus endotoxin and sterility testing, screened to research-grade thresholds." />
+            <Check title="Fentanyl screen" body="Every lot on the current panel is screened for fentanyl by immunoassay — reported on the certificate itself." />
           </div>
           <p className="mt-8 max-w-2xl text-[13px] leading-relaxed text-ink-soft">
-            <strong className="text-ink">A note on what&rsquo;s shown.</strong> Manufacturer and laboratory
-            identifiers are redacted to protect supply-chain integrity — the data is not. Purity, identity,
-            and lot are reported exactly as measured. For research use only.
+            <strong className="text-ink">A note on what&rsquo;s shown.</strong> Lots released with a full
+            certificate carry the complete PDF — accredited lab named, signed by the lab director, with an
+            access code you can verify at the lab&rsquo;s own portal. On older lots, manufacturer and
+            laboratory identifiers are redacted to protect supply-chain integrity; the data never is.
+            Purity, identity, and lot are reported exactly as measured. For research use only.
           </p>
         </div>
       </section>

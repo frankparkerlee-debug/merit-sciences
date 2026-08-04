@@ -89,6 +89,28 @@ export function isSupplyPath(pathname: string): boolean {
   );
 }
 
+/**
+ * Whether the supply storefront is publicly served. DEFAULT OFF.
+ *
+ * Deploying the storefront put an empty, branded wound-care store on
+ * meritcheckout.com — headline copy, category tiles reading 0, "Nothing here
+ * yet" — on the domain buyers are redirected to for checkout. A storefront is
+ * only ready when it has a catalog, and the catalog is a separate decision
+ * from the code being merged.
+ *
+ * Default-off is the safe direction for this flag specifically: if the env var
+ * never reaches the process (which happened twice on 2026-08-02), the failure
+ * mode is "payment domain behaves as it always did", not "half-built store goes
+ * public". Set SUPPLY_STOREFRONT=on once there are products to sell.
+ */
+export function supplyStorefrontEnabled(): boolean {
+  const v = (process.env.SUPPLY_STOREFRONT ?? '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .toLowerCase();
+  return v === 'on' || v === 'true' || v === '1';
+}
+
 /** True when checkout redirects to a different origin than the storefront. */
 export function isSplitCheckout(): boolean {
   return checkoutOrigin() !== null;

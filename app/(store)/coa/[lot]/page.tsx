@@ -23,6 +23,7 @@ type CoaRow = {
   compound: string;
   productHandle: string | null;
   lotId: string;
+  coaNumber: string | null;
   purity: string;
   identity: string | null;
   appearance: string | null;
@@ -30,21 +31,40 @@ type CoaRow = {
   fileUrl: string | null;
 };
 
-async function getLot(lotParam: string): Promise<CoaRow | null> {
-  const lotId = decodeURIComponent(lotParam).trim();
-  if (!lotId || lotId.length > 64) return null;
+/**
+ * Resolves either a lot number or a certificate number. A single production lot
+ * can cover many SKUs (one lot number, one certificate per product), so a lot
+ * lookup can legitimately return several rows — the caller renders an index in
+ * that case rather than silently showing one of them.
+ */
+async function getLot(lotParam: string): Promise<CoaRow[]> {
+  const key = decodeURIComponent(lotParam).trim();
+  if (!key || key.length > 64) return [];
   try {
-    return await prisma.coa.findFirst({
-      where: { lotId: { equals: lotId, mode: 'insensitive' } },
-      orderBy: { createdAt: 'desc' },
+    return await prisma.coa.findMany({
+      where: {
+        OR: [
+          { coaNumber: { equals: key, mode: 'insensitive' } },
+          { lotId: { equals: key, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: [{ compound: 'asc' }, { createdAt: 'desc' }],
+      take: 100,
       select: {
-        id: true, compound: true, productHandle: true, lotId: true, purity: true,
-        identity: true, appearance: true, testedDate: true, fileUrl: true,
+        id: true, compound: true, productHandle: true, lotId: true, coaNumber: true,
+        purity: true, identity: true, appearance: true, testedDate: true, fileUrl: true,
       },
     });
   } catch {
-    return null;
+    return [];
   }
+}
+
+/** An exact certificate-number hit always wins over its (shared) lot number. */
+function resolveOne(rows: CoaRow[], key: string): CoaRow | null {
+  const exact = rows.find((r) => r.coaNumber?.toLowerCase() === key.toLowerCase());
+  if (exact) return exact;
+  return rows.length === 1 ? rows[0] : null;
 }
 
 function fmtDate(s: string | null): string | null {
@@ -59,8 +79,19 @@ function parsePurity(s: string): number {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const coa = await getLot(params.lot);
-  if (!coa) return { title: 'COA not found' };
+  const key = decodeURIComponent(params.lot).trim();
+  const rows = await getLot(params.lot);
+  const coa = resolveOne(rows, key);
+  if (!coa) {
+    if (rows.length > 1) {
+      return {
+        title: `Lot ${rows[0].lotId} — certificates of analysis`,
+        description: `Certificates of analysis for every compound released under lot ${rows[0].lotId}: purity by HPLC, identity confirmation, and the full QC panel. Research use only.`,
+        alternates: { canonical: `https://meritsciences.com/coa/${encodeURIComponent(rows[0].lotId)}` },
+      };
+    }
+    return { title: 'COA not found' };
+  }
   // Root template appends "· Merit Sciences".
   const title = `${coa.compound} COA — Lot ${coa.lotId} (${coa.purity} HPLC)`;
   return {
@@ -71,8 +102,13 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function CoaLotPage({ params }: Props) {
-  const coa = await getLot(params.lot);
-  if (!coa) return notFound();
+  const key = decodeURIComponent(params.lot).trim();
+  const rows = await getLot(params.lot);
+  const coa = resolveOne(rows, key);
+  if (!coa) {
+    if (rows.length > 1) return <LotIndex rows={rows} />;
+    return notFound();
+  }
 
   const isWater = /bacteriostatic|sterile water/i.test(coa.compound);
   const tested = fmtDate(coa.testedDate);
@@ -166,6 +202,7 @@ export default async function CoaLotPage({ params }: Props) {
           <dl className="mt-4 space-y-2 text-[14px]">
             <Row label="Compound">{coa.compound}</Row>
             <Row label="Lot">{coa.lotId}</Row>
+            {coa.coaNumber && <Row label="COA #">{coa.coaNumber}</Row>}
             <Row label="Purity">{isWater ? 'USP sterility + content verified' : `${coa.purity} by HPLC`}</Row>
             {coa.identity && <Row label="Identity">{coa.identity}</Row>}
             {coa.appearance && <Row label="Appearance">{coa.appearance}</Row>}
@@ -185,7 +222,7 @@ export default async function CoaLotPage({ params }: Props) {
                   rel="noopener noreferrer"
                   className="text-xs font-bold text-cobalt hover:underline"
                 >
-                  View full report →
+                  Full certificate (PDF) →
                 </a>
               )}
               {coa.productHandle && (
@@ -198,9 +235,20 @@ export default async function CoaLotPage({ params }: Props) {
         </div>
 
         <p className="mt-6 text-[13px] leading-relaxed text-ink-soft">
-          <strong className="text-ink">A note on what&rsquo;s shown.</strong> Manufacturer and laboratory
-          identifiers are redacted to protect supply-chain integrity — the data is not. Purity, identity,
-          and lot are reported exactly as measured. For research use only — not for human or veterinary use.
+          <strong className="text-ink">A note on what&rsquo;s shown.</strong>{' '}
+          {coa.fileUrl ? (
+            <>
+              The full certificate above is the lab&rsquo;s own document — accredited lab named, signed by
+              the lab director, carrying an access code you can verify at the lab&rsquo;s portal.
+            </>
+          ) : (
+            <>
+              Manufacturer and laboratory identifiers are redacted on this lot to protect supply-chain
+              integrity — the data is not.
+            </>
+          )}{' '}
+          Purity, identity, and lot are reported exactly as measured. For research use only — not for human
+          or veterinary use.
         </p>
 
         <p className="mt-4 text-[13px] text-ink-soft">
@@ -220,5 +268,78 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <dt className="w-28 flex-none text-ink-muted">{label}</dt>
       <dd className="text-ink font-medium">{children}</dd>
     </div>
+  );
+}
+
+/**
+ * One lot number, many SKUs — each with its own certificate. Landing on the
+ * shared lot number lists them rather than picking one arbitrarily.
+ */
+function LotIndex({ rows }: { rows: CoaRow[] }) {
+  const lotId = rows[0].lotId;
+  const tested = fmtDate(rows[0].testedDate);
+
+  return (
+    <main className="bg-cream min-h-screen">
+      <section className="bg-white border-b border-cobalt/10">
+        <div className="max-w-[760px] mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-8">
+          <div className="text-xs text-ink-muted mb-5">
+            <Link href="/" className="hover:text-ink transition">Home</Link>
+            {' · '}
+            <Link href="/coa" className="hover:text-ink transition">Lab results</Link>
+            {' · '}
+            <span className="text-ink">Lot {lotId}</span>
+          </div>
+          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+            — Certificates of analysis
+          </p>
+          <h1
+            className="font-display font-black text-ink tracking-[-0.035em] leading-[0.98] mb-3"
+            style={{ fontSize: 'clamp(28px, 4.5vw, 44px)' }}
+          >
+            Lot {lotId}<span className="text-cobalt">.</span>
+          </h1>
+          <p className="text-sm text-ink-soft">
+            {rows.length} compounds released under this lot
+            {tested && <> · tested {tested}</>}. Pick yours to see its certificate.
+          </p>
+        </div>
+      </section>
+
+      <section className="max-w-[760px] mx-auto px-5 sm:px-6 lg:px-8 py-10">
+        <ul className="space-y-2">
+          {rows.map((r) => {
+            const isWater = /bacteriostatic|sterile water/i.test(r.compound);
+            return (
+              <li key={r.id}>
+                <Link
+                  href={`/coa/${encodeURIComponent(r.coaNumber ?? r.lotId)}`}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-cobalt/12 bg-white px-4 py-3 transition hover:border-cobalt/35"
+                >
+                  <span className="min-w-0">
+                    <span className="block font-display text-[15px] font-extrabold text-ink leading-tight">
+                      {r.compound}
+                    </span>
+                    {r.coaNumber && (
+                      <span className="block text-[11.5px] text-ink-muted tabular-nums">{r.coaNumber}</span>
+                    )}
+                  </span>
+                  <span className="flex-none rounded-lg bg-cobalt/10 px-2.5 py-1 text-[12px] font-bold tabular-nums text-cobalt">
+                    {isWater ? 'USP · Sterile' : `${r.purity} HPLC`}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+
+        <p className="mt-6 text-[13px] text-ink-soft">
+          Looking for a different lot?{' '}
+          <Link href="/coa" className="text-cobalt font-bold underline-offset-2 hover:underline">
+            Search the full lab-results library →
+          </Link>
+        </p>
+      </section>
+    </main>
   );
 }
