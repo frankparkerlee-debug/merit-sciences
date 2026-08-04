@@ -12,7 +12,24 @@ export function SupplyProductCard({ p }: { p: SupplyListItem }) {
   const unit = perUnit(p.priceCents, p.unitsPerBox);
 
   return (
-    <div className="flex flex-col rounded-2xl border border-ink/10 bg-white p-4 transition hover:border-ink/25">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-white transition hover:border-ink/25">
+      {/* Package render. Plain <img> rather than next/image: these are our own
+          static SVGs, so there is nothing to optimise and next/image's SVG
+          handling would only add a config dependency. */}
+      {p.imageUrl && (
+        <Link href={`/shop/${p.handle}`} className="block border-b border-ink/10 bg-white">
+          <img
+            src={p.imageUrl}
+            alt={p.title}
+            width={640}
+            height={640}
+            loading="lazy"
+            className="block h-auto w-full"
+          />
+        </Link>
+      )}
+
+      <div className="flex flex-1 flex-col p-4">
       <Link href={`/shop/${p.handle}`} className="group flex-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -70,6 +87,7 @@ export function SupplyProductCard({ p }: { p: SupplyListItem }) {
             compact
           />
         </div>
+      </div>
       </div>
     </div>
   );

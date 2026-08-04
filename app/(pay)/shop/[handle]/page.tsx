@@ -51,6 +51,17 @@ export default async function SupplyPDP({
 
         <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_360px]">
           <div>
+            {p.imageUrl && (
+              <div className="mb-8 overflow-hidden rounded-2xl border border-ink/10 bg-white">
+                <img
+                  src={p.imageUrl}
+                  alt={p.title}
+                  width={640}
+                  height={640}
+                  className="block h-auto w-full max-w-[420px]"
+                />
+              </div>
+            )}
             {p.brand && (
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cobalt">
                 {p.brand}
