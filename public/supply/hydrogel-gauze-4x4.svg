@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-label="Bordered Gauze">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-label="Hydrogel Gauze">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#FFFFFF"/>
@@ -28,15 +28,15 @@
   <text x="168" y="216" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#94A0B0" letter-spacing="3">CLINICAL</text>
 
   <!-- product name -->
-  <text x="168" y="288" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="800" fill="#0B0F19" letter-spacing="-0.7">Bordered Gauze</text>
-  <text x="168" y="316" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="500" fill="#4A5160">Bordered gauze island dressing for larger post-op and donor sites</text>
+  <text x="168" y="288" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="800" fill="#0B0F19" letter-spacing="-0.7">Hydrogel Gauze</text>
+  <text x="168" y="316" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="500" fill="#4A5160">Hydrogel-impregnated gauze for packing dry cavity and tunneling wounds</text>
 
   <!-- size, the thing a buyer scans for -->
-  <text x="168" y="392" font-family="Inter, system-ui, sans-serif" font-size="46" font-weight="800" fill="#0E7C86" letter-spacing="-1.5">6" × 6"</text>
+  <text x="168" y="392" font-family="Inter, system-ui, sans-serif" font-size="46" font-weight="800" fill="#0E7C86" letter-spacing="-1.5">4" × 4"</text>
 
   <!-- spec rail -->
   <line x1="168" y1="424" x2="472" y2="424" stroke="#E2E5EB" stroke-width="2"/>
-  <text x="168" y="454" font-family="ui-monospace, monospace" font-size="14" font-weight="600" fill="#4A5160">HCPCS A6220</text>
+  <text x="168" y="454" font-family="ui-monospace, monospace" font-size="14" font-weight="600" fill="#4A5160">HCPCS A6231</text>
   <text x="168" y="480" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#4A5160" letter-spacing="1.5">STERILE · SINGLE USE</text>
 
   <text x="168" y="516" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="500" fill="#94A0B0">Supplied to licensed clinicians and healthcare facilities</text>

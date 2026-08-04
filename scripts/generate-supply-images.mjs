@@ -39,10 +39,55 @@ function esc(s) {
 }
 
 /**
- * A pouch-style package render. Deliberately flat and diagrammatic: it is a
- * spec card wearing a package shape, not a photograph pretending to be one.
+ * The container silhouette. A hydrogel tube is not a pouch and a bottle of
+ * cleanser is not a dressing — drawing them all as the same flat rectangle
+ * would make a 50-SKU shelf unreadable, and would quietly misrepresent what
+ * arrives in the box.
  */
-function packageSvg({ title, subtitle, size, hcpcs, category, sterile, rx }) {
+function vessel(form, accent) {
+  const crimp = (y) =>
+    `<rect x="128" y="${y}" width="384" height="34" rx="10" fill="#E9ECF1"/>
+     <g stroke="${INK_MUTED}" stroke-width="1" opacity="0.45">
+       ${Array.from({ length: 24 }, (_, i) => `<line x1="${140 + i * 16}" y1="${y + 6}" x2="${140 + i * 16}" y2="${y + 28}"/>`).join('')}
+     </g>`;
+
+  switch (form) {
+    case 'bottle':
+      return `
+    <rect x="286" y="60" width="68" height="30" rx="5" fill="#DDE1E8" stroke="${BORDER}" stroke-width="2"/>
+    <rect x="300" y="86" width="40" height="24" fill="#E9ECF1"/>
+    <rect x="128" y="106" width="384" height="438" rx="26" fill="url(#foil)" stroke="${BORDER}" stroke-width="2"/>
+    <rect x="128" y="150" width="8" height="394" fill="${accent}"/>`;
+    case 'tube':
+      return `
+    <rect x="296" y="58" width="48" height="34" rx="6" fill="#DDE1E8" stroke="${BORDER}" stroke-width="2"/>
+    <rect x="128" y="88" width="384" height="456" rx="30" fill="url(#foil)" stroke="${BORDER}" stroke-width="2"/>
+    ${crimp(508)}
+    <rect x="128" y="150" width="8" height="358" fill="${accent}"/>`;
+    case 'roll':
+      return `
+    <rect x="128" y="112" width="384" height="432" rx="14" fill="url(#foil)" stroke="${BORDER}" stroke-width="2"/>
+    <ellipse cx="320" cy="112" rx="192" ry="26" fill="#F1F3F6" stroke="${BORDER}" stroke-width="2"/>
+    <ellipse cx="320" cy="112" rx="74" ry="10" fill="#E4E7ED"/>
+    <rect x="128" y="150" width="8" height="394" fill="${accent}"/>`;
+    case 'box':
+      return `
+    <rect x="128" y="96" width="384" height="448" rx="6" fill="url(#foil)" stroke="${BORDER}" stroke-width="2"/>
+    <line x1="128" y1="150" x2="512" y2="150" stroke="${BORDER}" stroke-width="2"/>
+    <rect x="128" y="150" width="8" height="394" fill="${accent}"/>`;
+    default: // pouch
+      return `
+    <rect x="128" y="96" width="384" height="448" rx="10" fill="url(#foil)" stroke="${BORDER}" stroke-width="2"/>
+    ${crimp(96)}
+    <rect x="128" y="150" width="8" height="394" fill="${accent}"/>`;
+  }
+}
+
+/**
+ * Deliberately flat and diagrammatic: a spec card wearing a package shape, not
+ * a photograph pretending to be one.
+ */
+function packageSvg({ title, subtitle, size, hcpcs, category, sterile, rx, form }) {
   const accent = ACCENT[category] ?? COBALT;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-label="${esc(title)}">
   <defs>
@@ -60,16 +105,7 @@ function packageSvg({ title, subtitle, size, hcpcs, category, sterile, rx }) {
 
   <rect width="640" height="640" fill="url(#bg)"/>
 
-  <!-- pouch body -->
-  <g>
-    <rect x="128" y="96" width="384" height="448" rx="10" fill="url(#foil)" stroke="${BORDER}" stroke-width="2"/>
-    <!-- sealed top crimp -->
-    <rect x="128" y="96" width="384" height="34" rx="10" fill="#E9ECF1"/>
-    <g stroke="${INK_MUTED}" stroke-width="1" opacity="0.45">
-      ${Array.from({ length: 24 }, (_, i) => `<line x1="${140 + i * 16}" y1="102" x2="${140 + i * 16}" y2="124"/>`).join('')}
-    </g>
-    <!-- accent spine -->
-    <rect x="128" y="150" width="8" height="394" fill="${accent}"/>
+  <g>${vessel(form, accent)}
   </g>
 
   <!-- wordmark -->
@@ -105,10 +141,14 @@ for (const p of CATALOG) {
       size: p.size,
       hcpcs: p.hcpcs,
       category: p.cat,
-      sterile: true,
+      // Not everything is sterile — barrier creams, tapes and elastic wraps
+      // aren't, and claiming sterility on a non-sterile product is a labeling
+      // defect, not a design detail.
+      sterile: p.sterile !== false,
       // Only the collagen line is Rx. Stamping "Rx only" on a dressing that
       // isn't would be a false statement on a device package.
       rx: p.rx,
+      form: p.form,
     }),
     'utf8',
   );
