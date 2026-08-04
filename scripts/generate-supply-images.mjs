@@ -13,6 +13,7 @@
  * Run: node scripts/generate-supply-images.mjs
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
+import { CATALOG } from './supply-catalog.mjs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -41,7 +42,7 @@ function esc(s) {
  * A pouch-style package render. Deliberately flat and diagrammatic: it is a
  * spec card wearing a package shape, not a photograph pretending to be one.
  */
-function packageSvg({ title, subtitle, size, hcpcs, category, sterile }) {
+function packageSvg({ title, subtitle, size, hcpcs, category, sterile, rx }) {
   const accent = ACCENT[category] ?? COBALT;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-label="${esc(title)}">
   <defs>
@@ -87,29 +88,30 @@ function packageSvg({ title, subtitle, size, hcpcs, category, sterile }) {
   ${hcpcs ? `<text x="168" y="454" font-family="ui-monospace, monospace" font-size="14" font-weight="600" fill="${INK_SOFT}">HCPCS ${esc(hcpcs)}</text>` : ''}
   ${sterile ? `<text x="168" y="480" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="${INK_SOFT}" letter-spacing="1.5">STERILE · SINGLE USE</text>` : ''}
 
-  <text x="168" y="516" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="500" fill="${INK_MUTED}">Rx only — for use by or on the order of a licensed practitioner</text>
+  ${rx
+    ? `<text x="168" y="516" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="500" fill="${INK_MUTED}">Rx only — for use by or on the order of a licensed practitioner</text>`
+    : `<text x="168" y="516" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="500" fill="${INK_MUTED}">Supplied to licensed clinicians and healthcare facilities</text>`}
 </svg>
 `;
 }
 
-const PRODUCTS = [
-  { file: 'collagen-matrix-7x7',       title: 'Collagen Matrix',   subtitle: 'Native collagen wound dressing', size: '7" × 7"',       hcpcs: 'A6023', category: 'COLLAGEN',   sterile: true },
-  { file: 'collagen-matrix-4x4',       title: 'Collagen Matrix',   subtitle: 'Native collagen wound dressing', size: '4" × 4"',       hcpcs: 'A6022', category: 'COLLAGEN',   sterile: true },
-  { file: 'collagen-matrix-2x2',       title: 'Collagen Matrix',   subtitle: 'Native collagen wound dressing', size: '2" × 2"',       hcpcs: 'A6021', category: 'COLLAGEN',   sterile: true },
-  { file: 'collagen-particulate-1g',   title: 'Collagen Particulate', subtitle: 'For tunneling and irregular wounds', size: '1 g',    hcpcs: 'A6010', category: 'COLLAGEN',   sterile: true },
-  { file: 'calcium-alginate-2x2',      title: 'Calcium Alginate',  subtitle: 'Moderate to heavy exudate',      size: '2" × 2"',       hcpcs: 'A6196', category: 'WOUND_CARE', sterile: true },
-  { file: 'calcium-alginate-4x4',      title: 'Calcium Alginate',  subtitle: 'Moderate to heavy exudate',      size: '4.33" × 4.33"', hcpcs: 'A6197', category: 'WOUND_CARE', sterile: true },
-  { file: 'calcium-alginate-rope',     title: 'Alginate Rope',     subtitle: 'Packing for tunneling wounds',   size: '2 g',           hcpcs: 'A6199', category: 'WOUND_CARE', sterile: true },
-  { file: 'silver-alginate-2x2',       title: 'Silver Alginate',   subtitle: 'Ionic silver, antimicrobial',    size: '2" × 2"',       hcpcs: 'A6196', category: 'WOUND_CARE', sterile: true },
-  { file: 'silver-alginate-4x4',       title: 'Silver Alginate',   subtitle: 'Ionic silver, antimicrobial',    size: '4.33" × 4.33"', hcpcs: 'A6197', category: 'WOUND_CARE', sterile: true },
-  { file: 'silicone-foam-4x4',         title: 'Silicone Foam',     subtitle: 'Bordered, atraumatic adhesive',  size: '4" × 4"',       hcpcs: 'A6213', category: 'WOUND_CARE', sterile: true },
-  { file: 'silicone-foam-sacral',      title: 'Sacral Foam',       subtitle: 'Contoured, bordered silicone',   size: '9" × 9"',       hcpcs: 'A6214', category: 'WOUND_CARE', sterile: true },
-  { file: 'super-absorbent-4x4',       title: 'Super Absorbent',   subtitle: 'Non-adherent, heavy exudate',    size: '4" × 4"',       hcpcs: 'A6252', category: 'WOUND_CARE', sterile: true },
-];
-
 let n = 0;
-for (const p of PRODUCTS) {
-  writeFileSync(join(OUT, `${p.file}.svg`), packageSvg(p), 'utf8');
+for (const p of CATALOG) {
+  writeFileSync(
+    join(OUT, `${p.file}.svg`),
+    packageSvg({
+      title: p.type,
+      subtitle: p.blurb.split('.')[0],
+      size: p.size,
+      hcpcs: p.hcpcs,
+      category: p.cat,
+      sterile: true,
+      // Only the collagen line is Rx. Stamping "Rx only" on a dressing that
+      // isn't would be a false statement on a device package.
+      rx: p.rx,
+    }),
+    'utf8',
+  );
   n++;
 }
 console.log(`wrote ${n} product images to public/supply/`);

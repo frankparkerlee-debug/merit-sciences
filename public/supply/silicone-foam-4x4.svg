@@ -32,7 +32,7 @@
 
   <!-- product name -->
   <text x="168" y="288" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="800" fill="#0B0F19" letter-spacing="-0.7">Silicone Foam</text>
-  <text x="168" y="316" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="500" fill="#4A5160">Bordered, atraumatic adhesive</text>
+  <text x="168" y="316" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="500" fill="#4A5160">Bordered silicone foam for moderate exudate</text>
 
   <!-- size, the thing a buyer scans for -->
   <text x="168" y="392" font-family="Inter, system-ui, sans-serif" font-size="46" font-weight="800" fill="#0E7C86" letter-spacing="-1.5">4" × 4"</text>
@@ -42,5 +42,5 @@
   <text x="168" y="454" font-family="ui-monospace, monospace" font-size="14" font-weight="600" fill="#4A5160">HCPCS A6213</text>
   <text x="168" y="480" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#4A5160" letter-spacing="1.5">STERILE · SINGLE USE</text>
 
-  <text x="168" y="516" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="500" fill="#94A0B0">Rx only — for use by or on the order of a licensed practitioner</text>
+  <text x="168" y="516" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="500" fill="#94A0B0">Supplied to licensed clinicians and healthcare facilities</text>
 </svg>

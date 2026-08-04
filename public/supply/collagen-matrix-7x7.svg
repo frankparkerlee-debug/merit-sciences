@@ -32,7 +32,7 @@
 
   <!-- product name -->
   <text x="168" y="288" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="800" fill="#0B0F19" letter-spacing="-0.7">Collagen Matrix</text>
-  <text x="168" y="316" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="500" fill="#4A5160">Native collagen wound dressing</text>
+  <text x="168" y="316" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="500" fill="#4A5160">Native collagen matrix for large wounds</text>
 
   <!-- size, the thing a buyer scans for -->
   <text x="168" y="392" font-family="Inter, system-ui, sans-serif" font-size="46" font-weight="800" fill="#2E4DDB" letter-spacing="-1.5">7" × 7"</text>
