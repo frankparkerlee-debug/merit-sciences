@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { SupplyHeader, SupplyFooter } from '@/components/SupplyShell';
-import { SupplyProductCard } from '@/components/SupplyProductCard';
+import { ShopClient } from './ShopClient';
 import { listSupplyProducts, SUPPLY_CATEGORIES } from '@/lib/supply';
 import type { SupplyCategory } from '@/lib/generated/prisma';
 
@@ -33,20 +33,18 @@ export default async function ShopPage({
   // used to be a feature flag, and the flag disagreed with reality.
   if (products.length === 0 && !active) notFound();
 
+  const heading = active
+    ? SUPPLY_CATEGORIES.find((c) => c.key === active)?.label ?? 'Products'
+    : 'All products';
+
   return (
     <>
       <SupplyHeader />
 
-      <div className="mx-auto max-w-6xl px-5 py-10">
-        <h1 className="text-[30px] font-extrabold tracking-tight text-ink">
-          {active ? SUPPLY_CATEGORIES.find((c) => c.key === active)?.label : 'All products'}
-        </h1>
-        <p className="mt-2 text-[14px] text-ink-soft">
-          {products.length} product{products.length === 1 ? '' : 's'} · priced per box · free
-          shipping over $300
-        </p>
-
-        <nav className="mt-6 flex flex-wrap gap-2">
+      <div className="mx-auto max-w-[1240px] px-5 py-10">
+        {/* Category lives in the URL (shareable, linked from the homepage
+            tiles); search and family facets are client-side. */}
+        <nav className="mb-7 flex flex-wrap gap-2">
           <FilterPill href="/shop" label="All" active={!active} />
           {SUPPLY_CATEGORIES.map((c) => (
             <FilterPill
@@ -58,17 +56,11 @@ export default async function ShopPage({
           ))}
         </nav>
 
-        {products.length === 0 ? (
-          <p className="mt-16 text-[15px] text-ink-muted">
-            Nothing here yet. Check back shortly.
-          </p>
-        ) : (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((p) => (
-              <SupplyProductCard key={p.handle} p={p} />
-            ))}
-          </div>
-        )}
+        <ShopClient products={products} heading={heading} />
+
+        <p className="mt-10 text-[12px] leading-relaxed text-ink-muted">
+          Priced per box · free shipping over $300 · US shipping only
+        </p>
       </div>
 
       <SupplyFooter />

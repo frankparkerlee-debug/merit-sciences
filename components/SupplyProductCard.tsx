@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { SupplyAddToCart } from './SupplyAddToCart';
-import { money, perUnit, type SupplyListItem } from '@/lib/supply';
+import { money, perUnit, type SupplyListItem } from '@/lib/supply-shared';
 
 /**
  * Clinic-facing product card: SKU, size, and HCPCS are surfaced rather than
