@@ -11,7 +11,6 @@ import {
   isCheckoutHostname,
   isPaymentPath,
   isSupplyPath,
-  supplyStorefrontEnabled,
   checkoutOrigin,
 } from '@/lib/checkout-domain';
 
@@ -107,13 +106,13 @@ export async function middleware(req: NextRequest) {
     // app/(pay)/page.tsx because the storefront homepage owns "/".
     if (req.nextUrl.pathname === '/') {
       const home = req.nextUrl.clone();
-      // Only front the storefront once it has a catalog — otherwise the
-      // payment domain publicly advertises a store with zero products.
-      home.pathname = supplyStorefrontEnabled() ? '/supply' : '/pay-home';
+      // Always /supply. That page renders the storefront when a catalog exists
+      // and the payment landing when it doesn't — the decision belongs with the
+      // data, not with an env var somebody has to remember to flip.
+      home.pathname = '/supply';
       return NextResponse.rewrite(home);
     }
-    const supplyOk = supplyStorefrontEnabled() && isSupplyPath(req.nextUrl.pathname);
-    if (!isPaymentPath(req.nextUrl.pathname) && !supplyOk) {
+    if (!isPaymentPath(req.nextUrl.pathname) && !isSupplyPath(req.nextUrl.pathname)) {
       // DEAD-END, not a redirect home.
       //
       // This used to 301 to meritsciences.com, which defeated the point: a

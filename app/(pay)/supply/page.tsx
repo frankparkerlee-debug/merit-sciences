@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { SupplyHeader, SupplyFooter } from '@/components/SupplyShell';
 import { SupplyProductCard } from '@/components/SupplyProductCard';
 import { listSupplyProducts, SUPPLY_CATEGORIES, money } from '@/lib/supply';
+import PayHomePage from '../pay-home/page';
 
 /**
  * Supply storefront home. Reached by middleware rewriting `/` on the checkout
@@ -23,6 +24,22 @@ export const metadata: Metadata = {
 
 export default async function SupplyHome() {
   const products = await listSupplyProducts();
+
+  // NO CATALOG → this is a payment domain, not a store.
+  //
+  // Gated on the data rather than a feature flag, deliberately. This started as
+  // SUPPLY_STOREFRONT, which was the wrong shape: a switch a human has to
+  // remember to flip can disagree with reality, and it did — meritcheckout.com
+  // publicly served "Wound care supply, without the markup" with every category
+  // reading zero, because the storefront shipped before the catalog decision was
+  // made.
+  //
+  // The database already knows whether there is anything to sell. Load products
+  // and the storefront appears; remove them and it goes back to being a payment
+  // page. Nothing to configure, nothing to drift, and the failure mode of a DB
+  // outage is the payment page — which is the safe direction.
+  if (products.length === 0) return <PayHomePage />;
+
   const featured = products.filter((p) => p.category === 'COLLAGEN').slice(0, 3);
   const cheapest = products.length
     ? Math.min(...products.map((p) => p.priceCents))

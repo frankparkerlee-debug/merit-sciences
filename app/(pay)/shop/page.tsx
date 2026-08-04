@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { SupplyHeader, SupplyFooter } from '@/components/SupplyShell';
 import { SupplyProductCard } from '@/components/SupplyProductCard';
@@ -26,6 +27,11 @@ export default async function ShopPage({
   const active = VALID.has(raw) ? raw : undefined;
 
   const products = await listSupplyProducts({ category: active });
+
+  // An empty catalog means there is no store — 404 rather than render a
+  // branded shell around nothing. See the note in ../supply/page.tsx: this
+  // used to be a feature flag, and the flag disagreed with reality.
+  if (products.length === 0 && !active) notFound();
 
   return (
     <>
