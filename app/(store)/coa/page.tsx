@@ -7,7 +7,7 @@ export const metadata = {
   // Root template appends "· Merit Sciences" — don't duplicate it here.
   title: 'Lab results — per-lot COA library',
   description:
-    'Every Merit batch is independently HPLC-verified before release. Find your lot by compound or lot number — purity, identity, and appearance, with lab and manufacturer identifiers redacted to protect supply-chain integrity.',
+    'Every Merit batch is independently HPLC-verified before release. Find your lot by compound, lot, or COA number — purity, identity, and appearance, with the full accredited-lab certificate published for current lots.',
 };
 
 type CoaRow = {
@@ -25,7 +25,12 @@ type CoaRow = {
 function fmtDate(s: string | null): string | null {
   if (!s) return null;
   const d = new Date(s);
-  return isNaN(d.getTime()) ? s : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (isNaN(d.getTime())) return s;
+  // Date-only values parse as UTC midnight; format in UTC too, or a
+  // west-of-UTC server renders the day before the one on the certificate.
+  return d.toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+  });
 }
 
 function parsePurity(s: string): number {

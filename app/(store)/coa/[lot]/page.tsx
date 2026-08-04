@@ -10,8 +10,8 @@ import { Chromatogram } from '../Chromatogram';
  * route makes that true. Each lot gets a stable, indexable page (long-tail:
  * "{compound} lot {id} COA") that IS the primary source for the lot's data.
  *
- * Same redaction rule as /coa: manufacturer + laboratory identifiers never
- * render — data only.
+ * Current lots publish the lab's full signed certificate; older lots stay
+ * data-only, with manufacturer and laboratory identifiers redacted.
  */
 
 export const dynamic = 'force-dynamic';
@@ -70,7 +70,12 @@ function resolveOne(rows: CoaRow[], key: string): CoaRow | null {
 function fmtDate(s: string | null): string | null {
   if (!s) return null;
   const d = new Date(s);
-  return isNaN(d.getTime()) ? s : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (isNaN(d.getTime())) return s;
+  // Date-only values parse as UTC midnight; format in UTC too, or a
+  // west-of-UTC server renders the day before the one on the certificate.
+  return d.toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+  });
 }
 
 function parsePurity(s: string): number {
@@ -112,6 +117,8 @@ export default async function CoaLotPage({ params }: Props) {
 
   const isWater = /bacteriostatic|sterile water/i.test(coa.compound);
   const tested = fmtDate(coa.testedDate);
+  // Lot numbers that already read "LOT…" don't need the word in front of them.
+  const lotLabel = /^lot/i.test(coa.lotId) ? coa.lotId : `Lot ${coa.lotId}`;
   const url = `https://meritsciences.com/coa/${encodeURIComponent(coa.lotId)}`;
 
   const jsonLd = {
@@ -156,7 +163,7 @@ export default async function CoaLotPage({ params }: Props) {
             {' · '}
             <Link href="/coa" className="hover:text-ink transition">Lab results</Link>
             {' · '}
-            <span className="text-ink">Lot {coa.lotId}</span>
+            <span className="text-ink">{lotLabel}</span>
           </div>
           <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
             — Certificate of analysis
@@ -168,7 +175,7 @@ export default async function CoaLotPage({ params }: Props) {
             {coa.compound}<span className="text-cobalt">.</span>
           </h1>
           <p className="text-sm text-ink-soft">
-            Lot <strong className="text-ink font-bold tabular-nums">{coa.lotId}</strong>
+            <strong className="text-ink font-bold tabular-nums">{lotLabel}</strong>
             {tested && <> · tested {tested}</>} · independently verified before release
           </p>
         </div>
@@ -278,6 +285,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function LotIndex({ rows }: { rows: CoaRow[] }) {
   const lotId = rows[0].lotId;
   const tested = fmtDate(rows[0].testedDate);
+  // Lot numbers that already read "LOT…" don't need the word in front of them.
+  const lotLabel = /^lot/i.test(lotId) ? lotId : `Lot ${lotId}`;
 
   return (
     <main className="bg-cream min-h-screen">
@@ -288,7 +297,7 @@ function LotIndex({ rows }: { rows: CoaRow[] }) {
             {' · '}
             <Link href="/coa" className="hover:text-ink transition">Lab results</Link>
             {' · '}
-            <span className="text-ink">Lot {lotId}</span>
+            <span className="text-ink">{lotLabel}</span>
           </div>
           <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
             — Certificates of analysis
@@ -297,7 +306,7 @@ function LotIndex({ rows }: { rows: CoaRow[] }) {
             className="font-display font-black text-ink tracking-[-0.035em] leading-[0.98] mb-3"
             style={{ fontSize: 'clamp(28px, 4.5vw, 44px)' }}
           >
-            Lot {lotId}<span className="text-cobalt">.</span>
+            {lotLabel}<span className="text-cobalt">.</span>
           </h1>
           <p className="text-sm text-ink-soft">
             {rows.length} compounds released under this lot
