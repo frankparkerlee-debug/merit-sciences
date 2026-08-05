@@ -203,7 +203,12 @@ export default async function HomePage() {
                   alt=""
                   fill
                   priority
-                  sizes="(max-width: 1024px) 0px, 560px"
+                  // Fixed 560px, NOT a "(max-width: 1024px) 0px" branch. The
+                  // 0px told the browser to select the smallest srcset entry,
+                  // which was then upscaled to 560px and rendered visibly
+                  // blurred. The column is hidden below lg anyway, so there is
+                  // no small-viewport case to describe.
+                  sizes="560px"
                   className="object-contain drop-shadow-[0_28px_60px_rgba(11,15,25,0.16)]"
                   style={{ transform: 'rotate(-7deg)' }}
                 />
