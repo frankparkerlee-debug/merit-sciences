@@ -56,7 +56,7 @@ export function SupplyAddToCart({
     return (
       <button
         onClick={handleAdd}
-        className="w-full rounded-lg bg-ink py-2 text-[12px] font-bold uppercase tracking-wider text-white transition hover:opacity-90"
+        className="w-full border border-ink bg-ink py-2 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white transition-opacity hover:opacity-85"
       >
         {added ? 'Added ✓' : 'Add to cart'}
       </button>
@@ -65,7 +65,7 @@ export function SupplyAddToCart({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="flex items-center rounded-lg border border-ink/15">
+      <div className="flex items-center border border-line bg-white">
         <button
           onClick={() => setQty((q) => Math.max(1, q - 1))}
           aria-label="Decrease quantity"
@@ -79,7 +79,7 @@ export function SupplyAddToCart({
           max={999}
           value={qty}
           onChange={(e) => setQty(Math.min(999, Math.max(1, Number(e.target.value) || 1)))}
-          className="w-14 border-x border-ink/15 py-2.5 text-center text-[15px] font-semibold text-ink focus:outline-none"
+          className="w-14 border-x border-line py-2.5 text-center text-[14px] font-medium tabular-nums text-ink focus:outline-none"
           aria-label="Quantity"
         />
         <button
@@ -93,7 +93,7 @@ export function SupplyAddToCart({
 
       <button
         onClick={handleAdd}
-        className="flex-1 rounded-xl bg-ink px-6 py-3 text-[13px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:opacity-90"
+        className="flex-1 border border-ink bg-ink px-6 py-3 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-white transition-opacity hover:opacity-85"
       >
         {added ? 'Added to cart ✓' : 'Add to cart'}
       </button>

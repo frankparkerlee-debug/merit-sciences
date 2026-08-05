@@ -41,10 +41,10 @@ export default async function ShopPage({
     <>
       <SupplyHeader />
 
-      <div className="mx-auto max-w-[1240px] px-5 py-10">
+      <div className="mx-auto max-w-[1280px] px-6 py-12">
         {/* Category lives in the URL (shareable, linked from the homepage
             tiles); search and family facets are client-side. */}
-        <nav className="mb-7 flex flex-wrap gap-2">
+        <nav className="mb-8 flex flex-wrap gap-1.5">
           <FilterPill href="/shop" label="All" active={!active} />
           {SUPPLY_CATEGORIES.map((c) => (
             <FilterPill
@@ -58,7 +58,7 @@ export default async function ShopPage({
 
         <ShopClient products={products} heading={heading} />
 
-        <p className="mt-10 text-[12px] leading-relaxed text-ink-muted">
+        <p className="mt-12 border-t border-line pt-6 text-[11.5px] leading-relaxed text-ink-muted">
           Priced per box · free shipping over $300 · US shipping only
         </p>
       </div>
@@ -74,8 +74,8 @@ function FilterPill({ href, label, active }: { href: string; label: string; acti
       href={href}
       className={
         active
-          ? 'rounded-full bg-ink px-4 py-1.5 text-[12px] font-bold uppercase tracking-wider text-white'
-          : 'rounded-full border border-ink/15 px-4 py-1.5 text-[12px] font-bold uppercase tracking-wider text-ink-soft transition hover:border-ink/40 hover:text-ink'
+          ? 'border border-ink bg-ink px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white'
+          : 'border border-line bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:border-ink/40 hover:text-ink'
       }
     >
       {label}

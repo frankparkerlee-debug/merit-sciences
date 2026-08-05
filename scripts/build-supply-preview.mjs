@@ -8,28 +8,32 @@
  *
  * Run: node scripts/build-supply-preview.mjs
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-import { CATALOG, titleFor } from './supply-catalog.mjs';
+import { CATALOG, titleFor, boxCents } from './supply-catalog.mjs';
+import { PHOTO_MAP } from './generate-supply-photos.mjs';
+
+const FORM = new Map();
+for (const [form, files] of Object.entries(PHOTO_MAP)) for (const f of files) FORM.set(f, form);
 
 const P = CATALOG.map((p) => [
-  titleFor(p), 'Merit Clinical', p.cat, p.cents, p.ref, p.size, p.box, p.hcpcs, p.file, p.blurb, p.rx,
+  titleFor(p), p.eyebrow, p.cat, boxCents(p), p.ref, p.size, p.box, p.hcpcs, FORM.get(p.file), p.blurb, p.rx,
 ]);
 
 const money = (c) => `$${(c / 100).toFixed(2)}`;
 const per = (c, n) => (n > 1 ? `$${(c / n / 100).toFixed(2)}` : null);
 
 const cards = P.map(([title, brand, cat, cents, sku, size, box, hcpcs, img, blurb, rx]) => {
-  const svg = readFileSync(join(ROOT, 'public', 'supply', `${img}.svg`), 'utf8');
+  const src = `merit-render/public/supply/photo/${img}.webp`;
   const u = per(cents, box);
   return `<article class="card">
-    <div class="thumb">${svg}</div>
+    <a class="thumb" href="#"><img src="${src}" alt="${title}" loading="lazy"></a>
     <div class="body">
-      <p class="brand">${brand}${rx ? ' <span class="rx">Rx</span>' : ''}</p>
+      <p class="brand">${brand ?? ''}${rx ? ' <span class="rx">Rx</span>' : ''}</p>
       <h3>${title}</h3>
       <p class="blurb">${blurb}</p>
       <dl class="specs">
@@ -48,60 +52,80 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Merit Clinical — catalog preview</title>
 <style>
-  :root{--ink:#0B0F19;--soft:#4A5160;--muted:#94A0B0;--cobalt:#2E4DDB;--cream:#F4F1EA;--border:#E2E5EB}
+  :root{--ink:#0B0F19;--soft:#4A5160;--muted:#94A0B0;--paper:#F6F7F9;--line:#E4E7EC}
   *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--cream);color:var(--ink)}
-  header{background:#fff;border-bottom:1px solid var(--border)}
-  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
-  .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
-  .mark{font-size:19px;font-weight:800;letter-spacing:-.4px}
-  .mark span{color:var(--cobalt)}
-  .mark small{margin-left:8px;font-size:10.5px;font-weight:700;letter-spacing:3px;color:var(--muted)}
-  .hero{padding:56px 0 40px}
-  .eyebrow{margin:0;font-size:11px;font-weight:800;letter-spacing:2px;color:var(--cobalt)}
-  h1{margin:10px 0 0;font-size:44px;line-height:1.05;letter-spacing:-1.4px;font-weight:800}
-  .lede{margin:16px 0 0;max-width:620px;font-size:16px;line-height:1.6;color:var(--soft)}
-  .note{margin:28px 0 0;padding:12px 16px;border-left:3px solid var(--cobalt);background:#fff;font-size:13px;color:var(--soft);max-width:620px}
-  h2{margin:40px 0 4px;font-size:22px;letter-spacing:-.5px}
-  .sub{margin:0 0 18px;font-size:13px;color:var(--muted)}
-  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));padding-bottom:8px}
-  .card{display:flex;flex-direction:column;background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden}
-  .thumb{background:#fff;border-bottom:1px solid var(--border)}
-  .thumb svg{display:block;width:100%;height:auto}
-  .body{padding:14px 16px 0;flex:1}
-  .brand{margin:0;font-size:10px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--cobalt)}
-  .rx{margin-left:6px;padding:1px 5px;border:1px solid #F0B040;border-radius:3px;color:#8a6300;background:#FFF8E8;letter-spacing:.5px}
-  h3{margin:6px 0 0;font-size:15px;font-weight:800;line-height:1.3}
-  .blurb{margin:8px 0 0;font-size:12.5px;line-height:1.55;color:var(--soft)}
-  .specs{display:flex;gap:16px;margin:12px 0 14px}
-  .specs div{display:flex;gap:5px;font-size:11px}
-  .specs dt{margin:0;font-weight:700;color:var(--muted)}
-  .specs dd{margin:0;font-family:ui-monospace,monospace;color:var(--soft)}
-  .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:12px 16px 14px;border-top:1px solid var(--border)}
-  .price{margin:0;font-size:17px;font-weight:800;letter-spacing:-.4px}
-  .unit{margin:2px 0 0;font-size:11px;color:var(--muted)}
-  button{border:0;border-radius:8px;background:var(--ink);color:#fff;font:inherit;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:9px 14px;cursor:pointer}
-  footer{margin-top:48px;background:#fff;border-top:1px solid var(--border);padding:26px 0}
-  footer p{margin:0;font-size:12px;color:var(--muted);max-width:760px;line-height:1.6}
+  body{margin:0;font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  header{position:sticky;top:0;z-index:9;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+  .mark{display:flex;align-items:baseline;gap:10px;font-size:18px;font-weight:700;letter-spacing:-.03em}
+  .mark small{border-left:1px solid var(--line);padding-left:10px;font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .navlinks{display:flex;gap:24px;font-size:13px;font-weight:500;color:var(--soft)}
+  .hero{background:#fff;border-bottom:1px solid var(--line)}
+  .hero .wrap{padding:96px 24px 88px}
+  .eyebrow{margin:0;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+  h1{margin:20px 0 0;max-width:15ch;font-size:56px;line-height:1.06;letter-spacing:-.035em;font-weight:700}
+  .lede{margin:24px 0 0;max-width:52ch;font-size:16px;line-height:1.65;color:var(--soft)}
+  .cta{display:inline-block;margin:36px 12px 0 0;border:1px solid var(--ink);background:var(--ink);color:#fff;padding:12px 28px;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+  .cta.alt{background:#fff;color:var(--ink);border-color:var(--line)}
+  .strip{background:#fff;border-bottom:1px solid var(--line)}
+  .strip .grid4{display:grid;grid-template-columns:repeat(4,1fr);border-left:1px solid var(--line);border-right:1px solid var(--line)}
+  .strip .cell{padding:24px;border-right:1px solid var(--line)}
+  .strip .cell:last-child{border-right:0}
+  .strip .cell p:first-child{margin:0;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .strip .cell p:last-child{margin:8px 0 0;font-size:15px;font-weight:500;letter-spacing:-.01em}
+  h2{margin:0;font-size:20px;font-weight:600;letter-spacing:-.02em}
+  .sechead{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding:0 0 16px;margin:64px 0 24px}
+  .sub{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .grid{display:grid;gap:1px;background:var(--line);grid-template-columns:repeat(auto-fill,minmax(272px,1fr))}
+  .card{display:flex;flex-direction:column;background:#fff}
+  .thumb{display:block;border-bottom:1px solid var(--line)}
+  .thumb img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover}
+  .body{padding:16px;flex:1;display:flex;flex-direction:column}
+  .brand{margin:0;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .rx{margin-left:8px;border:1px solid rgba(11,15,25,.2);padding:1px 6px;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--soft)}
+  h3{margin:8px 0 0;font-size:15px;font-weight:600;line-height:1.35;letter-spacing:-.01em}
+  .blurb{margin:6px 0 0;font-size:12.5px;line-height:1.55;color:var(--soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .specs{display:flex;gap:16px;margin:12px 0 0}
+  .specs div{display:flex;gap:6px;font-size:11px}
+  .specs dt{margin:0;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .specs dd{margin:0;font-family:ui-monospace,SFMono-Regular,monospace;font-weight:500;color:var(--soft)}
+  .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:auto;padding-top:16px}
+  .price{margin:0;font-size:17px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .unit{margin:2px 0 0;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  button{border:1px solid var(--ink);background:var(--ink);color:#fff;font:inherit;font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;cursor:pointer}
+  footer{margin-top:96px;background:#fff;border-top:1px solid var(--line);padding:48px 0}
+  footer p{margin:0;font-size:11.5px;color:var(--muted);max-width:70ch;line-height:1.7}
+  .note{margin:32px 0 0;border:1px solid var(--line);background:#fff;padding:14px 18px;font-size:12.5px;color:var(--soft);max-width:64ch;line-height:1.6}
 </style></head><body>
 <header><div class="wrap"><div class="nav">
-  <div class="mark">Merit<span>.</span><small>CLINICAL</small></div>
-  <div style="font-size:13px;font-weight:600;color:var(--soft)">Shop all · Collagen · Wound care</div>
+  <div class="mark">Merit<small>Clinical</small></div>
+  <div class="navlinks"><span>Catalog</span><span>Collagen</span><span>Wound care</span></div>
 </div></div></header>
 
-<div class="wrap">
-  <section class="hero">
-    <p class="eyebrow">— CLINICAL SUPPLY</p>
-    <h1>Wound care supply,<br>without the markup.</h1>
-    <p class="lede">Collagen, alginates, and foams — sold by the box, direct to your practice.
-      Every product lists its REF number and HCPCS code so you can match what you already order.</p>
-    <p class="note"><strong>Preview only.</strong> Package renders are illustrative, not photography —
-      final artwork follows supplier selection. Pricing is a working target pending landed cost.
-      Nothing here is publicly reachable: <code>SUPPLY_STOREFRONT</code> is off.</p>
-  </section>
+<section class="hero"><div class="wrap">
+  <p class="eyebrow">Advanced wound care</p>
+  <h1>Clinical supply, sourced direct.</h1>
+  <p class="lede">Collagen, alginates, foams, gels, and securement &mdash; supplied by the box to
+    clinicians and healthcare facilities. Every item lists its REF number and HCPCS code so it can
+    be matched against what you already order.</p>
+  <a class="cta" href="#">View catalog</a><a class="cta alt" href="#">Collagen</a>
+  <p class="note"><strong>Preview.</strong> Product photography is generated for layout review and is
+    replaced with shot-in-studio images once inventory lands. Pricing is a working target pending
+    landed cost, and HCPCS codes require PDAC verification before sale.</p>
+</div></section>
 
-  <h2>All products</h2>
-  <p class="sub">${P.length} SKUs · priced per box · free shipping over $300</p>
+<section class="strip"><div class="wrap" style="padding:0"><div class="grid4">
+  <div class="cell"><p>Catalog</p><p>${P.length} SKUs</p></div>
+  <div class="cell"><p>Pricing</p><p>From $15.00 per box</p></div>
+  <div class="cell"><p>Coding</p><p>HCPCS listed per item</p></div>
+  <div class="cell"><p>Shipping</p><p>Free over $300 &middot; US only</p></div>
+</div></div></section>
+
+<div class="wrap">
+  <div class="sechead"><h2>All products</h2><span class="sub">${P.length} SKUs &middot; priced per box</span></div>
+<h2>All products</h2>
   <div class="grid">
 ${cards}
   </div>

@@ -15,6 +15,12 @@ const config: Config = {
         cobalt:     '#2E4DDB',
         'cobalt-soft':'#6B8AFF',
         cream:      '#F4F1EA',
+        // Supply-line (medical device) neutrals. Deliberately COOL: the
+        // storefront's warm cream reads apothecary, and the register for a
+        // device supplier is clinical — near-white paper, hairline rules.
+        paper:      '#F6F7F9',
+        line:       '#E4E7EC',
+        'line-soft':'#EFF1F4',
         border:     '#E2E5EB',
         'border-soft':'#EEF0F3',
         success:    '#1A8B3F',

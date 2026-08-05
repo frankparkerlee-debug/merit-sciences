@@ -73,14 +73,14 @@ export function ShopClient({ products, heading }: Props) {
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-2.5">
         <div className="relative min-w-[240px] flex-1">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search name, REF, HCPCS, or size…"
             aria-label="Search products"
-            className="w-full rounded-xl border border-ink/15 bg-white py-2.5 pl-10 pr-3 text-[14px] text-ink placeholder:text-ink-muted focus:border-cobalt focus:outline-none"
+            className="w-full border border-line bg-white py-2.5 pl-10 pr-3 text-[13.5px] text-ink placeholder:text-ink-muted focus:border-ink/40 focus:outline-none"
           />
           <svg
             aria-hidden="true"
@@ -99,7 +99,7 @@ export function ShopClient({ products, heading }: Props) {
           value={sort}
           onChange={(e) => setSort(e.target.value as Sort)}
           aria-label="Sort products"
-          className="rounded-xl border border-ink/15 bg-white px-3 py-2.5 text-[13px] font-semibold text-ink-soft focus:border-cobalt focus:outline-none"
+          className="border border-line bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft focus:border-ink/40 focus:outline-none"
         >
           <option value="curated">Sort: Curated</option>
           <option value="price-asc">Price: low to high</option>
@@ -107,18 +107,18 @@ export function ShopClient({ products, heading }: Props) {
           <option value="name">Name A–Z</option>
         </select>
 
-        <label className="flex cursor-pointer select-none items-center gap-2 rounded-xl border border-ink/15 bg-white px-3 py-2.5 text-[13px] font-semibold text-ink-soft">
+        <label className="flex cursor-pointer select-none items-center gap-2 border border-line bg-white px-3.5 py-2.5 text-[12.5px] font-medium text-ink-soft">
           <input
             type="checkbox"
             checked={rxOnly}
             onChange={(e) => setRxOnly(e.target.checked)}
-            className="h-3.5 w-3.5 accent-cobalt"
+            className="h-3 w-3 accent-ink"
           />
           Rx only
         </label>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-7 flex flex-wrap gap-1.5">
         {allFamilies.map(([f, n]) => {
           const on = families.includes(f);
           return (
@@ -128,22 +128,22 @@ export function ShopClient({ products, heading }: Props) {
               aria-pressed={on}
               className={
                 on
-                  ? 'rounded-full bg-cobalt px-3.5 py-1.5 text-[12px] font-bold text-white'
-                  : 'rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-ink-soft transition hover:border-ink/40 hover:text-ink'
+                  ? 'border border-ink bg-ink px-3 py-1.5 text-[11.5px] font-medium text-white'
+                  : 'border border-line bg-white px-3 py-1.5 text-[11.5px] font-medium text-ink-soft transition-colors hover:border-ink/40 hover:text-ink'
               }
             >
-              {f} <span className={on ? 'opacity-70' : 'text-ink-muted'}>{n}</span>
+              {f} <span className={on ? 'ml-1 opacity-60 tabular-nums' : 'ml-1 text-ink-muted tabular-nums'}>{n}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="mb-5 flex items-baseline justify-between gap-4">
-        <h1 className="text-[26px] font-extrabold tracking-tight text-ink">{heading}</h1>
-        <p className="text-[13px] text-ink-muted">
+      <div className="mb-5 flex items-baseline justify-between gap-4 border-b border-line pb-4">
+        <h1 className="text-[24px] font-semibold tracking-[-0.025em] text-ink">{heading}</h1>
+        <p className="text-[12.5px] tabular-nums text-ink-muted">
           {filtered.length} of {products.length}
           {dirty && (
-            <button onClick={clear} className="ml-3 font-semibold text-cobalt hover:underline">
+            <button onClick={clear} className="ml-3 font-medium text-ink underline underline-offset-2 hover:no-underline">
               Clear
             </button>
           )}
@@ -151,18 +151,18 @@ export function ShopClient({ products, heading }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-ink/10 bg-white p-10 text-center">
+        <div className="border border-line bg-white p-14 text-center">
           <p className="text-[15px] font-semibold text-ink">No products match.</p>
           <p className="mt-1 text-[13px] text-ink-soft">
             Try a REF number, a HCPCS code, or{' '}
-            <button onClick={clear} className="font-semibold text-cobalt hover:underline">
+            <button onClick={clear} className="font-medium text-ink underline underline-offset-2 hover:no-underline">
               clear the filters
             </button>
             .
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((p) => (
             <SupplyProductCard key={p.handle} p={p} />
           ))}
