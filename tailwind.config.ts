@@ -14,7 +14,12 @@ const config: Config = {
         'ink-muted':'#94A0B0',
         cobalt:     '#2E4DDB',
         'cobalt-soft':'#6B8AFF',
-        cream:      '#F4F1EA',
+        // Was #F4F1EA — a warm, artisanal cream. It read apothecary and
+        // softened a brand whose entire claim is pharmacy rigor, and it
+        // clashed with the cool hero once that was rebuilt. Cooled to a
+        // near-white that still separates from pure white on section
+        // alternation. One token: reverting is one line.
+        cream:      '#F5F6F8',
         // Supply-line (medical device) neutrals. Deliberately COOL: the
         // storefront's warm cream reads apothecary, and the register for a
         // device supplier is clinical — near-white paper, hairline rules.

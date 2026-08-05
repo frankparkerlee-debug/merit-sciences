@@ -101,127 +101,114 @@ export default async function HomePage() {
           via absolute positioning over the right portion of the type.
           Full-bleed cream — page bg flows edge to edge.
        */}
-      {/* CSS COMPOSITE HERO — content-height + padding (no forced 70vh).
-          Section is as tall as content needs, so the lanes section peeks
-          through naturally below without artificial empty space. */}
+      {/* ════════════════ §01 HERO ════════════════════════════════════════════
+          Rebuilt. The prior hero had two structural faults:
+
+          1. NO MINIMUM HEIGHT. It was sized purely by content padding, which
+             produced a 435px band — a banner, not a hero. Against Enhanced or
+             Hims, whose first screen is a full-viewport statement, it read as
+             cramped before a single word was judged.
+
+          2. NO ZONES. Three vials were scattered on an absolute layer behind
+             the type at 42vw / 28vw / 18vw. At desktop width the large one sat
+             directly behind the lede and CTA, so a white vial label collided
+             with body copy. Text had z-10 and won, but the result was muddy
+             and read as unfinished rather than art-directed.
+
+          Now a two-column architecture with real zones: type owns the left,
+          the specimen owns the right, and they cannot overlap. One vial, hero-
+          lit against a cobalt bloom, instead of three fighting the headline.
+
+          Ground moved off cream. Cream reads apothecary — soft, warm, artisanal
+          — and softens a brand whose entire claim is pharmacy rigor. A cool
+          near-white with a cobalt wash is both more confident and distinct from
+          the references (Enhanced runs dark, Hims runs warm).
+      */}
       <section
         id="hero"
-        className="relative overflow-hidden"
+        className="relative overflow-hidden border-b border-ink/10"
         style={{
           background:
-            // Cream → soft cobalt diagonal gradient — Merit's two brand
-            // colors meeting. Keeps cream warmth dominant (top-left)
-            // while cobalt energy creeps in from bottom-right.
-            'linear-gradient(135deg, #F4F1EA 0%, #F0EDE5 35%, #DFE3F2 70%, #BFC9EB 100%)',
+            'radial-gradient(120% 90% at 78% 18%, #E6EBFA 0%, #F2F4F9 42%, #FBFCFD 78%)',
         }}
       >
-        {/* ── Floating vials — 3 instances of the canonical Merit vial
-            at different scales/rotations/positions. The vial is the
-            brand mark. Compositionally they cluster around the headline
-            without obscuring it, mirroring the "63 mugs" reference.
-            Hidden on mobile (< sm) to keep type the focus on small screens. */}
-        <div aria-hidden="true" className="absolute inset-0 pointer-events-none hidden sm:block">
-          {/* Vial #1 — large, foreground-LEFT, cropped off the bottom-left.
-              Slight CCW tilt + gentle float. Reads as the hero specimen. */}
-          <div
-            className="absolute animate-float-vial"
-            style={{
-              left: 'clamp(-160px, -8vw, -80px)',
-              bottom: 'clamp(-220px, -18vw, -120px)',
-              width: 'clamp(420px, 42vw, 720px)',
-              aspectRatio: '1',
-              transform: 'rotate(-14deg)',
-              transformOrigin: 'center center',
-            }}
-          >
-            <Image
-              src="/brand/merit-vial-canonical-transparent.webp"
-              alt=""
-              fill
-              loading="lazy"
-              sizes="(max-width: 1400px) 42vw, 720px"
-              className="object-contain"
-            />
-          </div>
+        <div className="relative mx-auto grid min-h-[78vh] max-w-[1400px] items-center gap-10 px-6 py-16 lg:min-h-[84vh] lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:px-12 lg:py-20">
+          {/* ── Type column ── */}
+          <div className="relative z-10 max-w-[640px]">
+            <p className="mb-7 text-[10px] font-semibold uppercase tracking-[0.24em] text-cobalt lg:text-[11px]">
+              Merit Sciences · Dallas, TX
+            </p>
 
-          {/* Vial #2 — small, upper-RIGHT, sharp CW tilt. The "satellite"
-              specimen — fills negative space above the headline's right edge. */}
-          <div
-            className="absolute animate-float-vial-slow"
-            style={{
-              right: 'clamp(-40px, 2vw, 80px)',
-              top: 'clamp(-40px, -2vw, 24px)',
-              width: 'clamp(180px, 18vw, 300px)',
-              aspectRatio: '1',
-              transform: 'rotate(22deg)',
-              transformOrigin: 'center center',
-            }}
-          >
-            <Image
-              src="/brand/merit-vial-canonical-transparent.webp"
-              alt=""
-              fill
-              loading="lazy"
-              sizes="(max-width: 1400px) 18vw, 300px"
-              className="object-contain"
-            />
-          </div>
-
-          {/* Vial #3 — medium, lower-RIGHT, dramatic CW tilt. Balances
-              the large left vial across the diagonal. Cropped slightly
-              off the right edge for that "endless brand world" feel. */}
-          <div
-            className="absolute animate-float-vial-reverse"
-            style={{
-              right: 'clamp(-120px, -6vw, -40px)',
-              bottom: 'clamp(-100px, -6vw, -20px)',
-              width: 'clamp(280px, 28vw, 480px)',
-              aspectRatio: '1',
-              transform: 'rotate(34deg)',
-              transformOrigin: 'center center',
-            }}
-          >
-            <Image
-              src="/brand/merit-vial-canonical-transparent.webp"
-              alt=""
-              fill
-              loading="lazy"
-              sizes="(max-width: 1400px) 28vw, 480px"
-              className="object-contain"
-            />
-          </div>
-        </div>
-
-        {/* ── Content — sits above the vial layer via z-10 */}
-        <div className="relative z-10 max-w-[1400px] mx-auto w-full px-6 lg:px-12 pt-8 lg:pt-10 pb-12 lg:pb-16">
-          {/* Eyebrow */}
-          <p className="text-[10px] lg:text-[11px] tracking-[0.22em] uppercase text-cobalt font-semibold mb-6 lg:mb-8">
-            Merit Sciences · Dallas, TX
-          </p>
-
-          <div className="relative">
             <h1
-              className="font-display font-black text-ink leading-[0.88] tracking-[-0.04em] relative z-0"
-              style={{ fontSize: 'clamp(44px, 9vw, 156px)' }}
+              className="font-display font-black leading-[0.9] tracking-[-0.042em] text-ink"
+              style={{ fontSize: 'clamp(46px, 6.4vw, 104px)' }}
             >
               Same Stack.
               <br />
               Better Source<span className="text-cobalt">.</span>
             </h1>
+
+            <p className="mt-7 max-w-[460px] text-[15px] leading-[1.65] text-ink-soft lg:text-[17px]">
+              Pharmacy-grade peptides, made by a US-licensed pharmacy team in Dallas.
+              Verified per lot. Shipped in 48 hours.
+            </p>
+
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                href="/catalog"
+                className="inline-flex items-center justify-center rounded-lg bg-cobalt px-8 py-4 text-[14px] font-semibold text-white shadow-lg shadow-cobalt/25 transition hover:opacity-90"
+              >
+                Shop the catalog →
+              </Link>
+              <Link
+                href="/coa"
+                className="inline-flex items-center justify-center rounded-lg border border-ink/15 bg-white/70 px-8 py-4 text-[14px] font-semibold text-ink backdrop-blur transition hover:border-ink/35"
+              >
+                See a lot report
+              </Link>
+            </div>
+
+            {/* Proof, stated rather than claimed. */}
+            <dl className="mt-11 flex flex-wrap gap-x-10 gap-y-5 border-t border-ink/10 pt-7">
+              {[
+                ['Verified', 'Every lot, third-party'],
+                ['Shipped', 'Within 48 hours'],
+                ['Made in', 'Dallas, Texas'],
+              ].map(([k, v]) => (
+                <div key={k}>
+                  <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+                    {k}
+                  </dt>
+                  <dd className="mt-1.5 text-[13.5px] font-medium text-ink">{v}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
-          {/* Paragraph + CTA — inline flex */}
-          <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-8 mt-5 lg:mt-7">
-            <p className="text-[14px] lg:text-[16px] text-ink-soft max-w-[520px] leading-relaxed flex-1">
-              Pharmacy-grade peptides, made by a US-licensed pharmacy team
-              in Dallas. Verified per lot. Shipped in 48 hours.
-            </p>
-            <Link
-              href="/catalog"
-              className="inline-flex items-center justify-center px-7 py-3.5 bg-cobalt text-white font-semibold rounded-lg text-sm hover:opacity-90 transition whitespace-nowrap self-start md:self-auto shadow-lg shadow-cobalt/30"
-            >
-              Shop the catalog →
-            </Link>
+          {/* ── Specimen column. Its own zone — cannot reach the type. ── */}
+          <div aria-hidden="true" className="relative hidden lg:block">
+            <div className="relative mx-auto aspect-square w-full max-w-[560px]">
+              {/* Cobalt bloom behind the glass, so the vial reads lit rather
+                  than pasted onto the background. */}
+              <div
+                className="absolute inset-[8%] rounded-full blur-3xl"
+                style={{
+                  background:
+                    'radial-gradient(circle at 50% 45%, rgba(46,77,219,0.28) 0%, rgba(46,77,219,0.12) 45%, rgba(46,77,219,0) 72%)',
+                }}
+              />
+              <div className="absolute inset-0 animate-float-vial">
+                <Image
+                  src="/brand/merit-vial-canonical-transparent.webp"
+                  alt=""
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 0px, 560px"
+                  className="object-contain drop-shadow-[0_28px_60px_rgba(11,15,25,0.16)]"
+                  style={{ transform: 'rotate(-7deg)' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -231,10 +218,10 @@ export default async function HomePage() {
           so the scrolling white text + cobalt dot separators remain readable.
           The pattern is the editorial-credibility move; the text scrolls over
           it. Replaces the flat charcoal version. */}
-      <section className="relative text-white border-y border-cobalt/30 overflow-hidden bg-[#C2410C]">
+      <section className="relative overflow-hidden border-y border-white/10 bg-ink text-white">
         {/* Background pattern image */}
         <Image
-          src="/brand/scene-pattern-orange.webp"
+          src="/brand/scene-pattern-charcoal.webp"
           alt=""
           fill
           sizes="100vw"
