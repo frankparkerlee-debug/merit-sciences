@@ -17,3 +17,8 @@ lib/generated
 # mask are not used at runtime, only as scratch state for the script.
 public/products/_base-vial.png
 public/products/_edit-mask.png
+
+# Generated product photography source. WebP is committed and served; the
+# 33MB of source PNGs are not. scripts/generate-supply-photos.mjs recreates
+# them (and skips any that already exist).
+public/supply/photo/*.png
