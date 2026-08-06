@@ -208,7 +208,7 @@ export default async function HomePage() {
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link
                 href="/catalog"
-                className="bg-white text-black px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition"
+                className="bg-white text-black px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt transition"
               >
                 Shop the six
               </Link>
@@ -224,7 +224,7 @@ export default async function HomePage() {
       </section>
 
       {/* ════════════════ §02 · STATEMENT BAND ═════════════════════════════ */}
-      <section className="bg-black text-white border-y border-white/15">
+      <section className="bg-white text-ink border-y border-ink/10">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-20">
           <h2
             className="font-poster font-black uppercase leading-[0.96] tracking-[-0.04em]"
@@ -232,9 +232,9 @@ export default async function HomePage() {
           >
             Pharmacy-grade.
             <br />
-            Not <span className="text-cobalt-soft">“trust me bro”</span>-grade.
+            Not <span className="text-cobalt">“trust me bro”</span>-grade.
           </h2>
-          <p className="mt-6 max-w-[60ch] text-[15px] leading-[1.6] text-white/55">
+          <p className="mt-6 max-w-[60ch] text-[15px] leading-[1.6] text-ink-soft">
             The gray market got there first and poisoned the well. Merit exists for the other
             path: licensed compounding, independent assays, a published certificate for every lot —
             on the exact
@@ -248,9 +248,9 @@ export default async function HomePage() {
           crawlable with zero JS. Closed state is one compact row per compound,
           which keeps six entries to roughly one screen instead of six.
        */}
-      <section id="the-six" className="bg-black text-white">
+      <section id="the-six" className="bg-white text-ink">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
-          <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.14em] uppercase text-[#B9FF66] mb-5">
+          <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.14em] uppercase text-cobalt mb-5">
             The Six · Recommended Jul 24 2026
           </p>
           <h2
@@ -260,38 +260,38 @@ export default async function HomePage() {
             Named by the committee. Stocked by Merit.
           </h2>
 
-          <div className="border-t border-white/20">
+          <div className="border-t border-ink/15">
             {SIX.map((c, i) => (
-              <details key={c.compound} open={i === 0} className="group border-b border-white/20">
+              <details key={c.compound} open={i === 0} className="group border-b border-ink/15">
                 <summary className="grid grid-cols-[34px_1fr_30px] lg:grid-cols-[64px_1fr_auto_auto_44px] items-center gap-x-3 lg:gap-x-6 gap-y-1 py-4 lg:py-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-cobalt/15 transition-colors">
-                  <span className="font-mono text-[12px] text-white/35 lg:pl-1">{c.n}</span>
+                  <span className="font-mono text-[12px] text-ink-muted lg:pl-1">{c.n}</span>
                   <span
                     className="font-poster font-black uppercase leading-none tracking-[-0.035em]"
                     style={{ fontSize: 'clamp(21px, 2.6vw, 38px)' }}
                   >
                     {c.category}.
                   </span>
-                  <span className="font-mono text-[12px] lg:text-[13px] font-bold tracking-[0.08em] text-cobalt-soft col-start-2 lg:col-start-auto">
+                  <span className="font-mono text-[12px] lg:text-[13px] font-bold tracking-[0.08em] text-cobalt col-start-2 lg:col-start-auto">
                     {c.compound.toUpperCase()}
                   </span>
-                  <span className="hidden lg:inline-flex font-mono text-[10px] tracking-[0.1em] uppercase text-[#B9FF66] border border-[#B9FF66]/40 px-2.5 py-1 whitespace-nowrap">
+                  <span className="hidden lg:inline-flex font-mono text-[10px] tracking-[0.1em] uppercase text-success border border-success/40 px-2.5 py-1 whitespace-nowrap">
                     PCAC ✓
                   </span>
                   <span
                     aria-hidden="true"
-                    className="row-span-2 lg:row-span-1 justify-self-end self-center text-[22px] font-normal text-white/45 transition-transform group-open:rotate-45 group-open:text-[#B9FF66] lg:pr-2"
+                    className="row-span-2 lg:row-span-1 justify-self-end self-center text-[22px] font-normal text-ink-muted transition-transform group-open:rotate-45 group-open:text-cobalt lg:pr-2"
                   >
                     +
                   </span>
                 </summary>
 
                 <div className="pb-6 lg:pb-7 lg:pl-[88px] max-w-[70ch]">
-                  <p className="text-[14.5px] leading-[1.66] text-white/60">{c.body}</p>
+                  <p className="text-[14.5px] leading-[1.66] text-ink-soft">{c.body}</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {c.facts.map((f) => (
                       <span
                         key={f}
-                        className="font-mono text-[10px] lg:text-[10.5px] tracking-[0.08em] uppercase text-white/50 border border-white/20 px-2.5 py-1.5"
+                        className="font-mono text-[10px] lg:text-[10.5px] tracking-[0.08em] uppercase text-ink-muted border border-ink/15 px-2.5 py-1.5"
                       >
                         {f}
                       </span>
@@ -299,7 +299,7 @@ export default async function HomePage() {
                   </div>
                   <Link
                     href={hrefFor(c.handle, c.compound)}
-                    className="inline-block mt-5 text-[11px] font-poster font-black tracking-[0.16em] uppercase border-b border-white/40 pb-1 hover:text-cobalt-soft hover:border-cobalt-soft transition"
+                    className="inline-block mt-5 text-[11px] font-poster font-black tracking-[0.16em] uppercase border-b border-ink/30 pb-1 hover:text-cobalt hover:border-cobalt transition"
                   >
                     View {c.compound} →
                   </Link>
@@ -308,7 +308,7 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <p className="mt-6 font-mono text-[11px] leading-[1.7] text-white/40 max-w-[86ch]">
+          <p className="mt-6 font-mono text-[11px] leading-[1.7] text-ink-muted max-w-[86ch]">
             A PCAC recommendation is not FDA approval; rulemaking runs into 2027. All Merit
             compounds are research-use-only. Category terms describe each peptide’s published
             literature — not our products.
@@ -317,10 +317,10 @@ export default async function HomePage() {
       </section>
 
       {/* ════════════════ §04 · RULEMAKING WATCH ═══════════════════════════ */}
-      <section className="bg-black text-white border-t border-white/15">
+      <section className="bg-white text-ink border-t border-ink/10">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
-          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-8">
-            Rulemaking watch · <b className="text-[#B9FF66] font-bold">Live</b> · What has to
+          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted mb-8">
+            Rulemaking watch · <b className="text-success font-bold">Live</b> · What has to
             happen before these are 503A-legal
           </p>
           <ol className="relative grid grid-cols-2 lg:grid-cols-4 gap-y-7">
@@ -335,10 +335,10 @@ export default async function HomePage() {
                   aria-hidden="true"
                   className={`absolute top-0 left-0 w-[11px] h-[11px] rounded-full border ${
                     s.state === 'done'
-                      ? 'bg-[#B9FF66] border-[#B9FF66]'
+                      ? 'bg-success border-success'
                       : s.state === 'now'
-                        ? 'bg-cobalt border-cobalt-soft ring-4 ring-cobalt/30'
-                        : 'bg-black border-white/35'
+                        ? 'bg-cobalt border-cobalt ring-4 ring-cobalt/20'
+                        : 'bg-white border-ink/30'
                   }`}
                 />
                 <p className="text-[13px] font-bold tracking-[0.06em] uppercase mb-1.5">
@@ -347,10 +347,10 @@ export default async function HomePage() {
                 <p
                   className={`font-mono text-[10.5px] tracking-[0.08em] uppercase ${
                     s.state === 'done'
-                      ? 'text-[#B9FF66]'
+                      ? 'text-success'
                       : s.state === 'now'
-                        ? 'text-cobalt-soft'
-                        : 'text-white/45'
+                        ? 'text-cobalt'
+                        : 'text-ink-muted'
                   }`}
                 >
                   {s.detail}
@@ -365,9 +365,9 @@ export default async function HomePage() {
           The commerce layer. Live prices and PDP links straight from the DB.
        */}
       {featured.length > 0 && (
-        <section id="featured" className="bg-black text-white border-t border-white/15">
+        <section id="featured" className="bg-white text-ink border-t border-ink/10">
           <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
-            <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-5">
+            <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted mb-5">
               Most-stocked
             </p>
             <h2
@@ -382,9 +382,9 @@ export default async function HomePage() {
                 <Link
                   key={p.handle}
                   href={`/products/${p.handle}`}
-                  className="group border border-white/15 hover:border-cobalt-soft transition-colors flex flex-col"
+                  className="group border border-ink/10 hover:border-cobalt transition-colors bg-white flex flex-col"
                 >
-                  <div className="relative aspect-square bg-white/[0.03] overflow-hidden">
+                  <div className="relative aspect-square bg-cream overflow-hidden">
                     <Image
                       src={productImage(p.imageUrl)}
                       alt={p.title}
@@ -393,11 +393,11 @@ export default async function HomePage() {
                       className="object-contain p-5 lg:p-7 group-hover:scale-[1.04] transition-transform duration-500"
                     />
                   </div>
-                  <div className="p-4 lg:p-5 border-t border-white/15 flex-1 flex flex-col">
+                  <div className="p-4 lg:p-5 border-t border-ink/10 flex-1 flex flex-col">
                     <h3 className="font-poster font-extrabold text-[15px] lg:text-[17px] tracking-[-0.02em] leading-tight">
                       {p.title}
                     </h3>
-                    <p className="font-mono text-[10.5px] text-white/45 mt-1.5">
+                    <p className="font-mono text-[10.5px] text-ink-muted mt-1.5">
                       {p.vialSize} · {p.format}
                     </p>
                     <p className="font-poster font-black text-[20px] lg:text-[22px] mt-auto pt-4">
@@ -408,13 +408,13 @@ export default async function HomePage() {
               ))}
             </div>
 
-            <div className="mt-6 lg:mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/15 px-6 lg:px-8 py-5">
-              <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.08em] uppercase text-white/60">
+            <div className="mt-6 lg:mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-ink/10 px-6 lg:px-8 py-5">
+              <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.08em] uppercase text-ink-soft">
                 Free shipping over $300 · 48hr dispatch from Dallas, TX
               </p>
               <Link
                 href="/catalog"
-                className="bg-white text-black px-7 py-3 text-center text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition whitespace-nowrap"
+                className="bg-ink text-white px-7 py-3 text-center text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt transition whitespace-nowrap"
               >
                 Browse the catalog →
               </Link>
@@ -427,12 +427,12 @@ export default async function HomePage() {
           Values come from the newest published COA. If the DB is unreachable
           the numbers drop out and the QR + lookup still stand on their own.
        */}
-      <section className="bg-black text-white border-t border-white/15">
+      <section className="bg-white text-ink border-t border-ink/10">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-10 lg:gap-16 items-center">
             <div>
               {lot && (
-                <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-5">
+                <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted mb-5">
                   Lot {lot.lotId}
                   {lot.testedDate ? ` · tested ${lot.testedDate}` : ''}
                 </p>
@@ -443,7 +443,7 @@ export default async function HomePage() {
               >
                 The receipt is printed on the label.
               </h2>
-              <p className="mt-6 max-w-[52ch] text-[15px] leading-[1.62] text-white/55">
+              <p className="mt-6 max-w-[52ch] text-[15px] leading-[1.62] text-ink-soft">
                 Every vial label and every box carries a QR code. Scan it and that lot’s
                 certificate of analysis opens — identity, purity, appearance — from the
                 laboratory that ran it. No account. No request form.
@@ -460,18 +460,18 @@ export default async function HomePage() {
                   id="lot"
                   name="q"
                   placeholder="OR TYPE A LOT NUMBER"
-                  className="flex-1 bg-transparent border border-white/30 sm:border-r-0 px-4 py-3.5 font-mono text-[12px] tracking-[0.06em] text-white placeholder-white/35 focus:outline-none focus:border-cobalt-soft transition"
+                  className="flex-1 bg-white border border-ink/25 sm:border-r-0 px-4 py-3.5 font-mono text-[12px] tracking-[0.06em] text-ink placeholder-ink-muted focus:outline-none focus:border-cobalt transition"
                 />
                 <button
                   type="submit"
-                  className="bg-white text-black px-6 py-3.5 mt-2 sm:mt-0 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition"
+                  className="bg-ink text-white px-6 py-3.5 mt-2 sm:mt-0 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt transition"
                 >
                   Look up
                 </button>
               </form>
             </div>
 
-            <div className="bg-white p-5 lg:p-6 max-w-[260px] lg:max-w-none">
+            <div className="border border-ink/15 p-5 lg:p-6 max-w-[260px] lg:max-w-none">
               <Image
                 src="/brand/coa-qr.svg"
                 alt="QR code linking to Merit lot certificates of analysis"
@@ -486,33 +486,33 @@ export default async function HomePage() {
           </div>
 
           {lot && (
-            <dl className="mt-12 lg:mt-14 grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/15 border border-white/15">
-              <div className="bg-black px-6 py-7">
-                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/45">
+            <dl className="mt-12 lg:mt-14 grid grid-cols-2 lg:grid-cols-4 gap-px bg-ink/10 border border-ink/10">
+              <div className="bg-white px-6 py-7">
+                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-muted">
                   Purity (HPLC)
                 </dt>
                 <dd className="font-poster font-black tracking-[-0.03em] mt-3 text-[clamp(26px,3vw,42px)]">
                   {lot.purity}
                 </dd>
               </div>
-              <div className="bg-black px-6 py-7">
-                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/45">
+              <div className="bg-white px-6 py-7">
+                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-muted">
                   Compound
                 </dt>
                 <dd className="font-poster font-black tracking-[-0.03em] mt-3 text-[clamp(17px,1.9vw,26px)] leading-tight">
                   {lot.compound}
                 </dd>
               </div>
-              <div className="bg-black px-6 py-7">
-                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/45">
+              <div className="bg-white px-6 py-7">
+                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-muted">
                   Certificate
                 </dt>
                 <dd className="font-mono font-bold tracking-[-0.01em] mt-3 text-[clamp(13px,1.4vw,18px)] leading-tight break-all">
                   {lot.coaNumber ?? lot.lotId}
                 </dd>
               </div>
-              <div className="bg-black px-6 py-7">
-                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/45">
+              <div className="bg-white px-6 py-7">
+                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-muted">
                   Dispatch
                 </dt>
                 <dd className="font-poster font-black tracking-[-0.03em] mt-3 text-[clamp(26px,3vw,42px)]">
@@ -525,11 +525,11 @@ export default async function HomePage() {
       </section>
 
       {/* ════════════════ §07 · NEWSLETTER ═════════════════════════════════ */}
-      <section id="newsletter" className="bg-black text-white border-t border-white/15">
+      <section id="newsletter" className="bg-white text-ink border-t border-ink/10">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-14 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 lg:gap-16 items-center">
             <div>
-              <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-5">
+              <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted mb-5">
                 Research notes
               </p>
               <h2
@@ -538,7 +538,7 @@ export default async function HomePage() {
               >
                 First access to new lots.
               </h2>
-              <p className="mt-4 max-w-md text-[15px] text-white/55">
+              <p className="mt-4 max-w-md text-[15px] text-ink-soft">
                 A short note when there’s something worth saying. No noise.
               </p>
             </div>
@@ -561,11 +561,11 @@ export default async function HomePage() {
                 name="email"
                 required
                 placeholder="you@research.email"
-                className="flex-1 bg-transparent border border-white/30 px-4 py-3.5 text-sm text-white placeholder-white/35 focus:outline-none focus:border-cobalt-soft transition"
+                className="flex-1 bg-white border border-ink/25 px-4 py-3.5 text-sm text-ink placeholder-ink-muted focus:outline-none focus:border-cobalt transition"
               />
               <button
                 type="submit"
-                className="bg-white text-black px-7 py-3.5 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition whitespace-nowrap"
+                className="bg-ink text-white px-7 py-3.5 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt transition whitespace-nowrap"
               >
                 Subscribe
               </button>
@@ -575,7 +575,7 @@ export default async function HomePage() {
       </section>
 
       {/* ════════════════ §08 · CLOSE ══════════════════════════════════════ */}
-      <section className="relative isolate flex min-h-[62svh] lg:min-h-[70svh] items-end overflow-hidden bg-black text-white border-t border-white/15">
+      <section className="relative isolate flex min-h-[62svh] lg:min-h-[70svh] items-end overflow-hidden bg-black text-white border-t border-ink/10">
         <Image src="/brand/close-track.webp" alt="" fill sizes="100vw" className="object-cover" />
         <div
           aria-hidden="true"
@@ -603,7 +603,7 @@ export default async function HomePage() {
           </h2>
           <Link
             href="/catalog"
-            className="inline-block bg-white text-black px-9 py-4 text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition"
+            className="inline-block bg-white text-black px-9 py-4 text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt transition"
           >
             Shop the catalog
           </Link>

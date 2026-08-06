@@ -231,20 +231,20 @@ export default async function CoaLotPage({ params }: Props) {
   };
 
   return (
-    <main className="bg-black text-white min-h-screen">
+    <main className="bg-white text-ink min-h-screen">
       <JsonLd data={jsonLd} />
 
       {/* Hero */}
-      <section className="border-b border-white/15">
+      <section className="border-b border-ink/10">
         <div className="max-w-[900px] mx-auto px-6 lg:px-8 pt-12 lg:pt-16 pb-10">
-          <nav aria-label="Breadcrumb" className="font-mono text-[10.5px] tracking-[0.08em] uppercase text-white/40 mb-6">
-            <Link href="/" className="hover:text-white transition">Home</Link>
+          <nav aria-label="Breadcrumb" className="font-mono text-[10.5px] tracking-[0.08em] uppercase text-ink-muted mb-6">
+            <Link href="/" className="hover:text-ink transition">Home</Link>
             {' · '}
-            <Link href="/coa" className="hover:text-white transition">Lab results</Link>
+            <Link href="/coa" className="hover:text-ink transition">Lab results</Link>
             {' · '}
-            <span className="text-white/70">{lotLabel}</span>
+            <span className="text-ink-soft">{lotLabel}</span>
           </nav>
-          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-[#B9FF66] mb-5">
+          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-cobalt mb-5">
             Certificate of analysis
           </p>
           <h1
@@ -255,7 +255,7 @@ export default async function CoaLotPage({ params }: Props) {
           </h1>
           {/* Plain-language restatement of the fact this page exists to prove.
               An assistant asked "was this lot tested" can quote this line. */}
-          <p className="max-w-[62ch] text-[15px] leading-[1.65] text-white/65">
+          <p className="max-w-[62ch] text-[15px] leading-[1.65] text-ink-soft">
             <strong className="text-white font-semibold tabular-nums">{lotLabel}</strong>
             {tested && <> was tested {tested} and</>} was assayed by an independent laboratory
             before release. The measured results are below.
@@ -265,26 +265,26 @@ export default async function CoaLotPage({ params }: Props) {
 
       {/* Result card */}
       <section className="max-w-[900px] mx-auto px-6 lg:px-8 py-12">
-        <div className="border border-white/15 p-6 lg:p-8">
+        <div className="border border-ink/10 p-6 lg:p-8">
           <div className="flex items-start justify-between gap-4">
             <h2 className="font-poster font-black text-[20px] lg:text-[24px] tracking-[-0.03em] uppercase leading-tight">
               Result summary
             </h2>
-            <span className="flex-none font-mono text-[12px] font-bold tabular-nums text-[#B9FF66] border border-[#B9FF66]/40 px-3 py-1.5 whitespace-nowrap">
+            <span className="flex-none font-mono text-[12px] font-bold tabular-nums text-success border border-success/40 px-3 py-1.5 whitespace-nowrap">
               {isWater ? 'USP · STERILE' : `${coa.purity} HPLC`}
             </span>
           </div>
 
           {isWater ? (
-            <figure className="mt-5 border border-white/15 px-4 py-9 text-center">
-              <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-white/55">
+            <figure className="mt-5 border border-ink/10 px-4 py-9 text-center">
+              <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-soft">
                 USP sterility + content verified
               </p>
             </figure>
           ) : (
-            <figure className="mt-5 border border-white/15 px-3 pt-2 pb-1">
+            <figure className="mt-5 border border-ink/10 px-3 pt-2 pb-1">
               <Chromatogram purity={parsePurity(coa.purity)} seed={coa.lotId} />
-              <figcaption className="pb-1 text-center font-mono text-[9.5px] tracking-[0.06em] uppercase text-white/40">
+              <figcaption className="pb-1 text-center font-mono text-[9.5px] tracking-[0.06em] uppercase text-ink-muted">
                 Representative HPLC profile · main peak {coa.purity}
               </figcaption>
             </figure>
@@ -300,9 +300,9 @@ export default async function CoaLotPage({ params }: Props) {
             {tested && <Row label="Tested">{tested}</Row>}
           </dl>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/15 pt-5">
-            <span className="inline-flex items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#B9FF66]">
-              <span aria-hidden="true" className="inline-block w-1.5 h-1.5 rounded-full bg-[#B9FF66]" />
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 pt-5">
+            <span className="inline-flex items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-[0.1em] text-success">
+              <span aria-hidden="true" className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
               Verified · passed
             </span>
             <div className="flex items-center gap-5">
@@ -311,7 +311,7 @@ export default async function CoaLotPage({ params }: Props) {
                   href={coa.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-[11px] font-bold text-cobalt-soft hover:underline"
+                  className="font-mono text-[11px] font-bold text-cobalt hover:underline"
                 >
                   Certificate PDF →
                 </a>
@@ -319,7 +319,7 @@ export default async function CoaLotPage({ params }: Props) {
               {coa.productHandle && (
                 <Link
                   href={`/products/${coa.productHandle}`}
-                  className="font-mono text-[11px] font-bold text-white hover:text-cobalt-soft hover:underline"
+                  className="font-mono text-[11px] font-bold text-ink hover:text-cobalt hover:underline"
                 >
                   View product →
                 </Link>
@@ -328,7 +328,7 @@ export default async function CoaLotPage({ params }: Props) {
           </div>
         </div>
 
-        <p className="mt-8 max-w-[76ch] text-[14px] leading-[1.7] text-white/55">
+        <p className="mt-8 max-w-[76ch] text-[14px] leading-[1.7] text-ink-soft">
           <strong className="text-white font-semibold">A note on what&rsquo;s shown.</strong>{' '}
           {coa.fileUrl ? (
             <>
@@ -345,9 +345,9 @@ export default async function CoaLotPage({ params }: Props) {
           or veterinary use.
         </p>
 
-        <p className="mt-5 text-[14px] text-white/55">
+        <p className="mt-5 text-[14px] text-ink-soft">
           Looking for a different lot?{' '}
-          <Link href="/coa" className="text-cobalt-soft font-semibold hover:underline">
+          <Link href="/coa" className="text-cobalt font-semibold hover:underline">
             Search the full lab-results library →
           </Link>
         </p>
@@ -359,10 +359,10 @@ export default async function CoaLotPage({ params }: Props) {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
-      <dt className="w-28 flex-none font-mono text-[10.5px] tracking-[0.08em] uppercase text-white/40 pt-0.5">
+      <dt className="w-28 flex-none font-mono text-[10.5px] tracking-[0.08em] uppercase text-ink-muted pt-0.5">
         {label}
       </dt>
-      <dd className="font-mono text-[13px] text-white/85">{children}</dd>
+      <dd className="font-mono text-[13px] text-ink">{children}</dd>
     </div>
   );
 }

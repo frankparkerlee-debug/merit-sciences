@@ -214,13 +214,13 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
   };
 
   return (
-    <main className="bg-black text-white min-h-screen">
+    <main className="bg-white text-ink min-h-screen">
       <JsonLd data={jsonLd} />
 
       {/* ── Hero + search ─────────────────────────────────────────────── */}
-      <section className="border-b border-white/15">
+      <section className="border-b border-ink/10">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-12 pt-14 lg:pt-20 pb-12">
-          <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.14em] uppercase text-[#B9FF66] mb-5">
+          <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.14em] uppercase text-cobalt mb-5">
             Independent third-party verification
           </p>
           <h1
@@ -232,7 +232,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
 
           {/* The citable paragraph. An assistant asked "is Merit third-party
               tested" should be able to lift this verbatim and be correct. */}
-          <p className="mt-7 max-w-[68ch] text-[15px] lg:text-[16px] leading-[1.65] text-white/70">
+          <p className="mt-7 max-w-[68ch] text-[15px] lg:text-[16px] leading-[1.65] text-ink-soft">
             Every Merit lot is assayed by an independent laboratory before release — purity by HPLC,
             identity against a reference standard. The certificate is published here before the lot
             ships, and every vial label and box carries a QR code that opens it. No account, no
@@ -249,26 +249,26 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
               name="q"
               defaultValue={q}
               placeholder="COMPOUND, LOT, OR COA NUMBER"
-              className="flex-1 bg-transparent border border-white/30 sm:border-r-0 px-4 py-3.5 font-mono text-[12px] tracking-[0.06em] text-white placeholder-white/35 outline-none focus:border-cobalt-soft transition"
+              className="flex-1 bg-white border border-ink/25 sm:border-r-0 px-4 py-3.5 font-mono text-[12px] tracking-[0.06em] text-ink placeholder-ink-muted outline-none focus:border-cobalt transition"
             />
             <button
               type="submit"
-              className="bg-white text-black px-7 py-3.5 mt-2 sm:mt-0 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition"
+              className="bg-ink text-white px-7 py-3.5 mt-2 sm:mt-0 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt transition"
             >
               Search
             </button>
           </form>
 
           {q && (
-            <p className="mt-4 font-mono text-[11px] tracking-[0.08em] uppercase text-white/45">
+            <p className="mt-4 font-mono text-[11px] tracking-[0.08em] uppercase text-ink-muted">
               {coas.length} {coas.length === 1 ? 'result' : 'results'} for “{q}” ·{' '}
-              <Link href="/coa" className="text-cobalt-soft hover:underline">
+              <Link href="/coa" className="text-cobalt hover:underline">
                 clear
               </Link>
             </p>
           )}
           {!q && coas.length > 0 && (
-            <p className="mt-4 font-mono text-[11px] tracking-[0.08em] uppercase text-white/45">
+            <p className="mt-4 font-mono text-[11px] tracking-[0.08em] uppercase text-ink-muted">
               {coas.length} published {coas.length === 1 ? 'certificate' : 'certificates'} ·{' '}
               {compounds.length} {compounds.length === 1 ? 'compound' : 'compounds'}
             </p>
@@ -279,8 +279,8 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
       {/* ── Lot grid ──────────────────────────────────────────────────── */}
       <section className="max-w-[1200px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
         {coas.length === 0 ? (
-          <div className="border border-dashed border-white/25 px-6 py-16 text-center">
-            <p className="text-[15px] text-white/60 max-w-[60ch] mx-auto leading-relaxed">
+          <div className="border border-dashed border-ink/20 px-6 py-16 text-center">
+            <p className="text-[15px] text-ink-soft max-w-[60ch] mx-auto leading-relaxed">
               {q ? (
                 <>
                   No certificate matches “{q}”. Check the lot number printed on your bottle, or{' '}
@@ -290,7 +290,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
               )}
               <a
                 href="mailto:rx@meritsciences.com"
-                className="text-cobalt-soft font-semibold hover:underline"
+                className="text-cobalt font-semibold hover:underline"
               >
                 email us
               </a>{' '}
@@ -298,33 +298,33 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-white/15 border border-white/15">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-ink/10 border border-ink/10">
             {coas.map((c) => {
               // Bacteriostatic water is released on a USP sterility + preservative
               // assay, not HPLC — show a sterility panel instead of a chromatogram.
               const isWater = /bacteriostatic|sterile water/i.test(c.compound);
               const href = `/coa/${encodeURIComponent(c.coaNumber ?? c.lotId)}`;
               return (
-                <article key={c.id} className="bg-black p-6 lg:p-7">
+                <article key={c.id} className="bg-white p-6 lg:p-7">
                   <div className="flex items-start justify-between gap-4">
                     <h2 className="font-poster font-black text-[20px] lg:text-[24px] tracking-[-0.03em] leading-tight">
                       {c.compound}
                     </h2>
-                    <span className="flex-none font-mono text-[11px] font-bold tabular-nums text-[#B9FF66] border border-[#B9FF66]/40 px-2.5 py-1 whitespace-nowrap">
+                    <span className="flex-none font-mono text-[11px] font-bold tabular-nums text-success border border-success/40 px-2.5 py-1 whitespace-nowrap">
                       {isWater ? 'USP · STERILE' : `${c.purity} HPLC`}
                     </span>
                   </div>
 
                   {isWater ? (
-                    <figure className="mt-4 border border-white/15 px-4 py-7 text-center">
-                      <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-white/55">
+                    <figure className="mt-4 border border-ink/10 px-4 py-7 text-center">
+                      <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-soft">
                         USP sterility + content verified
                       </p>
                     </figure>
                   ) : (
-                    <figure className="mt-4 border border-white/15 px-3 pt-2 pb-1">
+                    <figure className="mt-4 border border-ink/10 px-3 pt-2 pb-1">
                       <Chromatogram purity={parsePurity(c.purity)} seed={c.lotId} />
-                      <figcaption className="pb-1 text-center font-mono text-[9.5px] tracking-[0.06em] uppercase text-white/40">
+                      <figcaption className="pb-1 text-center font-mono text-[9.5px] tracking-[0.06em] uppercase text-ink-muted">
                         Representative HPLC profile · main peak {c.purity}
                       </figcaption>
                     </figure>
@@ -338,9 +338,9 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                     {fmtDate(c.testedDate) && <Row label="Tested">{fmtDate(c.testedDate)}</Row>}
                   </dl>
 
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/15 pt-4">
-                    <span className="inline-flex items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#B9FF66]">
-                      <span aria-hidden="true" className="inline-block w-1.5 h-1.5 rounded-full bg-[#B9FF66]" />
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-4">
+                    <span className="inline-flex items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-[0.1em] text-success">
+                      <span aria-hidden="true" className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
                       Verified · passed
                     </span>
                     <div className="flex items-center gap-4">
@@ -349,7 +349,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                           href={c.fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-[11px] font-bold text-cobalt-soft hover:underline"
+                          className="font-mono text-[11px] font-bold text-cobalt hover:underline"
                         >
                           Certificate PDF →
                         </a>
@@ -358,7 +358,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                           can cover several SKUs, so the COA number keys it when present. */}
                       <Link
                         href={href}
-                        className="font-mono text-[11px] font-bold text-white hover:text-cobalt-soft hover:underline"
+                        className="font-mono text-[11px] font-bold text-ink hover:text-cobalt hover:underline"
                       >
                         Lot page →
                       </Link>
@@ -372,9 +372,9 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
       </section>
 
       {/* ── How we verify ─────────────────────────────────────────────── */}
-      <section className="border-t border-white/15">
+      <section className="border-t border-ink/10">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-12 py-14 lg:py-20">
-          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-5">
+          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted mb-5">
             How we verify
           </p>
           <h2
@@ -383,17 +383,17 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           >
             A full QC panel. Zero exceptions.
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/15 border border-white/15">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-ink/10 border border-ink/10">
             {PANEL.map((p) => (
-              <div key={p.title} className="bg-black p-6 lg:p-7">
+              <div key={p.title} className="bg-white p-6 lg:p-7">
                 <h3 className="font-poster font-extrabold text-[16px] tracking-[-0.02em] mb-2">
                   {p.title}
                 </h3>
-                <p className="text-[14px] leading-[1.65] text-white/55">{p.body}</p>
+                <p className="text-[14px] leading-[1.65] text-ink-soft">{p.body}</p>
               </div>
             ))}
           </div>
-          <p className="mt-8 max-w-[76ch] text-[14px] leading-[1.7] text-white/55">
+          <p className="mt-8 max-w-[76ch] text-[14px] leading-[1.7] text-ink-soft">
             <strong className="text-white font-semibold">A note on what&rsquo;s shown.</strong> Lots
             released with a full certificate carry the complete PDF — accredited lab named, signed by
             the lab director, with an access code you can verify at the lab&rsquo;s own portal. On
@@ -404,9 +404,9 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
       </section>
 
       {/* ── FAQ — visible twin of the FAQPage schema above ────────────── */}
-      <section className="border-t border-white/15">
+      <section className="border-t border-ink/10">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-12 py-14 lg:py-20">
-          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-5">
+          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted mb-5">
             Common questions
           </p>
           <h2
@@ -415,30 +415,30 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           >
             What the certificate does and doesn&rsquo;t say.
           </h2>
-          <div className="border-t border-white/20">
+          <div className="border-t border-ink/15">
             {FAQ.map((f) => (
-              <details key={f.q} className="group border-b border-white/20">
+              <details key={f.q} className="group border-b border-ink/15">
                 <summary className="flex items-start justify-between gap-6 py-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-cobalt/15 transition-colors">
                   <h3 className="font-poster font-extrabold text-[17px] lg:text-[21px] tracking-[-0.02em] leading-snug">
                     {f.q}
                   </h3>
                   <span
                     aria-hidden="true"
-                    className="flex-none text-[22px] text-white/45 transition-transform group-open:rotate-45 group-open:text-[#B9FF66]"
+                    className="flex-none text-[22px] text-ink-muted transition-transform group-open:rotate-45 group-open:text-cobalt"
                   >
                     +
                   </span>
                 </summary>
-                <p className="pb-6 max-w-[76ch] text-[14.5px] leading-[1.7] text-white/60">{f.a}</p>
+                <p className="pb-6 max-w-[76ch] text-[14.5px] leading-[1.7] text-ink-soft">{f.a}</p>
               </details>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-t border-white/15">
+      <section className="border-t border-ink/10">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-12 py-10">
-          <p className="font-mono text-[11px] leading-[1.8] tracking-[0.04em] text-white/40">
+          <p className="font-mono text-[11px] leading-[1.8] tracking-[0.04em] text-ink-muted">
             For research use only · Not for human or veterinary use · Not FDA-approved
           </p>
         </div>
@@ -450,10 +450,10 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
-      <dt className="w-24 flex-none font-mono text-[10.5px] tracking-[0.08em] uppercase text-white/40 pt-0.5">
+      <dt className="w-24 flex-none font-mono text-[10.5px] tracking-[0.08em] uppercase text-ink-muted pt-0.5">
         {label}
       </dt>
-      <dd className="font-mono text-[12.5px] text-white/80">{children}</dd>
+      <dd className="font-mono text-[12.5px] text-ink">{children}</dd>
     </div>
   );
 }
