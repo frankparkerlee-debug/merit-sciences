@@ -5,12 +5,13 @@ import { usePathname } from 'next/navigation';
 import { CartIcon } from './CartIcon';
 
 export function Nav() {
-  // The homepage opens on a full-bleed near-black hero. A solid white bar
-  // across the top of it cuts the image in half and kills the cinematic
-  // read, so on `/` the nav goes transparent and sits IN the hero — the
-  // dark register the rest of that page is built in. Every other route
-  // keeps the white bar, which is correct against their light backgrounds.
-  const onHome = usePathname() === '/';
+  // Routes rendered on the near-black ground: the homepage's full-bleed hero
+  // and the lab-results surfaces. A white bar across the top of those cuts
+  // the page in half, so the nav goes dark to match. Everything else —
+  // catalog, PDPs, library, policies — is light, and keeps the white bar.
+  // Keep this list in sync with any page whose <main> is bg-black.
+  const pathname = usePathname();
+  const onHome = pathname === '/' || pathname === '/coa' || pathname.startsWith('/coa/');
 
   return (
     <nav

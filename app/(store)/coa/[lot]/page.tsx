@@ -16,6 +16,8 @@ import { Chromatogram } from '../Chromatogram';
 
 export const dynamic = 'force-dynamic';
 
+const SITE = 'https://meritsciences.com';
+
 type Props = { params: { lot: string } };
 
 type CoaRow = {
@@ -78,6 +80,13 @@ function fmtDate(s: string | null): string | null {
   });
 }
 
+/** ISO-8601 for schema.org date fields; null when the source isn't a date. */
+function isoDate(s: string | null): string | null {
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
 function parsePurity(s: string): number {
   const n = parseFloat(String(s).replace(/[^0-9.]/g, ''));
   return isFinite(n) ? n : 99;
@@ -119,94 +128,169 @@ export default async function CoaLotPage({ params }: Props) {
   const tested = fmtDate(coa.testedDate);
   // Lot numbers that already read "LOT…" don't need the word in front of them.
   const lotLabel = /^lot/i.test(coa.lotId) ? coa.lotId : `Lot ${coa.lotId}`;
-  const url = `https://meritsciences.com/coa/${encodeURIComponent(coa.lotId)}`;
+  const url = `${SITE}/coa/${encodeURIComponent(coa.lotId)}`;
 
+  const testedIso = isoDate(coa.testedDate);
+  const datasetId = `${url}#dataset`;
+
+  /* Four linked nodes so an answer engine can resolve the whole claim without
+     guessing: the Dataset IS the measurement, the Certification is the signed
+     artifact behind it (only asserted when a real PDF exists), the Product is
+     what the measurement is ABOUT, and the breadcrumb places it in the site.
+     The `about`/`hasCertification` edges are the point — without them a
+     crawler sees a purity number floating free of the thing it describes. */
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://meritsciences.com/' },
-          { '@type': 'ListItem', position: 2, name: 'Lab results', item: 'https://meritsciences.com/coa' },
-          { '@type': 'ListItem', position: 3, name: `Lot ${coa.lotId}`, item: url },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: 'Lab results', item: `${SITE}/coa` },
+          { '@type': 'ListItem', position: 3, name: lotLabel, item: url },
         ],
       },
       {
         // The lot's test results as a citable dataset — this page is the
         // primary source for "{compound} lot {id}" purity claims.
         '@type': 'Dataset',
+        '@id': datasetId,
         name: `${coa.compound} — Lot ${coa.lotId} certificate of analysis`,
         description: `Independent quality-control results for ${coa.compound} research compound, lot ${coa.lotId}: purity by HPLC${coa.identity ? ', identity confirmation' : ''}${coa.appearance ? ', appearance' : ''}. For research use only.`,
         url,
-        creator: { '@id': 'https://meritsciences.com/#organization' },
-        license: 'https://meritsciences.com/terms',
+        identifier: coa.coaNumber ?? coa.lotId,
+        isPartOf: { '@id': `${SITE}/coa#page` },
+        creator: { '@id': `${SITE}/#organization` },
+        publisher: { '@id': `${SITE}/#organization` },
+        license: `${SITE}/terms`,
+        measurementTechnique: isWater
+          ? 'USP sterility and preservative content assay'
+          : 'High-performance liquid chromatography (HPLC)',
         variableMeasured: [
           { '@type': 'PropertyValue', name: 'Purity (HPLC)', value: coa.purity },
           ...(coa.identity ? [{ '@type': 'PropertyValue', name: 'Identity', value: coa.identity }] : []),
           ...(coa.appearance ? [{ '@type': 'PropertyValue', name: 'Appearance', value: coa.appearance }] : []),
+          { '@type': 'PropertyValue', name: 'Lot', value: coa.lotId },
         ],
-        ...(tested ? { dateModified: coa.testedDate } : {}),
+        ...(testedIso ? { datePublished: testedIso, dateModified: testedIso } : {}),
+        ...(coa.fileUrl
+          ? {
+              distribution: {
+                '@type': 'DataDownload',
+                encodingFormat: 'application/pdf',
+                contentUrl: coa.fileUrl,
+                name: `${coa.compound} lot ${coa.lotId} — signed certificate of analysis`,
+              },
+            }
+          : {}),
       },
+      // Only assert a Certification when a signed certificate actually exists.
+      // Redacted-data lots have real measurements but no publishable artifact,
+      // and claiming one would be a false statement in machine-readable form.
+      ...(coa.fileUrl
+        ? [
+            {
+              '@type': 'Certification',
+              '@id': `${url}#certification`,
+              name: `Certificate of analysis — ${coa.compound} lot ${coa.lotId}`,
+              certificationIdentification: coa.coaNumber ?? coa.lotId,
+              certificationStatus: 'CertificationActive',
+              url,
+              ...(testedIso ? { datePublished: testedIso, auditDate: testedIso } : {}),
+              hasMeasurement: {
+                '@type': 'QuantitativeValue',
+                name: 'Purity (HPLC)',
+                value: parsePurity(coa.purity),
+                unitText: 'percent',
+              },
+            },
+          ]
+        : []),
+      // Join the certificate to the thing it certifies.
+      ...(coa.productHandle
+        ? [
+            {
+              '@type': 'Product',
+              '@id': `${SITE}/products/${coa.productHandle}#product`,
+              name: coa.compound,
+              url: `${SITE}/products/${coa.productHandle}`,
+              brand: { '@id': `${SITE}/#organization` },
+              subjectOf: { '@id': datasetId },
+              additionalProperty: [
+                { '@type': 'PropertyValue', name: 'Lot', value: coa.lotId },
+                { '@type': 'PropertyValue', name: 'Purity (HPLC)', value: coa.purity },
+                ...(coa.identity
+                  ? [{ '@type': 'PropertyValue', name: 'Identity', value: coa.identity }]
+                  : []),
+              ],
+              ...(coa.fileUrl ? { hasCertification: { '@id': `${url}#certification` } } : {}),
+            },
+          ]
+        : []),
     ],
   };
 
   return (
-    <main className="bg-cream min-h-screen">
+    <main className="bg-black text-white min-h-screen">
       <JsonLd data={jsonLd} />
 
       {/* Hero */}
-      <section className="bg-white border-b border-cobalt/10">
-        <div className="max-w-[760px] mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-8">
-          <div className="text-xs text-ink-muted mb-5">
-            <Link href="/" className="hover:text-ink transition">Home</Link>
+      <section className="border-b border-white/15">
+        <div className="max-w-[900px] mx-auto px-6 lg:px-8 pt-12 lg:pt-16 pb-10">
+          <nav aria-label="Breadcrumb" className="font-mono text-[10.5px] tracking-[0.08em] uppercase text-white/40 mb-6">
+            <Link href="/" className="hover:text-white transition">Home</Link>
             {' · '}
-            <Link href="/coa" className="hover:text-ink transition">Lab results</Link>
+            <Link href="/coa" className="hover:text-white transition">Lab results</Link>
             {' · '}
-            <span className="text-ink">{lotLabel}</span>
-          </div>
-          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-            — Certificate of analysis
+            <span className="text-white/70">{lotLabel}</span>
+          </nav>
+          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-[#B9FF66] mb-5">
+            Certificate of analysis
           </p>
           <h1
-            className="font-display font-black text-ink tracking-[-0.035em] leading-[0.98] mb-3"
-            style={{ fontSize: 'clamp(28px, 4.5vw, 44px)' }}
+            className="font-poster font-black uppercase tracking-[-0.045em] leading-[0.9] mb-4"
+            style={{ fontSize: 'clamp(34px, 6.5vw, 84px)' }}
           >
-            {coa.compound}<span className="text-cobalt">.</span>
+            {coa.compound}
           </h1>
-          <p className="text-sm text-ink-soft">
-            <strong className="text-ink font-bold tabular-nums">{lotLabel}</strong>
-            {tested && <> · tested {tested}</>} · independently verified before release
+          {/* Plain-language restatement of the fact this page exists to prove.
+              An assistant asked "was this lot tested" can quote this line. */}
+          <p className="max-w-[62ch] text-[15px] leading-[1.65] text-white/65">
+            <strong className="text-white font-semibold tabular-nums">{lotLabel}</strong>
+            {tested && <> was tested {tested} and</>} was assayed by an independent laboratory
+            before release. The measured results are below.
           </p>
         </div>
       </section>
 
       {/* Result card */}
-      <section className="max-w-[760px] mx-auto px-5 sm:px-6 lg:px-8 py-10">
-        <div className="rounded-2xl border border-cobalt/12 bg-white p-6">
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="font-display text-lg font-extrabold text-ink leading-tight">Result summary</h2>
-            <span className="flex-none rounded-lg bg-cobalt/10 px-2.5 py-1 text-[12px] font-bold tabular-nums text-cobalt">
-              {isWater ? 'USP · Sterile' : `${coa.purity} HPLC`}
+      <section className="max-w-[900px] mx-auto px-6 lg:px-8 py-12">
+        <div className="border border-white/15 p-6 lg:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="font-poster font-black text-[20px] lg:text-[24px] tracking-[-0.03em] uppercase leading-tight">
+              Result summary
+            </h2>
+            <span className="flex-none font-mono text-[12px] font-bold tabular-nums text-[#B9FF66] border border-[#B9FF66]/40 px-3 py-1.5 whitespace-nowrap">
+              {isWater ? 'USP · STERILE' : `${coa.purity} HPLC`}
             </span>
           </div>
 
           {isWater ? (
-            <figure className="mt-4 rounded-xl border border-cobalt/10 bg-cream/40 px-4 py-8 text-center">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-cobalt">
+            <figure className="mt-5 border border-white/15 px-4 py-9 text-center">
+              <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-white/55">
                 USP sterility + content verified
               </p>
             </figure>
           ) : (
-            <figure className="mt-4 rounded-xl border border-cobalt/10 bg-cream/40 px-3 pt-2 pb-1">
+            <figure className="mt-5 border border-white/15 px-3 pt-2 pb-1">
               <Chromatogram purity={parsePurity(coa.purity)} seed={coa.lotId} />
-              <figcaption className="pb-0.5 text-center text-[10px] text-ink-muted">
+              <figcaption className="pb-1 text-center font-mono text-[9.5px] tracking-[0.06em] uppercase text-white/40">
                 Representative HPLC profile · main peak {coa.purity}
               </figcaption>
             </figure>
           )}
 
-          <dl className="mt-4 space-y-2 text-[14px]">
+          <dl className="mt-5 space-y-2.5">
             <Row label="Compound">{coa.compound}</Row>
             <Row label="Lot">{coa.lotId}</Row>
             {coa.coaNumber && <Row label="COA #">{coa.coaNumber}</Row>}
@@ -216,24 +300,27 @@ export default async function CoaLotPage({ params }: Props) {
             {tested && <Row label="Tested">{tested}</Row>}
           </dl>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-cobalt/8 pt-4">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/15 pt-5">
+            <span className="inline-flex items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#B9FF66]">
+              <span aria-hidden="true" className="inline-block w-1.5 h-1.5 rounded-full bg-[#B9FF66]" />
               Verified · passed
             </span>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               {coa.fileUrl && (
                 <a
                   href={coa.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs font-bold text-cobalt hover:underline"
+                  className="font-mono text-[11px] font-bold text-cobalt-soft hover:underline"
                 >
-                  Full certificate (PDF) →
+                  Certificate PDF →
                 </a>
               )}
               {coa.productHandle && (
-                <Link href={`/products/${coa.productHandle}`} className="text-xs font-bold text-cobalt hover:underline">
+                <Link
+                  href={`/products/${coa.productHandle}`}
+                  className="font-mono text-[11px] font-bold text-white hover:text-cobalt-soft hover:underline"
+                >
                   View product →
                 </Link>
               )}
@@ -241,8 +328,8 @@ export default async function CoaLotPage({ params }: Props) {
           </div>
         </div>
 
-        <p className="mt-6 text-[13px] leading-relaxed text-ink-soft">
-          <strong className="text-ink">A note on what&rsquo;s shown.</strong>{' '}
+        <p className="mt-8 max-w-[76ch] text-[14px] leading-[1.7] text-white/55">
+          <strong className="text-white font-semibold">A note on what&rsquo;s shown.</strong>{' '}
           {coa.fileUrl ? (
             <>
               The full certificate above is the lab&rsquo;s own document — accredited lab named, signed by
@@ -258,9 +345,9 @@ export default async function CoaLotPage({ params }: Props) {
           or veterinary use.
         </p>
 
-        <p className="mt-4 text-[13px] text-ink-soft">
+        <p className="mt-5 text-[14px] text-white/55">
           Looking for a different lot?{' '}
-          <Link href="/coa" className="text-cobalt font-bold underline-offset-2 hover:underline">
+          <Link href="/coa" className="text-cobalt-soft font-semibold hover:underline">
             Search the full lab-results library →
           </Link>
         </p>
@@ -271,9 +358,11 @@ export default async function CoaLotPage({ params }: Props) {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-2">
-      <dt className="w-28 flex-none text-ink-muted">{label}</dt>
-      <dd className="text-ink font-medium">{children}</dd>
+    <div className="flex gap-3">
+      <dt className="w-28 flex-none font-mono text-[10.5px] tracking-[0.08em] uppercase text-white/40 pt-0.5">
+        {label}
+      </dt>
+      <dd className="font-mono text-[13px] text-white/85">{children}</dd>
     </div>
   );
 }
