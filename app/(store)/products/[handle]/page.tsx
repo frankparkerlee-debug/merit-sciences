@@ -450,6 +450,25 @@ export default async function ProductPage({ params }: Props) {
             </div>
           ))}
         </div>
+
+        {/* The PDP asserts a purity figure but never linked to the certificates
+            behind it — the FAQ only described the URL in prose. Deliberately
+            points at a filtered search rather than one lot's page: pinning a
+            PDP to a specific lot would mean re-editing the product every time
+            a new lot ships, and the link would 404 the moment it did. The
+            search stays correct forever and surfaces every lot of this
+            compound, which is the more useful answer anyway. */}
+        <p className="mt-4 text-[13px] text-ink-soft">
+          <Link
+            href={`/coa?q=${encodeURIComponent(product.title)}`}
+            className="text-cobalt font-bold underline-offset-2 hover:underline"
+          >
+            View lab results for {product.title} →
+          </Link>{' '}
+          <span className="text-ink-muted">
+            — or search any lot number from your label.
+          </span>
+        </p>
       </section>
 
       {/* ═══════════════ LAB ANALYSIS — chromatogram + methodology ═══════════════
