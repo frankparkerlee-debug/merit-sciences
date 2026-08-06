@@ -101,10 +101,23 @@ const RULEMAKING = [
 ] as const;
 
 /** Newest published lot — drives the proof section. Never invent lab values
- *  on a page whose entire argument is that the numbers are real. */
+ *  on a page whose entire argument is that the numbers are real.
+ *
+ *  Bacteriostatic water is excluded deliberately. It is released on a USP
+ *  sterility + preservative-content assay, not HPLC, so its `purity` column
+ *  holds the benzyl alcohol content (~0.9%) rather than a purity. Rendered
+ *  under a "Purity (HPLC)" heading that reads as "this product is 0.85%
+ *  pure" — which is both false and the worst possible number to headline.
+ *  Anything measured on a different assay has no business in this slot. */
 async function latestLot() {
   try {
     return await prisma.coa.findFirst({
+      where: {
+        NOT: [
+          { compound: { contains: 'water', mode: 'insensitive' } },
+          { compound: { contains: 'bacteriostatic', mode: 'insensitive' } },
+        ],
+      },
       orderBy: { createdAt: 'desc' },
       select: { lotId: true, coaNumber: true, purity: true, compound: true, testedDate: true },
     });
