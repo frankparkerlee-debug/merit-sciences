@@ -21,6 +21,13 @@
       "runtimeArgs": ["-c", "CHECKOUT_HOST=localhost next dev -p 3021"],
       "port": 3021,
       "autoPort": false
+    },
+    {
+      "name": "merit-concepts",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "serve", "-l", "3030", "public"],
+      "port": 3030,
+      "autoPort": false
     }
   ]
 }

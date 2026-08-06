@@ -19,6 +19,11 @@ const GATED = [
   '/practitioners/portal',
   '/practitioners/login',
   '/practitioners/unsubscribe',
+  // Design concepts served out of public/. They carry their own noindex meta;
+  // this is the belt-and-braces so an unreviewed layout never gets crawled.
+  '/home-enhanced.html',
+  '/home-concepts.html',
+  '/home-concepts-2.html',
 ];
 
 // Answer-engine / AI crawlers we explicitly welcome onto content (the library
