@@ -34,6 +34,50 @@ async function ensureWelcomeDiscount() {
   });
 }
 
+// The footer form was getting 25-40 bot signups/day (list-bombing: temp-mail
+// and scraped corporate addresses POSTed straight at this endpoint). Three
+// cheap gates, all of which return a fake "ok" so bots don't adapt:
+// honeypot field, Origin allowlist, and a per-IP rate limit.
+const DISPOSABLE_DOMAINS = new Set([
+  'besttempmail.com', 'justdefinition.com', 'tempmail.com', 'mailinator.com',
+  'guerrillamail.com', '10minutemail.com', 'yopmail.com', 'sharklasers.com',
+  'trashmail.com', 'temp-mail.org', 'getnada.com', 'dropmail.me', 'maildrop.cc',
+]);
+
+const ipHits = new Map<string, { count: number; windowStart: number }>();
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+const RATE_MAX = 5;
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const hit = ipHits.get(ip);
+  if (!hit || now - hit.windowStart > RATE_WINDOW_MS) {
+    ipHits.set(ip, { count: 1, windowStart: now });
+    if (ipHits.size > 5000) ipHits.clear(); // crude memory bound
+    return false;
+  }
+  hit.count += 1;
+  return hit.count > RATE_MAX;
+}
+
+function originAllowed(req: Request): boolean {
+  const origin = req.headers.get('origin') ?? req.headers.get('referer') ?? '';
+  // Browsers always send Origin on cross- and same-origin POSTs; a missing or
+  // foreign origin means a scripted client.
+  if (!origin) return false;
+  try {
+    const host = new URL(origin).hostname;
+    return (
+      host === 'meritsciences.com' ||
+      host.endsWith('.meritsciences.com') ||
+      host === 'merit-sciences.onrender.com' ||
+      host === 'localhost'
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: Request) {
   const ctype = req.headers.get('content-type') ?? '';
   const isForm =
@@ -41,14 +85,30 @@ export async function POST(req: Request) {
 
   let email = '';
   let source = 'popup';
+  let honeypot = '';
   if (isForm) {
     const fd = await req.formData();
     email = String(fd.get('email') ?? '').trim().toLowerCase();
     source = String(fd.get('source') ?? 'footer');
+    honeypot = String(fd.get('website') ?? '').trim();
   } else {
     const body = await req.json().catch(() => ({}));
     email = String(body.email ?? '').trim().toLowerCase();
     source = String(body.source ?? 'popup');
+    honeypot = String(body.website ?? '').trim();
+  }
+
+  const fakeOk = () =>
+    isForm
+      ? NextResponse.redirect(`${SITE_URL}/?subscribe=ok#newsletter`, 303)
+      : NextResponse.json({ ok: true, code: WELCOME_CODE });
+
+  const ip =
+    (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
+  const domain = email.split('@')[1] ?? '';
+  if (honeypot || !originAllowed(req) || rateLimited(ip) || DISPOSABLE_DOMAINS.has(domain)) {
+    console.warn('[newsletter] rejected signup', { ip, source, domain, honeypot: !!honeypot });
+    return fakeOk();
   }
 
   const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

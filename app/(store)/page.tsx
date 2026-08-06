@@ -910,6 +910,15 @@ export default async function HomePage() {
               </p>
             </div>
             <form className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto lg:min-w-[420px]" action="/api/newsletter" method="POST">
+              {/* Honeypot: humans never see or fill this; the API silently drops any submit that does. */}
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+              />
               <input
                 type="email"
                 name="email"
