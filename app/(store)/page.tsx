@@ -194,7 +194,7 @@ export default async function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link
-                href="#the-six"
+                href="/catalog"
                 className="bg-white text-black px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition"
               >
                 Shop the six
@@ -203,7 +203,7 @@ export default async function HomePage() {
                 href="/coa"
                 className="border border-white/40 px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-white hover:text-black transition"
               >
-                Read a lot report
+                View lab results
               </Link>
             </div>
           </div>
@@ -223,7 +223,8 @@ export default async function HomePage() {
           </h2>
           <p className="mt-6 max-w-[60ch] text-[15px] leading-[1.6] text-white/55">
             The gray market got there first and poisoned the well. Merit exists for the other
-            path: licensed compounding, independent assays, published lot reports — on the exact
+            path: licensed compounding, independent assays, a published certificate for every lot —
+            on the exact
             six compounds the committee just named.
           </p>
         </div>

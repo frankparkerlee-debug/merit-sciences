@@ -164,7 +164,7 @@ export default function AboutPage() {
               className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
               style={{ fontSize: 'clamp(32px, 5vw, 64px)' }}
             >
-              How a lot reaches you<span className="text-cobalt">.</span>
+              How every lot reaches you<span className="text-cobalt">.</span>
             </h2>
             <p className="mt-5 text-[16px] text-ink-soft leading-relaxed">
               Five steps, none of them skipped. The same path every time &mdash; which is the point.

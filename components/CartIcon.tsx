@@ -31,7 +31,11 @@ export function CartIcon() {
     <button
       type="button"
       onClick={openDrawer}
-      className="relative inline-flex items-center gap-2 text-ink hover:text-cobalt transition group"
+      // Inherit the nav's colour rather than hardcoding ink: the homepage nav
+      // is dark, every other route's is white, and a fixed colour goes
+      // invisible on one of them. Hover dims instead of switching hue so it
+      // reads on either background.
+      className="relative inline-flex items-center gap-2 text-inherit hover:opacity-70 transition group"
       aria-label={`Open cart${showBadge ? ` — ${itemCount} item${itemCount === 1 ? '' : 's'}` : ''}`}
     >
       {/* Cart glyph — outline style matches the design vocabulary */}
@@ -54,7 +58,9 @@ export function CartIcon() {
       {/* Item count badge */}
       {showBadge && (
         <span
-          className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-cobalt text-white text-[10px] font-black tracking-tight flex items-center justify-center shadow-sm ring-2 ring-white"
+          // No white ring — it framed the badge on the light nav but drew a
+          // bright halo on the dark one. Cobalt-on-white reads on both.
+          className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-cobalt text-white text-[10px] font-black tracking-tight flex items-center justify-center shadow-sm"
           aria-hidden="true"
         >
           {itemCount > 9 ? '9+' : itemCount}
