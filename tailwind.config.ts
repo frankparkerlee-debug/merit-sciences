@@ -36,6 +36,8 @@ const config: Config = {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         display: ['var(--font-inter-tight)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-jetbrains-mono)', 'ui-monospace', 'monospace'],
+        // Poster face — 800/900 only, for the homepage's stacked caps.
+        poster: ['var(--font-archivo)', 'var(--font-inter-tight)', 'system-ui', 'sans-serif'],
       },
       maxWidth: {
         container: '1320px',

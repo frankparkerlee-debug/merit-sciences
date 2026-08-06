@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { getProduct, money } from '@/lib/catalog';
+import { getProduct, listProducts, money } from '@/lib/catalog';
 import { productImage } from '@/lib/product-types';
+import { prisma } from '@/lib/db';
 
 // Force-dynamic until Supabase pooling is moved to transaction mode
 // (port 6543 + ?pgbouncer=true). With session mode capped at 15
@@ -10,906 +11,528 @@ import { productImage } from '@/lib/product-types';
 // a time, well under the cap.
 export const dynamic = 'force-dynamic';
 
+/* ─────────────────────────────────────────────────────────────────────────
+   THE SIX — the peptides FDA's Pharmacy Compounding Advisory Committee
+   voted to recommend for the 503A bulks list on 24 July 2026.
+
+   Copy rules, non-negotiable:
+     · "recommended", never "approved" — rulemaking runs into 2027.
+     · Body copy describes each peptide's PUBLISHED LITERATURE. It never
+       says or implies what a Merit vial does. That distinction is the
+       whole reason this section can exist on an RUO storefront.
+     · `facts` are structural properties of the molecule (length, origin,
+       date). Safe to state flatly because they are chemistry, not outcomes.
+
+   `handle` is an explicit, verified catalog handle — deliberately NOT a
+   fuzzy title match. Substring matching on "bpc" resolves to whichever
+   blend the query happens to return first (GLOW, KLOW, Wolverine) instead
+   of the standalone vial, which would quietly point "BPC-157" at the wrong
+   product. TB-500 and KPV are null because Merit stocks them only inside
+   blends today; those rows fall back to a catalog search rather than
+   implying a standalone SKU exists. Any handle that stops resolving also
+   falls back, so a pulled SKU never becomes a dead link.
+   ───────────────────────────────────────────────────────────────────────── */
+const SIX = [
+  {
+    n: '01',
+    category: 'Repair',
+    compound: 'BPC-157',
+    handle: 'bpc-157-10mg',
+    facts: ['15 amino acids', 'Gastric-juice derived', 'Studied since 1991'],
+    body:
+      'A pentadecapeptide sequence originally isolated from human gastric juice, and the most heavily published compound of the six. Three decades of preclinical literature examine it in tendon, ligament, muscle and gastrointestinal injury models — much of the foundational work coming out of Sikirić’s group in Zagreb.',
+  },
+  {
+    n: '02',
+    category: 'Recovery',
+    compound: 'TB-500',
+    handle: null, // stocked only inside blends today
+    facts: ['7 amino acids', 'Thymosin β4 fragment', 'Actin-binding domain'],
+    body:
+      'The synthetic fragment corresponding to the active actin-binding region of thymosin beta-4, a protein present in nearly every human cell and in wound fluid. The research literature centers on cell migration, tissue regeneration and flexibility following injury.',
+  },
+  {
+    n: '03',
+    category: 'Inflammation',
+    compound: 'KPV',
+    handle: null, // stocked only inside blends today
+    facts: ['3 amino acids', 'α-MSH C-terminal', 'Lys-Pro-Val'],
+    body:
+      'The C-terminal tripeptide of alpha-melanocyte-stimulating hormone — lysine, proline, valine. Studied primarily in models of intestinal and cutaneous inflammation, where the interest is that it appears to carry the anti-inflammatory activity of the parent hormone without its pigmentary effects.',
+  },
+  {
+    n: '04',
+    category: 'Metabolic',
+    compound: 'MOTS-c',
+    handle: 'mots-c',
+    facts: ['16 amino acids', 'Mitochondrial-encoded', 'Identified 2015'],
+    body:
+      'One of a small class of peptides encoded by mitochondrial rather than nuclear DNA, identified at USC in 2015. Research examines its role in metabolic regulation and exercise capacity. It is the youngest literature on this list — which cuts both ways.',
+  },
+  {
+    n: '05',
+    category: 'Longevity',
+    compound: 'Epitalon',
+    handle: 'epitalon',
+    facts: ['4 amino acids', 'Pineal-derived', 'Khavinson, 1980s'],
+    body:
+      'A tetrapeptide developed from pineal gland extract by Vladimir Khavinson’s group in St. Petersburg. Published work spans telomerase activity and circadian regulation, including long-running Russian cohort studies that Western literature has not replicated at scale.',
+  },
+  {
+    n: '06',
+    category: 'Cognitive',
+    compound: 'Semax',
+    handle: 'semax-30mg',
+    facts: ['7 amino acids', 'ACTH(4-10) analog', 'Russian registry drug'],
+    body:
+      'A heptapeptide analog of ACTH fragment 4-10, developed in Russia where it has been on the national registry of medicines for decades. Research addresses cognition, attention and neuroprotection — a substantial body of work, most of it published in Russian.',
+  },
+] as const;
+
+// Where the six stand in the actual 503A process. This is the reason to come
+// back: the state changes, and Merit is the only one tracking it publicly. It
+// also turns the biggest liability — "recommended, not approved" — into
+// something worth bookmarking. Update `state` as each stage lands.
+const RULEMAKING = [
+  { title: 'Nominated', detail: 'Complete · 2025', state: 'done' },
+  { title: 'PCAC vote', detail: '6 recommended · Jul 24 2026', state: 'done' },
+  { title: 'Proposed rule', detail: 'Pending · FDA', state: 'now' },
+  { title: 'Final rule', detail: 'Expected 2027', state: 'next' },
+] as const;
+
+/** Newest published lot — drives the proof section. Never invent lab values
+ *  on a page whose entire argument is that the numbers are real. */
+async function latestLot() {
+  try {
+    return await prisma.coa.findFirst({
+      orderBy: { createdAt: 'desc' },
+      select: { lotId: true, coaNumber: true, purity: true, compound: true, testedDate: true },
+    });
+  } catch {
+    return null; // DB blip — section degrades to the QR + lookup, which still work.
+  }
+}
+
 export default async function HomePage() {
-  // Curated picks — drive imagery + featured compounds
-  const [wolverine, tirz, reta, nad, klow, selank] = await Promise.all([
-    getProduct('bpc-157-tb-500'),
-    getProduct('ly3298176'),
-    getProduct('ly3437943'),
-    getProduct('nad-500mg'),
-    getProduct('klow'),
-    getProduct('selank'),
+  const [featuredRaw, allProducts, lot] = await Promise.all([
+    Promise.all([
+      getProduct('retatrutide-10mg'),
+      getProduct('bpc-10mg-tb-10mg-wolverine-20mg'),
+      getProduct('bpc157-ghk-cu-50-tb500-kpv-klow-80mg'),
+      getProduct('tirzepatide-10mg'),
+    ]),
+    listProducts({ status: 'active' }),
+    latestLot(),
   ]);
 
-  // §03 featured order: Retatrutide + Wolverine visible first, KLOW + Tirzepatide
-  // revealed by horizontal scroll.
-  const featured = [reta, wolverine, klow, tirz].filter(Boolean) as NonNullable<Awaited<ReturnType<typeof getProduct>>>[];
+  const featured = featuredRaw.filter(Boolean) as NonNullable<
+    Awaited<ReturnType<typeof getProduct>>
+  >[];
 
-  // Family labels: simple chemistry categories (no human outcomes). Each
-  // lane gets its own labeled transparent vial PNG, a per-card tilt angle,
-  // and a per-card halo color so the four cards read as a family but with
-  // visual distinction.
-  const lanes = [
-    {
-      eyebrow: 'PEPTIDES',
-      title: 'BPC + TB',
-      compounds: ['BPC-157', 'TB-500', 'Wolverine'],
-      desc: 'The pentadecapeptide-class compounds.',
-      img: '/brand/merit-vial-canonical-transparent.webp',
-      alt: 'Merit BPC + TB vial — transparent label, lyophilized',
-      tiltDeg: -6,
-      // Cobalt (Merit core)
-      halo: {
-        inner: 'rgba(80,120,255,0.38)',
-        mid: 'rgba(46,77,219,0.20)',
-        outer: 'rgba(46,77,219,0.06)',
-      },
-    },
-    {
-      eyebrow: 'COFACTORS',
-      title: 'NAD+ Family',
-      compounds: ['NAD⁺', 'GHK-Cu', 'MOTS-c'],
-      desc: 'Coenzymes and signaling peptides.',
-      img: '/brand/merit-vial-canonical-transparent.webp',
-      alt: 'Merit NAD+ vial — transparent label, lyophilized',
-      tiltDeg: 5,
-      // Amber (metabolic warmth)
-      halo: {
-        inner: 'rgba(255,185,90,0.42)',
-        mid: 'rgba(201,140,60,0.22)',
-        outer: 'rgba(160,110,50,0.06)',
-      },
-    },
-    {
-      eyebrow: 'NEUROPEPTIDES',
-      title: 'Selank + Semax',
-      compounds: ['Selank', 'Semax'],
-      desc: 'Russian-derived synthetic neuropeptides.',
-      img: '/brand/merit-vial-canonical-transparent.webp',
-      alt: 'Merit Selank vial — transparent label, lyophilized',
-      tiltDeg: -8,
-      // Violet (cognitive)
-      halo: {
-        inner: 'rgba(160,120,255,0.40)',
-        mid: 'rgba(107,91,192,0.22)',
-        outer: 'rgba(80,60,160,0.06)',
-      },
-    },
-    {
-      eyebrow: 'BLENDS',
-      title: 'Multi-Compound Vials',
-      compounds: ['KLOW', 'GLOW', 'CJC + Ipa'],
-      desc: 'Multiple molecules co-formulated in one vial.',
-      img: '/brand/merit-vial-canonical-transparent.webp',
-      alt: 'Merit KLOW vial — transparent label, lyophilized',
-      tiltDeg: 7,
-      // Emerald (multi-pathway)
-      halo: {
-        inner: 'rgba(110,220,160,0.38)',
-        mid: 'rgba(60,150,110,0.22)',
-        outer: 'rgba(40,110,80,0.06)',
-      },
-    },
-  ];
+  // Link to the PDP only when that exact handle is actually live; otherwise
+  // send the reader to a catalog search. Never render a dead product link.
+  const live = new Set(allProducts.map((p) => p.handle));
+  const hrefFor = (handle: string | null, compound: string) =>
+    handle && live.has(handle)
+      ? `/products/${handle}`
+      : `/catalog?q=${encodeURIComponent(compound)}`;
 
   return (
     <>
-      {/* ════════════════ §01 · HERO — CSS COMPOSITE (PLAN B) ════════════════
-          HTML type ("MADE IN AMERICA.") + transparent vial PNG overlay.
-          Zero baked text in the image, so type is fully responsive, can be
-          re-copy-edited without regen, and the vial position is pixel-controlled
-          via absolute positioning over the right portion of the type.
-          Full-bleed cream — page bg flows edge to edge.
+      {/* ════════════════ §01 · HERO ═══════════════════════════════════════
+          Cinematic, near-black, type integrated into the image. The photo is
+          lit from the right and falls to black on the left, so the headline
+          sits in real darkness rather than on a scrim.
        */}
-      {/* ════════════════ §01 HERO ════════════════════════════════════════════
-          Rebuilt. The prior hero had two structural faults:
-
-          1. NO MINIMUM HEIGHT. It was sized purely by content padding, which
-             produced a 435px band — a banner, not a hero. Against Enhanced or
-             Hims, whose first screen is a full-viewport statement, it read as
-             cramped before a single word was judged.
-
-          2. NO ZONES. Three vials were scattered on an absolute layer behind
-             the type at 42vw / 28vw / 18vw. At desktop width the large one sat
-             directly behind the lede and CTA, so a white vial label collided
-             with body copy. Text had z-10 and won, but the result was muddy
-             and read as unfinished rather than art-directed.
-
-          Now a two-column architecture with real zones: type owns the left,
-          the specimen owns the right, and they cannot overlap. One vial, hero-
-          lit against a cobalt bloom, instead of three fighting the headline.
-
-          Ground moved off cream. Cream reads apothecary — soft, warm, artisanal
-          — and softens a brand whose entire claim is pharmacy rigor. A cool
-          near-white with a cobalt wash is both more confident and distinct from
-          the references (Enhanced runs dark, Hims runs warm).
-      */}
-      <section
-        id="hero"
-        className="relative overflow-hidden border-b border-ink/10"
-        style={{
-          background:
-            'radial-gradient(120% 90% at 78% 18%, #E6EBFA 0%, #F2F4F9 42%, #FBFCFD 78%)',
-        }}
-      >
-        <div className="relative mx-auto grid min-h-[78vh] max-w-[1400px] items-center gap-10 px-6 py-16 lg:min-h-[84vh] lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:px-12 lg:py-20">
-          {/* ── Type column ── */}
-          <div className="relative z-10 max-w-[640px]">
-            <p className="mb-7 text-[10px] font-semibold uppercase tracking-[0.24em] text-cobalt lg:text-[11px]">
-              Merit Sciences · Dallas, TX
-            </p>
-
-            <h1
-              className="font-display font-black leading-[0.9] tracking-[-0.042em] text-ink"
-              style={{ fontSize: 'clamp(46px, 6.4vw, 104px)' }}
+      <section className="relative isolate flex min-h-[92svh] items-end overflow-hidden bg-black text-white">
+        <Image
+          src="/brand/hero-human-a.webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[64%_22%]"
+        />
+        {/* Two gradients, not one: the horizontal keeps the left column black
+            for the headline, the vertical seats the section into the page. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.30) 46%, rgba(0,0,0,0) 72%), linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0.94) 100%)',
+          }}
+        />
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 pb-16 lg:pb-20">
+          <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.14em] uppercase text-[#B9FF66] mb-5">
+            FDA PCAC · Voted Jul 24 2026
+          </p>
+          <h1
+            className="font-poster font-black uppercase leading-[0.82] tracking-[-0.055em]"
+            style={{ fontSize: 'clamp(52px, 11vw, 190px)' }}
+          >
+            The
+            <br />
+            research
+            <br />
+            <span
+              className="text-transparent"
+              style={{ WebkitTextStroke: '2px rgba(255,255,255,0.62)' }}
             >
-              Same Stack.
-              <br />
-              Better Source<span className="text-cobalt">.</span>
-            </h1>
-
-            <p className="mt-7 max-w-[460px] text-[15px] leading-[1.65] text-ink-soft lg:text-[17px]">
-              Pharmacy-grade peptides, made by a US-licensed pharmacy team in Dallas.
-              Verified per lot. Shipped in 48 hours.
+              caught up.
+            </span>
+          </h1>
+          <div className="mt-9 lg:mt-11 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <p className="max-w-[46ch] text-[15px] leading-[1.62] text-white/70">
+              Six peptides —{' '}
+              <b className="font-semibold text-white">
+                BPC-157, TB-500, KPV, MOTS-c, epitalon, semax
+              </b>{' '}
+              — just earned a federal advisory committee’s recommendation for pharmacy
+              compounding. We’ve been compounding and assaying every one of them for years.
+              Receipts public.
             </p>
-
-            <div className="mt-9 flex flex-wrap items-center gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link
-                href="/catalog"
-                className="inline-flex items-center justify-center rounded-lg bg-cobalt px-8 py-4 text-[14px] font-semibold text-white shadow-lg shadow-cobalt/25 transition hover:opacity-90"
+                href="#the-six"
+                className="bg-white text-black px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition"
               >
-                Shop the catalog →
+                Shop the six
               </Link>
               <Link
                 href="/coa"
-                className="inline-flex items-center justify-center rounded-lg border border-ink/15 bg-white/70 px-8 py-4 text-[14px] font-semibold text-ink backdrop-blur transition hover:border-ink/35"
+                className="border border-white/40 px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-white hover:text-black transition"
               >
-                See a lot report
+                Read a lot report
               </Link>
             </div>
-
-            {/* Proof, stated rather than claimed. */}
-            <dl className="mt-11 flex flex-wrap gap-x-10 gap-y-5 border-t border-ink/10 pt-7">
-              {[
-                ['Verified', 'Every lot, third-party'],
-                ['Shipped', 'Within 48 hours'],
-                ['Made in', 'Dallas, Texas'],
-              ].map(([k, v]) => (
-                <div key={k}>
-                  <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
-                    {k}
-                  </dt>
-                  <dd className="mt-1.5 text-[13.5px] font-medium text-ink">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          {/* ── Specimen column. Its own zone — cannot reach the type. ── */}
-          <div aria-hidden="true" className="relative hidden lg:block">
-            <div className="relative mx-auto aspect-square w-full max-w-[560px]">
-              {/* Cobalt bloom behind the glass, so the vial reads lit rather
-                  than pasted onto the background. */}
-              <div
-                className="absolute inset-[8%] rounded-full blur-3xl"
-                style={{
-                  background:
-                    'radial-gradient(circle at 50% 45%, rgba(46,77,219,0.28) 0%, rgba(46,77,219,0.12) 45%, rgba(46,77,219,0) 72%)',
-                }}
-              />
-              <div className="absolute inset-0 animate-float-vial">
-                <Image
-                  src="/brand/merit-vial-canonical-transparent.webp"
-                  alt=""
-                  fill
-                  priority
-                  // Fixed 560px, NOT a "(max-width: 1024px) 0px" branch. The
-                  // 0px told the browser to select the smallest srcset entry,
-                  // which was then upscaled to 560px and rendered visibly
-                  // blurred. The column is hidden below lg anyway, so there is
-                  // no small-viewport case to describe.
-                  sizes="560px"
-                  className="object-contain drop-shadow-[0_28px_60px_rgba(11,15,25,0.16)]"
-                  style={{ transform: 'rotate(-7deg)' }}
-                />
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* ════════════════ CREDIBILITY MARQUEE ═════════════════════════════════
-          Warm-orange Merit-vial pattern background with a darkening overlay
-          so the scrolling white text + cobalt dot separators remain readable.
-          The pattern is the editorial-credibility move; the text scrolls over
-          it. Replaces the flat charcoal version. */}
-      <section className="relative overflow-hidden border-y border-white/10 bg-ink text-white">
-        {/* Background pattern image */}
-        <Image
-          src="/brand/scene-pattern-charcoal.webp"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-        {/* Overlay — slight darkening for text contrast. Lighter than the
-            §05 process overlay because the marquee is shorter and the text
-            needs to read at a glance, not be studied. */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(120,40,10,0.55) 0%, rgba(120,40,10,0.45) 100%)',
-          }}
-        />
-        <div className="relative py-4 lg:py-5">
-          <div className="flex animate-marquee whitespace-nowrap will-change-transform">
-            {[0, 1].map((dup) => (
-              <div
-                key={dup}
-                className="flex items-center shrink-0 gap-12 lg:gap-16 pr-12 lg:pr-16"
-                aria-hidden={dup === 1}
-              >
-                {[
-                  'US-LICENSED PHARMACY TEAM',
-                  'PHARMACY-VERIFIED PER LOT',
-                  'SEALED STERILE VIALS',
-                  'ISO-CERTIFIED CLEANROOM',
-                  'HPLC-TESTED PER LOT',
-                  '≥99% PURITY',
-                  'LOT-SPECIFIC COA WITH EVERY ORDER',
-                  'MADE IN DALLAS, TX',
-                  'SHIPPED IN 48 HOURS',
-                ].map((item) => (
+      {/* ════════════════ §02 · STATEMENT BAND ═════════════════════════════ */}
+      <section className="bg-black text-white border-y border-white/15">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-20">
+          <h2
+            className="font-poster font-black uppercase leading-[0.96] tracking-[-0.04em]"
+            style={{ fontSize: 'clamp(30px, 5.2vw, 80px)' }}
+          >
+            Pharmacy-grade.
+            <br />
+            Not <span className="text-cobalt-soft">“trust me bro”</span>-grade.
+          </h2>
+          <p className="mt-6 max-w-[60ch] text-[15px] leading-[1.6] text-white/55">
+            The gray market got there first and poisoned the well. Merit exists for the other
+            path: licensed compounding, independent assays, published lot reports — on the exact
+            six compounds the committee just named.
+          </p>
+        </div>
+      </section>
+
+      {/* ════════════════ §03 · THE SIX — ACCORDION ════════════════════════
+          Native <details>, so every panel's prose is in the DOM at load and
+          crawlable with zero JS. Closed state is one compact row per compound,
+          which keeps six entries to roughly one screen instead of six.
+       */}
+      <section id="the-six" className="bg-black text-white">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+          <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.14em] uppercase text-[#B9FF66] mb-5">
+            The Six · Recommended Jul 24 2026
+          </p>
+          <h2
+            className="font-poster font-black uppercase leading-[0.96] tracking-[-0.04em] max-w-[20ch] mb-10 lg:mb-12"
+            style={{ fontSize: 'clamp(28px, 4.4vw, 62px)' }}
+          >
+            Named by the committee. Stocked by Merit.
+          </h2>
+
+          <div className="border-t border-white/20">
+            {SIX.map((c, i) => (
+              <details key={c.compound} open={i === 0} className="group border-b border-white/20">
+                <summary className="grid grid-cols-[34px_1fr_30px] lg:grid-cols-[64px_1fr_auto_auto_44px] items-center gap-x-3 lg:gap-x-6 gap-y-1 py-4 lg:py-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-cobalt/15 transition-colors">
+                  <span className="font-mono text-[12px] text-white/35 lg:pl-1">{c.n}</span>
                   <span
-                    key={`${dup}-${item}`}
-                    className="flex items-center gap-12 lg:gap-16 text-[11px] lg:text-[13px] tracking-[0.22em] uppercase text-white font-black"
+                    className="font-poster font-black uppercase leading-none tracking-[-0.035em]"
+                    style={{ fontSize: 'clamp(21px, 2.6vw, 38px)' }}
                   >
-                    {item}
-                    <span className="w-1.5 h-1.5 rounded-full bg-cobalt shrink-0" />
+                    {c.category}.
                   </span>
-                ))}
-              </div>
+                  <span className="font-mono text-[12px] lg:text-[13px] font-bold tracking-[0.08em] text-cobalt-soft col-start-2 lg:col-start-auto">
+                    {c.compound.toUpperCase()}
+                  </span>
+                  <span className="hidden lg:inline-flex font-mono text-[10px] tracking-[0.1em] uppercase text-[#B9FF66] border border-[#B9FF66]/40 px-2.5 py-1 whitespace-nowrap">
+                    PCAC ✓
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="row-span-2 lg:row-span-1 justify-self-end self-center text-[22px] font-normal text-white/45 transition-transform group-open:rotate-45 group-open:text-[#B9FF66] lg:pr-2"
+                  >
+                    +
+                  </span>
+                </summary>
+
+                <div className="pb-6 lg:pb-7 lg:pl-[88px] max-w-[70ch]">
+                  <p className="text-[14.5px] leading-[1.66] text-white/60">{c.body}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {c.facts.map((f) => (
+                      <span
+                        key={f}
+                        className="font-mono text-[10px] lg:text-[10.5px] tracking-[0.08em] uppercase text-white/50 border border-white/20 px-2.5 py-1.5"
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                  <Link
+                    href={hrefFor(c.handle, c.compound)}
+                    className="inline-block mt-5 text-[11px] font-poster font-black tracking-[0.16em] uppercase border-b border-white/40 pb-1 hover:text-cobalt-soft hover:border-cobalt-soft transition"
+                  >
+                    View {c.compound} →
+                  </Link>
+                </div>
+              </details>
             ))}
           </div>
+
+          <p className="mt-6 font-mono text-[11px] leading-[1.7] text-white/40 max-w-[86ch]">
+            A PCAC recommendation is not FDA approval; rulemaking runs into 2027. All Merit
+            compounds are research-use-only. Category terms describe each peptide’s published
+            literature — not our products.
+          </p>
         </div>
       </section>
 
-      {/* ════════════════ §02 · CATALOG FAMILIES — minimal cards ═══════════
-          Clean 4-up grid. Each card: white background, no corner brackets,
-          no index numbers, no hover lift on the card. The VIAL inside each
-          card floats softly (staggered delays so they don't sync).
-          Promotional bar across the bottom for bundle pricing.
-       */}
-      <section id="lanes" className="bg-cream py-20 lg:py-28 px-6 lg:px-12">
-        <div className="max-w-[1400px] mx-auto">
-          {/* Section header */}
-          <div className="flex flex-wrap items-end justify-between mb-10 lg:mb-14 gap-6">
-            <div className="max-w-2xl">
-              <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-semibold mb-4">
-                — The Catalog
-              </p>
-              <h2
-                className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-                style={{ fontSize: 'clamp(36px, 5.5vw, 76px)' }}
-              >
-                Four families<span className="text-cobalt">.</span>
-              </h2>
-              <p className="mt-4 text-[14px] lg:text-[16px] text-ink-soft max-w-[520px] leading-relaxed">
-                The Merit catalog, organized by compound class. Pick a
-                family to see what we stock.
-              </p>
-            </div>
-            <Link
-              href="/catalog"
-              className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-semibold hover:text-ink transition whitespace-nowrap"
-            >
-              View the full catalog →
-            </Link>
-          </div>
+      {/* ════════════════ §04 · RULEMAKING WATCH ═══════════════════════════ */}
+      <section className="bg-black text-white border-t border-white/15">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
+          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-8">
+            Rulemaking watch · <b className="text-[#B9FF66] font-bold">Live</b> · What has to
+            happen before these are 503A-legal
+          </p>
+          <ol className="relative grid grid-cols-2 lg:grid-cols-4 gap-y-7">
+            {/* Rail sits behind the dots; hidden on mobile where the grid wraps. */}
+            <span
+              aria-hidden="true"
+              className="hidden lg:block absolute left-0 right-0 top-[5px] h-px bg-white/20"
+            />
+            {RULEMAKING.map((s) => (
+              <li key={s.title} className="relative pt-6 pr-4">
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-0 left-0 w-[11px] h-[11px] rounded-full border ${
+                    s.state === 'done'
+                      ? 'bg-[#B9FF66] border-[#B9FF66]'
+                      : s.state === 'now'
+                        ? 'bg-cobalt border-cobalt-soft ring-4 ring-cobalt/30'
+                        : 'bg-black border-white/35'
+                  }`}
+                />
+                <p className="text-[13px] font-bold tracking-[0.06em] uppercase mb-1.5">
+                  {s.title}
+                </p>
+                <p
+                  className={`font-mono text-[10.5px] tracking-[0.08em] uppercase ${
+                    s.state === 'done'
+                      ? 'text-[#B9FF66]'
+                      : s.state === 'now'
+                        ? 'text-cobalt-soft'
+                        : 'text-white/45'
+                  }`}
+                >
+                  {s.detail}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
-          {/* 4-up family grid — cream cards with cobalt backlight per vial.
-              Each card uses the transparent Merit vial PNG so the cobalt
-              halo shows through behind it (same treatment as the hero). */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
-            {lanes.map((lane) => (
-              <Link
-                key={lane.title}
-                href="/catalog"
-                className="group block"
-              >
-                {/* Image area — cream tile, per-card colored backlight,
-                    per-card tilted transparent vial. */}
-                <div className="relative aspect-square rounded-2xl overflow-hidden bg-cream border border-cobalt/10 group-hover:border-cobalt/35 transition-colors duration-300">
-                  {/* Per-card backlight — color sourced from lane.halo so
-                      each family reads with its own brand-accent glow. */}
-                  <div
-                    className="absolute inset-0 z-0"
-                    style={{
-                      background: `radial-gradient(ellipse 55% 60% at center, ${lane.halo.inner} 0%, ${lane.halo.mid} 40%, ${lane.halo.outer} 65%, transparent 82%)`,
-                    }}
-                  />
-                  {/* Per-card vial — labeled with the compound name,
-                      tilted slightly. Each card has a different tilt angle
-                      so they don't all read identically. */}
-                  <div
-                    className="absolute inset-0 z-10 p-6 lg:p-8"
-                    style={{
-                      transform: `rotate(${lane.tiltDeg}deg)`,
-                      transformOrigin: 'center center',
-                    }}
-                  >
+      {/* ════════════════ §05 · MOST-STOCKED — REAL PRODUCTS ═══════════════
+          The commerce layer. Live prices and PDP links straight from the DB.
+       */}
+      {featured.length > 0 && (
+        <section id="featured" className="bg-black text-white border-t border-white/15">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+            <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-5">
+              Most-stocked
+            </p>
+            <h2
+              className="font-poster font-black uppercase leading-[0.96] tracking-[-0.04em] mb-10 lg:mb-12"
+              style={{ fontSize: 'clamp(28px, 4.4vw, 62px)' }}
+            >
+              What researchers come back for.
+            </h2>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              {featured.map((p) => (
+                <Link
+                  key={p.handle}
+                  href={`/products/${p.handle}`}
+                  className="group border border-white/15 hover:border-cobalt-soft transition-colors flex flex-col"
+                >
+                  <div className="relative aspect-square bg-white/[0.03] overflow-hidden">
                     <Image
-                      src={lane.img}
-                      alt={lane.alt}
+                      src={productImage(p.imageUrl)}
+                      alt={p.title}
                       fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-contain object-center"
+                      sizes="(max-width: 1024px) 50vw, 25vw"
+                      className="object-contain p-5 lg:p-7 group-hover:scale-[1.04] transition-transform duration-500"
                     />
                   </div>
-                </div>
-
-                {/* Text content — minimal, below the image */}
-                <div className="pt-5 px-1">
-                  <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-semibold mb-2">
-                    {lane.eyebrow}
-                  </p>
-                  <h3 className="font-display text-lg lg:text-xl font-extrabold text-ink tracking-tight leading-tight">
-                    {lane.title}<span className="text-cobalt">.</span>
-                  </h3>
-
-                  {/* Compound list — plain dotted text, no chip pills */}
-                  <p className="mt-2.5 text-[12px] text-ink-soft leading-relaxed">
-                    {lane.compounds.join(' · ')}
-                  </p>
-
-                  <p className="mt-4 text-[11px] tracking-[0.22em] uppercase text-cobalt font-semibold group-hover:text-ink transition-colors">
-                    Browse →
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* Promotional bar — cobalt band. Bundle / subscription pricing
-              (RUO compliant — no individual-targeted discount codes). */}
-          <div className="mt-8 lg:mt-10 bg-cobalt text-white rounded-2xl px-7 lg:px-10 py-5 lg:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <span
-                aria-hidden="true"
-                className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/15 border border-white/25 text-white text-lg"
-              >
-                ↻
-              </span>
-              <p className="text-[14px] lg:text-[15px] font-medium leading-snug">
-                <span className="opacity-75 text-[11px] tracking-[0.22em] uppercase font-semibold block mb-0.5">
-                  Bundle &amp; save
-                </span>
-                5% off 3-packs · 10% off 6-packs · 10% off subscribe &amp; save
-              </p>
-            </div>
-            <Link
-              href="/catalog"
-              className="bg-white text-ink px-5 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90 transition whitespace-nowrap"
-            >
-              See pricing →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════ §03 · MOST-STOCKED — FEATURED COMPOUNDS ═══════════
-          Reference-pattern layout: bold cobalt feature card on the LEFT
-          (intro + master CTA), two cream product cards on the RIGHT showing
-          actual featured molecules with prices + lot details + tags, and a
-          shipping-promise bar across the BOTTOM. Section bg stays charcoal
-          for the palette rhythm (cream lanes → charcoal featured → cream
-          comparison).
-       */}
-      <section id="featured" className="bg-ink text-white py-20 lg:py-28 px-6 lg:px-12">
-        <div className="max-w-[1400px] mx-auto">
-          {/* Section header */}
-          <div className="mb-10 lg:mb-12 max-w-2xl">
-            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-semibold mb-4">
-              — Most-Stocked
-            </p>
-            <h2
-              className="font-display font-black tracking-[-0.035em] leading-[0.95]"
-              style={{ fontSize: 'clamp(36px, 5.5vw, 76px)' }}
-            >
-              What researchers come back for<span className="text-cobalt">.</span>
-            </h2>
-          </div>
-
-          {/* Feature card + 2 product cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-5 lg:gap-7">
-            {/* LEFT — Feature card with cobalt-toned atmospheric BG image.
-                Layer order (back→front):
-                  1. <Image fill> — bg photo, absolute, no z-class
-                  2. Overlay <div> — cobalt+charcoal wash for text contrast
-                  3. Content wrapper — relative z-10, sits above both bg layers
-            */}
-            <div className="relative bg-cobalt rounded-2xl overflow-hidden flex flex-col min-h-[440px]">
-              {/* Editorial cobalt vial pattern as background — diagonal grid
-                  of Merit vials on saturated brand cobalt. Replaces the
-                  abstract atmospheric mist. bg-cobalt on parent acts as
-                  fallback if image fails. */}
-              <Image
-                src="/brand/scene-pattern-cobalt.webp"
-                alt=""
-                fill
-                sizes="(max-width: 1024px) 100vw, 33vw"
-                className="object-cover object-center"
-                priority={false}
-              />
-              {/* Cobalt + charcoal wash overlay — provides white-text
-                  contrast over the pattern. Slightly heavier than before
-                  since the pattern image has more visual activity (vials,
-                  shadows) than the previous atmospheric mist. */}
-              <div
-                aria-hidden="true"
-                className="absolute inset-0"
-                style={{
-                  background:
-                    'linear-gradient(135deg, rgba(46,77,219,0.35) 0%, rgba(11,15,25,0.60) 100%)',
-                }}
-              />
-
-              {/* Content wrapper — relative + z-10 so it stacks above the
-                  bg image and overlay regardless of DOM-order quirks. */}
-              <div className="relative z-10 text-white p-8 lg:p-10 flex flex-col flex-1">
-                {/* Section tag — small bordered pill, leads the stack */}
-                <span className="inline-flex items-center self-start text-[10px] tracking-[0.22em] uppercase text-white font-bold border border-white/30 px-2 py-1 rounded mb-4">
-                  Top Sellers
-                </span>
-
-                {/* Eyebrow */}
-                <p className="text-[10px] tracking-[0.22em] uppercase text-white/80 font-semibold mb-5">
-                  — Restocked First
-                </p>
-
-                {/* Headline */}
-                <h3
-                  className="font-display font-black leading-[0.95] tracking-[-0.025em] mb-5"
-                  style={{ fontSize: 'clamp(28px, 3vw, 44px)' }}
-                >
-                  Top-shelf molecules<span className="text-white/70">.</span>
-                </h3>
-
-                {/* Supporting copy */}
-                <p className="text-[14px] lg:text-[15px] text-white/90 leading-relaxed max-w-md">
-                  These are the compounds that get reordered first when supplies
-                  run low — the molecules our researchers come back for, batch
-                  after batch.
-                </p>
-
-                {/* CTA at bottom */}
-                <Link
-                  href="/catalog"
-                  className="inline-flex items-center justify-center mt-auto pt-8 self-start"
-                >
-                  <span className="bg-white text-ink px-7 py-3.5 rounded-lg font-semibold text-sm hover:opacity-90 transition">
-                    View all products →
-                  </span>
+                  <div className="p-4 lg:p-5 border-t border-white/15 flex-1 flex flex-col">
+                    <h3 className="font-poster font-extrabold text-[15px] lg:text-[17px] tracking-[-0.02em] leading-tight">
+                      {p.title}
+                    </h3>
+                    <p className="font-mono text-[10.5px] text-white/45 mt-1.5">
+                      {p.vialSize} · {p.format}
+                    </p>
+                    <p className="font-poster font-black text-[20px] lg:text-[22px] mt-auto pt-4">
+                      {money(p.priceCents)}
+                    </p>
+                  </div>
                 </Link>
-              </div>
+              ))}
             </div>
 
-            {/* RIGHT — horizontal-scroll product carousel.
-                2 cards visible at a time on desktop (Retatrutide + Wolverine);
-                horizontal scroll reveals KLOW + Tirzepatide. Scroll-snap
-                keeps cards aligned. */}
-            <div className="relative">
-              <div className="overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide -mx-6 px-6 lg:mx-0 lg:px-0">
-                <div className="flex gap-4 lg:gap-5">
-                  {featured.map((p) => {
-                const bestBundle = p.bundles?.find((b) => b.label.toLowerCase().includes('subscribe'))
-                  ?? p.bundles?.[p.bundles.length - 1];
-                const perVialSavings = bestBundle && bestBundle.vials > 0
-                  ? Math.round((1 - (bestBundle.priceCents / bestBundle.vials) / p.priceCents) * 100)
-                  : null;
-                return (
-                  <Link
-                    key={p.handle}
-                    href={`/products/${p.handle}`}
-                    className="group block bg-cream text-ink rounded-2xl overflow-hidden border border-white/10 hover:border-cobalt/60 transition-colors snap-start shrink-0 w-[85vw] sm:w-[320px] lg:w-[calc(50%-0.625rem)]"
-                  >
-                    {/* Vial image area — cream tile with subtle warmth */}
-                    <div className="relative aspect-square bg-gradient-to-br from-white to-[#EDE8DD]/40 overflow-hidden">
-                      <Image
-                        src={productImage(p.imageUrl)}
-                        alt={p.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-contain p-7 lg:p-9 group-hover:scale-[1.04] transition-transform duration-500"
-                      />
-                      {/* Pharmacy-verified badge — top-left */}
-                      <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-cobalt/20 text-[9px] font-bold tracking-widest uppercase text-cobalt px-2.5 py-1 rounded">
-                        <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-                        Pharmacy-Verified
-                      </span>
-                    </div>
-
-                    {/* Product details */}
-                    <div className="p-6 lg:p-7">
-                      {/* Eyebrow */}
-                      <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-semibold mb-2">
-                        {p.eyebrow.split('·')[0].trim()}
-                      </p>
-
-                      {/* Title */}
-                      <h3 className="font-display text-xl lg:text-2xl font-extrabold text-ink tracking-tight leading-tight mb-1">
-                        {p.title}
-                      </h3>
-
-                      {/* Vial size / format */}
-                      <p className="text-[12px] text-ink-soft mb-4">
-                        {p.vialSize} · {p.format}
-                      </p>
-
-                      {/* Price row */}
-                      <div className="flex items-baseline gap-3 mb-4">
-                        <span className="font-display text-2xl font-bold text-ink">{money(p.priceCents)}</span>
-                        {perVialSavings !== null && perVialSavings > 0 && (
-                          <span className="text-[11px] tracking-[0.16em] uppercase text-success font-semibold">
-                            Save {perVialSavings}% on subscribe
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Tag row at bottom — lot info, certifications */}
-                      <div className="flex flex-wrap gap-1.5 pt-4 border-t border-ink/10">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-cobalt/15 text-[10px] tracking-[0.08em] uppercase text-ink/70 font-medium">
-                          ≥99% Purity
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-cobalt/15 text-[10px] tracking-[0.08em] uppercase text-ink/70 font-medium">
-                          Lot COA
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-cobalt/15 text-[10px] tracking-[0.08em] uppercase text-ink/70 font-medium">
-                          48hr Ship
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-                </div>
-              </div>
-              {/* Scroll hint — fades in below the carousel as a small UX cue
-                  that more cards exist to the right. */}
-              <p className="mt-4 text-[10px] tracking-[0.22em] uppercase text-cobalt-soft font-semibold flex items-center gap-2">
-                <span aria-hidden="true" className="inline-block w-5 h-px bg-cobalt-soft" />
-                Scroll for KLOW + Tirzepatide
-                <span aria-hidden="true">→</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Bottom shipping/dispatch promise bar — clock icon for the
-              48hr dispatch promise (replaces the lightning-bolt cliché). */}
-          <div className="mt-6 lg:mt-7 bg-white text-ink rounded-2xl px-7 lg:px-10 py-5 lg:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {/* Clock SVG — clean stroke icon, cobalt color, ties to the
-                  48hr dispatch promise in the copy. */}
-              <span
-                aria-hidden="true"
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-cobalt/10 border border-cobalt/30 text-cobalt shrink-0"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="9" />
-                  <polyline points="12 7 12 12 15.5 14" />
-                </svg>
-              </span>
-              <p className="text-[14px] lg:text-[15px] font-medium leading-snug">
-                <span className="opacity-75 text-[11px] tracking-[0.22em] uppercase font-semibold block mb-0.5 text-cobalt">
-                  Ships fast
-                </span>
+            <div className="mt-6 lg:mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/15 px-6 lg:px-8 py-5">
+              <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.08em] uppercase text-white/60">
                 Free shipping over $300 · 48hr dispatch from Dallas, TX
               </p>
-            </div>
-            <Link
-              href="/catalog"
-              className="bg-cobalt text-white px-5 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90 transition whitespace-nowrap"
-            >
-              Browse the catalog →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════ §04 · MERIT vs MARKET — COMPARISON ═════════════════
-          Kept verbatim per user feedback ("table comparison is really good").
-          Only the wrapper container width is harmonized to the new 1400 grid.
-       */}
-      <section id="comparison" className="bg-cream py-20 lg:py-28 px-6 lg:px-12">
-        <div className="max-w-[1400px] mx-auto">
-          <div className="max-w-2xl mb-12 lg:mb-16">
-            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-semibold mb-4">
-              — Merit vs Market
-            </p>
-            <h2
-              className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-              style={{ fontSize: 'clamp(36px, 5.5vw, 80px)' }}
-            >
-              There&apos;s no comparison<span className="text-cobalt">.</span>
-            </h2>
-            <p className="mt-6 text-base lg:text-lg text-ink-soft leading-relaxed">
-              Most peptide sellers are resellers. Merit is the pharmacy.
-              Here&apos;s what that actually gets you.
-            </p>
-          </div>
-
-          {/* Comparison table.
-              3 columns (Merit / Online Resellers / Influencer Brands), 6
-              rows. Plain-English buyer-relevant claims — no jargon (no
-              "USP 797", "HPLC", "COA" without context). Marks: cobalt ✓ for
-              win, amber — for partial credit (honest calibration — resellers
-              DO sometimes provide test results, so we don't zero them),
-              muted ✗ for clear loss. */}
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-border-soft overflow-hidden">
-            {/* Header row */}
-            <div className="grid grid-cols-[1fr_72px_72px_72px] lg:grid-cols-[1fr_110px_110px_110px] gap-2 lg:gap-4 px-5 lg:px-8 py-5 border-b border-border-soft bg-cream/40">
-              <div />
-              <p className="font-display font-bold text-cobalt text-xs lg:text-sm text-center">Merit</p>
-              <p className="font-display font-bold text-ink-muted text-xs lg:text-sm text-center leading-tight">
-                Online<br className="lg:hidden" /> Resellers
-              </p>
-              <p className="font-display font-bold text-ink-muted text-xs lg:text-sm text-center leading-tight">
-                Influencer<br className="lg:hidden" /> Brands
-              </p>
-            </div>
-
-            {[
-              {
-                claim: 'Test results for your exact batch — in every shipment',
-                merit: 'yes', ruo: 'partial', inf: 'no',
-              },
-              {
-                claim: 'Lab-verified to ≥99% pure, every batch',
-                merit: 'yes', ruo: 'partial', inf: 'no',
-              },
-              {
-                claim: 'A US pharmacist signs off on every batch',
-                merit: 'yes', ruo: 'no', inf: 'no',
-              },
-              {
-                claim: 'Made in a federally-inspected US pharmacy',
-                merit: 'yes', ruo: 'no', inf: 'no',
-              },
-              {
-                claim: 'Your reorder price stays the same — forever',
-                merit: 'yes', ruo: 'no', inf: 'no',
-              },
-              {
-                claim: 'Ships from Texas in 2 business days',
-                merit: 'yes', ruo: 'partial', inf: 'partial',
-              },
-            ].map((row, i, arr) => {
-              const renderMark = (mark: string) => {
-                if (mark === 'yes') {
-                  return (
-                    <span className="inline-flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-cobalt/10">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-cobalt">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </span>
-                  );
-                }
-                if (mark === 'partial') {
-                  return (
-                    <span
-                      className="inline-flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 rounded-full"
-                      style={{ background: 'rgba(181, 143, 74, 0.14)' }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#B58F4A' }}>
-                        <line x1="6" y1="12" x2="18" y2="12" />
-                      </svg>
-                    </span>
-                  );
-                }
-                return (
-                  <span className="inline-flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink-muted/10">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </span>
-                );
-              };
-              return (
-                <div
-                  key={row.claim}
-                  className={`grid grid-cols-[1fr_72px_72px_72px] lg:grid-cols-[1fr_110px_110px_110px] gap-2 lg:gap-4 px-5 lg:px-8 py-4 lg:py-5 items-center ${i < arr.length - 1 ? 'border-b border-border-soft' : ''}`}
-                >
-                  <p className="text-sm lg:text-base text-ink leading-snug">{row.claim}</p>
-                  <div className="flex justify-center">{renderMark(row.merit)}</div>
-                  <div className="flex justify-center">{renderMark(row.ruo)}</div>
-                  <div className="flex justify-center">{renderMark(row.inf)}</div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Mark legend — small caption below the table explaining the
-              partial-credit indicator. Optional but it heads off the
-              "what's the amber dash?" question. */}
-          <div className="max-w-4xl mx-auto mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-ink-soft">
-            <span className="inline-flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-cobalt/10">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-cobalt">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </span>
-              Verified
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full" style={{ background: 'rgba(181, 143, 74, 0.14)' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ color: '#B58F4A' }}>
-                  <line x1="6" y1="12" x2="18" y2="12" />
-                </svg>
-              </span>
-              Sometimes / inconsistent
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-ink-muted/10">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-ink-muted">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </span>
-              No / not standard
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════ §05 · HOW WE VERIFY — PROCESS WALKTHROUGH ════════
-          Replaces the previous amber "Numbers" tiles. Adds NEW info — the
-          actual steps between order and delivery. Background is the
-          charcoal vial-grid pattern (cinematic, on-theme, lets cards
-          breathe rather than competing). */}
-      <section id="process" className="relative py-20 lg:py-28 px-6 lg:px-12 overflow-hidden bg-ink">
-        {/* Charcoal vial-pattern background */}
-        <Image
-          src="/brand/scene-pattern-charcoal.webp"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-        {/* Darkening + cobalt overlay. The pattern source is already
-            dark so we don't need a heavy wash — just enough to ensure
-            text contrast and add the brand-color hint. */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(11,15,25,0.62) 0%, rgba(11,15,25,0.48) 60%, rgba(46,77,219,0.42) 100%)',
-          }}
-        />
-
-        <div className="relative max-w-[1400px] mx-auto text-white">
-          {/* Header */}
-          <div className="max-w-2xl mb-12 lg:mb-16">
-            <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-semibold mb-4">
-              — The Process
-            </p>
-            <h2
-              className="font-display font-black tracking-[-0.035em] leading-[0.95]"
-              style={{ fontSize: 'clamp(36px, 5.5vw, 76px)' }}
-            >
-              Here&apos;s the work<span className="text-cobalt">.</span>
-            </h2>
-            <p className="mt-5 text-base lg:text-lg text-white/80 leading-relaxed max-w-xl">
-              We made bold claims in the comparison above. These are the four
-              steps that back them up — order, verification, release, dispatch.
-            </p>
-          </div>
-
-          {/* 4 process step cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-            {[
-              {
-                num: '01',
-                title: 'Your order arrives at the pharmacy',
-                body: 'Orders go directly to our US-licensed pharmacy partner in Dallas — no middlemen, no resellers in between.',
-              },
-              {
-                num: '02',
-                title: 'A pharmacist signs off on your batch',
-                body: 'A licensed pharmacist reviews the specific lot you\'ll receive. Lab-confirmed ≥99% pure before anything ships.',
-              },
-              {
-                num: '03',
-                title: 'Your batch passes quality release',
-                body: 'The test data for your specific lot is logged and tied to your order — purity, identity, batch ID, all of it.',
-              },
-              {
-                num: '04',
-                title: 'Ships from Dallas in 2 business days',
-                body: 'Tracked and insured. Your batch\'s lot number is on the vial — pull the COA any time using that number.',
-              },
-            ].map((step) => (
-              <div
-                key={step.num}
-                className="relative rounded-2xl p-6 lg:p-7 bg-cream border border-cobalt/10 hover:border-cobalt/40 transition-colors duration-300"
+              <Link
+                href="/catalog"
+                className="bg-white text-black px-7 py-3 text-center text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition whitespace-nowrap"
               >
-                {/* Step number — cobalt against cream */}
-                <p
-                  className="font-display font-black text-cobalt leading-none tracking-[-0.04em] mb-5"
-                  style={{ fontSize: 'clamp(40px, 4vw, 56px)' }}
+                Browse the catalog →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ════════════════ §06 · PROOF — THE QR IS ON THE LABEL ═════════════
+          Values come from the newest published COA. If the DB is unreachable
+          the numbers drop out and the QR + lookup still stand on their own.
+       */}
+      <section className="bg-black text-white border-t border-white/15">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-10 lg:gap-16 items-center">
+            <div>
+              {lot && (
+                <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-5">
+                  Lot {lot.lotId}
+                  {lot.testedDate ? ` · tested ${lot.testedDate}` : ''}
+                </p>
+              )}
+              <h2
+                className="font-poster font-black uppercase leading-[0.96] tracking-[-0.04em] max-w-[16ch]"
+                style={{ fontSize: 'clamp(28px, 4.8vw, 68px)' }}
+              >
+                The receipt is printed on the label.
+              </h2>
+              <p className="mt-6 max-w-[52ch] text-[15px] leading-[1.62] text-white/55">
+                Every vial label and every box carries a QR code. Scan it and that lot’s
+                certificate of analysis opens — identity, purity, appearance — from the
+                laboratory that ran it. No account. No request form.
+              </p>
+              <form
+                action="/coa"
+                method="get"
+                className="mt-6 flex flex-col sm:flex-row max-w-[460px]"
+              >
+                <label htmlFor="lot" className="sr-only">
+                  Lot number
+                </label>
+                <input
+                  id="lot"
+                  name="q"
+                  placeholder="OR TYPE A LOT NUMBER"
+                  className="flex-1 bg-transparent border border-white/30 sm:border-r-0 px-4 py-3.5 font-mono text-[12px] tracking-[0.06em] text-white placeholder-white/35 focus:outline-none focus:border-cobalt-soft transition"
+                />
+                <button
+                  type="submit"
+                  className="bg-white text-black px-6 py-3.5 mt-2 sm:mt-0 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition"
                 >
-                  {step.num}
-                </p>
-                {/* Title */}
-                <h3 className="font-display text-base lg:text-lg font-extrabold text-ink tracking-tight leading-tight mb-3">
-                  {step.title}
-                </h3>
-                {/* Body */}
-                <p className="text-[13px] lg:text-[14px] text-ink-soft leading-relaxed">
-                  {step.body}
-                </p>
-              </div>
-            ))}
+                  Look up
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white p-5 lg:p-6 max-w-[260px] lg:max-w-none">
+              <Image
+                src="/brand/coa-qr.svg"
+                alt="QR code linking to Merit lot certificates of analysis"
+                width={260}
+                height={260}
+                className="w-full h-auto"
+              />
+              <p className="font-mono text-[10px] tracking-[0.1em] uppercase text-black text-center mt-3.5 leading-relaxed">
+                Scan → <b className="text-cobalt">meritsciences.com/coa</b>
+              </p>
+            </div>
           </div>
 
-          {/* Quiet footnote with link to sample COA */}
-          <div className="mt-10 lg:mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-white/70">
-            <span className="inline-flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-              Lot number on every vial — pull the COA any time
-            </span>
-            <Link
-              href="/coa-sample"
-              className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-semibold hover:text-white transition"
-            >
-              See a sample COA →
-            </Link>
-            <Link
-              href="/library"
-              className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-semibold hover:text-white transition"
-            >
-              Explore the research library →
-            </Link>
-          </div>
+          {lot && (
+            <dl className="mt-12 lg:mt-14 grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/15 border border-white/15">
+              <div className="bg-black px-6 py-7">
+                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/45">
+                  Purity (HPLC)
+                </dt>
+                <dd className="font-poster font-black tracking-[-0.03em] mt-3 text-[clamp(26px,3vw,42px)]">
+                  {lot.purity}
+                </dd>
+              </div>
+              <div className="bg-black px-6 py-7">
+                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/45">
+                  Compound
+                </dt>
+                <dd className="font-poster font-black tracking-[-0.03em] mt-3 text-[clamp(17px,1.9vw,26px)] leading-tight">
+                  {lot.compound}
+                </dd>
+              </div>
+              <div className="bg-black px-6 py-7">
+                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/45">
+                  Certificate
+                </dt>
+                <dd className="font-mono font-bold tracking-[-0.01em] mt-3 text-[clamp(13px,1.4vw,18px)] leading-tight break-all">
+                  {lot.coaNumber ?? lot.lotId}
+                </dd>
+              </div>
+              <div className="bg-black px-6 py-7">
+                <dt className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/45">
+                  Dispatch
+                </dt>
+                <dd className="font-poster font-black tracking-[-0.03em] mt-3 text-[clamp(26px,3vw,42px)]">
+                  48 HRS
+                </dd>
+              </div>
+            </dl>
+          )}
         </div>
       </section>
 
-      {/* (Old §07 Featured Compounds was here — moved up to §03 right after
-          hero so productization happens immediately, not at the bottom.) */}
-
-      {/* ════════════════ §06 · NEWSLETTER BAND — SLIM COBALT ON CREAM ═══════
-          Quiet finish. Single line, single input, single CTA.
-       */}
-      <section id="newsletter" className="bg-cream border-t border-cobalt/15 px-6 lg:px-12">
-        <div className="max-w-[1400px] mx-auto py-14 lg:py-20">
+      {/* ════════════════ §07 · NEWSLETTER ═════════════════════════════════ */}
+      <section id="newsletter" className="bg-black text-white border-t border-white/15">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-14 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 lg:gap-16 items-center">
             <div>
-              <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-semibold mb-4">
-                — Research Notes
+              <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mb-5">
+                Research notes
               </p>
               <h2
-                className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
-                style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}
+                className="font-poster font-black uppercase leading-[0.96] tracking-[-0.04em]"
+                style={{ fontSize: 'clamp(26px, 3.8vw, 52px)' }}
               >
-                First access to new lots<span className="text-cobalt">.</span>
+                First access to new lots.
               </h2>
-              <p className="mt-4 text-sm lg:text-base text-ink-soft max-w-md">
-                A short note when there&apos;s something worth saying. No noise.
+              <p className="mt-4 max-w-md text-[15px] text-white/55">
+                A short note when there’s something worth saying. No noise.
               </p>
             </div>
-            <form className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto lg:min-w-[420px]" action="/api/newsletter" method="POST">
+            <form
+              className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto lg:min-w-[420px]"
+              action="/api/newsletter"
+              method="POST"
+            >
               {/* Honeypot: humans never see or fill this; the API silently drops any submit that does. */}
               <input
                 type="text"
@@ -924,16 +547,52 @@ export default async function HomePage() {
                 name="email"
                 required
                 placeholder="you@research.email"
-                className="flex-1 bg-white border border-border rounded-lg px-4 py-3.5 text-sm text-ink placeholder-ink-muted focus:outline-none focus:border-cobalt transition"
+                className="flex-1 bg-transparent border border-white/30 px-4 py-3.5 text-sm text-white placeholder-white/35 focus:outline-none focus:border-cobalt-soft transition"
               />
               <button
                 type="submit"
-                className="bg-ink text-white px-6 py-3.5 rounded-lg text-sm font-semibold hover:bg-steel transition whitespace-nowrap"
+                className="bg-white text-black px-7 py-3.5 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition whitespace-nowrap"
               >
                 Subscribe
               </button>
             </form>
           </div>
+        </div>
+      </section>
+
+      {/* ════════════════ §08 · CLOSE ══════════════════════════════════════ */}
+      <section className="relative isolate flex min-h-[62svh] lg:min-h-[70svh] items-end overflow-hidden bg-black text-white border-t border-white/15">
+        <Image src="/brand/close-track.webp" alt="" fill sizes="100vw" className="object-cover" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.90) 100%)',
+          }}
+        />
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 pb-16 lg:pb-20">
+          <h2
+            className="font-poster font-black uppercase leading-[0.86] tracking-[-0.05em] mb-8"
+            style={{ fontSize: 'clamp(38px, 6.8vw, 116px)' }}
+          >
+            Stock what
+            <br />
+            the committee
+            <br />
+            <span
+              className="text-transparent"
+              style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}
+            >
+              recommended.
+            </span>
+          </h2>
+          <Link
+            href="/catalog"
+            className="inline-block bg-white text-black px-9 py-4 text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt hover:text-white transition"
+          >
+            Shop the catalog
+          </Link>
         </div>
       </section>
     </>

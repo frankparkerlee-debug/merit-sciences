@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
+import { Archivo, Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
 import '../globals.css';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
@@ -28,6 +28,16 @@ const jetbrains = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['500', '600'],
   variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
+// Display face for the homepage. Inter Tight tops out at 800 and its caps go
+// soft at poster size; the register this brand is built on needs a true Black
+// with tight negative tracking. Archivo is the closest freely-licensed
+// neo-grotesk to it. Loaded at 800/900 only — display sizes never need more.
+const archivo = Archivo({
+  subsets: ['latin'],
+  weight: ['800', '900'],
+  variable: '--font-archivo',
   display: 'swap',
 });
 
@@ -152,7 +162,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const settings = await getStoreSettings();
   return (
-    <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable} ${archivo.variable}`}>
       <body className="font-sans">
         {/* Site-wide Organization + WebSite JSON-LD (entity + sitelinks search).
             Suppressed on the split checkout domain: it embeds meritsciences.com
