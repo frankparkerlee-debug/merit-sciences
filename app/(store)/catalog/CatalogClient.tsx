@@ -105,6 +105,7 @@ function subscribePrice(p: Product): number {
 
 export function CatalogClient({ products, stacks, accessories, totalCount, isPractitionerPricing = false, referralPct = 0 }: Props) {
   const [selectedFamily, setSelectedFamily] = useState<Family | 'all'>('all');
+  const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [subscribeMode, setSubscribeMode] = useState(false);
   const [quickViewHandle, setQuickViewHandle] = useState<string | null>(null);
@@ -145,9 +146,32 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
   }
 
   const filtered = useMemo(() => {
-    if (selectedFamily === 'all') return products;
-    return products.filter((ep) => ep.family === selectedFamily);
-  }, [products, selectedFamily]);
+    const byFamily =
+      selectedFamily === 'all'
+        ? products
+        : products.filter((ep) => ep.family === selectedFamily);
+
+    const q = query.trim().toLowerCase();
+    if (!q) return byFamily;
+
+    // Match across the names a buyer might actually type. Someone looking for
+    // "wolverine" or "BPC" shouldn't have to know which family we filed it
+    // under, and someone who knows the chemical code ('ly3437943') shouldn't
+    // have to know we call it Retatrutide. Every token must match somewhere,
+    // so "bpc 10" narrows rather than widening the way an OR would.
+    const tokens = q.split(/\s+/);
+    return byFamily.filter((ep) => {
+      const hay = [
+        ep.product.title,
+        ep.product.compound,
+        ep.product.handle.replace(/-/g, ' '),
+        ep.product.vialSize,
+      ]
+        .join(' ')
+        .toLowerCase();
+      return tokens.every((t) => hay.includes(t));
+    });
+  }, [products, selectedFamily, query]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -331,6 +355,40 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
       {/* ═══════════════ STICKY FILTER STRIP ═══════════════ */}
       <div className="sticky top-0 z-20 bg-cream/95 backdrop-blur-sm border-y border-ink/10">
         <div className="px-6 lg:px-12 py-4 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 lg:gap-4">
+          {/* Search — 29 SKUs with names people half-remember ("wolverine",
+              "BPC", "reta") and chemical codes they may know instead. Leads the
+              strip because typing beats scanning seven chips. min-h-[44px]
+              meets the tap-target floor the chips were missing. */}
+          <div className="relative w-full lg:w-auto lg:min-w-[280px] order-first">
+            <label htmlFor="catalog-search" className="sr-only">Search compounds</label>
+            <input
+              id="catalog-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search compounds…"
+              className="w-full min-h-[44px] bg-white border border-ink/15 pl-9 pr-9 py-2.5 text-[13px] text-ink placeholder-ink-muted outline-none focus:border-cobalt transition"
+            />
+            <svg
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
+              width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"
+            >
+              <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
+            </svg>
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] inline-flex items-center justify-center text-ink-muted hover:text-ink transition"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
           {/* Family pills (left) */}
           <div className="flex flex-wrap items-center gap-2">
             {familyPills.map((pill) => {
@@ -344,7 +402,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
                   key={pill.id}
                   type="button"
                   onClick={() => setSelectedFamily(pill.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 lg:px-3.5 py-1.5 lg:py-2 rounded-full text-[11px] lg:text-[12px] tracking-[0.05em] font-semibold transition ${
+                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 lg:px-4 py-2 rounded-full text-[11px] lg:text-[12px] tracking-[0.05em] font-semibold transition ${
                     isActive
                       ? 'bg-ink text-white border-ink'
                       : 'bg-white text-ink border border-ink/10 hover:border-cobalt/40'
@@ -440,11 +498,18 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
         {/* Empty state */}
         {sorted.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-ink-soft text-base mb-4">No compounds in this family yet.</p>
+            {/* Name what the buyer actually did. "No compounds in this family"
+                is wrong and confusing when they typed a search term, and it
+                hides which control to undo. */}
+            <p className="text-ink-soft text-base mb-4">
+              {query
+                ? <>Nothing matches “{query}”{selectedFamily !== 'all' && ' in this family'}.</>
+                : 'No compounds in this family yet.'}
+            </p>
             <button
               type="button"
-              onClick={() => setSelectedFamily('all')}
-              className="text-cobalt font-semibold text-sm hover:underline"
+              onClick={() => { setQuery(''); setSelectedFamily('all'); }}
+              className="text-cobalt font-semibold text-sm hover:underline min-h-[44px] px-2"
             >
               Show all {products.length} compounds →
             </button>
