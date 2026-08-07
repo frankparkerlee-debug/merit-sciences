@@ -3,6 +3,7 @@ import type { Product } from '@/lib/product-types';
 import { familyByCompound, familySortRank } from '@/lib/catalog-meta';
 import { withPricingMany } from '@/lib/pricing';
 import { getActiveReferral } from '@/lib/referral';
+import { JsonLd } from '@/components/JsonLd';
 
 /** Numeric weight for sorting "5mg" / "1500mg" / "10000IU" strings. */
 function sizeWeight(s: string): number {
@@ -24,32 +25,21 @@ export const dynamic = 'force-dynamic';
 // component as static data so we don't ship the classifier code in the
 // browser bundle.
 // ─────────────────────────────────────────────────────────────────────────
-export type Family = 'peptides' | 'glp1' | 'cofactors' | 'neuropeptides' | 'blends';
-
-const FAMILY_BY_HANDLE: Record<string, Family> = {
-  // GLPs — weight-loss / metabolic / body-comp (top sellers)
-  'ly3298176':          'glp1',           // Tirzepatide
-  'ly3437943':          'glp1',           // Retatrutide
-  'th9507':             'glp1',           // Tesamorelin — lumped into GLPs per market positioning
-  'aod-9604':           'glp1',           // Lipolytic GH fragment
-  // Healing / blends
-  'bpc-157-tb-500':     'blends',         // BPC + TB co-formulated, actually a blend
-  'klow':               'blends',
-  // Single peptides — repair / growth / signaling
-  'thymosin-alpha-1':   'peptides',
-  'igf-1-lr3':          'peptides',
-  'sermorelin':         'peptides',
-  // Cofactors / cellular
-  'nad-500mg':          'cofactors',
-  'ghk-cu':             'cofactors',
-  'mots-c':             'cofactors',
-  'epitalon':           'cofactors',
-  // Neuropeptides
-  'selank':             'neuropeptides',
-  'semax':              'neuropeptides',
-  'pt-141':             'neuropeptides',
-  'melanotan-ii':       'neuropeptides',
-};
+// The catalog's family taxonomy is defined once, in lib/catalog-meta.ts, and
+// resolved from the compound name. There used to be a second, older taxonomy
+// here — a hand-keyed FAMILY_BY_HANDLE map with its own union ('peptides' |
+// 'cofactors' | 'blends') that took precedence over the classifier.
+//
+// It was quietly breaking merchandising. Half its handles no longer existed
+// after the SKU rename ('klow', 'semax', 'bpc-157-tb-500'), so those entries
+// were dead. The handles that DID match overrode the classifier with families
+// the filter chips understood — while everything unmapped fell through to the
+// real classifier and came back 'healing' / 'aesthetic' / 'gh' / 'longevity',
+// which no chip matched. Seven live SKUs, Wolverine and KLOW among them, were
+// reachable only under "All compounds".
+//
+// One taxonomy now. Re-export so the client keeps importing Family from here.
+export type { Family } from '@/lib/catalog-meta';
 
 // Stack templates — pre-built bundles named for common research use cases.
 // Each template references its compound handles; the client resolves them
@@ -70,7 +60,7 @@ const STACK_TEMPLATES: StackTemplate[] = [
     name: 'The Recovery Stack',
     subtitle: 'Tissue + copper-peptide signaling',
     description: 'Wolverine paired with GHK-Cu — the most-stacked pair in our catalog for repair-pathway research.',
-    handles: ['bpc-157-tb-500', 'ghk-cu'],
+    handles: ['bpc-10mg-tb-10mg-wolverine-20mg', 'ghk-cu'],
     bundleDiscountPct: 10,
     accentColor: 'cobalt',
   },
@@ -88,7 +78,7 @@ const STACK_TEMPLATES: StackTemplate[] = [
     name: 'The Neuropeptide Pair',
     subtitle: 'Russian heptapeptides',
     description: 'Selank and Semax — the two most-studied compounds in neuropeptide research, almost always stacked together.',
-    handles: ['selank', 'semax'],
+    handles: ['selank', 'semax-30mg'],
     bundleDiscountPct: 10,
     accentColor: 'violet',
   },
@@ -106,26 +96,43 @@ const STACK_TEMPLATES: StackTemplate[] = [
 // Pharmacist's notes — short editorial blurbs attached to specific
 // handles. Reads as the pharmacist's voice in the catalog.
 const PHARMACIST_NOTES: Record<string, string> = {
-  'bpc-157-tb-500':
+  'bpc-10mg-tb-10mg-wolverine-20mg':
     'The most-studied pentadecapeptide combination in the catalog. Wolverine ships with both BPC-157 and TB-500 co-formulated in one vial.',
   'nad-500mg':
     'A coenzyme, not a peptide. Stocked because the cellular-pathway literature is deep and reorders are consistent.',
-  'klow':
+  'bpc157-ghk-cu-50-tb500-kpv-klow-80mg':
     'Multi-pathway blend, co-formulated at our US facility. One vial, four signaling pathways under research.',
-  'ly3437943':
+  'retatrutide-10mg':
     'Triple-agonist — newer than Tirzepatide. Limited literature but increasing research interest.',
   'pt-141':
     'Neuroendocrine pathway research. Stack-level demand higher than catalog-level, often paired with Selank.',
 };
 
-// Restocking signals — fake-but-plausible "next lot" data for a few
-// products. In a real build this comes from inventory + lot scheduling;
-// here it lives as static data and signals scarcity/freshness.
-const RESTOCK_SIGNALS: Record<string, { status: 'fresh' | 'low' | 'restocking'; message: string }> = {
-  'ly3437943':       { status: 'low',        message: 'Current lot ships through July 2026' },
-  'mots-c':          { status: 'fresh',      message: 'New lot — released this week' },
-  'sermorelin':      { status: 'restocking', message: 'Next lot releases July 12, 2026' },
-};
+// Restock signals used to live here as hand-written static data — the
+// original comment described them as "fake-but-plausible". On a storefront
+// whose entire argument is that its numbers are real, telling a buyer a lot
+// "released this week" when nothing released is the one thing that cannot
+// ship. Removed rather than reworded. When inventory exposes real lot
+// scheduling, this can come back sourced from it.
+
+/**
+ * Cost per milligram, in cents, or null when the vial size doesn't parse.
+ *
+ * This is the number the category refuses to publish. A 10mg vial at $60 and
+ * a 30mg vial at $150 look like "$60" and "$150" on a shelf; per-mg they are
+ * $6.00 and $5.00, and the bigger vial is the better buy by 17%. Every
+ * peptide storefront leaves the buyer to work that out, which is precisely
+ * why it's worth showing: it is the one comparison that cannot be gamed by
+ * pack size, and publishing it is the merchandising equivalent of publishing
+ * the COA.
+ */
+function centsPerMg(p: Product): number | null {
+  const m = /([\d.]+)\s*mg/i.exec(p.vialSize);
+  if (!m) return null;
+  const mg = parseFloat(m[1]);
+  if (!isFinite(mg) || mg <= 0) return null;
+  return p.priceCents / mg;
+}
 
 // Server data prep — runs once at request time, hands a single bundle
 // to the client component.
@@ -150,9 +157,10 @@ export default async function CatalogPage() {
   // so the client doesn't need to do this lookup work.
   const enriched = main.map((p) => ({
     product: p,
-    family: FAMILY_BY_HANDLE[p.handle] ?? familyByCompound(p.compound),
+    family: familyByCompound(p.compound),
     pharmacistNote: PHARMACIST_NOTES[p.handle] ?? null,
-    restock: RESTOCK_SIGNALS[p.handle] ?? null,
+    restock: null,
+    centsPerMg: centsPerMg(p),
   }));
 
   // Best-seller sort: GLP-1 first (Tirzepatide, Semaglutide, Retatrutide),
@@ -172,7 +180,14 @@ export default async function CatalogPage() {
     const items = stack.handles
       .map((h) => products.find((p) => p.handle === h))
       .filter(Boolean) as Product[];
-    if (items.length !== stack.handles.length) return null;
+    if (items.length !== stack.handles.length) {
+      // Loud on the server rather than a silent disappearance: a stack that
+      // vanishes from the catalog while its /stacks/[slug] page still exists
+      // is invisible until someone happens to notice the gap.
+      const missing = stack.handles.filter((h) => !products.some((p) => p.handle === h));
+      console.warn(`[catalog] stack "${stack.slug}" hidden — missing handles: ${missing.join(', ')}`);
+      return null;
+    }
     const sumCents = items.reduce((acc, p) => acc + p.priceCents, 0);
     const discountedCents = Math.round(sumCents * (1 - stack.bundleDiscountPct / 100));
     return {
@@ -193,7 +208,47 @@ export default async function CatalogPage() {
   // surface the buyer discount as a strikethrough across the catalog.
   const referral = await getActiveReferral();
 
+  // The catalog carried no structured data. An ItemList of Products is what
+  // lets an answer engine enumerate what Merit actually sells rather than
+  // inferring it from link text. Prices are real and server-resolved, so they
+  // are safe to state; omitted entirely when the DB is unavailable rather
+  // than asserting an empty catalog.
+  const catalogSchema = enriched.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': 'https://meritsciences.com/catalog#page',
+        url: 'https://meritsciences.com/catalog',
+        name: 'Merit Sciences catalog — research compounds',
+        isPartOf: { '@id': 'https://meritsciences.com/#website' },
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: enriched.length,
+          itemListElement: enriched.slice(0, 100).map((e, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            item: {
+              '@type': 'Product',
+              '@id': `https://meritsciences.com/products/${e.product.handle}#product`,
+              name: `${e.product.title} ${e.product.vialSize}`,
+              url: `https://meritsciences.com/products/${e.product.handle}`,
+              brand: { '@id': 'https://meritsciences.com/#organization' },
+              offers: {
+                '@type': 'Offer',
+                price: (e.product.priceCents / 100).toFixed(2),
+                priceCurrency: 'USD',
+                availability: 'https://schema.org/InStock',
+                url: `https://meritsciences.com/products/${e.product.handle}`,
+              },
+            },
+          })),
+        },
+      }
+    : null;
+
   return (
+    <>
+    {catalogSchema && <JsonLd data={catalogSchema} />}
     <CatalogClient
       products={enriched}
       stacks={stacksResolved}
@@ -202,5 +257,6 @@ export default async function CatalogPage() {
       isPractitionerPricing={isPractitionerPricing}
       referralPct={referral?.discountPct ?? 0}
     />
+    </>
   );
 }

@@ -7,7 +7,7 @@ import type { Product } from '@/lib/product-types';
 import { money, productImage, productDisplayName } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
 import { track, trackAddToCart } from '@/lib/analytics';
-import { stackToCartLine } from '@/lib/catalog-meta';
+import { stackToCartLine, familyLabel, familySortRank } from '@/lib/catalog-meta';
 import type { Family, StackTemplate } from './page';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -21,6 +21,10 @@ type EnrichedProduct = {
   family: Family;
   pharmacistNote: string | null;
   restock: Restock | null;
+  /** Cost per milligram in cents — server-computed, null when the vial
+   *  size doesn't parse. The comparison no storefront in this category
+   *  publishes, because it's the one pack size can't flatter. */
+  centsPerMg: number | null;
 };
 
 type StackResolved = StackTemplate & {
@@ -47,14 +51,24 @@ type Props = {
 // Constants
 // ─────────────────────────────────────────────────────────────────────────
 
-const FAMILY_PILLS: { id: Family | 'all'; label: string }[] = [
-  { id: 'all',           label: 'All compounds' },
-  { id: 'peptides',      label: 'Peptides' },
-  { id: 'glp1',          label: 'GLPs' },
-  { id: 'cofactors',     label: 'Cofactors' },
-  { id: 'neuropeptides', label: 'Neuropeptides' },
-  { id: 'blends',        label: 'Blends' },
-];
+// Filter chips are derived from the products actually present, not declared
+// up front. The previous static list was written against an older taxonomy
+// and had drifted: it offered Peptides / Cofactors / Blends while the live
+// classifier was returning Healing / Aesthetic / Growth Hormone / Longevity,
+// so seven SKUs — Wolverine and KLOW among them — could only be reached under
+// "All compounds". Deriving the list makes that class of drift impossible: a
+// chip can never point at an empty family, and no family can lack a chip.
+function buildPills(rows: { family: Family }[]): { id: Family | 'all'; label: string }[] {
+  const counts = new Map<Family, number>();
+  for (const r of rows) counts.set(r.family, (counts.get(r.family) ?? 0) + 1);
+  const ordered = [...counts.keys()].sort(
+    (a, b) => familySortRank(a) - familySortRank(b),
+  );
+  return [
+    { id: 'all' as const, label: 'All compounds' },
+    ...ordered.map((f) => ({ id: f, label: familyLabel(f) })),
+  ];
+}
 
 type SortOption = 'featured' | 'price-low' | 'price-high' | 'name';
 
@@ -85,11 +99,6 @@ function subscribePrice(p: Product): number {
   return Math.round(p.priceCents * 0.9);
 }
 
-function familyLabel(f: Family): string {
-  const pill = FAMILY_PILLS.find((p) => p.id === f);
-  return pill?.label ?? f;
-}
-
 // ─────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────
@@ -105,6 +114,8 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
   // Brief confirmation toast — single-card adds (drawer doesn't auto-open
   // anymore so the buyer needs *some* signal that the click registered).
   const [addedFlash, setAddedFlash] = useState<{ title: string; cents: number } | null>(null);
+
+  const familyPills = useMemo(() => buildPills(products), [products]);
 
   const addToCart  = useCart((s) => s.add);
   const openDrawer = useCart((s) => s.openDrawer);
@@ -276,7 +287,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
   }
 
   return (
-    <main className="bg-cream min-h-screen">
+    <main className="bg-white min-h-screen">
       {/* ═══════════════ PRACTITIONER PRICING BANNER ═══════════════
           Only renders when an approved practitioner is signed in.
           Sits above the page header so it reads as account status,
@@ -305,7 +316,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
           — The Catalog
         </p>
         <h1
-          className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
+          className="font-poster font-black text-ink tracking-[-0.035em] leading-[0.95]"
           style={{ fontSize: 'clamp(28px, 6vw, 88px)' }}
         >
           {totalCount} compounds<span className="text-cobalt">.</span>
@@ -318,11 +329,11 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
       </div>
 
       {/* ═══════════════ STICKY FILTER STRIP ═══════════════ */}
-      <div className="sticky top-0 z-20 bg-cream/95 backdrop-blur-sm border-y border-cobalt/10">
+      <div className="sticky top-0 z-20 bg-cream/95 backdrop-blur-sm border-y border-ink/10">
         <div className="px-6 lg:px-12 py-4 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 lg:gap-4">
           {/* Family pills (left) */}
           <div className="flex flex-wrap items-center gap-2">
-            {FAMILY_PILLS.map((pill) => {
+            {familyPills.map((pill) => {
               const isActive = selectedFamily === pill.id;
               const count =
                 pill.id === 'all'
@@ -336,7 +347,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
                   className={`inline-flex items-center gap-1.5 px-3 lg:px-3.5 py-1.5 lg:py-2 rounded-full text-[11px] lg:text-[12px] tracking-[0.05em] font-semibold transition ${
                     isActive
                       ? 'bg-ink text-white border-ink'
-                      : 'bg-white text-ink border border-cobalt/15 hover:border-cobalt/40'
+                      : 'bg-white text-ink border border-ink/10 hover:border-cobalt/40'
                   }`}
                 >
                   {pill.label}
@@ -377,7 +388,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
               <button
                 type="button"
                 onClick={() => setSortMenuOpen((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-cobalt/15 bg-white text-[11px] tracking-[0.05em] font-semibold text-ink hover:border-cobalt/40 transition"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-ink/10 bg-white text-[11px] tracking-[0.05em] font-semibold text-ink hover:border-cobalt/40 transition"
               >
                 Sort: {SORT_OPTIONS.find((s) => s.id === sortBy)?.label}
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -385,7 +396,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
                 </svg>
               </button>
               {sortMenuOpen && (
-                <div className="absolute top-full right-0 mt-1 bg-white border border-cobalt/15 rounded-lg shadow-lg overflow-hidden z-30 min-w-[180px]">
+                <div className="absolute top-full right-0 mt-1 bg-white border border-ink/10 rounded-none shadow-lg overflow-hidden z-30 min-w-[180px]">
                   {SORT_OPTIONS.map((opt) => (
                     <button
                       key={opt.id}
@@ -442,7 +453,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
 
         {/* Accessories section */}
         {accessories.length > 0 && (
-          <div className="mt-20 lg:mt-24 pt-10 lg:pt-12 border-t border-cobalt/10">
+          <div className="mt-20 lg:mt-24 pt-10 lg:pt-12 border-t border-ink/10">
             <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
               — Reconstitution
             </p>
@@ -454,7 +465,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
                 <Link
                   key={p.handle}
                   href={`/products/${p.handle}`}
-                  className="group block bg-white rounded-2xl overflow-hidden border border-cobalt/8 hover:border-cobalt/30 transition-colors"
+                  className="group block bg-white rounded-none overflow-hidden border border-ink/10 hover:border-cobalt/30 transition-colors"
                 >
                   <div className="relative aspect-[5/3] bg-cream overflow-hidden">
                     <Image
@@ -501,7 +512,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
           Single-action: "Add N to cart". The user chose to batch, so
           opening the drawer after submit is the appropriate confirmation. */}
       {selectedHandles.length > 0 && (
-        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 lg:bottom-6 lg:right-12 z-30 flex items-stretch bg-ink text-white rounded-2xl shadow-2xl overflow-hidden border border-white/10">
+        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 lg:bottom-6 lg:right-12 z-30 flex items-stretch bg-ink text-white rounded-none shadow-2xl overflow-hidden border border-white/10">
           <div className="flex items-center gap-2 px-4 py-3 border-r border-white/10 whitespace-nowrap">
             <span className="font-display text-lg font-black leading-none">
               {selectedHandles.length}
@@ -678,7 +689,7 @@ function ProductCard({
   onBuyNow: (product: Product) => void;
   onQuickView: (handle: string) => void;
 }) {
-  const { product: p, family, restock } = enriched;
+  const { product: p, family, restock, centsPerMg } = enriched;
   // Referral price: an active ?ref= visitor sees the buyer discount applied
   // with retail struck through. Skipped for practitioners (own pricing) and
   // subscribe mode (already a discounted layer).
@@ -690,8 +701,8 @@ function ProductCard({
 
   return (
     <div
-      className={`group relative bg-white rounded-2xl border transition-colors overflow-hidden flex flex-col ${
-        isSelected ? 'border-cobalt/60 ring-2 ring-cobalt/15' : 'border-cobalt/8 hover:border-cobalt/30'
+      className={`group relative bg-white rounded-none border transition-colors overflow-hidden flex flex-col ${
+        isSelected ? 'border-cobalt/60 ring-2 ring-cobalt/15' : 'border-ink/10 hover:border-cobalt/30'
       }`}
     >
       {/* Select chip — top-left. Labeled pill so the multi-add flow
@@ -700,7 +711,7 @@ function ProductCard({
         className={`absolute top-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.08em] uppercase transition select-none ${
           isSelected
             ? 'bg-cobalt text-white border border-cobalt shadow-sm'
-            : 'bg-white/95 text-ink border border-cobalt/25 hover:border-cobalt/60 hover:bg-white'
+            : 'bg-white/95 text-ink border border-ink/15 hover:border-cobalt/60 hover:bg-white'
         }`}
       >
         <input
@@ -780,7 +791,7 @@ function ProductCard({
               {productDisplayName(p)}
             </Link>
           </h3>
-          <span className="font-display font-black text-ink tracking-tight leading-tight whitespace-nowrap flex items-baseline gap-1.5">
+          <span className="font-poster font-black text-ink tracking-tight leading-tight whitespace-nowrap flex items-baseline gap-1.5">
             <span className="text-[15px] sm:text-lg lg:text-xl">{money(displayPrice)}</span>
             {/* Strikethrough the retail price — for referral pricing (?ref=)
                 OR practitioner pricing. Never both (referralPrice is null
@@ -798,9 +809,19 @@ function ProductCard({
           </span>
         </div>
 
-        {/* Format */}
-        <p className="text-[11px] sm:text-[12px] text-ink-soft mb-2 sm:mb-3">
-          {p.vialSize} · {p.format}
+        {/* Format + cost per milligram.
+            Per-mg is the comparison this category avoids: a 10mg vial at $60
+            and a 30mg at $150 read as "$60" and "$150" on a shelf, but $6.00
+            and $5.00 per mg. Publishing it is the merchandising equivalent of
+            publishing the COA — the one number pack size cannot flatter. Muted
+            deliberately; it informs the careful buyer without shouting price. */}
+        <p className="text-[11px] sm:text-[12px] text-ink-soft mb-2 sm:mb-3 flex items-center gap-2 flex-wrap">
+          <span>{p.vialSize} · {p.format}</span>
+          {centsPerMg != null && (
+            <span className="font-mono text-[10px] tracking-[0.06em] uppercase text-ink-muted border border-ink/10 px-1.5 py-0.5">
+              ${(centsPerMg / 100).toFixed(2)}/mg
+            </span>
+          )}
         </p>
 
         {/* Lot data */}
@@ -822,7 +843,7 @@ function ProductCard({
           <button
             type="button"
             onClick={() => onBuyNow(p)}
-            className="flex-1 text-white py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-sm font-bold shadow-sm hover:opacity-95 transition"
+            className="flex-1 text-white py-2.5 sm:py-3 rounded-none text-[12px] sm:text-sm font-bold shadow-sm hover:opacity-95 transition"
             style={{
               background:
                 'linear-gradient(135deg, #2E4DDB 0%, #5078FF 50%, #2E4DDB 100%)',
@@ -834,7 +855,7 @@ function ProductCard({
           <button
             type="button"
             onClick={() => onAddToCart(p)}
-            className="flex-1 bg-white text-cobalt border border-cobalt/30 py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-sm font-bold hover:border-cobalt hover:bg-cobalt/[0.04] transition flex items-center justify-center gap-1.5"
+            className="flex-1 bg-white text-cobalt border border-cobalt/30 py-2.5 sm:py-3 rounded-none text-[12px] sm:text-sm font-bold hover:border-cobalt hover:bg-cobalt/[0.04] transition flex items-center justify-center gap-1.5"
             aria-label={`Add ${p.title} to cart`}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -865,7 +886,7 @@ function StacksBreak({
 }) {
   return (
     <div className="col-span-2 lg:col-span-3 my-4 lg:my-6">
-      <div className="bg-ink text-white rounded-2xl p-6 lg:p-8 overflow-hidden">
+      <div className="bg-ink text-white rounded-none p-6 lg:p-8 overflow-hidden">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
             <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt-soft font-bold mb-3">
@@ -886,7 +907,7 @@ function StacksBreak({
             return (
               <div
                 key={stack.slug}
-                className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10 hover:border-white/30 transition-colors flex flex-col"
+                className="bg-white/5 backdrop-blur-sm rounded-none p-5 border border-white/10 hover:border-white/30 transition-colors flex flex-col"
               >
                 <span
                   className="inline-block self-start text-[9px] font-bold tracking-[0.16em] uppercase mb-3 px-2 py-0.5 rounded"
@@ -940,7 +961,7 @@ function StacksBreak({
 function SupportBreak() {
   return (
     <div className="col-span-2 lg:col-span-3 my-4 lg:my-6">
-      <div className="bg-cobalt text-white rounded-2xl p-6 lg:p-8 flex flex-col lg:flex-row items-start lg:items-center gap-5">
+      <div className="bg-cobalt text-white rounded-none p-6 lg:p-8 flex flex-col lg:flex-row items-start lg:items-center gap-5">
         <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white/15 border border-white/25 flex items-center justify-center">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
@@ -961,7 +982,7 @@ function SupportBreak() {
         </div>
         <a
           href="mailto:rx@meritsciences.com"
-          className="bg-white text-ink px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition whitespace-nowrap"
+          className="bg-white text-ink px-5 py-2.5 rounded-none font-bold text-sm hover:opacity-90 transition whitespace-nowrap"
         >
           Email the team →
         </a>
@@ -997,14 +1018,14 @@ function QuickViewModal({
       onClick={onClose}
     >
       <div
-        className="relative bg-white rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl my-auto"
+        className="relative bg-white rounded-none max-w-4xl w-full overflow-hidden shadow-2xl my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white border border-cobalt/20 flex items-center justify-center hover:border-cobalt/50 transition"
+          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white border border-ink/15 flex items-center justify-center hover:border-cobalt/50 transition"
           aria-label="Close"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -1040,7 +1061,7 @@ function QuickViewModal({
 
             {/* Lot strip */}
             {product.lot.id !== 'TBD' && (
-              <div className="bg-cream/60 border-l-2 border-cobalt rounded-r-md p-3 mb-5">
+              <div className="bg-white/60 border-l-2 border-cobalt rounded-r-md p-3 mb-5">
                 <p className="text-[10px] tracking-[0.18em] uppercase text-cobalt font-bold mb-1">
                   Current shipping lot
                 </p>
@@ -1065,10 +1086,10 @@ function QuickViewModal({
                   key={b.label}
                   type="button"
                   onClick={() => setSelectedBundleIdx(i)}
-                  className={`text-left rounded-lg p-2.5 border transition ${
+                  className={`text-left rounded-none p-2.5 border transition ${
                     selectedBundleIdx === i
-                      ? 'border-ink bg-cream/40'
-                      : 'border-cobalt/15 hover:border-cobalt/40'
+                      ? 'border-ink bg-white'
+                      : 'border-ink/10 hover:border-cobalt/40'
                   }`}
                 >
                   <p className="text-[11px] font-bold text-ink">{b.label}</p>
@@ -1083,7 +1104,7 @@ function QuickViewModal({
             <button
               type="button"
               onClick={() => onAdd(product, selected)}
-              className="w-full bg-cobalt text-white py-3 rounded-lg font-bold text-sm hover:opacity-90 transition mb-3"
+              className="w-full bg-cobalt text-white py-3 rounded-none font-bold text-sm hover:opacity-90 transition mb-3"
             >
               Add to cart · {money(selected.priceCents)}
             </button>
