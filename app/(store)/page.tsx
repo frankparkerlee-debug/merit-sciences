@@ -158,13 +158,18 @@ export default async function HomePage() {
           sits in real darkness rather than on a scrim.
        */}
       <section className="relative isolate flex min-h-[92svh] items-end overflow-hidden bg-black text-white">
+        {/* Two figures, equal height and equal rim light, neither in front of
+            the other. The previous hero was a single man; the page reads as
+            male-centred when one body carries the whole brand. Framed at 62%
+            so the pair sits right-of-centre and the headline keeps its black
+            column on the left. */}
         <Image
-          src="/brand/hero-human-a.webp"
+          src="/brand/hero-pair.webp"
           alt=""
           fill
           priority
           sizes="100vw"
-          className="object-cover object-[64%_22%]"
+          className="object-cover object-[62%_30%]"
         />
         {/* Two gradients, not one: the horizontal keeps the left column black
             for the headline, the vertical seats the section into the page. */}
