@@ -49,13 +49,41 @@ const SITE_SCHEMA = {
   '@context': 'https://schema.org',
   '@graph': [
     {
+      // Organization carries the local signals directly rather than emitting a
+      // separate LocalBusiness node. Merit ships from Dallas but is not a
+      // walk-in storefront, and LocalBusiness implies premises the public can
+      // visit — it would invite map/venue treatment the business can't honour.
+      // Organization with address + contactPoint gives Google the same
+      // location and contact facts without the false affordance.
       '@type': 'Organization',
       '@id': `${SITE}/#organization`,
       name: 'Merit Sciences',
+      legalName: 'Merit Sciences LLC',
       url: SITE,
       logo: `${SITE}/icon.png`,
+      image: `${SITE}/og-image.jpg`,
+      email: 'rx@meritsciences.com',
       description:
         'Lab-verified research compounds — ≥99% HPLC purity, lot COA on every batch, ISO-certified US facility. Ships 48h from Dallas. For research use only.',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Dallas',
+        addressRegion: 'TX',
+        addressCountry: 'US',
+      },
+      areaServed: { '@type': 'Country', name: 'United States' },
+      contactPoint: [
+        {
+          '@type': 'ContactPoint',
+          contactType: 'customer support',
+          email: 'rx@meritsciences.com',
+          areaServed: 'US',
+          availableLanguage: 'English',
+        },
+      ],
+      // The lot library is the strongest third-party-verifiable thing on the
+      // domain; pointing at it from the entity node ties the org to its proof.
+      subjectOf: { '@id': `${SITE}/coa#page` },
     },
     {
       '@type': 'WebSite',

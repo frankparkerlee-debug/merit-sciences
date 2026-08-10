@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function PractitionersPage() {
   return (
-    <main className="bg-cream text-ink">
+    <main className="bg-white text-ink">
       {/* ═══════════ HERO ═══════════ */}
       <section
         className="relative overflow-hidden"
@@ -46,7 +46,7 @@ export default function PractitionersPage() {
             — Practitioner Program · Verified-account access
           </p>
           <h1
-            className="font-display font-black tracking-[-0.035em] leading-[0.92] max-w-3xl"
+            className="font-poster font-black tracking-[-0.035em] leading-[0.92] max-w-3xl"
             style={{ fontSize: 'clamp(40px, 7vw, 96px)' }}
           >
             Pharmacy-grade compounds.
@@ -63,13 +63,13 @@ export default function PractitionersPage() {
           <div className="mt-7 flex flex-col sm:flex-row gap-3">
             <Link
               href="#apply"
-              className="inline-flex items-center justify-center bg-cobalt text-white font-bold tracking-[0.16em] uppercase text-xs px-7 py-3.5 rounded-lg hover:bg-ink transition-colors shadow-lg shadow-cobalt/30"
+              className="inline-flex items-center justify-center bg-cobalt text-white font-bold tracking-[0.16em] uppercase text-xs px-7 py-3.5 rounded-none hover:bg-ink transition-colors shadow-lg shadow-cobalt/30"
             >
               Apply for an account →
             </Link>
             <Link
               href="/catalog"
-              className="inline-flex items-center justify-center bg-white/70 backdrop-blur-sm border border-cobalt/20 text-ink font-bold tracking-[0.16em] uppercase text-xs px-6 py-3.5 rounded-lg hover:border-cobalt/40 transition-colors"
+              className="inline-flex items-center justify-center bg-white/70 backdrop-blur-sm border border-ink/15 text-ink font-bold tracking-[0.16em] uppercase text-xs px-6 py-3.5 rounded-none hover:border-cobalt transition-colors"
             >
               Browse the public catalog
             </Link>
@@ -90,7 +90,7 @@ export default function PractitionersPage() {
       </section>
 
       {/* ═══════════ §01 — THE ECONOMIC CASE ═══════════ */}
-      <section className="bg-white border-t border-cobalt/10 py-16 lg:py-24">
+      <section className="bg-white border-t border-ink/10 py-16 lg:py-24">
         <div className="max-w-[1240px] mx-auto px-6 lg:px-10">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
             {/* Left — the argument */}
@@ -99,7 +99,7 @@ export default function PractitionersPage() {
                 — 01 · The economics
               </p>
               <h2
-                className="font-display font-black tracking-[-0.025em] leading-[0.98]"
+                className="font-poster font-black tracking-[-0.025em] leading-[0.98]"
                 style={{ fontSize: 'clamp(32px, 4.5vw, 60px)' }}
               >
                 Keep your pricing.
@@ -129,13 +129,13 @@ export default function PractitionersPage() {
             </div>
 
             {/* Right — the math, illustrative */}
-            <div className="rounded-3xl border border-cobalt/15 bg-cream p-8 lg:p-10">
+            <div className="border border-ink/10 bg-white p-8 lg:p-10">
               <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-5">
                 — What 30% looks like
               </p>
               <div className="flex items-baseline gap-3">
                 <span
-                  className="font-display font-black text-cobalt leading-none"
+                  className="font-poster font-black text-cobalt leading-none"
                   style={{ fontSize: 'clamp(56px, 8vw, 88px)' }}
                 >
                   ~30%
@@ -175,7 +175,7 @@ export default function PractitionersPage() {
               — 02 · How we&rsquo;re different
             </p>
             <h2
-              className="font-display font-black tracking-[-0.025em] leading-[0.98]"
+              className="font-poster font-black tracking-[-0.025em] leading-[0.98]"
               style={{ fontSize: 'clamp(32px, 4.5vw, 60px)' }}
             >
               Sourcing that holds up
@@ -229,7 +229,7 @@ export default function PractitionersPage() {
           <div className="mt-10">
             <Link
               href="#apply"
-              className="inline-flex items-center justify-center bg-white text-ink font-bold tracking-[0.16em] uppercase text-xs px-7 py-3.5 rounded-lg hover:bg-white/90 transition-colors"
+              className="inline-flex items-center justify-center bg-white text-ink font-bold tracking-[0.16em] uppercase text-xs px-7 py-3.5 rounded-none hover:bg-white/90 transition-colors"
             >
               Apply for an account →
             </Link>
@@ -238,7 +238,7 @@ export default function PractitionersPage() {
       </section>
 
       {/* ═══════════ LEAD CAPTURE — soft alt for the not-ready, beside the apply form ═══════════ */}
-      <section className="bg-white border-t border-cobalt/10 py-10">
+      <section className="bg-white border-t border-ink/10 py-10">
         <div className="max-w-[860px] mx-auto px-6 lg:px-10">
           <div className="flex flex-col lg:flex-row lg:items-center gap-6">
             <div className="flex-1">
@@ -259,14 +259,14 @@ export default function PractitionersPage() {
       </section>
 
       {/* ═══════════ §03 — APPLY ═══════════ */}
-      <section id="apply" className="bg-cream border-t border-cobalt/10 py-16 lg:py-24">
+      <section id="apply" className="bg-white border-t border-ink/10 py-16 lg:py-24">
         <div className="max-w-[860px] mx-auto px-6 lg:px-10">
           <div className="max-w-xl mb-10">
             <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
               — 03 · Apply
             </p>
             <h2
-              className="font-display font-black tracking-[-0.025em] leading-[0.98]"
+              className="font-poster font-black tracking-[-0.025em] leading-[0.98]"
               style={{ fontSize: 'clamp(32px, 4.5vw, 60px)' }}
             >
               Apply for portal access<span className="text-cobalt">.</span>
@@ -288,12 +288,12 @@ export default function PractitionersPage() {
 // ── helpers ───────────────────────────────────────────────────────────────
 function CTABand({ heading, sub }: { heading: string; sub: string }) {
   return (
-    <section className="bg-cream border-y border-cobalt/15">
+    <section className="bg-white border-y border-ink/10">
       <div className="max-w-[1240px] mx-auto px-6 lg:px-10 py-12 lg:py-14">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
             <h2
-              className="font-display font-black tracking-[-0.025em] leading-[1.0]"
+              className="font-poster font-black tracking-[-0.025em] leading-[1.0]"
               style={{ fontSize: 'clamp(26px, 3.6vw, 44px)' }}
             >
               {heading.replace(/\.$/, '')}
@@ -303,7 +303,7 @@ function CTABand({ heading, sub }: { heading: string; sub: string }) {
           </div>
           <Link
             href="#apply"
-            className="inline-flex items-center justify-center bg-cobalt text-white font-bold tracking-[0.16em] uppercase text-xs px-8 py-4 rounded-lg hover:bg-ink transition-colors shadow-lg shadow-cobalt/30 whitespace-nowrap"
+            className="inline-flex items-center justify-center bg-cobalt text-white font-bold tracking-[0.16em] uppercase text-xs px-8 py-4 rounded-none hover:bg-ink transition-colors shadow-lg shadow-cobalt/30 whitespace-nowrap"
           >
             Apply for an account →
           </Link>
@@ -315,11 +315,11 @@ function CTABand({ heading, sub }: { heading: string; sub: string }) {
 
 function DarkCard({ tag, title, body }: { tag: string; title: string; body: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/[0.04] backdrop-blur-sm p-7">
+    <div className="rounded-none border border-white/15 bg-white/[0.04] backdrop-blur-sm p-7">
       <p className="text-[10px] tracking-[0.22em] uppercase font-bold mb-3" style={{ color: '#7B96FF' }}>
         — {tag}
       </p>
-      <h3 className="font-display font-black text-2xl leading-tight mb-3 tracking-[-0.02em]">
+      <h3 className="font-poster font-black text-2xl leading-tight mb-3 tracking-[-0.02em]">
         {title}
       </h3>
       <p className="text-[13px] text-white/75 leading-relaxed">{body}</p>
@@ -354,7 +354,7 @@ function EconPoint({ title, children }: { title: string; children: React.ReactNo
 
 function MathRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="flex items-center justify-between border-b border-cobalt/10 pb-3">
+    <div className="flex items-center justify-between border-b border-ink/10 pb-3">
       <span className="text-[13px] text-ink-soft">{label}</span>
       <span className={`text-[15px] font-bold tabular-nums ${accent ? 'text-cobalt' : 'text-ink'}`}>
         {value}
@@ -367,7 +367,7 @@ function ProofStat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center lg:text-left">
       <div
-        className="font-display font-black tracking-[-0.02em] leading-none"
+        className="font-poster font-black tracking-[-0.02em] leading-none"
         style={{ fontSize: 'clamp(30px, 4vw, 46px)' }}
       >
         {value}

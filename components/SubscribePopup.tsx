@@ -23,11 +23,17 @@ const STORAGE_KEY = 'merit_subscribe_popup_v1';
 const SUPPRESS_DAYS_DISMISS = 14;
 const SUPPRESS_DAYS_DONE = 365;
 const TIMED_DELAY_MS = 25_000;
+/** Fraction of the page scrolled that counts as intent on touch, where
+ *  exit-intent has no equivalent and the timer often never fires. */
+const SCROLL_TRIGGER = 0.55;
 
 const HIDDEN_PREFIXES = [
   '/checkout', '/cart', '/admin', '/auth',
   '/affiliate/dashboard', '/affiliate/login',
   '/practitioners/portal', '/practitioners/login',
+  // Reading certificates IS the action this popup asks for — interrupting
+  // that with an offer to send certificates is nonsense.
+  '/coa',
 ];
 
 // Decorative lane vials scattered around the offer. Each floats on its own
@@ -82,11 +88,18 @@ export function SubscribePopup() {
     const onMouseOut = (e: MouseEvent) => {
       if (e.clientY <= 0) show(); // exit-intent: leaving through the top
     };
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - window.innerHeight;
+      if (max > 0 && window.scrollY / max >= SCROLL_TRIGGER) show();
+    };
     const timer = window.setTimeout(show, TIMED_DELAY_MS);
     document.addEventListener('mouseout', onMouseOut);
+    window.addEventListener('scroll', onScroll, { passive: true });
     function cleanup() {
       window.clearTimeout(timer);
       document.removeEventListener('mouseout', onMouseOut);
+      window.removeEventListener('scroll', onScroll);
     }
     return cleanup;
   }, [hidden, pathname]);
@@ -246,7 +259,7 @@ export function SubscribePopup() {
                 <a
                   href="/catalog"
                   onClick={() => setOpen(false)}
-                  className="inline-block text-white px-9 py-4 rounded-2xl text-base font-bold transition hover:opacity-95 shadow-xl"
+                  className="inline-block text-white px-9 py-4 rounded-none text-base font-bold transition hover:opacity-95 shadow-xl"
                   style={{ background: 'linear-gradient(135deg, #2E4DDB 0%, #6B8AFF 50%, #2E4DDB 100%)' }}
                 >
                   Shop the catalog →
@@ -255,12 +268,19 @@ export function SubscribePopup() {
             </>
           ) : (
             <>
-              <p className="font-display text-[12px] tracking-[0.28em] uppercase text-cobalt-soft font-bold mb-4">— Merit Sciences · Welcome offer</p>
-              <h2 className="font-display font-black text-cream tracking-[-0.035em] leading-[0.9] mb-5" style={{ fontSize: 'clamp(44px, 9vw, 88px)' }}>
-                Get 20% off<br />your first order<span className="text-cobalt-soft">.</span>
+              <p className="font-poster text-[12px] tracking-[0.28em] uppercase text-cobalt-soft font-bold mb-4">— Before you go</p>
+              {/* Lead with the thing no competitor can copy, not the discount.
+                  "20% off" is the same offer every gray-market peptide site
+                  runs, and it argues on price from a brand whose entire
+                  position is that it argues on proof. The certificate is the
+                  differentiator; the code is the close, not the headline. */}
+              <h2 className="font-poster font-black text-cream tracking-[-0.035em] leading-[0.9] mb-5" style={{ fontSize: 'clamp(38px, 8vw, 76px)' }}>
+                Read the lab<br />report first<span className="text-cobalt-soft">.</span>
               </h2>
-              <p className="text-base sm:text-lg text-cream/75 mb-8 leading-relaxed max-w-lg mx-auto">
-                Pharmacy-grade research compounds — HPLC-tested to ≥99%, a QR on every label to pull the COA. Join the list for your code plus restock alerts.
+              <p className="text-base sm:text-lg text-cream/75 mb-7 leading-relaxed max-w-lg mx-auto">
+                Every Merit lot is assayed by an independent laboratory before release, and the
+                certificate is published before it ships. Join the list and we&rsquo;ll send new lot
+                reports as they post — plus 20% off your first order.
               </p>
               <form onSubmit={handleSubmit} className="max-w-md mx-auto">
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -272,15 +292,15 @@ export function SubscribePopup() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="flex-1 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm px-5 py-4 text-base text-cream placeholder:text-cream/45 focus:outline-none focus:border-cobalt-soft focus:ring-2 focus:ring-cobalt-soft/30 transition"
+                    className="flex-1 rounded-none border border-white/20 bg-white/10 backdrop-blur-sm px-5 py-4 text-base text-cream placeholder:text-cream/45 focus:outline-none focus:border-cobalt-soft focus:ring-2 focus:ring-cobalt-soft/30 transition"
                   />
                   <button
                     type="submit"
                     disabled={status === 'submitting'}
-                    className="shrink-0 text-white px-7 py-4 rounded-2xl text-base font-bold transition hover:opacity-95 disabled:opacity-60 shadow-xl"
+                    className="shrink-0 text-white px-7 py-4 rounded-none text-base font-bold transition hover:opacity-95 disabled:opacity-60 shadow-xl"
                     style={{ background: 'linear-gradient(135deg, #2E4DDB 0%, #6B8AFF 50%, #2E4DDB 100%)' }}
                   >
-                    {status === 'submitting' ? 'Sending…' : 'Get my code'}
+                    {status === 'submitting' ? 'Sending…' : 'Send lot reports'}
                   </button>
                 </div>
                 {status === 'error' && errorMsg && <p className="text-sm text-rose-300 mt-3">{errorMsg}</p>}
@@ -288,9 +308,9 @@ export function SubscribePopup() {
               <button
                 type="button"
                 onClick={dismiss}
-                className="text-[11px] tracking-[0.18em] uppercase text-cream/50 font-bold mt-6 hover:text-cream/80 transition"
+                className="text-[11px] tracking-[0.18em] uppercase text-cream/50 font-bold mt-6 min-h-[44px] px-4 hover:text-cream/80 transition"
               >
-                No thanks, I'll pay full price
+                Not now
               </button>
               <p className="text-[11px] text-cream/40 mt-5">Research use only. No spam — unsubscribe anytime.</p>
             </>
