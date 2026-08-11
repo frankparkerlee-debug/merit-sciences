@@ -106,15 +106,18 @@ export const metadata: Metadata = {
   // is the live production domain (apex → Render), so it is the source of
   // truth — NOT the onrender.com temp URL, which would split SEO authority.
   metadataBase: new URL('https://meritsciences.com'),
+  // "Pharmacy-grade" dropped site-wide 2026-08-11 (team compliance call: a
+  // pharmacy exists to dispense to people, so the word implies human use).
+  // "Lab-verified" carries the same quality signal from the supply side.
   title: {
-    default: 'Merit Sciences · Pharmacy-grade compounds',
+    default: 'Merit Sciences · Lab-verified research compounds',
     template: '%s · Merit Sciences',
   },
   // HTML meta description — Google SERP target ~155 chars. PPC-safer
   // vocabulary: "compounds" (not peptides — auto-flagged by Meta).
   // RUO compliance lives in the top steel banner + Footer + Terms —
   // we don't repeat it in the SERP impression so the brand reads as a
-  // pharmacy-grade pharmaceutical supplier, not a research-chem shop.
+  // lab-verified supplier, not a research-chem shop.
   description:
     'Lab-verified compounds from an ISO-certified US facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from Dallas.',
   // NOTE: molecule names deliberately kept OUT of the GLOBAL <head> — it rides
