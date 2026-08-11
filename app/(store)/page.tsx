@@ -123,7 +123,7 @@ export default async function HomePage() {
   return (
     <>
       {/* ════════════════ §01 · HERO ═══════════════════════════════════════ */}
-      <section className="relative isolate flex min-h-[92svh] items-end overflow-hidden bg-[#08090A] text-white">
+      <section className="relative isolate flex h-[92svh] min-h-[560px] max-h-[880px] items-end overflow-hidden bg-[#08090A] text-white">
         <Image
           src="/brand/pattern-vials-dof.webp"
           alt=""
@@ -421,7 +421,7 @@ export default async function HomePage() {
       </section>
 
       {/* ════════════════ §06 · CLOSE ══════════════════════════════════════ */}
-      <section className="relative isolate flex min-h-[70svh] items-end overflow-hidden bg-black text-white">
+      <section className="relative isolate flex h-[70svh] min-h-[480px] max-h-[760px] items-end overflow-hidden bg-black text-white">
         <Image src="/brand/hero-monolith.webp" alt="" fill sizes="100vw" className="object-cover" />
         <div
           aria-hidden="true"
