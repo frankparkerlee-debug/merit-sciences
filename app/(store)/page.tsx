@@ -20,8 +20,9 @@ export const dynamic = 'force-dynamic';
    · Hero: "SAME STACK. BETTER SOURCE." over the Merit vial wall pushed
      into photographic depth-of-field (defocus baked into the asset — at
      this blur only the real "Merit." wordmark survives, so nothing
-     illegible-but-wrong can be read), with the REAL signed ILS certificate
-     as the one sharp object in frame.
+     illegible-but-wrong can be read). Type only: the COA sheet was tried
+     here and floated awkwardly at tall/narrow viewports — the certificate
+     evidence lives in §04's live receipt panel and on /coa instead.
    · NO grade framing anywhere: "pharmacy-grade" implies dispensing to
      people and was dropped on the team's compliance concern;
      "reference-grade" was obscure. The page sells proof and price.
@@ -131,65 +132,16 @@ export default async function HomePage() {
           sizes="100vw"
           className="object-cover"
         />
-        {/* Scrim: heavy left for type, lighter upper-right so the sheet sits
-            in a lit pocket of the wall rather than fighting it. */}
+        {/* Scrim: heavy left for type, easing right so the defocused wall
+            stays perceptible across the frame. */}
         <div
           aria-hidden="true"
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(90deg, rgba(8,9,10,0.86) 0%, rgba(8,9,10,0.62) 38%, rgba(8,9,10,0.18) 62%, rgba(8,9,10,0.34) 100%), linear-gradient(180deg, rgba(8,9,10,0.45) 0%, rgba(8,9,10,0.02) 36%, rgba(8,9,10,0.9) 100%)',
+              'linear-gradient(90deg, rgba(8,9,10,0.86) 0%, rgba(8,9,10,0.60) 40%, rgba(8,9,10,0.24) 70%, rgba(8,9,10,0.30) 100%), linear-gradient(180deg, rgba(8,9,10,0.5) 0%, rgba(8,9,10,0.05) 36%, rgba(8,9,10,0.9) 100%)',
           }}
         />
-
-        {/* The real certificate — page 1 of the signed ILS COA for lot
-            LOT2026-06-0001, angled like a sheet lifted off the bench. The
-            solid white backing matters: the PDF rendered with an alpha
-            background, and without it the wall bleeds through the paper.
-            Desktop gets the full document (object scale); mobile gets the
-            readable band (compound · lot · 99.13% · PASS) instead, because
-            a full letter page at 360px is texture, not evidence. */}
-        <div
-          aria-hidden="true"
-          className="hidden lg:block absolute z-[1] right-[4%] top-[9%] w-[24%] max-w-[400px] bg-white"
-          style={{
-            transform: 'perspective(1700px) rotateY(-12deg) rotateZ(-2deg)',
-            transformOrigin: 'right center',
-            filter: 'drop-shadow(-32px 40px 72px rgba(0,0,0,0.85))',
-          }}
-        >
-          <Image
-            src="/brand/coa-document.webp"
-            alt=""
-            width={1400}
-            height={2014}
-            priority
-            sizes="34vw"
-            className="w-full h-auto"
-          />
-        </div>
-        <div
-          aria-hidden="true"
-          className="lg:hidden absolute z-[1] left-[8%] right-[-12%] top-[13%] bg-white"
-          style={{ transform: 'rotate(-2deg)', filter: 'drop-shadow(-10px 20px 40px rgba(0,0,0,0.75))' }}
-        >
-          <Image
-            src="/brand/coa-document-detail.webp"
-            alt=""
-            width={1800}
-            height={736}
-            priority
-            sizes="104vw"
-            className="w-full h-auto"
-          />
-        </div>
-        {/* The pictured certificate's contents as real DOM text — answer
-            engines quote this; assistive tech reads it. */}
-        <p className="sr-only">
-          Certificate of analysis COA-2026-49Y4L7 issued by ILS Laboratories (ISO/IEC 17025
-          accredited) for Retatrutide 10 mg, lot LOT2026-06-0001. Peptide purity 99.13% by HPLC.
-          Identity confirmed. Fentanyl screen: not detected. Heavy metals: pass. Result: pass.
-        </p>
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 pb-16 lg:pb-20">
           <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
