@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { StatusPanel, NotesForm } from './OrderDetailClient';
+import { AffiliatePanel } from './AffiliatePanel';
 import { Timeline } from './Timeline';
 import { CommentForm } from './CommentForm';
 import { PayLinkPanel } from './PayLinkPanel';
@@ -37,6 +38,18 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
     orderBy: { createdAt: 'desc' },
   });
 
+  // Affiliate attribution + whether a commission actually got booked — the
+  // pair that exposes the silent "attributed but $0" gap on sight.
+  const [orderAffiliate, orderCommission] = await Promise.all([
+    order.affiliateId
+      ? prisma.affiliate.findUnique({ where: { id: order.affiliateId }, select: { slug: true } })
+      : Promise.resolve(null),
+    prisma.orderCommission.findFirst({
+      where: { paypalOrderId: order.paypalOrderId },
+      select: { commissionCents: true, commissionRateBp: true, status: true },
+    }),
+  ]);
+
   return (
     <main className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
       <Link href="/admin/orders" className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2 inline-block hover:underline underline-offset-4">
@@ -60,6 +73,20 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             <p className="text-sm text-ink-soft">{order.customerEmail}</p>
             {order.shippingPhone && <p className="text-sm text-ink-soft">{order.shippingPhone}</p>}
           </section>
+
+          <AffiliatePanel
+            orderId={order.id}
+            affiliateSlug={orderAffiliate?.slug ?? null}
+            commission={
+              orderCommission
+                ? {
+                    cents: Number(orderCommission.commissionCents),
+                    rateBp: orderCommission.commissionRateBp,
+                    status: orderCommission.status,
+                  }
+                : null
+            }
+          />
 
           {/* Line items */}
           <section className="rounded-2xl border border-cobalt/15 bg-white overflow-hidden">

@@ -516,3 +516,65 @@ export async function addOrderComment(_prev: ActionResult | null, formData: Form
   revalidatePath(`/admin/orders/${orderId}`);
   return { ok: true, message: 'Comment added to timeline.' };
 }
+
+/* ─── Assign an affiliate to this order + record the commission ───
+   For orders Parker KNOWS came from an affiliate but that carry no
+   attribution (no ?ref= cookie, no typed code). Sets Order.affiliateId,
+   books the commission through the shared repair engine (same tier /
+   evergreen / self-purchase rules as the live capture path), and writes
+   a timeline entry. Also works on orders that ARE attributed but whose
+   commission was never recorded — the engine is idempotent either way. */
+
+export async function assignAffiliate(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+  const orderId = String(formData.get('orderId') ?? '');
+  const ident = String(formData.get('affiliate') ?? '').trim().toLowerCase();
+  if (!orderId) return { ok: false, error: 'Missing order ID' };
+  if (!ident) return { ok: false, error: 'Enter an affiliate slug, email, or code' };
+
+  // Resolve by slug, email, or discount code — whatever Parker has on hand.
+  const affiliate = await prisma.affiliate.findFirst({
+    where: {
+      OR: [
+        { slug: ident },
+        { email: { equals: ident, mode: 'insensitive' } },
+        { discountCode: { equals: ident, mode: 'insensitive' } },
+      ],
+    },
+    select: { id: true, slug: true, status: true },
+  });
+  if (!affiliate) return { ok: false, error: `No affiliate matches “${ident}”` };
+  if (affiliate.status !== 'ACTIVE') {
+    return { ok: false, error: `Affiliate ${affiliate.slug} is ${affiliate.status}, not ACTIVE` };
+  }
+
+  const { recordCommissionFromOrder } = await import('@/lib/affiliate-repair');
+  let result;
+  try {
+    result = await recordCommissionFromOrder(orderId, { assignAffiliateId: affiliate.id });
+  } catch (err: any) {
+    console.error('[assignAffiliate] failed', err);
+    return { ok: false, error: 'Commission write failed — see server logs' };
+  }
+
+  if (result.outcome === 'created') {
+    const dollars = ((result.commissionCents ?? 0) / 100).toFixed(2);
+    const conflictNote = result.evergreenConflict
+      ? ` (note: this customer’s evergreen link points to ${result.evergreenConflict.linkedSlug}; this order was credited to ${result.evergreenConflict.creditedSlug} by admin override)`
+      : '';
+    await recordOrderEvent({
+      orderId,
+      kind: 'ADMIN_COMMENT',
+      message: `Affiliate assigned: ${affiliate.slug} — commission $${dollars} recorded${result.selfPurchase ? ' ($0: self-purchase)' : ''}${conflictNote}.`,
+      metadata: { affiliateSlug: affiliate.slug, commissionCents: result.commissionCents ?? 0 },
+      actorEmail: admin.email,
+    });
+    revalidatePath(`/admin/orders/${orderId}`);
+    return { ok: true, message: `Assigned to ${affiliate.slug} — $${dollars} commission recorded.` };
+  }
+  if (result.outcome === 'skipped') {
+    return { ok: false, error: 'A commission already exists for this order.' };
+  }
+  return { ok: false, error: `Blocked: ${result.reason}` };
+}
