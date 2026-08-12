@@ -120,6 +120,13 @@ model Affiliate {
   discountCode          String          @unique
   // Lifecycle. Open sign-up: ACTIVE by default; SUSPENDED for fraud/TOS.
   status                AffiliateStatus @default(ACTIVE)
+  // Payout-details nudge sequence state: how many "add your payout
+  // details" emails this affiliate has received, and when the last one
+  // went. Reset both to re-enter the sequence. Columns exist in prod
+  // (added via Supabase SQL 2026-08-12 — pooler can't run prisma ddl).
+  payoutNudgeCount      Int             @default(0)
+  payoutNudgeLastAt     DateTime?
+
   // PayPal payout destination — the email the affiliate's commission
   // checks are sent to via PayPal Payouts. Set on the affiliate
   // settings page; required before they can be paid.

@@ -11,6 +11,7 @@
  */
 import { NextResponse } from 'next/server';
 import { tickCustomers } from '@/lib/customer-journey';
+import { tickPayoutNudges } from '@/lib/affiliate-payout-nudge';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -31,7 +32,16 @@ export async function GET(request: Request) {
   const started = Date.now();
   try {
     const result = await tickCustomers();
-    return NextResponse.json({ ok: true, ...result, durationMs: Date.now() - started });
+    // Affiliate payout-details nudges ride the same daily tick — its own
+    // catch so a nudge failure never fails the customer sequences.
+    let payoutNudges: { sent: number; skipped: number } | { error: string };
+    try {
+      payoutNudges = await tickPayoutNudges();
+    } catch (err) {
+      console.error('[cron/customer-emails] payout nudges failed', err);
+      payoutNudges = { error: err instanceof Error ? err.message : 'unknown' };
+    }
+    return NextResponse.json({ ok: true, ...result, payoutNudges, durationMs: Date.now() - started });
   } catch (err) {
     console.error('[cron/customer-emails] failed', err);
     return NextResponse.json(
