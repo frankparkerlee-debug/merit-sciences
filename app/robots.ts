@@ -24,6 +24,9 @@ const GATED = [
   '/home-enhanced.html',
   '/home-concepts.html',
   '/home-concepts-2.html',
+  // Internal team tooling served out of public/ (label print template etc.).
+  // Files carry their own noindex meta; this keeps crawlers off the path.
+  '/internal/',
 ];
 
 // Answer-engine / AI crawlers we explicitly welcome onto content (the library
