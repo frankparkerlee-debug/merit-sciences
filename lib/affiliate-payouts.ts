@@ -1,17 +1,28 @@
 /**
  * Affiliate payout batch engine.
  *
- * Commissions accrue on every PayPal capture (see api/paypal/webhook),
- * are clawed back on refund, and become *payable* once they clear a
- * hold window (covers the refund/chargeback period). This module
- * aggregates payable commissions per affiliate and pays them out via
- * PayPal Payouts.
+ * Commissions accrue at capture time (see lib/paypal-fulfillment.ts — still
+ * the shared fulfillment adapter, which Stripe payments ride through), are
+ * clawed back on refund, and become *payable* once they clear a hold window
+ * covering the refund/chargeback period. This module aggregates payable
+ * commissions per affiliate and pays them out via Stripe Connect transfers.
+ *
+ * PAYOUT RAIL: Stripe direct deposit ONLY (PayPal terminated 2026-08-12).
+ * Money is UNPAYABLE until the affiliate connects — enforced in three
+ * independent places so no path can leak a payment:
+ *   1. Preview/eligibility — no stripeAccountId ⇒ method null ⇒ blocked.
+ *   2. Run loop — live transfersReady() check BEFORE commissions are
+ *      claimed, so an account that is connected but not finished (or was
+ *      later paused by Stripe) skips the run untouched.
+ *   3. retryPayout — same two checks before re-sending.
+ * Commissions keep accruing throughout; nothing is forfeited, it simply
+ * waits. paypalEmail is retained as historical data and pays nothing.
  *
  * Eligibility for a commission:
  *   - status PENDING or PAYABLE (not PAID, not CLAWED_BACK)
  *   - not already claimed by a payout (payoutId is null)
  *   - older than COMMISSION_HOLD_DAYS
- *   - the affiliate is ACTIVE and has a paypalEmail on file
+ *   - the affiliate is ACTIVE with a verified Stripe connected account
  * An affiliate is paid only if their eligible total ≥ payoutMinUsd.
  */
 
@@ -43,7 +54,7 @@ export type AffiliatePayoutPreview = {
   /** when the earliest held commission clears the hold (null if none held) */
   earliestMatureAt: Date | null;
   commissionCount: number;
-  /** true → meets the minimum AND has a PayPal email → will be paid */
+  /** true → meets the minimum AND direct deposit is connected → will be paid */
   payable: boolean;
   /** why not payable, when applicable */
   blockedReason: string | null;

@@ -29,6 +29,12 @@ export default async function AffiliatePayoutsPage() {
 
   const payable = preview.filter((p) => p.payable);
   const blocked = preview.filter((p) => !p.payable);
+  // Split the blocked list: money that is waiting on the AFFILIATE (connect
+  // direct deposit) vs money simply maturing. Same rows, different action —
+  // the first group is who to chase, and the nudge sequence is already on it.
+  const awaitingConnect = blocked.filter((p) => !p.method);
+  const accruing = blocked.filter((p) => p.method);
+  const awaitingCents = awaitingConnect.reduce((s, p) => s + p.eligibleCents + p.heldCents, 0);
   const totalDueCents = payable.reduce((s, p) => s + p.eligibleCents, 0);
   // Running tally across ALL affiliates — what's owed + what's been paid.
   const totalMaturedCents = preview.reduce((s, p) => s + p.eligibleCents, 0);
@@ -101,12 +107,40 @@ export default async function AffiliatePayoutsPage() {
         </Table>
       )}
 
+      {/* Waiting on the affiliate to connect direct deposit */}
+      {awaitingConnect.length > 0 && (
+        <>
+          <SectionTitle>
+            Unpayable until connected — {awaitingConnect.length} affiliate
+            {awaitingConnect.length === 1 ? '' : 's'} · {money(awaitingCents)}
+          </SectionTitle>
+          <p className="text-sm text-ink-soft mb-3">
+            Payouts are Stripe direct deposit only. These affiliates have not connected, so their
+            commissions keep accruing and cannot be sent. The payout-details email sequence is
+            already nudging them.
+          </p>
+          <Table head={['Affiliate', 'Matured', 'Accruing', 'Total owed']}>
+            {awaitingConnect.map((p) => (
+              <tr key={p.affiliateId} className="border-t border-cobalt/10">
+                <Td>
+                  <span className="font-bold text-ink">{p.name}</span>
+                  <span className="block text-[11px] text-ink-muted">{p.email}</span>
+                </Td>
+                <Td className="tabular-nums">{money(p.eligibleCents)}</Td>
+                <Td className="tabular-nums text-ink-soft">{money(p.heldCents)}</Td>
+                <Td className="text-right font-bold tabular-nums">{money(p.eligibleCents + p.heldCents)}</Td>
+              </tr>
+            ))}
+          </Table>
+        </>
+      )}
+
       {/* Accruing / blocked */}
-      {blocked.length > 0 && (
+      {accruing.length > 0 && (
         <>
           <SectionTitle>Accruing (not payable yet)</SectionTitle>
           <Table head={['Affiliate', 'Earned', 'Status']}>
-            {blocked.map((p) => (
+            {accruing.map((p) => (
               <tr key={p.affiliateId} className="border-t border-cobalt/10">
                 <Td>
                   <span className="font-bold text-ink">{p.name}</span>
