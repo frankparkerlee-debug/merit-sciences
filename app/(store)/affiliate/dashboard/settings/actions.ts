@@ -219,12 +219,14 @@ export async function startStripeOnboarding(): Promise<void> {
   const affiliate = await getCurrentAffiliate();
   if (!affiliate) redirect('/affiliate/login?next=/affiliate/dashboard/settings');
 
-  const { ensureExpressAccount, createOnboardingLink } = await import('@/lib/stripe-connect');
+  const { ensureExpressAccount, createOnboardingLink, buildBounceUrl } = await import('@/lib/stripe-connect');
   const row = await prisma.affiliate.findUniqueOrThrow({
     where: { id: affiliate.id },
     select: { id: true, email: true, name: true, stripeAccountId: true },
   });
   const accountId = await ensureExpressAccount(row);
   const url = await createOnboardingLink(accountId);
-  redirect(url);
+  // Via the checkout-host bounce so the browser never carries a storefront
+  // Referer onto connect.stripe.com — see lib/stripe-connect.ts.
+  redirect(buildBounceUrl(url));
 }

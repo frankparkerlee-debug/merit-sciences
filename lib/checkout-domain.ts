@@ -54,6 +54,10 @@ export function isPaymentPath(pathname: string): boolean {
   return (
     pathname === '/checkout' ||
     pathname.startsWith('/checkout/') ||
+    // Stripe Connect onboarding touchpoints. Stripe stores the account-link
+    // return/refresh URLs and sees the Referer on arrival — both must name
+    // the checkout host, never the storefront (same doctrine as checkout).
+    pathname.startsWith('/payout-setup/') ||
     pathname.startsWith('/pay/') ||
     pathname === '/reorder' ||
     pathname.startsWith('/reorder/') ||

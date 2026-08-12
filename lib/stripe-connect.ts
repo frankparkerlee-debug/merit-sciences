@@ -23,6 +23,12 @@ import { stripe } from './stripe';
    ───────────────────────────────────────────────────────────────────────── */
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
+// Stripe-visible URLs live on the CHECKOUT host, never the storefront: the
+// account-link return/refresh URLs are stored by Stripe, and the affiliate's
+// browser hands Stripe a Referer on arrival. Both must tell the same story
+// as the rest of the payment surface (meritcheckout.com). Falls back to the
+// storefront in dev where no split domain exists.
+const STRIPE_FACING_ORIGIN = (process.env.CHECKOUT_ORIGIN || SITE_URL).replace(/\/$/, '');
 
 /** Create the affiliate's Express account on first use; reuse it after.
  *  Persists the id before returning so a crash between Stripe and the DB
@@ -59,8 +65,8 @@ export async function createOnboardingLink(stripeAccountId: string): Promise<str
   const link = await stripe().accountLinks.create({
     account: stripeAccountId,
     type: 'account_onboarding',
-    refresh_url: `${SITE_URL}/affiliate/dashboard/settings?stripe=refresh`,
-    return_url: `${SITE_URL}/affiliate/dashboard/settings?stripe=return`,
+    refresh_url: `${STRIPE_FACING_ORIGIN}/payout-setup/refresh`,
+    return_url: `${STRIPE_FACING_ORIGIN}/payout-setup/return`,
   });
   return link.url;
 }
@@ -101,4 +107,52 @@ export async function sendStripeTransfer(args: {
   } catch (err: any) {
     return { ok: false, error: err?.message ?? 'Stripe transfer failed' };
   }
+}
+
+/* ── Outbound bounce signing ──────────────────────────────────────────────
+   The settings page must not link the affiliate's browser from the
+   storefront straight to connect.stripe.com (Referer would name the store).
+   Instead the server action redirects to
+   ${CHECKOUT_ORIGIN}/payout-setup/go?u=<b64url>&s=<hmac>, and that page —
+   on the checkout host, with a no-referrer meta policy — forwards to
+   Stripe. The HMAC stops the bounce from being an open redirect; the target
+   is additionally pinned to connect.stripe.com at verification time. */
+
+import { createHmac, timingSafeEqual } from 'crypto';
+
+function bounceSecret(): string {
+  // CRON_SECRET is the only long random secret guaranteed present in every
+  // environment; derive rather than reuse raw so logs of one never unlock
+  // the other.
+  return createHmac('sha256', process.env.CRON_SECRET || 'dev-secret')
+    .update('payout-bounce-v1')
+    .digest('hex');
+}
+
+export function signBounce(url: string): string {
+  return createHmac('sha256', bounceSecret()).update(url).digest('hex').slice(0, 32);
+}
+
+export function buildBounceUrl(stripeUrl: string): string {
+  const u = Buffer.from(stripeUrl, 'utf8').toString('base64url');
+  return `${STRIPE_FACING_ORIGIN}/payout-setup/go?u=${u}&s=${signBounce(stripeUrl)}`;
+}
+
+/** Verify + decode a bounce param pair. Returns the Stripe URL or null. */
+export function verifyBounce(u: string, s: string): string | null {
+  let url: string;
+  try {
+    url = Buffer.from(u, 'base64url').toString('utf8');
+  } catch {
+    return null;
+  }
+  if (!url.startsWith('https://connect.stripe.com/')) return null;
+  const expected = signBounce(url);
+  if (expected.length !== s.length) return null;
+  try {
+    if (!timingSafeEqual(Buffer.from(expected), Buffer.from(s))) return null;
+  } catch {
+    return null;
+  }
+  return url;
 }
