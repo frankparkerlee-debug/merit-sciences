@@ -18,7 +18,6 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
 import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
-import { sendAffiliatePayout } from '@/lib/paypal-payouts';
 import { sendStripeTransfer, transfersReady } from '@/lib/stripe-connect';
 
 // Hold window before a commission can be paid — covers the refund /
@@ -33,8 +32,10 @@ export type AffiliatePayoutPreview = {
   email: string;
   paypalEmail: string | null;
   stripeAccountId: string | null;
-  /** which rail the run will use — Stripe direct deposit wins when connected */
-  method: 'stripe' | 'paypal' | null;
+  /** PayPal was TERMINATED as a payout rail 2026-08-12 (Parker). Stripe
+   *  direct deposit is the only way affiliates get paid; paypalEmail is
+   *  retained as data but earns nothing. */
+  method: 'stripe' | null;
   /** matured (past the hold) commission total — payable now */
   eligibleCents: number;
   /** earned but still inside the 30-day refund hold — not payable yet */
@@ -87,7 +88,7 @@ export async function getPayoutPreview(): Promise<AffiliatePayoutPreview[]> {
         email: a.email,
         paypalEmail: a.paypalEmail,
         stripeAccountId: a.stripeAccountId,
-        method: a.stripeAccountId ? 'stripe' : a.paypalEmail ? 'paypal' : null,
+        method: a.stripeAccountId ? 'stripe' : null,
         eligibleCents: 0,
         heldCents: 0,
         earliestMatureAt: null,
@@ -110,7 +111,7 @@ export async function getPayoutPreview(): Promise<AffiliatePayoutPreview[]> {
 
   for (const p of byAff.values()) {
     if (!p.method) {
-      p.blockedReason = 'No payout method — connect direct deposit or add a PayPal email';
+      p.blockedReason = 'Direct deposit not connected (payouts are Stripe-only)';
     } else if (p.eligibleCents < MIN_CENTS) {
       if (p.heldCents > 0 && p.earliestMatureAt) {
         const d = p.earliestMatureAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -149,6 +150,19 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
   };
 
   for (const p of preview) {
+    // 0. Verify the connected account can actually receive BEFORE claiming —
+    //    an unfinished onboarding then simply skips this run instead of
+    //    littering FAILED payout rows that need manual retry.
+    if (!(await transfersReady(p.stripeAccountId!))) {
+      result.failedCount += 1;
+      result.failures.push({
+        affiliateId: p.affiliateId,
+        name: p.name,
+        error: 'Stripe onboarding incomplete — affiliate must finish direct-deposit setup',
+      });
+      continue;
+    }
+
     // 1. Claim the affiliate's eligible commissions into a fresh Payout
     //    inside a transaction so a parallel run can't grab them too.
     const claim = await prisma.$transaction(async (tx) => {
@@ -189,34 +203,18 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
 
     if (!claim) continue;
 
-    // 2. Send — Stripe direct deposit when the affiliate is connected and
-    //    verified; PayPal otherwise. A connected-but-unfinished Stripe
-    //    onboarding falls back to PayPal when possible instead of stranding
-    //    the run. All network calls happen outside the claim txn.
-    let send:
+    // 2. Send via Stripe — the only rail. Readiness was verified above;
+    //    the transfer is idempotent on the payout row id.
+    const t = await sendStripeTransfer({
+      stripeAccountId: p.stripeAccountId!,
+      amountCents: claim.totalCents,
+      payoutId: claim.payoutId,
+    });
+    const send:
       | { ok: true; rail: 'stripe'; transferId: string }
-      | { ok: true; rail: 'paypal'; batchId: string; itemId: string }
-      | { ok: false; error: string };
-
-    if (p.method === 'stripe' && (await transfersReady(p.stripeAccountId!))) {
-      const t = await sendStripeTransfer({
-        stripeAccountId: p.stripeAccountId!,
-        amountCents: claim.totalCents,
-        payoutId: claim.payoutId,
-      });
-      send = t.ok ? { ok: true, rail: 'stripe', transferId: t.transferId } : { ok: false, error: t.error };
-    } else if (p.paypalEmail) {
-      const pp = await sendAffiliatePayout({
-        receiverEmail: p.paypalEmail,
-        amountCents: claim.totalCents,
-        payoutId: claim.payoutId,
-      });
-      send = pp.ok
-        ? { ok: true, rail: 'paypal', batchId: pp.batchId, itemId: pp.itemId }
-        : { ok: false, error: pp.error };
-    } else {
-      send = { ok: false, error: 'Stripe onboarding incomplete and no PayPal email fallback' };
-    }
+      | { ok: false; error: string } = t.ok
+      ? { ok: true, rail: 'stripe', transferId: t.transferId }
+      : { ok: false, error: t.error };
 
     // 3. Record the outcome.
     if (send.ok) {
@@ -226,9 +224,7 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
           data: {
             status: 'PAID',
             paidAt: new Date(),
-            ...(send.rail === 'stripe'
-              ? { stripeTransferId: send.transferId }
-              : { paypalBatchId: send.batchId, paypalItemId: send.itemId }),
+            stripeTransferId: send.transferId,
           },
         }),
         prisma.orderCommission.updateMany({
@@ -252,22 +248,28 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
 }
 
 /**
- * Retry a single FAILED payout. The PayPal sender_batch_id is keyed on
- * the payout id, so if the original actually went through, PayPal
- * rejects the duplicate and we surface that rather than double-paying.
+ * Retry a single FAILED payout — Stripe-only since PayPal's termination
+ * (2026-08-12). The transfer's idempotency key is the payout id, so if the
+ * original actually went through, Stripe returns that same transfer instead
+ * of paying twice.
  */
 export async function retryPayout(payoutId: string): Promise<{ ok: boolean; error?: string }> {
   const payout = await prisma.payout.findUnique({
     where: { id: payoutId },
-    include: { affiliate: { select: { paypalEmail: true } } },
+    include: { affiliate: { select: { stripeAccountId: true } } },
   });
   if (!payout) return { ok: false, error: 'Payout not found' };
   if (payout.status === 'PAID') return { ok: true };
-  if (!payout.affiliate.paypalEmail) return { ok: false, error: 'Affiliate has no PayPal email' };
+  if (!payout.affiliate.stripeAccountId) {
+    return { ok: false, error: 'Affiliate has not connected direct deposit' };
+  }
+  if (!(await transfersReady(payout.affiliate.stripeAccountId))) {
+    return { ok: false, error: 'Affiliate direct-deposit onboarding incomplete' };
+  }
 
   await prisma.payout.update({ where: { id: payoutId }, data: { status: 'PROCESSING' } });
-  const send = await sendAffiliatePayout({
-    receiverEmail: payout.affiliate.paypalEmail,
+  const send = await sendStripeTransfer({
+    stripeAccountId: payout.affiliate.stripeAccountId,
     amountCents: Number(payout.totalCents),
     payoutId: payout.id,
   });
@@ -276,7 +278,7 @@ export async function retryPayout(payoutId: string): Promise<{ ok: boolean; erro
     await prisma.$transaction([
       prisma.payout.update({
         where: { id: payoutId },
-        data: { status: 'PAID', paidAt: new Date(), paypalBatchId: send.batchId, paypalItemId: send.itemId },
+        data: { status: 'PAID', paidAt: new Date(), stripeTransferId: send.transferId },
       }),
       prisma.orderCommission.updateMany({ where: { payoutId }, data: { status: 'PAID' } }),
     ]);

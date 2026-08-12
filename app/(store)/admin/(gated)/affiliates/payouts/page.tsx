@@ -91,7 +91,7 @@ export default async function AffiliatePayoutsPage() {
                 {p.method === 'stripe' ? (
                   <span className="font-bold text-ink">Direct deposit</span>
                 ) : (
-                  <span>{p.paypalEmail}</span>
+                  <span className="text-ink-muted">— not connected</span>
                 )}
               </Td>
               <Td>{p.commissionCount}</Td>

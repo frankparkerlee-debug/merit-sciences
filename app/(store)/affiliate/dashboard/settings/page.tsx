@@ -52,7 +52,7 @@ export default async function AffiliateSettingsPage() {
 
       <section className="max-w-[820px] mx-auto px-5 sm:px-6 lg:px-8 pt-10">
         <p className="text-sm text-ink-soft mb-10 leading-relaxed max-w-[620px]">
-          Update your profile, change your discount code, set your PayPal payout email, or swap the email you use to sign in. Each section saves independently &mdash; changes take effect immediately.
+          Update your profile, change your discount code, connect direct deposit for payouts, or swap the email you use to sign in. Each section saves independently &mdash; changes take effect immediately.
         </p>
         {/* Direct deposit (Stripe) — preferred payout rail when connected;
             the PayPal email in the forms below remains the fallback. */}
@@ -86,7 +86,7 @@ export default async function AffiliateSettingsPage() {
                 </button>
               </form>
               <p className="text-[11px] text-ink-soft mt-3">
-                Until this is connected, payouts use your PayPal email below.
+                Payouts are on hold for your account until this is connected.
               </p>
             </>
           )}

@@ -36,12 +36,13 @@ async function findNudgeTargets() {
   const affiliates = await prisma.affiliate.findMany({
     where: {
       status: 'ACTIVE',
-      paypalEmail: null,
+      // PayPal terminated 2026-08-12: a paypalEmail no longer counts as a
+      // payout method, so PayPal-only affiliates enter the sequence too.
       stripeAccountId: null,
       payoutNudgeCount: { lt: MAX_TOUCHES },
       OR: [{ payoutNudgeLastAt: null }, { payoutNudgeLastAt: { lte: cutoff } }],
     },
-    select: { id: true, name: true, email: true, payoutNudgeCount: true },
+    select: { id: true, name: true, email: true, payoutNudgeCount: true, paypalEmail: true },
     take: MAX_SENDS_PER_RUN,
   });
   if (affiliates.length === 0) return [];
@@ -59,11 +60,11 @@ async function findNudgeTargets() {
   });
   const owedBy = new Map(owed.map((o) => [o.affiliateId, Number(o._sum.commissionCents ?? 0)]));
 
-  return affiliates.map((a) => ({ ...a, owedCents: owedBy.get(a.id) ?? 0 }));
+  return affiliates.map((a) => ({ ...a, owedCents: owedBy.get(a.id) ?? 0, hadPaypal: !!a.paypalEmail }));
 }
 
-function buildEmail(args: { firstName: string; touch: number; owedCents: number }) {
-  const { firstName, touch, owedCents } = args;
+function buildEmail(args: { firstName: string; touch: number; owedCents: number; hadPaypal: boolean }) {
+  const { firstName, touch, owedCents, hadPaypal } = args;
   const settingsUrl = `${SITE}/affiliate/dashboard/settings`;
   const hasMoney = owedCents > 0;
 
@@ -78,25 +79,24 @@ function buildEmail(args: { firstName: string; touch: number; owedCents: number 
           : 'Your Merit payouts have nowhere to go yet'
         : 'Last reminder — add your payout details';
 
+  const paypalNote = hadPaypal
+    ? ` We've moved payouts to bank direct deposit — PayPal payouts have been discontinued, so the PayPal email on your account no longer receives payments.`
+    : '';
   const opener = hasMoney
     ? p(
         `Hi ${firstName} — you've earned <strong>${money(owedCents)}</strong> in commission, ` +
-          `but there's no payout method on your account, so payout runs are skipping you.`,
+          `but direct deposit isn't set up on your account, so payout runs are skipping you.${paypalNote}`,
       )
     : p(
-        `Hi ${firstName} — your affiliate account has no payout method on file yet, ` +
-          `so when your commissions come due we have nowhere to send them.`,
+        `Hi ${firstName} — direct deposit isn't set up on your affiliate account yet, ` +
+          `so when your commissions come due we have nowhere to send them.${paypalNote}`,
       );
 
   const bodyHtml = [
     opener,
     p(
-      `It takes about two minutes to fix, and there are two options in your dashboard settings:`,
-    ),
-    p(
-      `<strong>Direct deposit (recommended)</strong> — connect your bank through Stripe. ` +
-        `We never see your bank details, and payouts land straight in your account.<br/>` +
-        `<strong>PayPal</strong> — just add the email on your PayPal account.`,
+      `It takes about two minutes: connect your bank through Stripe from your dashboard ` +
+        `settings. We never see your bank details, and payouts land straight in your account.`,
     ),
     cta('Add payout details', settingsUrl),
     quiet(
@@ -128,7 +128,7 @@ export async function tickPayoutNudges(): Promise<{ sent: number; skipped: numbe
     const touch = t.payoutNudgeCount + 1;
     const firstName = (t.name || 'there').split(' ')[0];
     try {
-      const email = buildEmail({ firstName, touch, owedCents: t.owedCents });
+      const email = buildEmail({ firstName, touch, owedCents: t.owedCents, hadPaypal: t.hadPaypal });
       const result = await sendEmail({ to: t.email, subject: email.subject, html: email.html });
       if (!result.ok) throw new Error(result.error);
       await prisma.affiliate.update({

@@ -142,24 +142,6 @@ export async function updateDiscountCode(
 }
 
 // ─── Update PayPal payout email ──────────────────────────────────────
-export async function updatePaypalEmail(
-  _prev: ActionResult | null,
-  formData: FormData,
-): Promise<ActionResult> {
-  const affiliate = await getCurrentAffiliate();
-  if (!affiliate) return { ok: false, error: 'Not signed in.' };
-
-  const paypalEmail = String(formData.get('paypalEmail') ?? '').trim().toLowerCase();
-  const check = validateEmail(paypalEmail);
-  if (!check.ok) return { ok: false, error: check.reason, field: 'paypalEmail' };
-
-  await prisma.affiliate.update({
-    where: { id: affiliate.id },
-    data: { paypalEmail },
-  });
-  revalidatePath('/affiliate/dashboard/settings');
-  return { ok: true, message: 'PayPal payout email saved. Commission payouts will go here.' };
-}
 
 // ─── Request email change (Supabase confirmation flow) ──────────────
 export async function requestEmailChange(

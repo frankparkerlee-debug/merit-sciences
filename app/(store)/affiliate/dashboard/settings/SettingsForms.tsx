@@ -5,8 +5,7 @@ import {
   updateProfile,
   updateSlug,
   updateDiscountCode,
-  updatePaypalEmail,
-  requestEmailChange,
+    requestEmailChange,
   type ActionResult,
 } from './actions';
 import type { CurrentAffiliate } from '@/lib/affiliate-session';
@@ -19,7 +18,6 @@ export function SettingsForms({ affiliate }: { affiliate: CurrentAffiliate }) {
       <ProfileSection affiliate={affiliate} />
       <SlugSection affiliate={affiliate} />
       <DiscountCodeSection affiliate={affiliate} />
-      <PayoutSection affiliate={affiliate} />
       <EmailSection affiliate={affiliate} />
     </div>
   );
@@ -203,34 +201,6 @@ function DiscountCodeSection({ affiliate }: { affiliate: CurrentAffiliate }) {
           hint="Lowercase letters, numbers, hyphens. We uppercase it for customers. Must be different from your handle."
         />
         <SubmitButton>Update code</SubmitButton>
-      </form>
-    </SectionCard>
-  );
-}
-
-/* ─── 4. Payout (PayPal) ─── */
-
-function PayoutSection({ affiliate }: { affiliate: CurrentAffiliate }) {
-  const [result, action] = useFormState<ActionResult | null, FormData>(
-    updatePaypalEmail, null,
-  );
-  return (
-    <SectionCard
-      eyebrow="Payouts"
-      title="Where your commissions are paid"
-      description="Commissions are paid by PayPal once your cleared balance reaches $50. Enter the PayPal email that should receive your payouts — it can be different from your sign-in email."
-      result={result}
-    >
-      <form action={action}>
-        <Field
-          label="PayPal email"
-          name="paypalEmail"
-          type="email"
-          defaultValue={affiliate.paypalEmail ?? ''}
-          placeholder="you@paypal.com"
-          hint="Must match a PayPal account that can receive payments. Without it, we can't pay you."
-        />
-        <SubmitButton>Save payout email</SubmitButton>
       </form>
     </SectionCard>
   );
