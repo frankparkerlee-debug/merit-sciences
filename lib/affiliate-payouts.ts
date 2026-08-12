@@ -19,6 +19,7 @@ import 'server-only';
 import { prisma } from '@/lib/db';
 import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
 import { sendAffiliatePayout } from '@/lib/paypal-payouts';
+import { sendStripeTransfer, transfersReady } from '@/lib/stripe-connect';
 
 // Hold window before a commission can be paid — covers the refund /
 // chargeback period so we don't pay out money we may claw back.
@@ -31,6 +32,9 @@ export type AffiliatePayoutPreview = {
   name: string;
   email: string;
   paypalEmail: string | null;
+  stripeAccountId: string | null;
+  /** which rail the run will use — Stripe direct deposit wins when connected */
+  method: 'stripe' | 'paypal' | null;
   /** matured (past the hold) commission total — payable now */
   eligibleCents: number;
   /** earned but still inside the 30-day refund hold — not payable yet */
@@ -68,7 +72,7 @@ export async function getPayoutPreview(): Promise<AffiliatePayoutPreview[]> {
     select: {
       commissionCents: true,
       occurredAt: true,
-      affiliate: { select: { id: true, name: true, email: true, paypalEmail: true } },
+      affiliate: { select: { id: true, name: true, email: true, paypalEmail: true, stripeAccountId: true } },
     },
   });
 
@@ -82,6 +86,8 @@ export async function getPayoutPreview(): Promise<AffiliatePayoutPreview[]> {
         name: a.name,
         email: a.email,
         paypalEmail: a.paypalEmail,
+        stripeAccountId: a.stripeAccountId,
+        method: a.stripeAccountId ? 'stripe' : a.paypalEmail ? 'paypal' : null,
         eligibleCents: 0,
         heldCents: 0,
         earliestMatureAt: null,
@@ -103,8 +109,8 @@ export async function getPayoutPreview(): Promise<AffiliatePayoutPreview[]> {
   }
 
   for (const p of byAff.values()) {
-    if (!p.paypalEmail) {
-      p.blockedReason = 'No PayPal email on file';
+    if (!p.method) {
+      p.blockedReason = 'No payout method — connect direct deposit or add a PayPal email';
     } else if (p.eligibleCents < MIN_CENTS) {
       if (p.heldCents > 0 && p.earliestMatureAt) {
         const d = p.earliestMatureAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -183,12 +189,34 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
 
     if (!claim) continue;
 
-    // 2. Send via PayPal (outside the txn — network call).
-    const send = await sendAffiliatePayout({
-      receiverEmail: p.paypalEmail!,
-      amountCents: claim.totalCents,
-      payoutId: claim.payoutId,
-    });
+    // 2. Send — Stripe direct deposit when the affiliate is connected and
+    //    verified; PayPal otherwise. A connected-but-unfinished Stripe
+    //    onboarding falls back to PayPal when possible instead of stranding
+    //    the run. All network calls happen outside the claim txn.
+    let send:
+      | { ok: true; rail: 'stripe'; transferId: string }
+      | { ok: true; rail: 'paypal'; batchId: string; itemId: string }
+      | { ok: false; error: string };
+
+    if (p.method === 'stripe' && (await transfersReady(p.stripeAccountId!))) {
+      const t = await sendStripeTransfer({
+        stripeAccountId: p.stripeAccountId!,
+        amountCents: claim.totalCents,
+        payoutId: claim.payoutId,
+      });
+      send = t.ok ? { ok: true, rail: 'stripe', transferId: t.transferId } : { ok: false, error: t.error };
+    } else if (p.paypalEmail) {
+      const pp = await sendAffiliatePayout({
+        receiverEmail: p.paypalEmail,
+        amountCents: claim.totalCents,
+        payoutId: claim.payoutId,
+      });
+      send = pp.ok
+        ? { ok: true, rail: 'paypal', batchId: pp.batchId, itemId: pp.itemId }
+        : { ok: false, error: pp.error };
+    } else {
+      send = { ok: false, error: 'Stripe onboarding incomplete and no PayPal email fallback' };
+    }
 
     // 3. Record the outcome.
     if (send.ok) {
@@ -198,8 +226,9 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
           data: {
             status: 'PAID',
             paidAt: new Date(),
-            paypalBatchId: send.batchId,
-            paypalItemId: send.itemId,
+            ...(send.rail === 'stripe'
+              ? { stripeTransferId: send.transferId }
+              : { paypalBatchId: send.batchId, paypalItemId: send.itemId }),
           },
         }),
         prisma.orderCommission.updateMany({

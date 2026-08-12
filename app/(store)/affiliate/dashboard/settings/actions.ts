@@ -208,3 +208,23 @@ export async function requestEmailChange(
     message: `Confirmation sent to ${newEmail}. Click the link in that email to complete the change.`,
   };
 }
+
+
+// ─── Stripe direct-deposit onboarding ────────────────────────────────
+// Creates the affiliate's Express account on first click, then hands off
+// to Stripe's hosted onboarding (KYC + bank details — we never see the
+// numbers). Safe to click again any time: it resumes an unfinished
+// onboarding or lets a connected affiliate update their details.
+export async function startStripeOnboarding(): Promise<void> {
+  const affiliate = await getCurrentAffiliate();
+  if (!affiliate) redirect('/affiliate/login?next=/affiliate/dashboard/settings');
+
+  const { ensureExpressAccount, createOnboardingLink } = await import('@/lib/stripe-connect');
+  const row = await prisma.affiliate.findUniqueOrThrow({
+    where: { id: affiliate.id },
+    select: { id: true, email: true, name: true, stripeAccountId: true },
+  });
+  const accountId = await ensureExpressAccount(row);
+  const url = await createOnboardingLink(accountId);
+  redirect(url);
+}

@@ -80,14 +80,20 @@ export default async function AffiliatePayoutsPage() {
       {payable.length === 0 ? (
         <Empty>No affiliates have cleared the ${AFFILIATE_PROGRAM.payoutMinUsd} minimum yet.</Empty>
       ) : (
-        <Table head={['Affiliate', 'PayPal', 'Commissions', 'Amount']}>
+        <Table head={['Affiliate', 'Method', 'Commissions', 'Amount']}>
           {payable.map((p) => (
             <tr key={p.affiliateId} className="border-t border-cobalt/10">
               <Td>
                 <span className="font-bold text-ink">{p.name}</span>
                 <span className="block text-[11px] text-ink-muted">{p.email}</span>
               </Td>
-              <Td>{p.paypalEmail}</Td>
+              <Td>
+                {p.method === 'stripe' ? (
+                  <span className="font-bold text-ink">Direct deposit</span>
+                ) : (
+                  <span>{p.paypalEmail}</span>
+                )}
+              </Td>
               <Td>{p.commissionCount}</Td>
               <Td className="text-right font-bold tabular-nums text-cobalt">{money(p.eligibleCents)}</Td>
             </tr>
