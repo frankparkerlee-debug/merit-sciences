@@ -87,6 +87,7 @@ export async function priceCart(args: {
   lines: CartLineIn[];
   discountCodeInput?: string;
   buyerEmail?: string | null;
+  shipping?: { line1?: string | null; zip?: string | null } | null;
 }): Promise<PricedCart | PriceCartError> {
   const lines = args.lines;
   const discountCodeInput = (args.discountCodeInput ?? '').trim();
@@ -177,6 +178,7 @@ export async function priceCart(args: {
     const v = await validateDiscountCode(discountCodeInput, {
       subtotalCents: discountableCents,
       buyerEmail: args.buyerEmail ?? null,
+      shipping: args.shipping ?? null,
       cartQuantity,
     });
     if (!v.ok) return { error: v.error, field: 'discountCode', status: 400 };

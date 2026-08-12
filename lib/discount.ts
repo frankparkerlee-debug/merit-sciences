@@ -43,6 +43,10 @@ export type ValidationContext = {
   subtotalCents: number;
   buyerEmail?: string | null;     // optional — only needed for once-per-customer / customer-locked codes
   cartQuantity?: number;          // optional — only needed for min-quantity codes
+  /** Shipping identity for once-per-customer codes. Email alone is trivially
+   *  dodged with a second inbox (observed in production: same person, same
+   *  street, two emails, WELCOME20 twice) — the household match closes it. */
+  shipping?: { line1?: string | null; zip?: string | null } | null;
 };
 
 /**
@@ -134,18 +138,36 @@ export async function validateDiscountCode(
     }
   }
 
-  // Once-per-customer — query Order by buyer email
-  if (manual.oncePerCustomer && ctx.buyerEmail) {
+  // Once-per-customer — match prior completed orders by buyer email OR by
+  // shipping address (same street + zip). The address arm is what stops the
+  // second-inbox workaround; a shared household re-using a first-order code
+  // is the same economics either way, and the buyer can still order without
+  // the code.
+  if (manual.oncePerCustomer && (ctx.buyerEmail || ctx.shipping?.line1)) {
+    const identity: object[] = [];
+    if (ctx.buyerEmail) {
+      identity.push({ customerEmail: ctx.buyerEmail.toLowerCase() });
+    }
+    const line1 = ctx.shipping?.line1?.trim();
+    const zip = ctx.shipping?.zip?.trim();
+    if (line1 && zip) {
+      identity.push({
+        AND: [
+          { shippingZip: zip },
+          { shippingLine1: { equals: line1, mode: 'insensitive' as const } },
+        ],
+      });
+    }
     const priorUse = await prisma.order.findFirst({
       where: {
         discountCode: code.toUpperCase(), // orders store the code uppercased
-        customerEmail: ctx.buyerEmail.toLowerCase(),
         status: { not: 'PENDING_PAYMENT' },
+        OR: identity,
       },
       select: { id: true },
     });
     if (priorUse) {
-      return { ok: false, error: 'You have already used this code' };
+      return { ok: false, error: 'This code has already been used on a first order' };
     }
   }
 

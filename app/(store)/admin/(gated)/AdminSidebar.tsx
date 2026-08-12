@@ -54,6 +54,7 @@ const NAV: Section[] = [
         ],
       },
       { label: 'Email previews', href: '/admin/email-previews' },
+      { label: 'Label maker', href: '/admin/labels' },
     ],
   },
 ];

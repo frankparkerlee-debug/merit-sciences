@@ -79,6 +79,7 @@ export async function POST(req: Request) {
     lines,
     discountCodeInput: String(body?.discountCode ?? ''),
     buyerEmail: buyer.email,
+    shipping: { line1: buyer.line1, zip: buyer.zip },
   });
   if (isPriceError(priced)) {
     return NextResponse.json({ error: priced.error, field: priced.field }, { status: priced.status });

@@ -208,6 +208,12 @@ export async function POST(req: Request) {
       subtotalCents,
       buyerEmail: buyer?.email ?? null,
       cartQuantity,
+      // Card flow supplies the address here; the PayPal-wallet flow gets its
+      // address from PayPal at approval, so body.shipping may be absent —
+      // the email arm still enforces there.
+      shipping: body.shipping
+        ? { line1: body.shipping.line1 ?? null, zip: body.shipping.zip ?? null }
+        : null,
     });
     if (!v.ok) {
       return NextResponse.json({ error: v.error, field: 'discountCode' }, { status: 400 });
