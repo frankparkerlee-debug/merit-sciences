@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { assignAffiliate, type ActionResult } from './actions';
 
 /**
@@ -11,6 +11,19 @@ import { assignAffiliate, type ActionResult } from './actions';
  * unattributed — and carries the assign form for orders Parker knows came
  * from an affiliate. Accepts slug, email, or the affiliate's discount code.
  */
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="bg-cobalt text-white text-xs font-bold tracking-[0.1em] uppercase px-4 rounded-lg hover:bg-ink transition-colors disabled:opacity-50"
+    >
+      {pending ? 'Booking…' : 'Assign + record'}
+    </button>
+  );
+}
+
 export function AffiliatePanel({
   orderId,
   affiliateSlug,
@@ -20,10 +33,7 @@ export function AffiliatePanel({
   affiliateSlug: string | null;
   commission: { cents: number; rateBp: number; status: string } | null;
 }) {
-  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
-    assignAffiliate,
-    null,
-  );
+  const [state, formAction] = useFormState<ActionResult | null, FormData>(assignAffiliate, null);
 
   return (
     <section className="rounded-2xl border border-cobalt/15 bg-white p-6">
@@ -65,13 +75,7 @@ export function AffiliatePanel({
               defaultValue={affiliateSlug ?? ''}
               className="flex-1 min-h-[40px] border border-ink/20 rounded-lg px-3 text-sm focus:outline-none focus:border-cobalt"
             />
-            <button
-              type="submit"
-              disabled={pending}
-              className="bg-cobalt text-white text-xs font-bold tracking-[0.1em] uppercase px-4 rounded-lg hover:bg-ink transition-colors disabled:opacity-50"
-            >
-              {pending ? 'Booking…' : 'Assign + record'}
-            </button>
+            <SubmitButton />
           </div>
           {state && (
             <p className={`text-xs ${state.ok ? 'text-green-700' : 'text-red-600'}`}>
