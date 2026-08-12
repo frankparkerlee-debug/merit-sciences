@@ -4,7 +4,8 @@ import { prisma } from '@/lib/db';
 import { verifyPayToken } from '@/lib/pay-link';
 import { PayClient } from './PayClient';
 import { headers } from 'next/headers';
-import { isCheckoutHostname } from '@/lib/checkout-domain';
+import { redirect } from 'next/navigation';
+import { isCheckoutHostname, checkoutOrigin } from '@/lib/checkout-domain';
 import { PaymentShellHeader, PaymentShellFooter } from '@/components/PaymentShell';
 
 /**
@@ -33,6 +34,18 @@ export const metadata = {
 type Props = { params: { token: string } };
 
 export default async function PayPage({ params }: Props) {
+  // Payment surface host-pin: when the split checkout domain is armed, this
+  // page must never render (and mount payment SDKs) on the storefront host —
+  // Stripe/PayPal would see the storefront origin. The signed token carries
+  // all state, so a plain redirect is lossless.
+  {
+    const host = headers().get('host');
+    const origin = checkoutOrigin();
+    if (origin && !isCheckoutHostname(host)) {
+      const { token } = params;
+      redirect(`${origin}/pay/${token}`);
+    }
+  }
   const orderId = verifyPayToken(params.token?.trim() || '');
   if (!orderId) notFound();
 
