@@ -45,6 +45,55 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
   // PEPTIDES — repair / growth / signaling
   // ═════════════════════════════════════════════════════════════════════
 
+  // ─── BPC-157 (standalone) ──────────────────────────────────────────
+  // The Wolverine entry above covers BPC-157 only as half of a blend, so
+  // the standalone 10 mg product resolved to nothing and fell through to
+  // the generic catalogue sentence. Keyed on 'bpc-157' so getResearchData
+  // matches it by compound name; the blend keeps resolving via the
+  // 'wolverine' BLEND_TOKEN, which is checked later.
+  'bpc-157': {
+    compoundClass: 'Synthetic pentadecapeptide (stable gastric pentadecapeptide, BPC 157)',
+    discovery:
+      'First characterized at the University of Zagreb by the Sikiric laboratory in the early 1990s as a stable fragment of body protection compound, a polypeptide identified in human gastric juice.',
+    description: [
+      'BPC-157 is a synthetic pentadecapeptide of fifteen amino acids (Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val), derived from a partial sequence of body protection compound, a polypeptide originally isolated from human gastric juice.',
+      'It is distinguished in the peptide literature by unusual stability: it remains intact in human gastric juice for extended periods and requires no carrier for stability in aqueous solution. That property is the reason it appears so frequently in preclinical study designs, where less stable peptides are difficult to administer consistently.',
+      'The published record is preclinical. BPC-157 has been studied extensively in rodent models across gastrointestinal, musculoskeletal and vascular systems, and has not completed controlled human efficacy trials. Literature summarized here describes findings in animal models and should not be read as evidence of clinical effect.',
+    ],
+    mechanism:
+      'Preclinical work has examined BPC-157 in relation to angiogenesis via the VEGF/VEGFR2 axis, modulation of the nitric oxide system, growth hormone receptor expression in fibroblasts, and interactions with dopaminergic and serotonergic signaling. These are proposed mechanisms drawn from animal models and cell culture; none has been established in humans.',
+    halfLife: 'Approximately 4 hours in rat plasma (preclinical). Human pharmacokinetics have not been characterized in the public literature.',
+    solubility: 'Reconstitutes readily in bacteriostatic water at 2-5 mg/mL. Store lyophilized at -20 °C; protect from light.',
+    researchApplications: [
+      'Tendon and ligament repair models',
+      'GI mucosal integrity studies',
+      'Vascular angiogenesis research',
+      'Nitric oxide pathway investigation',
+      'Growth factor receptor expression assays',
+    ],
+    references: [
+      {
+        title: 'Stable Gastric Pentadecapeptide BPC 157-NO-system Relation',
+        authors: 'Sikiric P, Seiwerth S, Rucman R, et al.',
+        journal: 'Current Pharmaceutical Design',
+        year: 2014,
+        doi: '10.2174/13816128113190990411',
+        url: 'https://doi.org/10.2174/13816128113190990411',
+        verify: false,
+      },
+      {
+        title: 'Brain-gut axis and pentadecapeptide BPC 157: Theoretical and practical implications',
+        authors: 'Sikiric P, Rucman R, Turkovic B, et al.',
+        journal: 'Current Neuropharmacology',
+        year: 2016,
+        doi: '10.2174/1570159x13666160502153022',
+        pubmedId: '27138887',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/27138887/',
+        verify: false,
+      },
+    ],
+  },
+
   // ─── Wolverine Blend (BPC-157 + TB-500) ────────────────────────────
   'bpc-157-tb-500': {
     compoundClass: 'Pentadecapeptide (BPC-157) + Thymosin Beta-4 fragment (TB-500) co-formulation',
@@ -1030,12 +1079,228 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
       },
     ],
   },
+
+  // ═════════════════════════════════════════════════════════════════════
+  // GH SECRETAGOGUES / GHRH ANALOGS
+  // ═════════════════════════════════════════════════════════════════════
+
+  // ─── Ipamorelin ────────────────────────────────────────────────────
+  ipamorelin: {
+    compoundClass: 'Selective growth hormone secretagogue (pentapeptide, GHS-R1a agonist)',
+    discovery:
+      'Described by Raun and colleagues at Novo Nordisk in 1998 as the first growth hormone secretagogue with a selectivity profile comparable to GHRH.',
+    description: [
+      'Ipamorelin is a synthetic pentapeptide (Aib-His-D-2-Nal-D-Phe-Lys-NH2) that acts as an agonist at the growth hormone secretagogue receptor GHS-R1a, the same receptor bound by the endogenous peptide ghrelin.',
+      'Its defining characteristic in the literature is selectivity. In the original preclinical characterization, ipamorelin stimulated growth hormone release without the concurrent rises in ACTH, cortisol or prolactin that accompany earlier secretagogues of its class. That separation is why it is so frequently used as a comparator compound in receptor-selectivity work.',
+      'Findings summarized here derive from preclinical and early pharmacological studies. Ipamorelin has not been approved for therapeutic use in any jurisdiction, and this material is supplied strictly for laboratory research.',
+    ],
+    mechanism:
+      'Binds GHS-R1a on pituitary somatotrophs, producing a pulsatile release of growth hormone that mirrors endogenous secretion patterns in preclinical models. Its receptor selectivity is the property most often examined, since it separates GH release from the wider anterior-pituitary response.',
+    halfLife: 'Approximately 2 hours (reported in early pharmacological characterization).',
+    solubility: 'Reconstitutes readily in bacteriostatic water at 2-5 mg/mL. Store lyophilized at -20 °C.',
+    researchApplications: [
+      'GHS-R1a receptor selectivity studies',
+      'Growth hormone pulsatility models',
+      'Comparative secretagogue pharmacology',
+      'Pituitary signaling research',
+    ],
+    references: [
+      {
+        title: 'Ipamorelin, the first selective growth hormone secretagogue',
+        authors: 'Raun K, Hansen BS, Johansen NL, et al.',
+        journal: 'European Journal of Endocrinology',
+        year: 1998,
+        url: 'https://pubmed.ncbi.nlm.nih.gov/?term=Ipamorelin+first+selective+growth+hormone+secretagogue',
+        verify: true,
+      },
+    ],
+  },
+
+  // ─── CJC-1295 w/o DAC + Ipamorelin ─────────────────────────────────
+  'cjc-1295-ipamorelin': {
+    compoundClass: 'Co-formulation: modified GRF(1-29) GHRH analog + selective GH secretagogue',
+    discovery:
+      'CJC-1295 without DAC is a tetrasubstituted analog of the first 29 amino acids of growth hormone-releasing hormone, developed to resist enzymatic degradation. Ipamorelin was characterized at Novo Nordisk in 1998.',
+    description: [
+      'CJC-1295 without DAC — also written Mod GRF (1-29) — is a synthetic 29-amino-acid analog of growth hormone-releasing hormone, carrying four amino acid substitutions that slow degradation by dipeptidyl peptidase-4. Unlike the DAC-conjugated version, it lacks the drug affinity complex and therefore has a substantially shorter duration of action.',
+      'Ipamorelin is a selective agonist at the growth hormone secretagogue receptor GHS-R1a. The two act at different receptors: one at the GHRH receptor, the other at GHS-R1a.',
+      'That receptor separation is the stated rationale for the pairing in the research literature, where complementary-pathway designs are used to examine whether simultaneous stimulation produces a different secretory profile than either compound alone. This co-formulation supplies both peptides in a single lyophilized vial. Preclinical context only.',
+    ],
+    mechanism:
+      'GHRH analogs act at the GHRH receptor on pituitary somatotrophs; GHS-R1a agonists act at the ghrelin receptor and additionally suppress somatostatin tone in preclinical models. Studies of the combination examine whether the two pathways interact additively. Mechanisms described are proposed and derive from animal and in vitro work.',
+    halfLife: 'CJC-1295 w/o DAC: ~30 minutes. Ipamorelin: ~2 hours. Both figures come from pharmacological characterization, not clinical study.',
+    solubility: 'Both peptides reconstitute in bacteriostatic water at 2-5 mg/mL.',
+    researchApplications: [
+      'Complementary-pathway secretagogue studies',
+      'GHRH receptor / GHS-R1a interaction models',
+      'Growth hormone pulsatility research',
+      'Comparative half-life investigation',
+    ],
+    references: [
+      {
+        title: 'Prolonged stimulation of growth hormone and insulin-like growth factor I secretion by CJC-1295, a long-acting analog of GH-releasing hormone',
+        authors: 'Teichman SL, Neale A, Lawrence B, et al.',
+        journal: 'Journal of Clinical Endocrinology & Metabolism',
+        year: 2006,
+        url: 'https://pubmed.ncbi.nlm.nih.gov/?term=Teichman+CJC-1295+growth+hormone+releasing+hormone',
+        verify: true,
+      },
+    ],
+  },
+
+  // ═════════════════════════════════════════════════════════════════════
+  // NEUROPEPTIDES / METABOLIC / COFACTORS
+  // ═════════════════════════════════════════════════════════════════════
+
+  // ─── DSIP ──────────────────────────────────────────────────────────
+  dsip: {
+    compoundClass: 'Delta sleep-inducing peptide (endogenous nonapeptide)',
+    discovery:
+      'Isolated in the 1970s by Monnier and Schoenenberger from the cerebral venous blood of rabbits during electrically induced delta-wave sleep.',
+    description: [
+      'DSIP is a nonapeptide with the sequence Trp-Ala-Gly-Gly-Asp-Ala-Ser-Gly-Glu. It was named for the circumstances of its isolation: it was recovered from the blood of animals in delta-wave sleep and, on transfer, appeared to promote the same state in recipients.',
+      'The peptide has resisted straightforward characterization. Decades of investigation have not established a single receptor or a consistent mechanism, and reported effects span sleep architecture, stress-response modulation and thermoregulation rather than clustering around one system.',
+      'DSIP remains a research compound with no approved therapeutic use. The literature is heterogeneous and largely preclinical; results reported here should be read as observations in study models rather than established effects.',
+    ],
+    mechanism:
+      'No specific DSIP receptor has been definitively identified. Preclinical work has examined interactions with sleep-regulatory circuits, the hypothalamic-pituitary-adrenal axis and opioid signaling, without arriving at consensus. Mechanism should be regarded as unresolved.',
+    halfLife: 'Short — minutes in circulation, per preclinical reports. Not well characterized.',
+    solubility: 'Reconstitutes in bacteriostatic water at 2-5 mg/mL. Store lyophilized at -20 °C, protected from light.',
+    researchApplications: [
+      'Sleep architecture models',
+      'HPA-axis and stress-response research',
+      'Thermoregulation studies',
+      'Neuropeptide receptor identification work',
+    ],
+    references: [
+      {
+        title: 'Delta sleep-inducing peptide (DSIP): a review',
+        authors: 'Graf MV, Kastin AJ',
+        journal: 'Neuroscience & Biobehavioral Reviews',
+        year: 1984,
+        url: 'https://pubmed.ncbi.nlm.nih.gov/?term=Delta+sleep-inducing+peptide+DSIP+review+Graf+Kastin',
+        verify: true,
+      },
+    ],
+  },
+
+  // ─── Glutathione ───────────────────────────────────────────────────
+  glutathione: {
+    compoundClass: 'Endogenous tripeptide antioxidant (gamma-Glu-Cys-Gly)',
+    discovery:
+      'Identified by de Rey-Pailhade in 1888 and structurally characterized by Frederick Gowland Hopkins in the 1920s.',
+    description: [
+      'Glutathione is a tripeptide of glutamate, cysteine and glycine, distinguished by an unusual gamma peptide bond between the glutamate side chain and cysteine — a linkage that makes it resistant to standard peptidase cleavage. It is present in essentially all mammalian cells, frequently at millimolar concentration.',
+      'Its reactive thiol group is the basis of most of what it does. The ratio of reduced glutathione to its oxidized disulfide form is one of the standard readouts of cellular redox state, and the molecule serves as a substrate for the glutathione-S-transferase family in phase II conjugation.',
+      'Unlike most compounds in this catalog, glutathione is endogenous and extensively characterized in the biochemical literature. It is supplied here as a research reagent for laboratory use.',
+    ],
+    mechanism:
+      'Acts as the principal intracellular thiol buffer. Reduces peroxides via glutathione peroxidase, conjugates electrophiles through glutathione-S-transferases, and maintains protein cysteine residues in the reduced state. The GSH/GSSG ratio is widely used as an index of oxidative stress in experimental models.',
+    halfLife: 'Intracellular turnover on the order of hours; plasma half-life of exogenous glutathione is short (minutes).',
+    solubility: 'Highly water-soluble. Reconstitute in bacteriostatic water; solutions oxidize on standing, so prepare fresh for redox-sensitive assays.',
+    researchApplications: [
+      'Oxidative stress and redox-state assays',
+      'Phase II conjugation studies',
+      'GSH/GSSG ratio measurement',
+      'Cellular thiol buffering research',
+    ],
+    references: [
+      {
+        title: 'Glutathione metabolism and its implications for health',
+        authors: 'Wu G, Fang YZ, Yang S, Lupton JR, Turner ND',
+        journal: 'Journal of Nutrition',
+        year: 2004,
+        url: 'https://pubmed.ncbi.nlm.nih.gov/?term=Glutathione+metabolism+and+its+implications+for+health+Wu',
+        verify: true,
+      },
+    ],
+  },
+
+  // ─── SLU-PP-332 ────────────────────────────────────────────────────
+  'slu-pp-332': {
+    compoundClass: 'Synthetic pan-ERR (estrogen-related receptor) agonist — small molecule, not a peptide',
+    discovery:
+      'Developed in the laboratory of Thomas Burris at Saint Louis University and reported from 2023 onward as a synthetic agonist of the estrogen-related receptors.',
+    description: [
+      'SLU-PP-332 is a small-molecule agonist of the estrogen-related receptors ERR-alpha, ERR-beta and ERR-gamma — orphan nuclear receptors that regulate transcriptional programs governing mitochondrial biogenesis and oxidative metabolism. It is not a peptide, and it does not belong to the same structural class as the rest of this catalog.',
+      'It has attracted attention as a candidate "exercise mimetic": in rodent studies it induced transcriptional changes in skeletal muscle overlapping those produced by endurance training, without the training itself.',
+      'The evidence base is early and entirely preclinical. SLU-PP-332 has not entered human trials, no human pharmacokinetic or safety data exist, and its long-term effects are uncharacterized. It is supplied strictly as a research chemical, and the absence of clinical data should be treated as a material limitation rather than a gap awaiting results.',
+    ],
+    mechanism:
+      'Binds and activates the ERR family of orphan nuclear receptors, driving transcription of genes involved in mitochondrial biogenesis, fatty acid oxidation and oxidative phosphorylation. Reported effects derive from rodent models and cell culture.',
+    halfLife: 'Not characterized in the public literature.',
+    solubility: 'A small molecule, not a lyophilized peptide — handling differs from the peptides in this catalog. Consult the lot documentation before preparing solutions.',
+    researchApplications: [
+      'Mitochondrial biogenesis studies',
+      'ERR nuclear receptor pharmacology',
+      'Exercise-mimetic transcriptional models',
+      'Oxidative metabolism research',
+    ],
+    references: [
+      {
+        title: 'Synthetic ERR agonist SLU-PP-332 and metabolic regulation in preclinical models',
+        authors: 'Billon C, Burris TP, et al.',
+        journal: 'Journal of Pharmacology and Experimental Therapeutics',
+        year: 2023,
+        url: 'https://pubmed.ncbi.nlm.nih.gov/?term=SLU-PP-332+ERR+agonist+Billon+Burris',
+        verify: true,
+      },
+    ],
+  },
+
+  // ─── Tesamorelin + Ipamorelin ──────────────────────────────────────
+  'tesamorelin-ipamorelin': {
+    compoundClass: 'Co-formulation: stabilized GHRH(1-44) analog + selective GH secretagogue',
+    discovery:
+      'Tesamorelin is a trans-3-hexenoyl-modified analog of human GHRH(1-44). Ipamorelin was characterized at Novo Nordisk in 1998.',
+    description: [
+      'Tesamorelin is a synthetic analog of the full 44-amino-acid growth hormone-releasing hormone, stabilized by a trans-3-hexenoyl group at the N-terminus that slows enzymatic degradation. The molecule is approved as a prescription drug in the United States under a separate brand for a specific indication; that approval belongs to the drug product and its trials, not to this research material.',
+      'Ipamorelin is a selective agonist at the growth hormone secretagogue receptor GHS-R1a, notable for stimulating growth hormone release without the concurrent ACTH, cortisol and prolactin rises seen with earlier secretagogues.',
+      'This co-formulation supplies both in a single lyophilized vial at 5 mg each. As with other GHRH-analog plus secretagogue pairings, the stated research rationale is that the two act at distinct receptors. The combination itself has not been studied in controlled trials, and no clinical conclusions should be drawn from the individual records of either component.',
+    ],
+    mechanism:
+      'Tesamorelin acts at the GHRH receptor on pituitary somatotrophs; ipamorelin at GHS-R1a. Combination designs examine whether concurrent stimulation of the two receptors alters the secretory profile relative to either alone. Proposed mechanism, drawn from the separate literature of each component.',
+    halfLife: 'Tesamorelin: approximately 26-38 minutes reported for the drug product. Ipamorelin: approximately 2 hours.',
+    solubility: 'Both components reconstitute in bacteriostatic water at 2-5 mg/mL. Store lyophilized at -20 °C.',
+    researchApplications: [
+      'Complementary-pathway secretagogue studies',
+      'GHRH receptor / GHS-R1a interaction models',
+      'Growth hormone axis research',
+    ],
+    references: [
+      {
+        title: 'Effects of tesamorelin on visceral adipose tissue: pooled analysis of phase 3 trials',
+        authors: 'Falutz J, Mamputu JC, Potvin D, et al.',
+        journal: 'Journal of Clinical Endocrinology & Metabolism',
+        year: 2010,
+        url: 'https://pubmed.ncbi.nlm.nih.gov/?term=Falutz+tesamorelin+visceral+adipose+tissue+pooled',
+        verify: true,
+      },
+      {
+        title: 'Ipamorelin, the first selective growth hormone secretagogue',
+        authors: 'Raun K, Hansen BS, Johansen NL, et al.',
+        journal: 'European Journal of Endocrinology',
+        year: 1998,
+        url: 'https://pubmed.ncbi.nlm.nih.gov/?term=Ipamorelin+first+selective+growth+hormone+secretagogue',
+        verify: true,
+      },
+    ],
+  },
+
 };
 
 // Common name / research-code → canonical RESEARCH_DATA key. Lets the
 // PDP resolve research content whether the product handle is a chemical
 // code (ly3298176), a real name (tirzepatide), or a blend label.
 const NAME_TO_KEY: Record<string, string> = {
+  ipamorelin: 'ipamorelin',
+  'slu-pp-332': 'slu-pp-332',
+  'slu-pp-332-injectable': 'slu-pp-332',
+  'cjc-1295-w-o-dac-10-ipa-10': 'cjc-1295-ipamorelin',
+  'cjc-1295-w-o-dac-10-ipa-10-20mg': 'cjc-1295-ipamorelin',
+  dsip: 'dsip',
+  glutathione: 'glutathione',
+  'bpc-157': 'bpc-157',
   tirzepatide: 'ly3298176',
   ly3298176: 'ly3298176',
   retatrutide: 'ly3437943',

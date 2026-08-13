@@ -4,6 +4,9 @@ import { useCart } from '@/lib/cart';
 import { money } from '@/lib/product-types';
 import Link from 'next/link';
 
+/* Metadata for this route lives in ./layout.tsx — a client component
+   cannot export `metadata`, and doing so here silently did nothing. */
+
 export default function CartPage() {
   const { lines, remove, totalCents } = useCart();
 

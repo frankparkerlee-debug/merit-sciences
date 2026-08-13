@@ -17,6 +17,7 @@ import {
   type Family,
 } from '@/lib/catalog-meta';
 import { getResearchData } from '@/lib/research-data';
+import { COMPOUND_META } from '@/lib/monographs';
 import { ProductBuyBox } from './ProductBuyBox';
 import { PdpStackAddButton } from './PdpStackAddButton';
 import { JsonLd } from '@/components/JsonLd';
@@ -81,6 +82,19 @@ export async function generateMetadata({ params }: Props) {
   const cls = research?.compoundClass;
   const url = abs(`/products/${p.handle}`);
   const image = abs(productImage(p.imageUrl));
+  // Social cards render at ~1.91:1. Handing them the square product shot
+  // centre-cropped every share, cutting off the cap and the base of the
+  // vial, so each product ships a purpose-built 1200x630 card.
+  const share = abs(`/products/share-${p.handle}.jpg`);
+
+  // Synonyms the compound is actually searched by — development codes,
+  // receptor-class names, common misspellings of the trade name. These are
+  // where long-tail and answer-engine queries land, and they are already
+  // curated per compound for the monograph library.
+  const monograph = COMPOUND_META.find(
+    (m) => m.product?.handle === p.handle || m.slug === p.handle || m.key === p.handle,
+  );
+  const synonyms = monograph?.aka ?? [];
 
   // No "| Merit Sciences" here — the root layout's title template appends
   // "· Merit Sciences" (doubling it produced "… | Merit Sciences · Merit Sciences").
@@ -101,6 +115,10 @@ export async function generateMetadata({ params }: Props) {
       `${name} COA`,
       `${name} research`,
       ...(cls ? [cls] : []),
+      ...synonyms,
+      ...synonyms.map((a) => `${a} research`),
+      `${name} purity`,
+      `${name} peptide`,
       'research compound',
       'HPLC tested',
       'Merit Sciences',
@@ -112,14 +130,17 @@ export async function generateMetadata({ params }: Props) {
       title: `${name} ${p.vialSize} · Merit Sciences`,
       description,
       images: [
-        { url: image, width: 1200, height: 1200, alt: `${name} ${p.vialSize} research vial — Merit Sciences` },
+        { url: share, width: 1200, height: 630, alt: `${name} ${p.vialSize} — ${cls ?? 'research compound'} · Merit Sciences` },
+        // Square fallback for surfaces that prefer 1:1. Dimensions match the
+        // file: it is 1024, and the previous 1200 here was simply wrong.
+        { url: image, width: 1024, height: 1024, alt: `${name} ${p.vialSize} research vial — Merit Sciences` },
       ],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${name} ${p.vialSize}`,
       description,
-      images: [image],
+      images: [share],
     },
   };
 }
@@ -1234,7 +1255,7 @@ function ProductGallery({
             >
               <Image
                 src={img}
-                alt=""
+                alt={`${product.title} ${product.vialSize} — view ${i + 1}`}
                 fill
                 sizes="100px"
                 className="object-contain p-2"
