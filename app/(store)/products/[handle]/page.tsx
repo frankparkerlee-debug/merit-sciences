@@ -278,7 +278,7 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-              Pharmacy-Grade · ISO-Certified
+              Independently Assayed · ISO-Certified
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
@@ -1122,7 +1122,7 @@ export default async function ProductPage({ params }: Props) {
                   <div className="relative aspect-square bg-cream overflow-hidden">
                     <Image
                       src={productImage(p.imageUrl)}
-                      alt={p.title}
+                      alt={`A sealed Merit ${p.title} vial`}
                       fill
                       sizes="(max-width: 640px) 50vw, 25vw"
                       className="object-contain p-7 group-hover:scale-[1.04] transition-transform duration-500"
@@ -1207,7 +1207,7 @@ function ProductGallery({
         />
         <Image
           src={productImage(product.imageUrl)}
-          alt={product.title}
+          alt={`A sealed Merit ${product.title} vial, ${product.vialSize} of lyophilized research compound`}
           fill
           priority
           sizes="(max-width: 1024px) 100vw, 50vw"

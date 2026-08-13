@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'About',
   description:
-    'Why Merit Sciences exists: pharmacy-grade compounds, tested and documented per lot, without the pharmacy markup. HPLC ≥99% purity, a COA with every shipment, shipped from Dallas.',
+    'Why Merit Sciences exists: lab-verified compounds, tested and documented per lot, priced like the material they are. HPLC ≥99% purity, a COA with every shipment, shipped from Dallas.',
 };
 
 export default function AboutPage() {
@@ -33,7 +33,7 @@ export default function AboutPage() {
         >
           <Image
             src="/brand/merit-vial-canonical-transparent.webp"
-            alt=""
+            alt="A sealed Merit Sciences vial of lyophilized research compound with its Research Use Only label"
             fill
             priority
             sizes="(max-width: 1400px) 26vw, 440px"

@@ -7,9 +7,31 @@ import { LeadCaptureForm } from './LeadCaptureForm';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Practitioner Program — Merit Sciences',
+  title: { absolute: 'Practitioner Program — Merit Sciences' },
   description:
-    'Wholesale account pricing for licensed practitioners. Compounded to USP <797> in a licensed US facility, assayed by an independent laboratory, COA published on every lot. Ships 48hr from Dallas. No minimums.',
+    'Account pricing for licensed practitioners. USP <797> compounded, independently assayed, certificate published on every lot. Ships 48hr from Dallas. No minimums.',
+  alternates: { canonical: '/practitioners' },
+  openGraph: {
+    title: 'Merit Sciences Practitioner Program — sourcing your practice can stand behind',
+    description:
+      'Verified-account access for licensed practitioners. USP <797> compounded, independently assayed, certificate published on every lot. No minimums, no contracts.',
+    url: 'https://meritsciences.com/practitioners',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Merit Sciences Practitioner Program — USP <797> compounded research compounds, every lot independently assayed with a published certificate of analysis.',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image' as const,
+    title: 'Merit Sciences Practitioner Program',
+    description:
+      'Verified-account access for licensed practitioners. USP <797> compounded, independently assayed, certificate on every lot.',
+    images: ['/og-image.jpg'],
+  },
 };
 
 /* ─────────────────────────────────────────────────────────────────────────
