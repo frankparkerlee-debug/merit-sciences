@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getPayoutPreview, COMMISSION_HOLD_DAYS } from '@/lib/affiliate-payouts';
 import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
 import { RunPayoutsButton } from './RunPayoutsButton';
+import { RetryPayoutButton } from './RetryPayoutButton';
 
 export const metadata = { title: 'Affiliate payouts — Merit Admin' };
 export const dynamic = 'force-dynamic';
@@ -181,6 +182,7 @@ export default async function AffiliatePayoutsPage() {
               <Td className="tabular-nums">{money(p.totalCents)}</Td>
               <Td>
                 <PayoutStatusPill status={p.status} reason={p.failureReason} />
+                {p.status === 'FAILED' && <RetryPayoutButton payoutId={p.id} />}
               </Td>
             </tr>
           ))}
