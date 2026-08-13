@@ -299,7 +299,7 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-              Pharmacy-Grade · ISO-Certified
+              Independently Assayed · ISO-Certified
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />

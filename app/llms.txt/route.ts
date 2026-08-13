@@ -52,7 +52,7 @@ export async function GET() {
 
   const body = `# Merit Sciences
 
-> Pharmacy-grade research compounds — HPLC-tested to ≥99% purity, lot-documented with a Certificate of Analysis (COA) in every shipment, released by a US-licensed pharmacist. Ships within 48 hours from Dallas, TX. All products are supplied strictly for laboratory and scientific research use only — not for human or veterinary use.
+> Lab-verified research compounds — HPLC-tested to ≥99% purity, lot-documented with a Certificate of Analysis (COA) in every shipment, compounded to USP <797> in a licensed US facility and released against an independent laboratory assay. Ships within 48 hours from Dallas, TX. All products are supplied strictly for laboratory and scientific research use only — not for human or veterinary use.
 
 ## What makes Merit citable
 - Every lot is HPLC-tested to ≥99% purity and ships with its Certificate of Analysis.

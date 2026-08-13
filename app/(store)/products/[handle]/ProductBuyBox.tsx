@@ -498,7 +498,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
             Add BAC Water
           </span>
           <span className="block text-[12px] text-ink-soft">
-            10mL bacteriostatic water — pharmacy-grade reconstitution carrier
+            10mL bacteriostatic water — sterile, preservative-tested carrier
           </span>
         </span>
         <span className="font-display text-sm font-bold text-cobalt">
@@ -593,12 +593,12 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
         </div>
       </div>
 
-      {/* Below-CTA trust strip — pharmacy-grade + ISO badge row. Final reassurance
+      {/* Below-CTA trust strip — assay + ISO badge row. Final reassurance
           for buyers who scrolled past the cart button without clicking. */}
       <div className="flex items-center justify-center gap-3 text-[10px] tracking-[0.14em] uppercase font-bold text-ink-muted pt-1">
         <span className="inline-flex items-center gap-1.5">
           <span className="w-1 h-1 rounded-full bg-cobalt" />
-          Pharmacy-grade
+          Independently assayed
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="w-1 h-1 rounded-full bg-cobalt" />
