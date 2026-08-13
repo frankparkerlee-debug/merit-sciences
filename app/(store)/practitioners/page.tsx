@@ -19,12 +19,15 @@ export const metadata = {
    The rebuild fixed four things the audit surfaced on the previous version:
 
    1. THE SAVINGS CLAIM WAS FALSE. The page promised "~30%" three times and
-      built an $18,000/yr math box on it. Real physician pricing across 62
-      SKUs is mostly 12–14%; only the two GLPs clear 30%. Rather than pick a
-      new adjective, this page now renders the ACTUAL retail-vs-account
-      prices straight from the catalog — live, per SKU, with the real dollar
-      delta. A number a practitioner can verify beats a percentage they have
-      to trust, and it can never drift from the price book again.
+      built an $18,000/yr math box on it, while real physician pricing across
+      62 SKUs is mostly 12–14%. Removed.
+
+      A live retail-vs-account price table briefly replaced it and was ALSO
+      removed (Parker, same day): account pricing is set PER PRACTICE, so any
+      public table either misleads a practice on different terms or anchors
+      the wrong number before the conversation starts. Merit does not publish
+      practitioner pricing — it lives in the portal, post-verification. What
+      belongs on the public page is the release-testing evidence (§03).
 
    2. IT NARRATED HUMAN USE. "Same doses, same patient programs", "without
       changing a single patient price", "don't change your protocols" — on a
@@ -61,54 +64,28 @@ export const metadata = {
    defensibility and lets the price table make the money argument.
    ───────────────────────────────────────────────────────────────────────── */
 
-/** Live retail-vs-account pricing for the comparison table. Reads the price
- *  book directly so the page can never quote a discount the catalog doesn't
- *  honour — the exact failure mode of the version this replaces. */
-async function priceComparison() {
+/** Newest published lot — the assay panel is rendered from real published
+ *  values, never illustrative ones. Degrades to the static method table if
+ *  the DB is unreachable. */
+async function latestLot() {
   try {
-    const rows = await prisma.product.findMany({
+    return await prisma.coa.findFirst({
       where: {
-        status: 'ACTIVE',
-        physicianPriceCents: { not: null, gt: 0 },
-        NOT: [{ title: { contains: 'water', mode: 'insensitive' } }],
+        NOT: [
+          { compound: { contains: 'water', mode: 'insensitive' } },
+          { compound: { contains: 'bacteriostatic', mode: 'insensitive' } },
+        ],
       },
-      select: { handle: true, title: true, vialSize: true, priceCents: true, physicianPriceCents: true },
-      orderBy: { priceCents: 'desc' },
-      take: 60,
+      orderBy: { createdAt: 'desc' },
+      select: { lotId: true, compound: true, purity: true, testedDate: true },
     });
-    const priced = rows
-      .map((r) => {
-        const retail = Number(r.priceCents);
-        const account = Number(r.physicianPriceCents);
-        return {
-          handle: r.handle,
-          title: r.title,
-          vialSize: r.vialSize,
-          retail,
-          account,
-          saveCents: retail - account,
-          savePct: retail > 0 ? Math.round(((retail - account) / retail) * 100) : 0,
-        };
-      })
-      .filter((r) => r.saveCents > 0);
-    // Best savings first — the table opens on the strongest true numbers.
-    priced.sort((a, b) => b.savePct - a.savePct);
-    return {
-      rows: priced.slice(0, 8),
-      maxPct: priced.length ? priced[0].savePct : 0,
-      count: priced.length,
-    };
   } catch {
-    return { rows: [], maxPct: 0, count: 0 };
+    return null;
   }
 }
 
-function money(cents: number): string {
-  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 export default async function PractitionersPage() {
-  const { rows, maxPct, count } = await priceComparison();
+  const lot = await latestLot();
 
   return (
     <div className="bg-white text-ink">
@@ -174,10 +151,10 @@ export default async function PractitionersPage() {
                 Apply for an account
               </Link>
               <Link
-                href="#pricing"
+                href="#testing"
                 className="border-2 border-ink text-ink px-8 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-ink hover:text-white transition"
               >
-                See account pricing
+                How every lot is tested
               </Link>
             </div>
           </div>
@@ -227,76 +204,102 @@ export default async function PractitionersPage() {
         </div>
       </section>
 
-      {/* ════════════ §03 · THE NUMBERS — live price book ════════════
-          The heart of the page. Real retail vs real account price, pulled
-          from the catalog at request time. Replaces the "~30% savings"
-          claim the old page made and the price book did not support. */}
-      {rows.length > 0 && (
-        <section id="pricing" className="bg-white">
-          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
-              <div>
-                <p className="font-mono text-[11px] tracking-[0.16em] uppercase text-cobalt font-bold mb-4">
-                  Account pricing · live from the catalog
-                </p>
-                <h2
-                  className="font-poster font-black uppercase leading-[0.94] tracking-[-0.04em] max-w-[15ch] text-ink"
-                  style={{ fontSize: 'clamp(28px, 4.4vw, 64px)' }}
-                >
-                  What you&rsquo;d actually pay.
-                </h2>
-              </div>
-              <p className="max-w-[40ch] text-[14.5px] leading-[1.6] text-ink-soft lg:pb-3">
-                Not a percentage to take on faith — the real numbers, on {count} stocked compounds.
-                Savings reach <b className="text-ink">{maxPct}%</b> and vary by compound.
+      {/* ════════════ §03 · HOW EVERY LOT IS TESTED ════════════
+             Replaces the public retail-vs-account price table that briefly
+             shipped here. Account pricing is per-practice and lives in the
+             portal only — a public table either misleads a practice whose
+             pricing differs or anchors the wrong number before the
+             conversation starts. What belongs on a public page is the
+             evidence: the actual assay panel, by method and specification,
+             from an ISO/IEC 17025 accredited laboratory. */}
+      <section id="testing" className="bg-white">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
+            <div>
+              <p className="font-mono text-[11px] tracking-[0.16em] uppercase text-cobalt font-bold mb-4">
+                Release testing · every lot, no exceptions
               </p>
+              <h2
+                className="font-poster font-black uppercase leading-[0.94] tracking-[-0.04em] max-w-[16ch] text-ink"
+                style={{ fontSize: 'clamp(28px, 4.4vw, 64px)' }}
+              >
+                Tested to clinical standards.
+              </h2>
             </div>
-
-            <div className="border border-ink/12 overflow-x-auto bg-white">
-              <table className="w-full min-w-[560px] text-left">
-                <thead>
-                  <tr className="border-b border-ink/12 bg-cream font-mono text-[10px] tracking-[0.14em] uppercase text-ink-muted">
-                    <th className="px-5 lg:px-6 py-3.5 font-normal">Compound</th>
-                    <th className="px-5 lg:px-6 py-3.5 font-normal text-right">Retail</th>
-                    <th className="px-5 lg:px-6 py-3.5 font-normal text-right">Your account</th>
-                    <th className="px-5 lg:px-6 py-3.5 font-normal text-right">You save</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.handle} className="border-b border-ink/8 last:border-b-0 hover:bg-cream/60 transition-colors">
-                      <td className="px-5 lg:px-6 py-4">
-                        <span className="font-poster font-extrabold text-[15px] lg:text-[17px] tracking-[-0.02em] text-ink">
-                          {r.title}
-                        </span>
-                        <span className="block font-mono text-[10.5px] text-ink-muted mt-0.5">{r.vialSize}</span>
-                      </td>
-                      <td className="px-5 lg:px-6 py-4 text-right font-mono text-[13px] text-ink-muted line-through tabular-nums">
-                        {money(r.retail)}
-                      </td>
-                      <td className="px-5 lg:px-6 py-4 text-right font-poster font-black text-[15px] lg:text-[17px] tabular-nums text-ink">
-                        {money(r.account)}
-                      </td>
-                      <td className="px-5 lg:px-6 py-4 text-right tabular-nums">
-                        <span className="font-poster font-black text-[15px] lg:text-[17px] text-cobalt">
-                          {money(r.saveCents)}
-                        </span>
-                        <span className="block font-mono text-[10.5px] text-ink-muted mt-0.5">{r.savePct}% off</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <p className="mt-5 font-mono text-[10.5px] leading-[1.7] text-ink-muted max-w-[80ch]">
-              Account pricing applies automatically across the catalog once you&rsquo;re signed in, on
-              every pack size. Full price list is visible in your portal after approval — we
-              don&rsquo;t publish account pricing publicly.
+            <p className="max-w-[42ch] text-[14.5px] leading-[1.6] text-ink-soft lg:pb-3">
+              Assayed by <b className="text-ink">ILS Laboratories</b>, an ISO/IEC 17025 accredited
+              lab — independent of us. Every lot clears the full panel below before it is released,
+              and the signed certificate publishes before you can buy it.
             </p>
           </div>
-        </section>
-      )}
+
+          <div className="border border-ink/12 overflow-x-auto bg-white">
+            <table className="w-full min-w-[640px] text-left">
+              <thead>
+                <tr className="border-b border-ink/12 bg-cream font-mono text-[10px] tracking-[0.14em] uppercase text-ink-muted">
+                  <th className="px-5 lg:px-6 py-3.5 font-normal">Analyte</th>
+                  <th className="px-5 lg:px-6 py-3.5 font-normal">Method</th>
+                  <th className="px-5 lg:px-6 py-3.5 font-normal">Specification</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['Identity', 'HPLC-RTM vs. reference standard', 'Must confirm the labelled compound'],
+                  ['Peptide purity', 'HPLC, main-peak area', '≥ 95.0% (published figure is the measured one)'],
+                  ['Net peptide content', 'Quantitative assay', 'Reported per lot'],
+                  ['Heavy metals', 'ICP-MS', 'As ≤1.5 · Cd ≤0.5 · Pb ≤1.0 · Hg ≤1.5 · Cr ≤10.0 ppm'],
+                  ['Sterility', 'USP <71>', 'Screened before release'],
+                  ['Bacterial endotoxin', 'USP <85>', 'Screened before release'],
+                  ['Particulate matter', 'USP <788>', 'Screened before release'],
+                  ['Fentanyl', 'Immunoassay, 50 ng/mL cutoff', 'Not detected — printed on the certificate'],
+                ].map(([analyte, method, spec]) => (
+                  <tr key={analyte} className="border-b border-ink/8 last:border-b-0 hover:bg-cream/60 transition-colors">
+                    <td className="px-5 lg:px-6 py-3.5 font-poster font-extrabold text-[14.5px] tracking-[-0.02em] text-ink whitespace-nowrap">
+                      {analyte}
+                    </td>
+                    <td className="px-5 lg:px-6 py-3.5 font-mono text-[11.5px] text-ink-soft">{method}</td>
+                    <td className="px-5 lg:px-6 py-3.5 text-[13.5px] text-ink-soft">{spec}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center border border-ink/12 bg-cream px-6 py-5">
+            <div>
+              <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-muted mb-1.5">
+                {lot ? `Most recent published lot · ${lot.lotId}` : 'Most recent published lot'}
+              </p>
+              <p className="text-[14.5px] text-ink-soft">
+                {lot ? (
+                  <>
+                    <b className="text-ink">{lot.compound}</b> — purity{' '}
+                    <b className="text-ink">{lot.purity}</b> by HPLC
+                    {lot.testedDate ? `, tested ${lot.testedDate}` : ''}. Full certificate, including
+                    the chromatogram and heavy-metals panel, is public.
+                  </>
+                ) : (
+                  <>
+                    Every published certificate — chromatogram, heavy-metals panel and fentanyl
+                    screen included — is public and searchable by lot number.
+                  </>
+                )}
+              </p>
+            </div>
+            <Link
+              href="/coa"
+              className="justify-self-start lg:justify-self-end bg-ink text-white px-7 py-3.5 text-[11px] font-poster font-black tracking-[0.16em] uppercase hover:bg-cobalt transition whitespace-nowrap"
+            >
+              Read a lab report →
+            </Link>
+          </div>
+
+          <p className="mt-5 font-mono text-[10.5px] leading-[1.7] text-ink-muted max-w-[86ch]">
+            Account pricing is set per practice and is visible in your portal once your license and
+            NPI are verified. We don&rsquo;t publish practitioner pricing.
+          </p>
+        </div>
+      </section>
 
       {/* ════════════ §04 · WHY THE PRICE CAN BE LOWER ════════════ */}
       <section className="bg-cream border-y border-ink/10">
