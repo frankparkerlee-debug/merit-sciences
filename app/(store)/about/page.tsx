@@ -233,7 +233,7 @@ export default function AboutPage() {
             <Audience
               tag="Practitioners"
               title="Open an account"
-              body="A verified-account program for licensed practitioners — account-tier pricing, the same documentation, no minimums. Already trusted by 40+ practices across Texas."
+              body="A verified-account program for licensed practitioners — account pricing set per practice, the same lot documentation, no minimums and no contracts. License and NPI verified before access."
               cta="Practitioner Program"
               href="/practitioners"
             />
