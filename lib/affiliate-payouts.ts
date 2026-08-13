@@ -35,7 +35,24 @@ import { sendStripeTransfer, transfersReady } from '@/lib/stripe-connect';
 // chargeback period so we don't pay out money we may claw back.
 export const COMMISSION_HOLD_DAYS = 30;
 
-const MIN_CENTS = AFFILIATE_PROGRAM.payoutMinUsd * 100;
+/** Payout minimum. Normally $50 (AFFILIATE_PROGRAM.payoutMinUsd) — the
+ *  threshold that keeps transfer fees from eating small balances. Overridable
+ *  via PAYOUT_MIN_USD so a test run can pay a $1 balance without a code
+ *  change, and so a promo period can lower it temporarily. Unset the env var
+ *  to return to the program default; a malformed value is ignored rather than
+ *  silently paying everyone. */
+function minCents(): number {
+  const raw = process.env.PAYOUT_MIN_USD;
+  if (raw !== undefined) {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n >= 0) return Math.round(n * 100);
+    console.warn(`[payouts] ignoring malformed PAYOUT_MIN_USD=${raw}`);
+  }
+  return AFFILIATE_PROGRAM.payoutMinUsd * 100;
+}
+function minLabel(): string {
+  return `$${(minCents() / 100).toFixed(2).replace(/\.00$/, '')}`;
+}
 
 export type AffiliatePayoutPreview = {
   affiliateId: string;
@@ -123,12 +140,12 @@ export async function getPayoutPreview(): Promise<AffiliatePayoutPreview[]> {
   for (const p of byAff.values()) {
     if (!p.method) {
       p.blockedReason = 'Direct deposit not connected (payouts are Stripe-only)';
-    } else if (p.eligibleCents < MIN_CENTS) {
+    } else if (p.eligibleCents < minCents()) {
       if (p.heldCents > 0 && p.earliestMatureAt) {
         const d = p.earliestMatureAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         p.blockedReason = `In ${COMMISSION_HOLD_DAYS}-day refund hold — matures ${d}`;
       } else {
-        p.blockedReason = `Below $${AFFILIATE_PROGRAM.payoutMinUsd} minimum`;
+        p.blockedReason = `Below ${minLabel()} minimum`;
       }
     }
     p.payable = !p.blockedReason;
@@ -190,7 +207,7 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
       if (commissions.length === 0) return null;
 
       const totalCents = commissions.reduce((s, c) => s + Number(c.commissionCents), 0);
-      if (totalCents < MIN_CENTS) return null;
+      if (totalCents < minCents()) return null;
 
       const periodStart = commissions.reduce(
         (min, c) => (c.occurredAt < min ? c.occurredAt : min),
