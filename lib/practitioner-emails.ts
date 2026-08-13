@@ -108,7 +108,7 @@ const PROSPECT: EmailDefinition[] = [
       </ul>
       <p>If you&rsquo;d rather skip the series and apply now, it takes about four minutes.</p>
       ${btn('Apply for portal access →', `${ctx.siteUrl}/practitioners#apply`)}
-      <p style="font-size:13px;color:${INK_SOFT};margin-top:18px;">&mdash; The Merit pharmacy team</p>
+      <p style="font-size:13px;color:${INK_SOFT};margin-top:18px;">&mdash; The Merit compounding team</p>
     `,
   },
   {
@@ -169,7 +169,7 @@ const PROSPECT: EmailDefinition[] = [
     subject: () => 'The supplier story you can name',
     body: (ctx) => `
       <p>A lot of supplier stories are vapor — &ldquo;manufactured in a sterile lab, tested rigorously&rdquo; with no entity name, no facility address, no inspectable chain.</p>
-      <p>Ours: an <strong>ISO-certified US facility in Dallas</strong>. US-licensed pharmacy team. Lot-documented and named in your COA.</p>
+      <p>Ours: an <strong>ISO-certified US facility in Dallas</strong>, compounding to USP &lt;797&gt;. Lot-documented, third-party assayed, and named on your COA.</p>
       <p>That&rsquo;s what we mean when we say sourcing that holds up to scrutiny.</p>
       ${btn('Apply →', `${ctx.siteUrl}/practitioners#apply`)}
     `,
@@ -237,7 +237,7 @@ const PROSPECT: EmailDefinition[] = [
       <p>Quick check-in. We don&rsquo;t want to add to your inbox without value.</p>
       <p>If something specific would help you decide — sample COA, manufacturing walkthrough video, conversation with our chief pharmacist — reply to this email and we&rsquo;ll get it to you.</p>
       <p>If now&rsquo;s not the right time, that&rsquo;s fine too. We&rsquo;re not going anywhere.</p>
-      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit pharmacy team</p>
+      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
       ${btn('Apply →', `${ctx.siteUrl}/practitioners#apply`)}
     `,
   },
@@ -268,7 +268,7 @@ const ONBOARDING: EmailDefinition[] = [
     subject: () => 'Your first Merit order — where practitioners start',
     body: (ctx) => `
       <p>Welcome aboard. Three common starting points we see from new practitioner accounts:</p>
-      <p><strong>1. Mirror your current protocol.</strong> Order what you already use — same compound, same vial size. Evaluate Merit next to your current supplier.</p>
+      <p><strong>1. Match your current order.</strong> Same compound, same vial size as you source today — the cleanest way to compare Merit against your current supplier on quality and documentation.</p>
       <p><strong>2. Diversify your supply.</strong> Add Merit as a second supplier alongside your current one. Reduces single-source risk.</p>
       <p><strong>3. Start small.</strong> A 1-2 vial order on a single SKU lets you see the packaging, the COA, and the dispatch speed before committing volume.</p>
       <p>Whatever you start with, your account-tier pricing applies the moment you sign in.</p>
@@ -310,7 +310,7 @@ const ONBOARDING: EmailDefinition[] = [
         <li><strong>Tracking number</strong> in your portal as soon as the label prints</li>
         <li><strong>COA archive</strong> in your portal — pull it anytime</li>
       </ul>
-      <p>If anything&rsquo;s off when the box arrives, reply directly to the order confirmation — you reach the pharmacy team.</p>
+      <p>If anything&rsquo;s off when the box arrives, reply directly to the order confirmation — you reach the team that packed it.</p>
       ${btn('View catalog →', `${ctx.siteUrl}/catalog`)}
     `,
   },
@@ -334,7 +334,7 @@ const ONBOARDING: EmailDefinition[] = [
       <p>Quick check. We saw your account is active but haven&rsquo;t seen a first order yet.</p>
       <p>If something specific would help — pricing detail on a compound, lead-time confirmation, a conversation about volume — reply directly.</p>
       <p>We&rsquo;re trying to be useful, not noisy.</p>
-      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit pharmacy team</p>
+      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
     `,
   },
   {
@@ -370,7 +370,7 @@ const RETENTION: EmailDefinition[] = [
     subject: () => 'Your first lot is documented',
     body: (ctx) => `
       <p>Quick note: your first order was delivered, and the COA + lot data is now archived in your portal under Order History. Pull it anytime.</p>
-      <p>If anything in the shipment was off — quality, packaging, documentation — reply to this email and you&rsquo;ll reach the pharmacy team directly.</p>
+      <p>If anything in the shipment was off — quality, packaging, documentation — reply to this email and you&rsquo;ll reach the compounding team directly.</p>
       <p>If everything was right, here&rsquo;s where most practitioners go next:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
         <li><strong>Reorder same SKU</strong> — keeps lot continuity for your records</li>
@@ -386,7 +386,7 @@ const RETENTION: EmailDefinition[] = [
     subject: (ctx) => `What practitioners commonly stack with ${ctx.firstCompound ?? 'your formulary'}`,
     body: (ctx) => `
       <p>Practitioners ordering ${ctx.firstCompound ?? '[that compound]'} frequently also order related compounds in adjacent research families.</p>
-      <p>(These are observed ordering patterns, not protocol guidance — your practice, your call.)</p>
+      <p>(Observed ordering patterns across accounts — not guidance of any kind. Your practice, your call.)</p>
       <p>If any of these are already in your formulary at another supplier, your Merit pricing might surprise you.</p>
       ${btn('Browse the catalog →', `${ctx.siteUrl}/catalog`)}
     `,
@@ -429,7 +429,7 @@ const RETENTION: EmailDefinition[] = [
         <li><strong>Multi-provider account</strong> if your practice has multiple ordering clinicians</li>
       </ul>
       <p>If any of these are interesting, reply and we&rsquo;ll set it up.</p>
-      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit pharmacy team</p>
+      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
     `,
   },
   {
@@ -474,7 +474,7 @@ const RETENTION: EmailDefinition[] = [
       <p>You&rsquo;ve been on Merit for about 90 days. One reflection question:</p>
       <p><strong>What&rsquo;s working, and what&rsquo;s not?</strong></p>
       <p>We read every reply. If there&rsquo;s a compound you&rsquo;d like us to add, a portal feature missing, or an experience issue — we want to know.</p>
-      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit pharmacy team</p>
+      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
     `,
   },
   {
@@ -485,7 +485,7 @@ const RETENTION: EmailDefinition[] = [
     body: (ctx) => `
       <p>If Merit has been a good fit, the highest compliment is an introduction.</p>
       <p>Reply with a name + email and we&rsquo;ll reach out gently — no spam, no pressure. If they convert to an account, we credit your account on the next invoice.</p>
-      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit pharmacy team</p>
+      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
     `,
   },
   {
@@ -502,7 +502,7 @@ const RETENTION: EmailDefinition[] = [
         <li>Average dispatch time</li>
       </ul>
       <p>Your COA archive is complete. Reorder shortcuts in your portal. Thanks for the year.</p>
-      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit pharmacy team</p>
+      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
     `,
   },
   {
@@ -514,12 +514,12 @@ const RETENTION: EmailDefinition[] = [
       <p>For practitioners ordering at scale, we have a few features worth a conversation:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
         <li><strong>Custom pricing tier</strong> for sustained volume</li>
-        <li><strong>Dedicated account contact</strong> at the pharmacy</li>
+        <li><strong>Dedicated account contact</strong> for your practice</li>
         <li><strong>Batch reservation</strong> for forecasted volume</li>
         <li><strong>Priority dispatch</strong> windows</li>
       </ul>
       <p>If this fits your practice trajectory, reply to schedule 15 minutes.</p>
-      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit pharmacy team</p>
+      <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
     `,
   },
 ];
