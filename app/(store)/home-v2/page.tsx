@@ -224,7 +224,7 @@ export default async function HomeV2() {
       {/* ══ WHY — approved image-led feature (cobalt vial pattern) ══ */}
       <section id="why" className="max-w-[1400px] mx-auto px-6 lg:px-12 py-20 lg:py-28 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         <div className="relative aspect-[4/3] rounded-[28px] overflow-hidden shadow-[0_40px_90px_-40px_rgba(11,15,25,0.4)]">
-          <Image src="/brand/scene-pattern-cobalt.webp" alt="Merit research-compound vials — pharmacy-grade, lot-verified" fill sizes="(max-width:1024px) 100vw, 620px" className="object-cover" />
+          <Image src="/brand/scene-pattern-cobalt.webp" alt="A wall of sealed Merit research-compound vials, each lot-numbered and independently assayed" fill sizes="(max-width:1024px) 100vw, 620px" className="object-cover" />
         </div>
         <div>
           <p className="eyebrow text-cobalt mb-3">— Why Merit</p>

@@ -10,6 +10,37 @@ import { prisma } from '@/lib/db';
 // a time, well under the cap.
 export const dynamic = 'force-dynamic';
 
+/* Homepage-specific social + SERP impression. The layout default is written
+   generically because it also rides on the /access ad gate; the homepage can
+   afford to lead with the locked positioning line. */
+export const metadata = {
+  title: { absolute: 'Merit Sciences — Same Stack. Better Source.' },
+  description:
+    'Research compounds compounded to USP <797> in a licensed US facility, independently assayed, with the certificate published for every lot. Ships 48hr from Dallas.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Merit Sciences — Same Stack. Better Source.',
+    description:
+      'Compounded to USP <797>, assayed by an independent laboratory, certificate published on every lot. Ships 48 hours from Dallas.',
+    url: 'https://meritsciences.com',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, USP <797> compounded, every lot assayed, 48-hour dispatch from Dallas.',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image' as const,
+    title: 'Merit Sciences — Same Stack. Better Source.',
+    description:
+      'USP <797> compounded, independently assayed, certificate published on every lot. Ships 48hr from Dallas.',
+    images: ['/og-image.jpg'],
+  },
+};
+
 /* ─────────────────────────────────────────────────────────────────────────
    HOMEPAGE — locked with Parker 2026-08-11 ("This is it.").
 

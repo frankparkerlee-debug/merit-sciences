@@ -170,7 +170,7 @@ export const metadata: Metadata = {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — lab-verified compounds, ISO-certified, Dallas',
+        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, USP <797> compounded, every lot independently assayed, 48-hour dispatch from Dallas.',
         type: 'image/jpeg',
       },
     ],

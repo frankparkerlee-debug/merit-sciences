@@ -89,7 +89,7 @@ export default async function AffiliateLoginPage({
         {/* Hero vial photo — full bleed */}
         <Image
           src="/brand/merit-vial-hero.webp"
-          alt="Merit Sciences vial — pharmacy-grade, lyophilized, 99% HPLC verified"
+          alt="A sealed Merit Sciences vial of lyophilized research compound, lot-tested to ≥99% HPLC purity"
           fill
           priority
           sizes="(max-width: 1024px) 100vw, 52vw"
