@@ -1,254 +1,359 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { prisma } from '@/lib/db';
 import { PractitionerApplicationForm } from './PractitionerApplicationForm';
 import { LeadCaptureForm } from './LeadCaptureForm';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Practitioner Program — Merit Sciences',
   description:
-    'Merit Sciences Practitioner Program — verified-account access for licensed practitioners. ISO-certified. HPLC ≥99% per lot. COA with every shipment. Apply for portal access.',
+    'Wholesale account pricing for licensed practitioners. Compounded to USP <797> in a licensed US facility, assayed by an independent laboratory, COA published on every lot. Ships 48hr from Dallas. No minimums.',
 };
 
-export default function PractitionersPage() {
+/* ─────────────────────────────────────────────────────────────────────────
+   PRACTITIONER PROGRAM — rebuilt 2026-08-13 to the locked homepage register
+   (dark object cinema, same defocused vial wall, monumental type).
+
+   The rebuild fixed four things the audit surfaced on the previous version:
+
+   1. THE SAVINGS CLAIM WAS FALSE. The page promised "~30%" three times and
+      built an $18,000/yr math box on it. Real physician pricing across 62
+      SKUs is mostly 12–14%; only the two GLPs clear 30%. Rather than pick a
+      new adjective, this page now renders the ACTUAL retail-vs-account
+      prices straight from the catalog — live, per SKU, with the real dollar
+      delta. A number a practitioner can verify beats a percentage they have
+      to trust, and it can never drift from the price book again.
+
+   2. IT NARRATED HUMAN USE. "Same doses, same patient programs", "without
+      changing a single patient price", "don't change your protocols" — on a
+      page under an RUO banner. Every one of those is gone; the pitch is
+      purely supply-side (what you source, what you pay, what it ships with)
+      and is no less persuasive for it.
+
+   3. IT CLAIMED "40+ TEXAS PRACTICES". There are 4 applications in the
+      database. Removed — the verifiable credentials (USP <797>, independent
+      assay, published COA, 48hr dispatch) carry more weight anyway.
+
+   4. NO GRADE FRAMING. "Pharmacy-grade" is retired site-wide per the
+      compliance call; nothing here reintroduces it.
+   ───────────────────────────────────────────────────────────────────────── */
+
+const LIME = '#B9FF66';
+
+/** Live retail-vs-account pricing for the comparison table. Reads the price
+ *  book directly so the page can never quote a discount the catalog doesn't
+ *  honour — the exact failure mode of the version this replaces. */
+async function priceComparison() {
+  try {
+    const rows = await prisma.product.findMany({
+      where: {
+        status: 'ACTIVE',
+        physicianPriceCents: { not: null, gt: 0 },
+        NOT: [{ title: { contains: 'water', mode: 'insensitive' } }],
+      },
+      select: { handle: true, title: true, vialSize: true, priceCents: true, physicianPriceCents: true },
+      orderBy: { priceCents: 'desc' },
+      take: 60,
+    });
+    const priced = rows
+      .map((r) => {
+        const retail = Number(r.priceCents);
+        const account = Number(r.physicianPriceCents);
+        return {
+          handle: r.handle,
+          title: r.title,
+          vialSize: r.vialSize,
+          retail,
+          account,
+          saveCents: retail - account,
+          savePct: retail > 0 ? Math.round(((retail - account) / retail) * 100) : 0,
+        };
+      })
+      .filter((r) => r.saveCents > 0);
+    // Best savings first — the table opens on the strongest true numbers.
+    priced.sort((a, b) => b.savePct - a.savePct);
+    return {
+      rows: priced.slice(0, 8),
+      maxPct: priced.length ? priced[0].savePct : 0,
+      count: priced.length,
+    };
+  } catch {
+    return { rows: [], maxPct: 0, count: 0 };
+  }
+}
+
+function money(cents: number): string {
+  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+export default async function PractitionersPage() {
+  const { rows, maxPct, count } = await priceComparison();
+
   return (
-    <main className="bg-white text-ink">
-      {/* ═══════════ HERO ═══════════ */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          background:
-            'linear-gradient(135deg, #F4F1EA 0%, #F0EDE5 30%, #DFE3F2 75%, #BFC9EB 100%)',
-        }}
-      >
+    <div className="bg-[#08090A] text-white">
+      {/* ════════════ §01 · HERO — same wall as the homepage ════════════ */}
+      <section className="relative isolate flex h-[86svh] min-h-[540px] max-h-[820px] items-end overflow-hidden">
+        <Image
+          src="/brand/pattern-vials-dof.webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
         <div
           aria-hidden="true"
-          className="absolute pointer-events-none hidden md:block"
+          className="absolute inset-0"
           style={{
-            right: 'clamp(-80px, -3vw, -20px)',
-            top: '50%',
-            transform: 'translateY(-50%) rotate(12deg)',
-            width: 'clamp(280px, 28vw, 460px)',
-            aspectRatio: '1',
+            background:
+              'linear-gradient(90deg, rgba(8,9,10,0.88) 0%, rgba(8,9,10,0.64) 40%, rgba(8,9,10,0.26) 70%, rgba(8,9,10,0.34) 100%), linear-gradient(180deg, rgba(8,9,10,0.5) 0%, rgba(8,9,10,0.04) 36%, rgba(8,9,10,0.92) 100%)',
           }}
-        >
-          <Image
-            src="/brand/merit-vial-canonical-transparent.webp"
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 1400px) 28vw, 460px"
-            className="object-contain"
-          />
-        </div>
-
-        <div className="relative z-10 max-w-[1240px] mx-auto px-6 lg:px-10 py-14 lg:py-20">
-          <p className="text-[10px] lg:text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-5">
-            — Practitioner Program · Verified-account access
+        />
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 pb-14 lg:pb-18">
+          <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
+            Practitioner Program · Verified-account access
           </p>
           <h1
-            className="font-poster font-black tracking-[-0.035em] leading-[0.92] max-w-3xl"
-            style={{ fontSize: 'clamp(40px, 7vw, 96px)' }}
+            className="font-poster font-black uppercase leading-[0.84] tracking-[-0.05em]"
+            style={{ fontSize: 'clamp(40px, 7.2vw, 120px)' }}
           >
-            Pharmacy-grade compounds.
+            Same compounds.
             <br />
-            Built for your<span className="text-cobalt"> practice.</span>
+            <span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}>
+              Better invoice.
+            </span>
           </h1>
-          <p className="mt-5 max-w-xl text-[15px] lg:text-[17px] text-ink-soft leading-relaxed">
-            A verified-account program for licensed practitioners. Practices save an average{' '}
-            <strong>~30% on compound cost</strong> versus their previous supplier &mdash; margin
-            added straight back into the practice. <strong>Pharmacy-grade.</strong>{' '}
-            <strong>HPLC &ge;99%</strong> per lot. COA with every shipment. Shipped from Dallas in 48
-            hours.
-          </p>
-          <div className="mt-7 flex flex-col sm:flex-row gap-3">
-            <Link
-              href="#apply"
-              className="inline-flex items-center justify-center bg-cobalt text-white font-bold tracking-[0.16em] uppercase text-xs px-7 py-3.5 rounded-none hover:bg-ink transition-colors shadow-lg shadow-cobalt/30"
-            >
-              Apply for an account →
-            </Link>
-            <Link
-              href="/catalog"
-              className="inline-flex items-center justify-center bg-white/70 backdrop-blur-sm border border-ink/15 text-ink font-bold tracking-[0.16em] uppercase text-xs px-6 py-3.5 rounded-none hover:border-cobalt transition-colors"
-            >
-              Browse the public catalog
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ PROOF BAR — social proof + credentials ═══════════ */}
-      <section className="bg-cobalt text-white">
-        <div className="max-w-[1240px] mx-auto px-6 lg:px-10 py-7 lg:py-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-6 gap-x-4">
-            <ProofStat value="40+" label="Texas practices sourcing through Merit" />
-            <ProofStat value="ISO" label="certified · sterile-filled facility" />
-            <ProofStat value="≥99%" label="HPLC purity, released per lot" />
-            <ProofStat value="48hr" label="shipped from Dallas · no MOQ" />
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ §01 — THE ECONOMIC CASE ═══════════ */}
-      <section className="bg-white border-t border-ink/10 py-16 lg:py-24">
-        <div className="max-w-[1240px] mx-auto px-6 lg:px-10">
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
-            {/* Left — the argument */}
-            <div>
-              <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-                — 01 · The economics
-              </p>
-              <h2
-                className="font-poster font-black tracking-[-0.025em] leading-[0.98]"
-                style={{ fontSize: 'clamp(32px, 4.5vw, 60px)' }}
+          <div className="mt-8 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <p className="max-w-[50ch] text-[15px] leading-[1.62] text-white/70">
+              Account pricing for licensed practitioners on the compounds you already source —
+              compounded to USP &lt;797&gt; in a licensed US facility, assayed by an independent
+              laboratory, certificate published on every lot. No minimums, no contracts.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+              <Link
+                href="#apply"
+                className="bg-white text-black px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-[#B9FF66] transition"
               >
-                Keep your pricing.
-                <br />
-                Change your margin<span className="text-cobalt">.</span>
-              </h2>
-              <p className="mt-5 max-w-xl text-[15px] lg:text-[16px] text-ink-soft leading-relaxed">
-                Practices that move their sourcing to Merit cut their average compound cost by
-                roughly <strong className="text-ink">30%</strong> versus their previous supplier
-                &mdash; without changing a single patient price. That spread stops going to a
-                middleman. It goes back into your practice.
-              </p>
-
-              <ul className="mt-7 space-y-3">
-                <EconPoint title="Don't change your protocols">
-                  Same compounds, same doses, same patient programs. Only the invoice changes.
-                </EconPoint>
-                <EconPoint title="Don't change your patient pricing">
-                  The ~30% isn&rsquo;t a discount you pass on &mdash; it&rsquo;s margin you&rsquo;re
-                  currently handing your supplier.
-                </EconPoint>
-                <EconPoint title="Don't change your workflow">
-                  Order office stock, reorder from history, COA on every shipment. Switching is a
-                  sourcing decision, not an operational one.
-                </EconPoint>
-              </ul>
-            </div>
-
-            {/* Right — the math, illustrative */}
-            <div className="border border-ink/10 bg-white p-8 lg:p-10">
-              <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-5">
-                — What 30% looks like
-              </p>
-              <div className="flex items-baseline gap-3">
-                <span
-                  className="font-poster font-black text-cobalt leading-none"
-                  style={{ fontSize: 'clamp(56px, 8vw, 88px)' }}
-                >
-                  ~30%
-                </span>
-                <span className="text-[13px] text-ink-soft leading-tight max-w-[150px]">
-                  average cut in compound cost vs. previous supplier
-                </span>
-              </div>
-
-              <div className="mt-8 space-y-4">
-                <MathRow label="A practice spending" value="$5,000 / mo" />
-                <MathRow label="Cost reduction at ~30%" value="≈ $1,500 / mo" accent />
-                <MathRow label="Added to margin, annually" value="≈ $18,000 / yr" accent />
-              </div>
-
-              <p className="mt-6 text-[11px] text-ink-soft leading-relaxed">
-                Illustrative example. Actual savings depend on your volume and current supplier.
-                Account pricing is set in your portal at approval &mdash; standard or custom to your
-                practice.
-              </p>
+                Apply for an account
+              </Link>
+              <Link
+                href="#pricing"
+                className="border border-white/40 px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-white hover:text-black transition"
+              >
+                See account pricing
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════════ CTA BAND — catch the money-convinced ═══════════ */}
-      <CTABand
-        heading="Keep the 30%."
-        sub="License + NPI verified within one business day. No commitments, no activation fees."
-      />
+      {/* ════════════ §02 · CREDENTIAL RAIL ════════════ */}
+      <section className="border-y border-white/12 bg-[#0B0D0F]">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4">
+          {[
+            ['USP <797>', 'compounded, licensed US facility'],
+            ['≥99%', 'HPLC purity, assayed per lot'],
+            ['Every lot', 'COA published before purchase'],
+            ['48 hrs', 'dispatch from Dallas · no minimums'],
+          ].map(([big, small], i) => (
+            <div
+              key={big}
+              className={`px-6 lg:px-10 py-5 lg:py-6 border-white/12 ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i % 2 === 0 ? 'border-r' : ''} lg:border-r lg:last:border-r-0`}
+            >
+              <span className="font-poster font-black text-[16px] lg:text-[20px] tracking-[-0.03em]">{big}</span>{' '}
+              <span className="font-mono text-[10px] lg:text-[10.5px] tracking-[0.1em] uppercase text-white/50">
+                {small}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
 
-      {/* ═══════════ §02 — QUALITY ═══════════ */}
-      <section className="bg-ink text-white py-16 lg:py-24">
-        <div className="max-w-[1240px] mx-auto px-6 lg:px-10">
-          <div className="max-w-2xl mb-12">
-            <p className="text-[10px] tracking-[0.22em] uppercase font-bold mb-3" style={{ color: '#7B96FF' }}>
-              — 02 · How we&rsquo;re different
+      {/* ════════════ §03 · THE NUMBERS — live price book ════════════
+          The heart of the page. Real retail vs real account price, pulled
+          from the catalog at request time. Replaces the "~30% savings"
+          claim the old page made and the price book did not support. */}
+      {rows.length > 0 && (
+        <section id="pricing" className="bg-[#08090A]">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
+              <div>
+                <p className="font-mono text-[11px] tracking-[0.16em] uppercase mb-4" style={{ color: LIME }}>
+                  Account pricing · live from the catalog
+                </p>
+                <h2
+                  className="font-poster font-black uppercase leading-[0.92] tracking-[-0.045em] max-w-[15ch]"
+                  style={{ fontSize: 'clamp(30px, 5vw, 76px)' }}
+                >
+                  What you&rsquo;d actually pay.
+                </h2>
+              </div>
+              <p className="max-w-[40ch] text-[14.5px] leading-[1.6] text-white/60 lg:pb-3">
+                Not a percentage to take on faith — the real numbers, on {count} stocked compounds.
+                Savings reach <b className="text-white">{maxPct}%</b> and vary by compound.
+              </p>
+            </div>
+
+            <div className="border border-white/12 overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left">
+                <thead>
+                  <tr className="border-b border-white/12 font-mono text-[10px] tracking-[0.14em] uppercase text-white/45">
+                    <th className="px-5 lg:px-6 py-3.5 font-normal">Compound</th>
+                    <th className="px-5 lg:px-6 py-3.5 font-normal text-right">Retail</th>
+                    <th className="px-5 lg:px-6 py-3.5 font-normal text-right">Your account</th>
+                    <th className="px-5 lg:px-6 py-3.5 font-normal text-right">You save</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.handle} className="border-b border-white/8 last:border-b-0">
+                      <td className="px-5 lg:px-6 py-4">
+                        <span className="font-poster font-extrabold text-[15px] lg:text-[17px] tracking-[-0.02em]">
+                          {r.title}
+                        </span>
+                        <span className="block font-mono text-[10.5px] text-white/40 mt-0.5">{r.vialSize}</span>
+                      </td>
+                      <td className="px-5 lg:px-6 py-4 text-right font-mono text-[13px] text-white/45 line-through tabular-nums">
+                        {money(r.retail)}
+                      </td>
+                      <td className="px-5 lg:px-6 py-4 text-right font-poster font-black text-[15px] lg:text-[17px] tabular-nums">
+                        {money(r.account)}
+                      </td>
+                      <td className="px-5 lg:px-6 py-4 text-right tabular-nums">
+                        <span className="font-poster font-black text-[15px] lg:text-[17px]" style={{ color: LIME }}>
+                          {money(r.saveCents)}
+                        </span>
+                        <span className="block font-mono text-[10.5px] text-white/45 mt-0.5">{r.savePct}% off</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-5 font-mono text-[10.5px] leading-[1.7] text-white/40 max-w-[80ch]">
+              Account pricing applies automatically across the catalog once you&rsquo;re signed in, on
+              every pack size. Full price list is visible in your portal after approval — we
+              don&rsquo;t publish account pricing publicly.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* ════════════ §04 · WHY THE PRICE CAN BE LOWER ════════════ */}
+      <section className="bg-black border-y border-white/10">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-20 items-center">
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
+              Why the price can be lower
             </p>
             <h2
-              className="font-poster font-black tracking-[-0.025em] leading-[0.98]"
-              style={{ fontSize: 'clamp(32px, 4.5vw, 60px)' }}
+              className="font-poster font-black uppercase leading-[0.9] tracking-[-0.045em] max-w-[13ch]"
+              style={{ fontSize: 'clamp(30px, 5vw, 80px)' }}
             >
-              Sourcing that holds up
-              <br />
-              to whoever asks<span style={{ color: '#7B96FF' }}>.</span>
+              We spend on the lab, not the logo.
             </h2>
-            <p className="mt-4 text-[15px] text-white/70 leading-relaxed">
-              Overseas synthesis. TFA counterions. No release testing. We don&rsquo;t. The compound
-              you order is characterized and released to the same standards used by hospital
-              pharmacies &mdash; from a US-licensed pharmacy team you can name.
-            </p>
+            <div className="mt-8 space-y-5 max-w-[54ch]">
+              {[
+                ['Compounded, not imported blind', 'Licensed US facility, compounded to USP <797> — the sterile-compounding standard, on every lot.'],
+                ['Assayed by an outside laboratory', 'Identity, purity, heavy metals and a fentanyl screen — run by ILS Laboratories, not by us.'],
+                ['Published before you buy', 'Scan the QR on any vial and that exact lot’s certificate opens. No account needed, no request form.'],
+                ['Acetate, not TFA', 'We pay for the acetate exchange most discount sources skip. It shows up in the assay, not the invoice.'],
+              ].map(([t, b]) => (
+                <div key={t} className="flex gap-4">
+                  <span aria-hidden="true" className="mt-[7px] h-2 w-2 shrink-0" style={{ background: LIME }} />
+                  <p className="text-[14.5px] leading-[1.6] text-white/60">
+                    <b className="text-white font-semibold">{t}.</b> {b}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <DarkCard
-              tag="Sourcing"
-              title="USP <797> + ISO certified"
-              body={
-                <>
-                  Active ingredients sourced from a US facility with USP &lt;797&gt; sterile
-                  processing and ISO certifications &mdash; pharmacist-released, lot-documented,
-                  and fully traceable.
-                </>
-              }
-            />
-            <DarkCard
-              tag="Characterization"
-              title="HPLC ≥99% per lot"
-              body={
-                <>
-                  Every batch released only after HPLC purity, sterility (USP &lt;71&gt;),
-                  endotoxin (USP &lt;85&gt;), and particulate (USP &lt;788&gt;) testing.
-                  <strong> COA accompanies every shipment</strong> &mdash; lot # on every label.
-                </>
-              }
-            />
-            <DarkCard
-              tag="Counterion"
-              title="Acetate, not TFA"
-              body={
-                <>
-                  We exchange to <strong>acetate</strong> &mdash; the salt form used in
-                  characterized pharmaceutical references. Most discount sources ship as the
-                  trifluoroacetate (TFA) salt because the acetate exchange step is expensive. We
-                  do it anyway.
-                </>
-              }
-            />
-          </div>
-
-          <div className="mt-10">
-            <Link
-              href="#apply"
-              className="inline-flex items-center justify-center bg-white text-ink font-bold tracking-[0.16em] uppercase text-xs px-7 py-3.5 rounded-none hover:bg-white/90 transition-colors"
-            >
-              Apply for an account →
-            </Link>
+          <div className="border border-white/15 bg-white/[0.03]">
+            <div className="px-6 py-4 border-b border-white/15 font-mono text-[10px] tracking-[0.16em] uppercase" style={{ color: LIME }}>
+              What an account includes
+            </div>
+            {[
+              ['Account pricing', 'Applied automatically at catalog and checkout'],
+              ['No minimums', 'Order one vial or fifty — same price per unit'],
+              ['No contracts', 'No commitment, no monthly spend requirement'],
+              ['COA on every lot', 'Certificate ships with the order and lives at /coa'],
+              ['48-hour dispatch', 'Sealed, lot-numbered, from Dallas'],
+              ['Order history + reorder', 'Past orders, lots and certificates in your portal'],
+            ].map(([k, v]) => (
+              <div key={k} className="px-6 py-3.5 border-b border-white/10 last:border-b-0">
+                <p className="font-poster font-extrabold text-[14px] tracking-[-0.02em]">{k}</p>
+                <p className="font-mono text-[11px] text-white/50 mt-0.5">{v}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════ LEAD CAPTURE — soft alt for the not-ready, beside the apply form ═══════════ */}
-      <section className="bg-white border-t border-ink/10 py-10">
-        <div className="max-w-[860px] mx-auto px-6 lg:px-10">
+      {/* ════════════ §05 · HOW IT WORKS — expectations, explicitly ════════════
+          The old page ended the form with silence. Applicants had no idea
+          what happened next; this sets the timeline before they submit. */}
+      <section className="bg-[#08090A]">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+          <h2
+            className="font-poster font-black uppercase leading-[0.94] tracking-[-0.04em] mb-10 lg:mb-14 max-w-[16ch]"
+            style={{ fontSize: 'clamp(28px, 4.4vw, 66px)' }}
+          >
+            Four steps to an account.
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/12 border border-white/12">
+            {[
+              ['01', 'Apply', 'License number and NPI, plus how to reach you. Two minutes.'],
+              ['02', 'We verify', 'License and NPI checked against state and NPPES records — usually within one business day.'],
+              ['03', 'Account opens', 'You get a sign-in link by email. Account pricing is live the moment you land.'],
+              ['04', 'Order', 'Browse the catalog signed in and your pricing is already applied. Ships in 48 hours.'],
+            ].map(([n, t, b]) => (
+              <div key={n} className="bg-[#08090A] p-6 lg:p-8">
+                <span className="font-mono text-[11px] text-white/35">{n}</span>
+                <h3 className="font-poster font-black text-[19px] lg:text-[23px] tracking-[-0.03em] uppercase mt-2.5 mb-2.5">
+                  {t}
+                </h3>
+                <p className="text-[13.5px] leading-[1.6] text-white/55">{b}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════ §06 · APPLY ════════════ */}
+      <section id="apply" className="bg-white text-ink">
+        <div className="max-w-[860px] mx-auto px-6 lg:px-10 py-16 lg:py-24">
+          <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">— Apply</p>
+          <h2
+            className="font-poster font-black uppercase tracking-[-0.04em] leading-[0.95]"
+            style={{ fontSize: 'clamp(30px, 4.6vw, 60px)' }}
+          >
+            Open your account.
+          </h2>
+          <p className="mt-4 mb-9 text-[15px] text-ink-soft leading-relaxed max-w-[58ch]">
+            License and NPI verification is usually complete within one business day. You&rsquo;ll get
+            a sign-in link by email as soon as it clears — no commitments, no activation fee, and
+            nothing to cancel if you never order.
+          </p>
+          <PractitionerApplicationForm />
+        </div>
+      </section>
+
+      {/* ════════════ §07 · NOT READY YET ════════════ */}
+      <section className="bg-cream text-ink border-t border-ink/10">
+        <div className="max-w-[860px] mx-auto px-6 lg:px-10 py-12">
           <div className="flex flex-col lg:flex-row lg:items-center gap-6">
             <div className="flex-1">
               <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
-                — Not ready to apply yet?
+                — Not ready to apply?
               </p>
               <p className="text-[15px] text-ink leading-relaxed">
-                Get <strong>The Practice Owner&rsquo;s Guide to Adding Compounds</strong> &mdash; the
-                margin math, the compliance basics, and the protocols practices start with. A short
-                email series. Unsubscribe anytime.
+                Get <strong>The Practice Owner&rsquo;s Guide to Adding Compounds</strong> — the margin
+                math, the sourcing questions worth asking, and what to check on a certificate of
+                analysis. A short email series. Unsubscribe anytime.
               </p>
             </div>
             <div className="flex-1">
@@ -258,121 +363,41 @@ export default function PractitionersPage() {
         </div>
       </section>
 
-      {/* ═══════════ §03 — APPLY ═══════════ */}
-      <section id="apply" className="bg-white border-t border-ink/10 py-16 lg:py-24">
-        <div className="max-w-[860px] mx-auto px-6 lg:px-10">
-          <div className="max-w-xl mb-10">
-            <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-              — 03 · Apply
-            </p>
-            <h2
-              className="font-poster font-black tracking-[-0.025em] leading-[0.98]"
-              style={{ fontSize: 'clamp(32px, 4.5vw, 60px)' }}
+      {/* ════════════ §08 · CLOSE ════════════ */}
+      <section className="relative isolate flex min-h-[52svh] max-h-[680px] items-end overflow-hidden bg-black">
+        <Image src="/brand/hero-monolith.webp" alt="" fill sizes="100vw" className="object-cover" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(180deg, rgba(8,9,10,0.6) 0%, rgba(8,9,10,0.2) 40%, rgba(8,9,10,0.95) 100%)' }}
+        />
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 pb-14 lg:pb-18">
+          <h2
+            className="font-poster font-black uppercase leading-[0.86] tracking-[-0.05em] mb-7 text-white"
+            style={{ fontSize: 'clamp(30px, 5.4vw, 92px)' }}
+          >
+            Know what&rsquo;s
+            <br />
+            <span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}>
+              in the vial.
+            </span>
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              href="#apply"
+              className="bg-white text-black px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-[#B9FF66] transition"
             >
-              Apply for portal access<span className="text-cobalt">.</span>
-            </h2>
-            <p className="mt-4 text-[15px] text-ink-soft leading-relaxed">
-              License + NPI verification within 1 business day. Approved practitioners get portal
-              access with their account-tier pricing already applied. No commitments, no
-              activation fees.
-            </p>
+              Apply for an account
+            </Link>
+            <Link
+              href="/coa"
+              className="border border-white/40 px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase text-white hover:bg-white hover:text-black transition"
+            >
+              Read a lab report
+            </Link>
           </div>
-
-          <PractitionerApplicationForm />
         </div>
       </section>
-    </main>
-  );
-}
-
-// ── helpers ───────────────────────────────────────────────────────────────
-function CTABand({ heading, sub }: { heading: string; sub: string }) {
-  return (
-    <section className="bg-white border-y border-ink/10">
-      <div className="max-w-[1240px] mx-auto px-6 lg:px-10 py-12 lg:py-14">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-          <div>
-            <h2
-              className="font-poster font-black tracking-[-0.025em] leading-[1.0]"
-              style={{ fontSize: 'clamp(26px, 3.6vw, 44px)' }}
-            >
-              {heading.replace(/\.$/, '')}
-              <span className="text-cobalt">.</span>
-            </h2>
-            <p className="mt-2 text-[15px] text-ink-soft max-w-md leading-relaxed">{sub}</p>
-          </div>
-          <Link
-            href="#apply"
-            className="inline-flex items-center justify-center bg-cobalt text-white font-bold tracking-[0.16em] uppercase text-xs px-8 py-4 rounded-none hover:bg-ink transition-colors shadow-lg shadow-cobalt/30 whitespace-nowrap"
-          >
-            Apply for an account →
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function DarkCard({ tag, title, body }: { tag: string; title: string; body: React.ReactNode }) {
-  return (
-    <div className="rounded-none border border-white/15 bg-white/[0.04] backdrop-blur-sm p-7">
-      <p className="text-[10px] tracking-[0.22em] uppercase font-bold mb-3" style={{ color: '#7B96FF' }}>
-        — {tag}
-      </p>
-      <h3 className="font-poster font-black text-2xl leading-tight mb-3 tracking-[-0.02em]">
-        {title}
-      </h3>
-      <p className="text-[13px] text-white/75 leading-relaxed">{body}</p>
-    </div>
-  );
-}
-
-function EconPoint({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <li className="flex gap-3">
-      <span
-        className="mt-0.5 flex-none w-5 h-5 rounded-full bg-cobalt/10 text-cobalt flex items-center justify-center"
-        aria-hidden="true"
-      >
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-          <path
-            d="M2.5 6.5L5 9L9.5 3.5"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </span>
-      <span className="text-[14px] leading-relaxed">
-        <strong className="text-ink">{title}.</strong>{' '}
-        <span className="text-ink-soft">{children}</span>
-      </span>
-    </li>
-  );
-}
-
-function MathRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className="flex items-center justify-between border-b border-ink/10 pb-3">
-      <span className="text-[13px] text-ink-soft">{label}</span>
-      <span className={`text-[15px] font-bold tabular-nums ${accent ? 'text-cobalt' : 'text-ink'}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function ProofStat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="text-center lg:text-left">
-      <div
-        className="font-poster font-black tracking-[-0.02em] leading-none"
-        style={{ fontSize: 'clamp(30px, 4vw, 46px)' }}
-      >
-        {value}
-      </div>
-      <p className="mt-1.5 text-[11px] lg:text-[12px] text-white/70 leading-snug">{label}</p>
     </div>
   );
 }

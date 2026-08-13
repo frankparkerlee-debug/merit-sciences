@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getPractitionerSession } from '@/lib/practitioner-session';
+import { prisma } from '@/lib/db';
+import { getPricingContext, priceFor } from '@/lib/pricing';
 
 export const metadata = { title: 'Practitioner Portal — Merit Sciences' };
 export const dynamic = 'force-dynamic';
@@ -10,6 +12,57 @@ export default async function PractitionerPortalPage() {
   if (!session) redirect('/practitioners/login?error=Sign+in+required');
 
   const firstName = session.providerName.split(' ')[0];
+
+  // The portal used to say "account pricing is applied across the catalog"
+  // and then show nothing — an empty room as the first impression after
+  // approval. Resolve this practitioner's ACTUAL prices through the same
+  // waterfall checkout uses, so they land on proof instead of a promise.
+  const myPrices = await (async () => {
+    try {
+      const [products, ctx] = await Promise.all([
+        prisma.product.findMany({
+          where: {
+            status: 'ACTIVE',
+            physicianPriceCents: { not: null, gt: 0 },
+            NOT: [{ title: { contains: 'water', mode: 'insensitive' } }],
+          },
+          select: {
+            handle: true, title: true, vialSize: true,
+            priceCents: true, physicianPriceCents: true,
+          },
+          orderBy: { priceCents: 'desc' },
+          take: 60,
+        }),
+        getPricingContext(),
+      ]);
+      type Row = { handle: string; title: string; vialSize: string; retail: number; yours: number; save: number; isPractitionerPricing: boolean };
+      const rows: Row[] = products
+        .map((p): Row => {
+          const { effectivePriceCents, isPractitionerPricing } = priceFor(
+            { handle: p.handle, priceCents: Number(p.priceCents), physicianPriceCents: Number(p.physicianPriceCents) },
+            ctx,
+          );
+          return {
+            handle: p.handle,
+            title: p.title,
+            vialSize: p.vialSize,
+            retail: Number(p.priceCents),
+            yours: effectivePriceCents,
+            save: Number(p.priceCents) - effectivePriceCents,
+            isPractitionerPricing,
+          };
+        })
+        .filter((r: Row) => r.isPractitionerPricing && r.save > 0);
+      rows.sort((a: Row, b: Row) => b.save - a.save);
+      const annualIfOnePerMonth = rows.reduce((acc: number, r: Row) => acc + r.save, 0) * 12;
+      return { rows: rows.slice(0, 6), total: rows.length, annualIfOnePerMonth };
+    } catch {
+      return { rows: [], total: 0, annualIfOnePerMonth: 0 };
+    }
+  })();
+
+  const money = (c: number) =>
+    `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <main className="bg-cream min-h-screen">
@@ -63,10 +116,63 @@ export default async function PractitionerPortalPage() {
             {firstName}<span className="text-cobalt">.</span>
           </h1>
           <p className="text-[15px] text-ink-soft">
-            Signed in to <strong>{session.practiceName}</strong>. Account-tier pricing is applied
-            across the catalog while you&rsquo;re signed in.
+            Signed in to <strong>{session.practiceName}</strong>. Your account pricing is live on{' '}
+            <strong>{myPrices.total || 'every stocked'}</strong>
+            {myPrices.total ? ' compounds' : ' compound'} — applied automatically at the catalog and
+            at checkout, on every pack size.
           </p>
         </div>
+
+        {/* Your pricing — the proof that the account is worth having. Same
+            resolver as checkout, so what is shown is what is charged. */}
+        {myPrices.rows.length > 0 && (
+          <section className="rounded-2xl border border-cobalt/15 bg-white overflow-hidden mb-8">
+            <div className="px-6 py-4 border-b border-cobalt/10 flex items-baseline justify-between gap-4 flex-wrap">
+              <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold">
+                — Your account pricing
+              </p>
+              <Link
+                href="/catalog"
+                className="text-[11px] font-bold tracking-[0.1em] uppercase text-cobalt hover:underline underline-offset-4"
+              >
+                See all {myPrices.total} →
+              </Link>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[520px] text-left text-sm">
+                <thead>
+                  <tr className="text-[10px] tracking-[0.14em] uppercase text-ink-muted border-b border-cobalt/10">
+                    <th className="px-6 py-3 font-normal">Compound</th>
+                    <th className="px-6 py-3 font-normal text-right">Retail</th>
+                    <th className="px-6 py-3 font-normal text-right">Your price</th>
+                    <th className="px-6 py-3 font-normal text-right">You save</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myPrices.rows.map((r) => (
+                    <tr key={r.handle} className="border-b border-cobalt/5 last:border-b-0">
+                      <td className="px-6 py-3.5">
+                        <Link href={`/products/${r.handle}`} className="font-bold text-ink hover:text-cobalt transition">
+                          {r.title}
+                        </Link>
+                        <span className="block text-[11px] text-ink-muted">{r.vialSize}</span>
+                      </td>
+                      <td className="px-6 py-3.5 text-right text-ink-muted line-through tabular-nums">{money(r.retail)}</td>
+                      <td className="px-6 py-3.5 text-right font-bold text-ink tabular-nums">{money(r.yours)}</td>
+                      <td className="px-6 py-3.5 text-right font-bold text-emerald-700 tabular-nums">{money(r.save)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="px-6 py-3.5 text-[11px] text-ink-soft border-t border-cobalt/10">
+              Prices shown are what you&rsquo;re charged at checkout while signed in — no code to enter.
+              Ordering one of each above monthly would save{' '}
+              <strong className="text-ink">{money(myPrices.annualIfOnePerMonth)}</strong> a year
+              against retail.
+            </p>
+          </section>
+        )}
 
         {/* Quick links */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
