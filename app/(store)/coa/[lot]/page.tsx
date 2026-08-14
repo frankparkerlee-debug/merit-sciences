@@ -377,8 +377,64 @@ function LotIndex({ rows }: { rows: CoaRow[] }) {
   // Lot numbers that already read "LOT…" don't need the word in front of them.
   const lotLabel = /^lot/i.test(lotId) ? lotId : `Lot ${lotId}`;
 
+  /* A multi-compound lot renders this index instead of the single-certificate
+     view, and that branch returned before any JSON-LD was emitted — so the one
+     lot covering the largest number of released compounds was the only lot on
+     the site with no machine-readable description of itself. The single-cert
+     branch carries Dataset + Certification; the index carries the collection
+     and the measured value for each member, so a crawler can read the whole
+     release from this URL without walking into every child page. */
+  const url = `${SITE}/coa/${encodeURIComponent(lotId)}`;
+  const testedIso = isoDate(rows[0].testedDate);
+  const indexJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: 'Lab results', item: `${SITE}/coa` },
+          { '@type': 'ListItem', position: 3, name: lotLabel, item: url },
+        ],
+      },
+      {
+        '@type': 'CollectionPage',
+        '@id': `${url}#page`,
+        name: `${lotLabel} — certificates of analysis`,
+        description: `Quality-control results for the ${rows.length} research compounds released under lot ${lotId}. For research use only.`,
+        url,
+        isPartOf: { '@id': `${SITE}/coa#page` },
+        publisher: { '@id': `${SITE}/#organization` },
+        ...(testedIso ? { datePublished: testedIso, dateModified: testedIso } : {}),
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: rows.length,
+          itemListElement: rows.map((r, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            item: {
+              '@type': 'Dataset',
+              name: `${r.compound} — lot ${r.lotId} certificate of analysis`,
+              url: `${SITE}/coa/${encodeURIComponent(r.coaNumber ?? r.lotId)}`,
+              identifier: r.coaNumber ?? r.lotId,
+              creator: { '@id': `${SITE}/#organization` },
+              variableMeasured: [
+                { '@type': 'PropertyValue', name: 'Purity (HPLC)', value: r.purity },
+                { '@type': 'PropertyValue', name: 'Lot', value: r.lotId },
+              ],
+            },
+          })),
+        },
+      },
+    ],
+  };
+
   return (
     <main className="bg-cream min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(indexJsonLd) }}
+      />
       <section className="bg-white border-b border-cobalt/10">
         <div className="max-w-[760px] mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-8">
           <div className="text-xs text-ink-muted mb-5">

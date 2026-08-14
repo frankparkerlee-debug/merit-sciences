@@ -45,6 +45,10 @@ const archivo = Archivo({
 // wired to the library search). This is how Google/answer-engines resolve
 // "Merit Sciences" as a known entity and attribute the whole domain's content.
 const SITE = 'https://meritsciences.com';
+
+/** Verified public profiles Merit controls, for the Organization's `sameAs`.
+ *  Add a URL here ONLY after confirming it resolves and is ours. */
+const SAME_AS: string[] = [];
 const SITE_SCHEMA = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -72,6 +76,29 @@ const SITE_SCHEMA = {
         addressCountry: 'US',
       },
       areaServed: { '@type': 'Country', name: 'United States' },
+      // Entity disambiguation. Without sameAs edges an answer engine has no
+      // way to tell this "Merit Sciences" from any other similarly-named
+      // company, so any mention found off-site can't be resolved back to this
+      // one — a real ceiling on citability.
+      //
+      // Deliberately EMPTY: Merit currently operates no verified public
+      // profile (checked 2026-08-13 — the obvious LinkedIn and Reddit handles
+      // 404). Only profiles Merit actually controls may go here; asserting an
+      // unowned or dead URL is a false identity claim in machine-readable
+      // form, and it degrades the node rather than strengthening it. Populate
+      // the moment a real profile exists — this is the single cheapest
+      // entity-resolution win available.
+      ...(SAME_AS.length ? { sameAs: SAME_AS } : {}),
+      // What the organization actually does, in machine-readable form — this
+      // is what a "who sells research peptides in the US" style query matches
+      // against once the entity resolves.
+      knowsAbout: [
+        'Research peptides',
+        'Certificate of analysis',
+        'High-performance liquid chromatography',
+        'USP <797> sterile compounding',
+        'Lot traceability',
+      ],
       contactPoint: [
         {
           '@type': 'ContactPoint',

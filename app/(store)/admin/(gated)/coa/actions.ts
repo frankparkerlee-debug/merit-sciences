@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { pingIndexNow } from '@/lib/indexnow';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 import { supabaseAdmin } from '@/lib/supabase';
@@ -65,6 +66,11 @@ export async function uploadCoa(_prev: CoaActionResult | null, fd: FormData): Pr
     });
     revalidatePath('/admin/coa');
     revalidatePath('/coa');
+    // Tell Bing (→ ChatGPT/Copilot) about the new lot page immediately.
+    await pingIndexNow([
+      'https://meritsciences.com/coa',
+      `https://meritsciences.com/coa/${encodeURIComponent(lotId)}`,
+    ]);
     return { ok: true, message: `Published lab result for ${compound} (lot ${lotId}).` };
   } catch (err: any) {
     console.error('[uploadCoa] failed', err);

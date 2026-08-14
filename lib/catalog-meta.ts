@@ -142,7 +142,7 @@ export const STACK_TEMPLATES: StackTemplate[] = [
     name: 'The Recovery Stack',
     subtitle: 'Tissue + copper-peptide signaling',
     description: 'Wolverine paired with GHK-Cu — the most-stacked pair in our catalog for repair-pathway research.',
-    handles: ['bpc-157-tb-500', 'ghk-cu'],
+    handles: ['bpc-10mg-tb-10mg-wolverine-20mg', 'ghk-cu'],
     bundleDiscountPct: 10,
     accentColor: 'cobalt',
   },
@@ -160,7 +160,7 @@ export const STACK_TEMPLATES: StackTemplate[] = [
     name: 'The Neuropeptide Pair',
     subtitle: 'Russian heptapeptides',
     description: 'Selank and Semax — the two most-studied compounds in neuropeptide research, almost always stacked together.',
-    handles: ['selank', 'semax'],
+    handles: ['selank', 'semax-30mg'],
     bundleDiscountPct: 10,
     accentColor: 'violet',
   },
@@ -176,7 +176,7 @@ export const STACK_TEMPLATES: StackTemplate[] = [
 ];
 
 export const PHARMACIST_NOTES: Record<string, string> = {
-  'bpc-157-tb-500':
+  'bpc-10mg-tb-10mg-wolverine-20mg':
     'The most-studied pentadecapeptide combination in the catalog. Wolverine ships with both BPC-157 and TB-500 co-formulated in one vial.',
   'nad-500mg':
     'A coenzyme, not a peptide. Stocked because the cellular-pathway literature is deep and reorders are consistent.',
