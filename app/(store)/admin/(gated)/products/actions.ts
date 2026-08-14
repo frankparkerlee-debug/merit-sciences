@@ -3,6 +3,7 @@
 import fs from 'fs';
 import path from 'path';
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { pingIndexNow } from '@/lib/indexnow';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
@@ -182,6 +183,12 @@ export async function updateProduct(_prev: ActionResult | null, formData: FormDa
   revalidatePath(`/admin/products/${handle}`);
   revalidatePath(`/products/${handle}`);
   revalidatePath('/catalog'); revalidateTag('products');
+  // A publish/unpublish changes what is citable — say so rather than waiting
+  // for an organic recrawl.
+  await pingIndexNow([
+    'https://meritsciences.com/catalog',
+    `https://meritsciences.com/products/${handle}`,
+  ]);
   return { ok: true, message: 'Product saved.' };
 }
 

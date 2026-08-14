@@ -38,8 +38,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // listProducts swallows DB errors and returns [], so a blip degrades the
   // sitemap to static + stacks rather than failing the build.
   let productRoutes: MetadataRoute.Sitemap = [];
+  let activeHandles: Set<string> | null = null;
   try {
     const products = await listProducts({ status: 'active', channel: 'rua' });
+    activeHandles = new Set(products.map((p) => p.handle));
     productRoutes = products.map((p) => ({
       url: `${BASE}/products/${p.handle}`,
       lastModified: now,
@@ -78,7 +80,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /* omit lot pages if the DB is unreachable */
   }
 
-  const stackRoutes: MetadataRoute.Sitemap = STACK_TEMPLATES.map((s) => ({
+  // Stacks are only listed when every member product is actually purchasable.
+  // /stacks/[slug] notFound()s if any handle fails to resolve, so a template
+  // that outlives one of its SKUs becomes a 404 that the sitemap keeps
+  // advertising — which is exactly how /stacks/recovery-stack and
+  // /stacks/neuro-pair ended up as dead entries after their BPC and Semax
+  // SKUs were moved to DRAFT. Filtering here keeps the sitemap self-healing:
+  // draft a product and its stacks drop out on the next request instead of
+  // rotting. If product enumeration failed we can't tell, so we emit them all
+  // rather than silently shrinking the sitemap on a DB blip.
+  const stackRoutes: MetadataRoute.Sitemap = STACK_TEMPLATES.filter(
+    (s) => !activeHandles || s.handles.every((h) => activeHandles!.has(h)),
+  ).map((s) => ({
     url: `${BASE}/stacks/${s.slug}`,
     lastModified: now,
     changeFrequency: 'monthly',

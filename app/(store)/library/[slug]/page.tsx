@@ -9,6 +9,39 @@ import { MonographView } from '@/components/library/Monograph';
 export const dynamic = 'error'; // fully static
 const MODIFIED = '2026-07-02';
 
+/**
+ * Pull an article's FAQ out of its own body HTML so FAQPage markup is derived
+ * from the rendered text rather than maintained alongside it — the two cannot
+ * disagree, which is the failure mode that gets structured data ignored.
+ *
+ * Shape matched: an <h3> question followed by one or more <p> answers, which
+ * is how the library's FAQ sections are authored. Articles without that shape
+ * simply yield nothing and emit no FAQPage.
+ */
+function extractFaqs(body: string): { q: string; a: string }[] {
+  const text = (s: string) =>
+    s
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&mdash;/g, '—')
+      .replace(/&rsquo;/g, '’')
+      .replace(/&ldquo;|&rdquo;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const out: { q: string; a: string }[] = [];
+  const re = /<h3[^>]*>(.*?)<\/h3>\s*((?:<p[^>]*>.*?<\/p>\s*)+)/gis;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(body))) {
+    const q = text(m[1]);
+    const a = text(m[2]);
+    if (q && a) out.push({ q, a });
+  }
+  return out;
+}
+
 export function generateStaticParams() {
   return [
     ...MONOGRAPHS.map((m) => ({ slug: m.slug })),
@@ -62,15 +95,61 @@ export default function LibraryEntryPage({ params }: { params: { slug: string } 
   if (!a) notFound();
   const related = ARTICLES.filter((x) => x.category === a.category && x.slug !== a.slug).slice(0, 4);
 
+  /* Articles previously emitted a bare Article node: no breadcrumb, no FAQ, no
+     date, and an author/publisher spelled out inline rather than pointed at the
+     site's Organization — so each of the 33 guides declared its own unlinked
+     "Merit Sciences" instead of reinforcing the one entity the rest of the site
+     builds. This graph fixes all four. Questions are lifted out of the body
+     HTML rather than duplicated in a second data structure, so an article's
+     FAQ markup can never drift from the FAQ a reader sees. */
+  const SITE = 'https://meritsciences.com';
+  const url = `${SITE}/library/${a.slug}`;
+  const faqs = extractFaqs(a.body);
+
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: a.title,
-    description: a.excerpt,
-    author: { '@type': 'Organization', name: 'Merit Sciences' },
-    publisher: { '@type': 'Organization', name: 'Merit Sciences' },
-    mainEntityOfPage: `https://meritsciences.com/library/${a.slug}`,
-    isAccessibleForFree: true,
+    '@graph': [
+      {
+        '@type': 'Article',
+        '@id': `${url}#article`,
+        headline: a.title,
+        description: a.excerpt,
+        author: { '@id': `${SITE}/#organization` },
+        publisher: { '@id': `${SITE}/#organization` },
+        mainEntityOfPage: url,
+        url,
+        isAccessibleForFree: true,
+        inLanguage: 'en-US',
+        // Freshness is a live ranking/citation input — roughly half of cited
+        // AI answers come from content under ~13 weeks old — so the date has
+        // to be stated rather than left for a crawler to guess.
+        dateModified: MODIFIED,
+        datePublished: MODIFIED,
+        about: { '@id': `${SITE}/#organization` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${url}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+          { '@type': 'ListItem', position: 2, name: 'Research library', item: `${SITE}/library` },
+          { '@type': 'ListItem', position: 3, name: a.title, item: url },
+        ],
+      },
+      ...(faqs.length
+        ? [
+            {
+              '@type': 'FAQPage',
+              '@id': `${url}#faq`,
+              mainEntity: faqs.map((f) => ({
+                '@type': 'Question',
+                name: f.q,
+                acceptedAnswer: { '@type': 'Answer', text: f.a },
+              })),
+            },
+          ]
+        : []),
+    ],
   };
 
   return (
