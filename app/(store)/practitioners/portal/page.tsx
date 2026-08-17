@@ -4,14 +4,25 @@ import { getPractitionerSession } from '@/lib/practitioner-session';
 import { prisma } from '@/lib/db';
 import { getPricingContext, priceFor } from '@/lib/pricing';
 
-export const metadata = { title: 'Practitioner Portal — Merit Sciences' };
+export const metadata = { title: { absolute: 'Practitioner Portal — Merit Sciences' } };
 export const dynamic = 'force-dynamic';
 
 export default async function PractitionerPortalPage() {
   const session = await getPractitionerSession();
   if (!session) redirect('/practitioners/login?error=Sign+in+required');
 
-  const firstName = session.providerName.split(' ')[0];
+  /* Greeting name. Splitting on the first space returned the honorific for
+     anyone stored as "Dr. Jane Smith" — and since the page appends its own
+     period, that rendered "Dr..". Drop a leading title, then take the first
+     remaining word; if a name is nothing but a title, fall back to the whole
+     string rather than greeting someone with an empty space. */
+  const firstName = (() => {
+    const parts = session.providerName
+      .trim()
+      .split(/\s+/)
+      .filter((w) => !/^(dr|mr|mrs|ms|mx|prof)\.?$/i.test(w));
+    return parts[0] || session.providerName.trim();
+  })();
 
   // The portal used to say "account pricing is applied across the catalog"
   // and then show nothing — an empty room as the first impression after
@@ -19,11 +30,18 @@ export default async function PractitionerPortalPage() {
   // waterfall checkout uses, so they land on proof instead of a promise.
   const myPrices = await (async () => {
     try {
-      const [products, ctx] = await Promise.all([
+      /* The catalogue query depends on the practice's basis, so resolve that
+         first rather than in parallel. A practice on a flat % off retail is
+         discounted on EVERY active SKU, including ones with no physician
+         price — filtering those out under-reported the count (30 of 32) and
+         hid products they are in fact getting a rate on. */
+      const ctx = await getPricingContext();
+      const onRetailBasis = (ctx.session?.retailDiscountBps ?? null) != null;
+      const [products] = await Promise.all([
         prisma.product.findMany({
           where: {
             status: 'ACTIVE',
-            physicianPriceCents: { not: null, gt: 0 },
+            ...(onRetailBasis ? {} : { physicianPriceCents: { not: null, gt: 0 } }),
             NOT: [{ title: { contains: 'water', mode: 'insensitive' } }],
           },
           select: {
@@ -33,7 +51,6 @@ export default async function PractitionerPortalPage() {
           orderBy: { priceCents: 'desc' },
           take: 60,
         }),
-        getPricingContext(),
       ]);
       type Row = { handle: string; title: string; vialSize: string; retail: number; yours: number; save: number; isPractitionerPricing: boolean };
       const rows: Row[] = products
@@ -208,7 +225,17 @@ export default async function PractitionerPortalPage() {
             <InfoRow label="Practice">{session.practiceName}</InfoRow>
             <InfoRow label="Provider">{session.providerName}</InfoRow>
             <InfoRow label="Email">{session.email}</InfoRow>
-            <InfoRow label="Pricing tier">{session.tier === 'standard' ? 'Standard' : session.tier}</InfoRow>
+            <InfoRow label="Pricing tier">
+              {session.retailDiscountBps != null
+                ? `${(session.retailDiscountBps / 100)
+                    .toFixed(2)
+                    .replace(/\.?0+$/, '')}% off retail`
+                : session.priceMultiplierBps !== 10000
+                  ? `Account tier (${session.priceMultiplierBps < 10000 ? '−' : '+'}${(
+                      Math.abs(session.priceMultiplierBps - 10000) / 100
+                    ).toFixed(2).replace(/\.?0+$/, '')}%)`
+                  : 'Account pricing'}
+            </InfoRow>
           </dl>
           <p className="text-[11px] text-ink-soft mt-5">
             To update your account or request a custom pricing tier, reply to your approval email
