@@ -398,7 +398,26 @@ export async function savePractitionerPricing(
     return { ok: false, error: 'Multiplier must be between 10% and 300% (1000–30000 bps).' };
   }
 
-  // ── Knob 2: per-SKU overrides ──
+  // ── Knob 2: flat % off retail ──
+  // The book multiplier scales physicianPriceCents, which is an absolute
+  // per-SKU price — its implied discount off retail varies SKU to SKU (10%
+  // to 44% across the live catalogue), and SKUs with no physician price fall
+  // through to full retail. So the book cannot express "this practice gets
+  // 10% off list". This can: it is applied to retail, covers every SKU, and
+  // is recomputed per request so it survives price changes.
+  //
+  // Empty = not on this basis, use the book.
+  const rawRetail = String(formData.get('retailDiscountBps') ?? '').trim();
+  let retailDiscountBps: number | null = null;
+  if (rawRetail !== '') {
+    const parsedRetail = Number.parseInt(rawRetail, 10);
+    if (!Number.isFinite(parsedRetail) || parsedRetail <= 0 || parsedRetail >= 10000) {
+      return { ok: false, error: 'Discount off retail must be between 0% and 100% (exclusive).' };
+    }
+    retailDiscountBps = parsedRetail;
+  }
+
+  // ── Knob 3: per-SKU overrides ──
   // Walk every `override.<handle>` form field. Empty string = delete row.
   // Non-empty = upsert with parsed dollar amount converted to cents.
   type Pending = { handle: string; priceCents: number | null };
@@ -430,7 +449,7 @@ export async function savePractitionerPricing(
   await prisma.$transaction(async (tx) => {
     await tx.practitionerApplication.update({
       where: { id },
-      data: { priceMultiplierBps: parsedMult },
+      data: { priceMultiplierBps: parsedMult, retailDiscountBps },
     });
 
     for (const row of pending) {
