@@ -24,6 +24,7 @@
  */
 import 'server-only';
 import { randomBytes } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { prisma } from './db';
 import { checkoutOrigin } from './checkout-domain';
 
@@ -45,6 +46,8 @@ export type HandoffPayload = {
   refSlug: string | null;
   attr: string | null;
   welcomeCode: string | null;
+  /** Approved practitioner id, resolved from the session server-side. */
+  practitionerApplicationId?: string | null;
 };
 
 /**
@@ -84,6 +87,7 @@ export async function createHandoff(payload: HandoffPayload): Promise<string> {
       refSlug: payload.refSlug,
       attr: payload.attr,
       welcomeCode: payload.welcomeCode,
+      practitionerApplicationId: payload.practitionerApplicationId ?? null,
       expiresAt: new Date(Date.now() + TTL_MS),
     },
   });
@@ -116,7 +120,44 @@ export async function consumeHandoff(token: string): Promise<HandoffPayload | nu
     refSlug: row.refSlug,
     attr: row.attr,
     welcomeCode: row.welcomeCode,
+    practitionerApplicationId: row.practitionerApplicationId,
   };
+}
+
+/**
+ * Signed practitioner cookie for the checkout origin.
+ *
+ * The storefront's Supabase auth cookie is scoped to meritsciences.com, so on
+ * meritcheckout.com getPractitionerSession() finds nothing and the cart prices
+ * at full retail — a practice would browse at their rate and be charged list.
+ *
+ * /api/checkout/claim already re-establishes the affiliate cookies on this
+ * origin so the money code runs identically; this is the same move for
+ * pricing. It MUST be signed: an unsigned `id` cookie would let any buyer
+ * type in a practitioner id and grant themselves account pricing.
+ */
+export const PRACTITIONER_COOKIE = 'merit_practitioner';
+const PRACTITIONER_COOKIE_SECRET = process.env.CRON_SECRET || 'dev-secret';
+
+export function signPractitionerId(applicationId: string): string {
+  const mac = createHmac('sha256', PRACTITIONER_COOKIE_SECRET)
+    .update(`practitioner:${applicationId}`)
+    .digest('base64url')
+    .slice(0, 32);
+  return `${applicationId}.${mac}`;
+}
+
+/** Returns the application id only when the signature checks out. */
+export function verifyPractitionerCookie(value: string | undefined): string | null {
+  if (!value) return null;
+  const i = value.lastIndexOf('.');
+  if (i <= 0) return null;
+  const id = value.slice(0, i);
+  const expected = signPractitionerId(id);
+  const a = Buffer.from(value);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return null;
+  return timingSafeEqual(a, b) ? id : null;
 }
 
 /** Housekeeping — drop expired rows. Safe to call from any cron. */

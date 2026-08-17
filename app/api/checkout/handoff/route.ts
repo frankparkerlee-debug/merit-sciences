@@ -17,6 +17,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createHandoff, type HandoffLine } from '@/lib/checkout-handoff';
 import { ATTR_COOKIE } from '@/lib/attribution';
+import { getPractitionerSession } from '@/lib/practitioner-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,8 +71,20 @@ export async function POST(req: Request) {
       ? body.welcomeCode.trim().slice(0, 40)
       : null;
 
+  // Resolved from the signed-in session on THIS origin, never from the body —
+  // the checkout domain cannot see the storefront's auth cookie, so this is
+  // the only point at which the practice can be identified.
+  let practitionerApplicationId: string | null = null;
   try {
-    const url = await createHandoff({ lines, refSlug, attr, welcomeCode });
+    practitionerApplicationId = (await getPractitionerSession())?.applicationId ?? null;
+  } catch {
+    /* pricing carry-over is best-effort; never block checkout on it */
+  }
+
+  try {
+    const url = await createHandoff({
+      lines, refSlug, attr, welcomeCode, practitionerApplicationId,
+    });
     return NextResponse.json({ url });
   } catch (err) {
     console.error('[checkout/handoff] failed', err);
