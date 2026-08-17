@@ -15,7 +15,8 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { prisma } from './db';
 import { validateDiscountCode } from './discount';
-import { getPractitionerSession } from './practitioner-session';
+import { getPricingContext, priceFor } from './pricing';
+import { STACK_TEMPLATES } from './catalog-meta';
 
 export const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300
 export const FLAT_SHIPPING_CENTS = 999; // $9.99
@@ -26,6 +27,28 @@ export const FLAT_SHIPPING_CENTS = 999; // $9.99
  * affiliate commission on traffic we already bought. Stored lowercase.
  */
 export const AD_FUNNEL_CODES = new Set(['welcome20']);
+
+/**
+ * Multiplier from the per-vial price to a pack line's unit price.
+ *
+ * Mirrors deriveBundles() — Single ×1, 3-Pack ×3×0.95, 6-Pack ×6×0.90,
+ * Subscribe ×0.90 — matched loosely because real orders carry several
+ * spellings of the same tier ("Subscribe & Save 10%" and "Subscribe · Every
+ * month" both being 0.90), plus add-on labels like "10mL bacteriostatic" and
+ * some legacy blanks, all of which are single units. Verified against the
+ * live order history: 3-Pack lines sit at exactly 2.85× retail, 6-Pack at
+ * 5.40×, every Subscribe spelling at 0.90×.
+ *
+ * Anything unrecognised falls to ×1, the most expensive interpretation, so an
+ * invented label can never buy a discount.
+ */
+export function packMultiplier(bundleLabel: string): number {
+  const l = (bundleLabel || '').toLowerCase();
+  if (l.includes('6-pack') || l.includes('6 pack')) return 6 * 0.9;
+  if (l.includes('3-pack') || l.includes('3 pack')) return 3 * 0.95;
+  if (l.includes('subscribe')) return 0.9;
+  return 1;
+}
 
 export type CartLineIn = {
   handle: string;
@@ -92,44 +115,106 @@ export async function priceCart(args: {
   const lines = args.lines;
   const discountCodeInput = (args.discountCodeInput ?? '').trim();
 
-  // ── Practitioner pricing override ──────────────────────────────────────
-  // Four-step waterfall: per-SKU override → physicianPriceCents × book-level
-  // multiplier → bare physicianPriceCents → retail. Applied as a ratio against
-  // retail so any bundle/subscribe discount the cart encoded is preserved.
-  const practitionerSession = await getPractitionerSession();
-  if (practitionerSession) {
-    const handles = [...new Set(lines.map((l) => l.handle).filter(Boolean))];
-    if (handles.length > 0) {
-      const [refs, overrideRows] = await Promise.all([
-        prisma.product.findMany({
-          where: { handle: { in: handles } },
-          select: { handle: true, priceCents: true, physicianPriceCents: true },
-        }),
-        prisma.practitionerPriceOverride.findMany({
-          where: {
-            applicationId: practitionerSession.applicationId,
-            productHandle: { in: handles },
-          },
-          select: { productHandle: true, priceCents: true },
-        }),
-      ]);
-      const refMap = new Map(refs.map((r) => [r.handle, r]));
-      const overrideMap = new Map(overrideRows.map((o) => [o.productHandle, o.priceCents]));
-      const multBps = practitionerSession.priceMultiplierBps ?? 10000;
-      for (const line of lines) {
-        const ref = refMap.get(line.handle);
-        if (!ref || ref.priceCents <= 0) continue;
-        let effectivePerVial: number | null = null;
-        const override = overrideMap.get(line.handle);
-        if (override != null && override > 0) {
-          effectivePerVial = override;
-        } else if (ref.physicianPriceCents && ref.physicianPriceCents > 0) {
-          effectivePerVial = Math.round((ref.physicianPriceCents * multBps) / 10000);
+  // ── Authoritative line pricing ─────────────────────────────────────────
+  // EVERY line's unit price is re-derived here from the database. The client's
+  // `unitCents` is discarded, not adjusted.
+  //
+  // It used to be trusted: sanitizeCartLines only checks that unitCents is a
+  // positive number, and the subtotal was computed straight from it, so a cart
+  // edited in localStorage was charged at whatever price it claimed — a $99.99
+  // vial for $0.01 produced a $0.01 PaymentIntent. The practitioner block below
+  // was the only thing that ever touched the number, and it scaled the client's
+  // figure by a ratio rather than replacing it.
+  //
+  // Re-deriving also makes practitioner pricing correct at checkout instead of
+  // incidental. The storefront resolves prices through priceFor(); this now
+  // calls the SAME resolver rather than keeping a second copy of the waterfall
+  // that has to be kept in step with it by hand.
+  const pricingCtx = await getPricingContext();
+  const practitionerSession = pricingCtx.session;
+
+  {
+    const productHandles = [...new Set(
+      lines.filter((l) => !l.handle.startsWith('supply:') && !l.handle.startsWith('stack:'))
+           .map((l) => l.handle).filter(Boolean),
+    )];
+    const stackSlugs = [...new Set(
+      lines.filter((l) => l.handle.startsWith('stack:'))
+           .map((l) => l.handle.slice('stack:'.length)),
+    )];
+    const supplyHandles = [...new Set(
+      lines.filter((l) => l.handle.startsWith('supply:'))
+           .map((l) => l.handle.slice('supply:'.length)),
+    )];
+    // Stack member prices have to be resolved too, so fetch them alongside.
+    const stackMemberHandles = stackSlugs.flatMap(
+      (s) => STACK_TEMPLATES.find((t) => t.slug === s)?.handles ?? [],
+    );
+
+    const [products, supplies] = await Promise.all([
+      productHandles.length + stackMemberHandles.length > 0
+        ? prisma.product.findMany({
+            where: { handle: { in: [...new Set([...productHandles, ...stackMemberHandles])] } },
+            select: { handle: true, priceCents: true, physicianPriceCents: true, status: true },
+          })
+        : Promise.resolve([]),
+      supplyHandles.length > 0
+        ? prisma.supplyProduct.findMany({
+            where: { handle: { in: supplyHandles } },
+            select: { handle: true, priceCents: true, clinicPriceCents: true },
+          })
+        : Promise.resolve([]),
+    ]);
+    const productMap = new Map(products.map((p) => [p.handle, p]));
+    const supplyMap = new Map(supplies.map((p) => [p.handle, p]));
+
+    /** Per-vial price this buyer is entitled to, via the shared resolver. */
+    const perVial = (handle: string): number | null => {
+      const p = productMap.get(handle);
+      if (!p || p.priceCents <= 0) return null;
+      return priceFor(
+        { handle, priceCents: p.priceCents, physicianPriceCents: p.physicianPriceCents },
+        pricingCtx,
+      ).effectivePriceCents;
+    };
+
+    for (const line of lines) {
+      let authoritative: number | null = null;
+
+      if (line.handle.startsWith('stack:')) {
+        const tpl = STACK_TEMPLATES.find((t) => t.slug === line.handle.slice('stack:'.length));
+        if (tpl) {
+          const parts = tpl.handles.map(perVial);
+          if (parts.every((c): c is number => c != null)) {
+            const sum = parts.reduce((a, b) => a + b, 0);
+            authoritative = Math.round(sum * (1 - tpl.bundleDiscountPct / 100));
+          }
         }
-        if (effectivePerVial === null) continue;
-        const ratio = effectivePerVial / ref.priceCents;
-        line.unitCents = Math.max(1, Math.round(line.unitCents * ratio));
+      } else if (line.handle.startsWith('supply:')) {
+        const s = supplyMap.get(line.handle.slice('supply:'.length));
+        if (s && s.priceCents > 0) {
+          // Clinic pricing on supply mirrors the peptide rule: session-gated,
+          // never exposed to retail buyers.
+          authoritative =
+            practitionerSession && s.clinicPriceCents && s.clinicPriceCents > 0
+              ? s.clinicPriceCents
+              : s.priceCents;
+        }
+      } else {
+        const base = perVial(line.handle);
+        if (base != null) authoritative = Math.round(base * packMultiplier(line.bundleLabel));
       }
+
+      if (authoritative == null || authoritative <= 0) {
+        // Fail closed. A line we cannot price from our own records is not a
+        // line we should quietly charge the client's number for.
+        return {
+          error: 'One or more items are no longer available. Refresh your cart and try again.',
+          field: 'lines',
+          status: 400,
+        };
+      }
+      line.unitCents = Math.max(1, authoritative);
     }
   }
 

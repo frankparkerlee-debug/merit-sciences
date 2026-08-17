@@ -821,6 +821,12 @@ model PractitionerApplication {
   // standard. 10800 = 8% above standard. Applied to physicianPriceCents
   // by the pricing resolver waterfall in lib/pricing.ts.
   priceMultiplierBps Int       @default(10000)
+  // Optional FLAT discount off RETAIL, in basis points (1000 = 10% off
+  // retail). Set this when a practice is signed on a simple "X% off list"
+  // deal rather than onto the physician book. It beats physicianPriceCents
+  // for EVERY SKU — including SKUs that have no physician price at all,
+  // which the book silently charges full retail for. Null = use the book.
+  retailDiscountBps  Int?
   // Audit
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt

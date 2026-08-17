@@ -26,6 +26,10 @@ export type PractitionerSession = {
    *  (standard physician tier). Applied to physicianPriceCents in
    *  lib/pricing.ts. Per-SKU override rows beat this. */
   priceMultiplierBps: number;
+  /** Flat discount off RETAIL in basis points (1000 = 10% off retail).
+   *  When set, the resolver uses retail × (1 − bps) for every SKU and
+   *  ignores the physician book. Null = book pricing. */
+  retailDiscountBps: number | null;
 };
 
 export async function getPractitionerSession(): Promise<PractitionerSession | null> {
@@ -36,7 +40,7 @@ export async function getPractitionerSession(): Promise<PractitionerSession | nu
 
   const app = await prisma.practitionerApplication.findFirst({
     where: { email, status: 'APPROVED' },
-    select: { id: true, practiceName: true, providerName: true, priceMultiplierBps: true },
+    select: { id: true, practiceName: true, providerName: true, priceMultiplierBps: true, retailDiscountBps: true },
   });
   if (!app) return null;
 
@@ -48,6 +52,7 @@ export async function getPractitionerSession(): Promise<PractitionerSession | nu
     providerName: app.providerName,
     tier: 'standard',
     priceMultiplierBps: app.priceMultiplierBps ?? 10000,
+    retailDiscountBps: app.retailDiscountBps ?? null,
   };
 }
 
