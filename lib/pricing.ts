@@ -78,6 +78,28 @@ export function priceFor(
     }
   }
 
+  /* Flat "X% off retail" deals.
+   *
+   * This sits ABOVE the physician book on purpose. A practice signed at
+   * "10% off list" is not on the book, and the book cannot express that
+   * deal: physicianPriceCents is an absolute per-SKU price whose implied
+   * discount ranges from 10% to 44% off retail across the live catalog, so
+   * no single multiplier yields a flat percentage. Worse, a SKU with no
+   * physicianPriceCents falls through to full retail — the practice would
+   * silently get 0% off on exactly the products we forgot to price.
+   *
+   * Deriving from retail on every request also means the deal survives
+   * price changes. Per-SKU override rows store absolute cents, so raising
+   * a retail price quietly changes the practice's real discount; a bps
+   * figure stays 10% off forever. Explicit overrides still win, because
+   * those are a deliberate per-SKU decision.
+   */
+  const retailBps = ctx.session.retailDiscountBps;
+  if (retailBps != null && retailBps > 0 && retailBps < 10000) {
+    const discounted = Math.max(1, Math.round((p.priceCents * (10000 - retailBps)) / 10000));
+    return { effectivePriceCents: discounted, isPractitionerPricing: true };
+  }
+
   if (p.physicianPriceCents != null && p.physicianPriceCents > 0) {
     const mult = ctx.session.priceMultiplierBps ?? 10000;
     const adjusted = Math.max(1, Math.round((p.physicianPriceCents * mult) / 10000));
