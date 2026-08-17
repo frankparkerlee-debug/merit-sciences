@@ -20,6 +20,7 @@ export default async function PractitionerApplicationDetail({
   // Pricing data — only meaningful for APPROVED practitioners.
   let pricingProps: null | {
     currentMultiplierBps: number;
+    currentRetailDiscountBps: number | null;
     products: {
       handle: string;
       title: string;
@@ -43,6 +44,7 @@ export default async function PractitionerApplicationDetail({
     ]);
     pricingProps = {
       currentMultiplierBps: app.priceMultiplierBps ?? 10000,
+      currentRetailDiscountBps: app.retailDiscountBps ?? null,
       products: products.map((p) => ({
         handle: p.handle,
         title: p.title,
@@ -133,6 +135,7 @@ export default async function PractitionerApplicationDetail({
             applicationId={app.id}
             practiceName={app.practiceName}
             currentMultiplierBps={pricingProps.currentMultiplierBps}
+            currentRetailDiscountBps={pricingProps.currentRetailDiscountBps}
             products={pricingProps.products}
             currentOverrides={pricingProps.currentOverrides}
           />

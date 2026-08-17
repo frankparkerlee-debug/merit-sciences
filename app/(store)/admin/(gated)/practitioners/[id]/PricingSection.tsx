@@ -15,6 +15,8 @@ type Props = {
   applicationId: string;
   practiceName: string;
   currentMultiplierBps: number;
+  /** Flat bps off retail, or null when the practice is on the book. */
+  currentRetailDiscountBps: number | null;
   products: ProductRow[];
   /** Map of productHandle → override priceCents. */
   currentOverrides: Record<string, number>;
@@ -30,17 +32,31 @@ function percentToBps(pct: number): number {
   return Math.round((pct + 100) * 100);
 }
 
+/**
+ * Preview of what this practice will actually be charged.
+ *
+ * This MUST stay in step with priceFor() in lib/pricing.ts — same order, same
+ * rounding. If the two drift, the admin is shown a price the storefront will
+ * not honour, which is worse than showing nothing.
+ */
 function effectivePerVial(
   product: ProductRow,
   multBps: number,
+  retailBps: number | null,
   overrideDollars: string,
-): { cents: number; source: 'override' | 'standard' | 'retail' } {
+): { cents: number; source: 'override' | 'retail-pct' | 'standard' | 'retail' } {
   const trimmed = overrideDollars.trim();
   if (trimmed !== '') {
     const v = Number.parseFloat(trimmed);
     if (Number.isFinite(v) && v > 0) {
       return { cents: Math.round(v * 100), source: 'override' };
     }
+  }
+  if (retailBps != null && retailBps > 0 && retailBps < 10000) {
+    return {
+      cents: Math.max(1, Math.round((product.retailPriceCents * (10000 - retailBps)) / 10000)),
+      source: 'retail-pct',
+    };
   }
   if (product.physicianPriceCents && product.physicianPriceCents > 0) {
     return {
@@ -55,6 +71,7 @@ export function PricingSection({
   applicationId,
   practiceName,
   currentMultiplierBps,
+  currentRetailDiscountBps,
   products,
   currentOverrides,
 }: Props) {
@@ -66,6 +83,8 @@ export function PricingSection({
   // Local state for live preview only — the form posts the actual values
   // to the server via field names, not these.
   const [multBps, setMultBps] = useState(currentMultiplierBps);
+  const [retailBps, setRetailBps] = useState<number | null>(currentRetailDiscountBps);
+  const onRetailBasis = retailBps != null;
   const [overrides, setOverrides] = useState<Record<string, string>>(() => {
     const seed: Record<string, string> = {};
     for (const [handle, cents] of Object.entries(currentOverrides)) {
@@ -79,13 +98,13 @@ export function PricingSection({
     let belowStandard = 0;
     let aboveStandard = 0;
     for (const p of products) {
-      const e = effectivePerVial(p, multBps, overrides[p.handle] ?? '');
+      const e = effectivePerVial(p, multBps, retailBps, overrides[p.handle] ?? '');
       if (e.source === 'override') overrideCount += 1;
       if (p.physicianPriceCents && e.cents < p.physicianPriceCents) belowStandard += 1;
       if (p.physicianPriceCents && e.cents > p.physicianPriceCents) aboveStandard += 1;
     }
     return { overrideCount, belowStandard, aboveStandard };
-  }, [products, multBps, overrides]);
+  }, [products, multBps, retailBps, overrides]);
 
   return (
     <form action={formAction} className="rounded-2xl border border-cobalt/15 bg-white p-6 mb-6">
@@ -115,8 +134,73 @@ export function PricingSection({
         </div>
       )}
 
+      {/* Basis selector — the two catalogue-wide modes are mutually exclusive,
+          so they are presented as a choice rather than two live fields. Both
+          being editable at once was the fastest way to promise a practice
+          "10% off list" and quietly hand them the book instead. */}
+      <div className="mt-5 mb-5">
+        <label className="block text-[10px] tracking-[0.18em] uppercase font-bold text-ink-soft mb-2">
+          Catalogue-wide basis
+        </label>
+        <div className="inline-flex rounded-lg border border-cobalt/25 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setRetailBps(null)}
+            className={`px-4 py-2 text-[12px] font-bold transition-colors ${
+              !onRetailBasis ? 'bg-cobalt text-white' : 'bg-white text-ink-soft hover:bg-cobalt/5'
+            }`}
+          >
+            Physician book
+          </button>
+          <button
+            type="button"
+            onClick={() => setRetailBps(retailBps ?? 1000)}
+            className={`px-4 py-2 text-[12px] font-bold transition-colors border-l border-cobalt/25 ${
+              onRetailBasis ? 'bg-cobalt text-white' : 'bg-white text-ink-soft hover:bg-cobalt/5'
+            }`}
+          >
+            % off retail
+          </button>
+        </div>
+        <p className="text-[12px] text-ink-soft leading-relaxed mt-2 max-w-[60ch]">
+          {onRetailBasis
+            ? 'A flat percentage off list, applied to every SKU — including any with no physician price set. Use this for a practice signed at "X% off retail".'
+            : 'Uses each SKU\u2019s physician price. The discount off retail therefore varies by SKU, and any SKU without a physician price is charged full retail.'}
+        </p>
+      </div>
+
+      {/* % off retail */}
+      {onRetailBasis && (
+        <div className="mb-6">
+          <label className="block text-[10px] tracking-[0.18em] uppercase font-bold text-ink-soft mb-1.5">
+            Discount off retail
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              step="0.5"
+              min={0.5}
+              max={99}
+              value={(retailBps! / 100).toFixed(2).replace(/\.00$/, '')}
+              onChange={(e) => {
+                const pct = Number.parseFloat(e.target.value);
+                if (Number.isFinite(pct)) setRetailBps(Math.round(pct * 100));
+              }}
+              className="w-28 rounded-lg border border-cobalt/25 bg-white px-3 py-2 text-sm font-bold tracking-tight focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/20"
+            />
+            <span className="text-sm text-ink-soft">% off every retail price</span>
+          </div>
+        </div>
+      )}
+      {/* Empty string = clear the column and fall back to the book. */}
+      <input type="hidden" name="retailDiscountBps" value={onRetailBasis ? String(retailBps) : ''} />
+
       {/* Knob 1 — book-level multiplier */}
-      <div className="mt-5 mb-6 grid grid-cols-1 sm:grid-cols-[1fr,auto] gap-4 items-end">
+      <div
+        className={`mt-5 mb-6 grid grid-cols-1 sm:grid-cols-[1fr,auto] gap-4 items-end ${
+          onRetailBasis ? 'opacity-40 pointer-events-none' : ''
+        }`}
+      >
         <div>
           <label className="block text-[10px] tracking-[0.18em] uppercase font-bold text-ink-soft mb-1.5">
             Book-level adjustment vs. standard physician tier
@@ -185,7 +269,7 @@ export function PricingSection({
             </thead>
             <tbody>
               {products.map((p) => {
-                const e = effectivePerVial(p, multBps, overrides[p.handle] ?? '');
+                const e = effectivePerVial(p, multBps, retailBps, overrides[p.handle] ?? '');
                 return (
                   <tr key={p.handle} className="border-t border-cobalt/10">
                     <td className="px-3 py-2 align-middle">
@@ -221,7 +305,7 @@ export function PricingSection({
                     <td className="px-3 py-2 text-right tabular-nums">
                       <span
                         className={`font-bold ${
-                          e.source === 'override'
+                          e.source === 'override' || e.source === 'retail-pct'
                             ? 'text-cobalt'
                             : e.source === 'standard'
                               ? 'text-ink'
@@ -231,7 +315,13 @@ export function PricingSection({
                         {money(e.cents)}
                       </span>
                       <span className="block text-[9px] tracking-[0.14em] uppercase text-ink-muted">
-                        {e.source === 'override' ? 'pinned' : e.source === 'standard' ? 'book' : 'retail'}
+                        {e.source === 'override'
+                          ? 'pinned'
+                          : e.source === 'retail-pct'
+                            ? '% off'
+                            : e.source === 'standard'
+                              ? 'book'
+                              : 'retail'}
                       </span>
                     </td>
                   </tr>
