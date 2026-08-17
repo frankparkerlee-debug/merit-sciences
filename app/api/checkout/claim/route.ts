@@ -17,7 +17,7 @@
  * checkout domain, with zero changes to the money code.
  */
 import { NextResponse } from 'next/server';
-import { consumeHandoff } from '@/lib/checkout-handoff';
+import { consumeHandoff, signPractitionerId, PRACTITIONER_COOKIE } from '@/lib/checkout-handoff';
 import { ATTR_COOKIE, ATTR_COOKIE_MAX_AGE } from '@/lib/attribution';
 
 export const runtime = 'nodejs';
@@ -63,6 +63,21 @@ export async function POST(req: Request) {
       maxAge: REF_MAX_AGE,
     });
   }
+  // Same device as the affiliate cookies above: restore the practice on this
+  // origin so priceCart() resolves account pricing here exactly as it does on
+  // the storefront. Signed, because an unsigned id would let any buyer grant
+  // themselves practitioner rates by typing a cookie.
+  if (payload.practitionerApplicationId) {
+    res.cookies.set(PRACTITIONER_COOKIE, signPractitionerId(payload.practitionerApplicationId), {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure,
+      path: '/',
+      // Short: it describes one checkout, not a login.
+      maxAge: 2 * 60 * 60,
+    });
+  }
+
   if (payload.attr) {
     res.cookies.set(ATTR_COOKIE, payload.attr, {
       httpOnly: true,

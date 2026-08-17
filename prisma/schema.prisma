@@ -81,6 +81,11 @@ model CheckoutHandoff {
   attr        String?
   /// Auto-apply promo stashed by DiscountCodeCapture / the /access gate.
   welcomeCode String?
+  /// Approved practitioner whose account pricing applies to this cart.
+  /// Written server-side from a verified session on the STOREFRONT origin so
+  /// the checkout origin — a different domain, where that auth cookie does
+  /// not exist — can resolve the same prices. Never client-supplied.
+  practitionerApplicationId String?
   createdAt   DateTime  @default(now())
   expiresAt   DateTime
   consumedAt  DateTime?

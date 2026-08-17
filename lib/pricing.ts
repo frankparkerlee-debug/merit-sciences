@@ -13,7 +13,9 @@
  */
 
 import 'server-only';
+import { cookies } from 'next/headers';
 import { getPractitionerSession, type PractitionerSession } from '@/lib/practitioner-session';
+import { PRACTITIONER_COOKIE, verifyPractitionerCookie } from '@/lib/checkout-handoff';
 import { prisma } from '@/lib/db';
 import { deriveBundles, type Product } from '@/lib/product-types';
 
@@ -40,7 +42,46 @@ export type PricingFields = {
 };
 
 export async function getPricingContext(): Promise<PricingContext> {
-  const session = await getPractitionerSession();
+  let session = await getPractitionerSession();
+
+  /* Checkout runs on a SEPARATE domain, and the Supabase auth cookie is scoped
+     to the storefront — so on meritcheckout.com the line above finds nothing
+     and the cart would price at full retail. A practice would browse at their
+     rate and be charged list.
+     /api/checkout/claim restores the practice here as a signed cookie, the
+     same way it restores the affiliate cookies so the commission path runs
+     identically. The signature is the load-bearing part: an unsigned id would
+     let any buyer grant themselves account pricing. We still read the practice
+     from the database rather than trusting anything in the cookie beyond the
+     verified id, so a deactivated account stops getting the rate immediately. */
+  if (!session) {
+    const signed = cookies().get(PRACTITIONER_COOKIE)?.value;
+    const applicationId = verifyPractitionerCookie(signed);
+    if (applicationId) {
+      const app = await prisma.practitionerApplication
+        .findFirst({
+          where: { id: applicationId, status: 'APPROVED' },
+          select: {
+            id: true, email: true, practiceName: true, providerName: true,
+            priceMultiplierBps: true, retailDiscountBps: true,
+          },
+        })
+        .catch(() => null);
+      if (app) {
+        session = {
+          email: app.email,
+          userId: '',
+          applicationId: app.id,
+          practiceName: app.practiceName,
+          providerName: app.providerName,
+          tier: 'standard',
+          priceMultiplierBps: app.priceMultiplierBps ?? 10000,
+          retailDiscountBps: app.retailDiscountBps ?? null,
+        };
+      }
+    }
+  }
+
   if (!session) return { session: null, overrides: new Map() };
 
   const rows = await prisma.practitionerPriceOverride.findMany({
