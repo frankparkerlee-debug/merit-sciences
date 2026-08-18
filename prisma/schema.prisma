@@ -261,6 +261,15 @@ model OrderCommission {
   affiliate        Affiliate             @relation(fields: [affiliateId], references: [id])
   // Money — Stripe convention: integer cents
   orderTotalCents  BigInt // gross order subtotal (commissionable base)
+  /// REVENUE = flat rate on the order total (standard affiliates).
+  /// GROSS_PROFIT = (revenue − product cost − shipping deduction) × rate,
+  /// used for practitioner referrals. The inputs below are snapshotted
+  /// because product cost moves; without them the figure cannot be re-derived
+  /// or defended months later.
+  basis            String  @default("REVENUE")
+  productCostCents       BigInt?
+  shippingDeductionCents BigInt?
+  grossProfitCents       BigInt?
   commissionRateBp Int // basis points: 1500 = 15%, 2000 = 20%, 2500 = 25%
   commissionCents  BigInt // computed at order time, locks in this rate
   // Status — paid, unpaid, or clawed back
@@ -832,6 +841,10 @@ model PractitionerApplication {
   // for EVERY SKU — including SKUs that have no physician price at all,
   // which the book silently charges full retail for. Null = use the book.
   retailDiscountBps  Int?
+  /// Affiliate who introduced this practice, set during onboarding. Orders
+  /// from this account pay the GROSS-PROFIT commission model rather than the
+  /// flat revenue rate — see lib/practitioner-commission.ts.
+  referredByAffiliateId String?
   // Which of the three bases actually applies. Defaults to RETAIL so an
   // approved practice pays list until someone deliberately assigns pricing —
   // before this existed, approval alone dropped a practice onto the physician

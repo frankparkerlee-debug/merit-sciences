@@ -4,6 +4,7 @@ import { createOrderFromPayPal, issueOrderConfirmationEmail } from './orders';
 import { notifyOpsOfOrder } from './ops-notify';
 import { sendMetaPurchase } from './meta-capi';
 import { notifyAffiliateOfSale } from './affiliate-sale-email';
+import { computeGrossProfitCommission, referringAffiliateFor } from './practitioner-commission';
 
 /**
  * Everything that must happen once a PayPal capture is COMPLETED: persist/
@@ -173,8 +174,42 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
   const trailing30 = await prisma.orderCommission.count({
     where: { affiliateId: affiliate.id, occurredAt: { gte: since }, status: { not: 'CLAWED_BACK' } },
   });
-  const { rateBp } = tierForOrderCount(trailing30);
-  const commissionCents = isSelfPurchase ? 0 : Math.floor((orderTotalCents * rateBp) / 10_000);
+  const { rateBp: tierRateBp } = tierForOrderCount(trailing30);
+
+  /* Practitioner referrals earn on GROSS PROFIT, not revenue.
+     A practice buys at account pricing and reorders steadily, so a share of
+     revenue there would pay commission on volume carrying very little margin.
+     Only orders from a practice this same affiliate introduced switch basis —
+     an ordinary customer who happens to share an affiliate is unaffected. */
+  const practitionerReferrer = await referringAffiliateFor(buyerEmail).catch(() => null);
+  const useGrossProfit = practitionerReferrer != null && practitionerReferrer === affiliate.id;
+
+  let rateBp = tierRateBp;
+  let commissionCents = isSelfPurchase ? 0 : Math.floor((orderTotalCents * rateBp) / 10_000);
+  let basis: 'REVENUE' | 'GROSS_PROFIT' = 'REVENUE';
+  let gp: Awaited<ReturnType<typeof computeGrossProfitCommission>> | null = null;
+
+  if (useGrossProfit && !isSelfPurchase) {
+    const items: any[] = Array.isArray(pu.items) ? pu.items : [];
+    const lines = items.map((it) => ({
+      handle: String(it?.sku ?? ''),
+      bundleLabel: String(it?.description ?? ''),
+      unitCents: Math.round(parseFloat(it?.unit_amount?.value ?? '0') * 100),
+      qty: Math.max(1, parseInt(String(it?.quantity ?? '1'), 10) || 1),
+    }));
+    if (lines.length > 0) {
+      gp = await computeGrossProfitCommission(lines);
+      basis = 'GROSS_PROFIT';
+      rateBp = gp.rateBp;
+      commissionCents = gp.commissionCents;
+      if (gp.uncostedHandles.length > 0) {
+        // Withheld rather than guessed — see computeGrossProfitCommission.
+        console.warn(
+          `[commission] gross-profit withheld on ${orderId}: no cost for ${gp.uncostedHandles.join(', ')}`,
+        );
+      }
+    }
+  }
 
   try {
     await prisma.$transaction([
@@ -188,6 +223,12 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
           orderTotalCents: BigInt(orderTotalCents),
           commissionRateBp: rateBp,
           commissionCents: BigInt(commissionCents),
+          basis,
+          // Snapshotted so the figure can be re-derived months later; product
+          // cost moves, and without these the number is unarguable.
+          productCostCents: gp ? BigInt(gp.productCostCents) : null,
+          shippingDeductionCents: gp ? BigInt(gp.shippingDeductionCents) : null,
+          grossProfitCents: gp ? BigInt(gp.grossProfitCents) : null,
           status: 'PENDING',
         },
       }),

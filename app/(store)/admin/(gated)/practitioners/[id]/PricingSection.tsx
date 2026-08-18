@@ -18,6 +18,9 @@ type Props = {
   /** Flat bps off retail, used when the basis is RETAIL_PCT. */
   currentRetailDiscountBps: number | null;
   currentBasis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
+  /** ACTIVE affiliates, for the referral picker. */
+  affiliates: { id: string; name: string; slug: string }[];
+  currentReferrerId: string | null;
   products: ProductRow[];
   /** Map of productHandle → override priceCents. */
   currentOverrides: Record<string, number>;
@@ -75,6 +78,8 @@ export function PricingSection({
   currentMultiplierBps,
   currentRetailDiscountBps,
   currentBasis,
+  affiliates,
+  currentReferrerId,
   products,
   currentOverrides,
 }: Props) {
@@ -89,6 +94,7 @@ export function PricingSection({
   const [basis, setBasis] = useState<'RETAIL' | 'BOOK' | 'RETAIL_PCT'>(currentBasis);
   const [retailBps, setRetailBps] = useState<number | null>(currentRetailDiscountBps ?? 1000);
   const onRetailBasis = basis === 'RETAIL_PCT';
+  const [referrerId, setReferrerId] = useState<string>(currentReferrerId ?? '');
   const [overrides, setOverrides] = useState<Record<string, string>>(() => {
     const seed: Record<string, string> = {};
     for (const [handle, cents] of Object.entries(currentOverrides)) {
@@ -137,6 +143,38 @@ export function PricingSection({
           {result.ok ? result.message : result.error}
         </div>
       )}
+
+      {/* Referring affiliate. Sits with pricing rather than on its own screen
+          because both are agreed in the same conversation, and both need to be
+          set before the account goes live. */}
+      <div className="mt-5 mb-5">
+        <label className="block text-[10px] tracking-[0.18em] uppercase font-bold text-ink-soft mb-2">
+          Referred by
+        </label>
+        <select
+          value={referrerId}
+          onChange={(e) => setReferrerId(e.target.value)}
+          className="w-full max-w-sm rounded-lg border border-cobalt/25 bg-white px-3 py-2 text-sm font-semibold focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/20"
+        >
+          <option value="">No affiliate</option>
+          {affiliates.map((a) => (
+            <option key={a.id} value={a.id}>{a.name} ({a.slug})</option>
+          ))}
+        </select>
+        <input type="hidden" name="referredByAffiliateId" value={referrerId} />
+        <p className="text-[12px] text-ink-soft leading-relaxed mt-2 max-w-[62ch]">
+          {referrerId ? (
+            <>
+              Orders from this practice earn on <strong>gross profit</strong>, not revenue:
+              {' '}revenue − product cost − $9.99 per order, × 20%. A practice buys at account
+              pricing and reorders steadily, so a share of revenue would pay out on volume
+              carrying little margin.
+            </>
+          ) : (
+            <>No referral commission on this account.</>
+          )}
+        </p>
+      </div>
 
       {/* Basis selector — three mutually exclusive catalogue-wide options.
           RETAIL is the default and is what an approved practice gets until
