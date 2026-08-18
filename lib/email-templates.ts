@@ -377,7 +377,7 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:28px;background-color:${COLOR_CREAM};border-radius:10px;">
       <tr>
         <td style="padding:18px;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
-          <strong style="color:${COLOR_INK};">Next:</strong> Our pharmacist signs off on every lot before release. You&rsquo;ll get a tracking link within 24 hours and your CoA (Certificate of Analysis) attached when it ships.
+          <strong style="color:${COLOR_INK};">Next:</strong> Every lot is released against an independent laboratory assay. You&rsquo;ll get a tracking link within 24 hours and your CoA (Certificate of Analysis) attached when it ships.
         </td>
       </tr>
     </table>
@@ -816,7 +816,7 @@ export function renderWelcome(d: WelcomeData): { subject: string; html: string; 
   const body = `
     ${headline(`Welcome, ${name}`)}
     <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      You&rsquo;re in. Merit is built on a simple premise: pharmacy-grade research compounds shouldn&rsquo;t cost pharmacy prices. Every lot we ship is HPLC-verified to &ge;99% purity, compounded in an ISO-certified US facility, and signed off by a US-licensed pharmacist before release.
+      You&rsquo;re in. Merit is built on a simple premise: pharmacy-grade research compounds shouldn&rsquo;t cost pharmacy prices. Every lot we ship is HPLC-verified to &ge;99% purity, compounded in an ISO-certified US facility, and released against an independent laboratory assay.
     </p>
 
     ${incentive}
@@ -851,7 +851,7 @@ You're in. Merit is built on a simple premise: pharmacy-grade research compounds
 Every lot we ship:
   · HPLC-verified ≥99% purity
   · Compounded in an ISO-certified US facility
-  · Signed off by a US-licensed pharmacist
+  · Released against an independent laboratory assay
   · Ships 48hr from Dallas
 
 ${d.discountCode && d.discountPercent ? `Welcome gift: ${d.discountPercent}% off your first order with code ${d.discountCode.toUpperCase()}\n` : ''}

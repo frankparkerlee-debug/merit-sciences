@@ -116,8 +116,8 @@ export default function ResearchDisclosurePage() {
       <h2>Quality commitment</h2>
       <p>
         Every Merit Sciences lot is independently HPLC-tested to a
-        ≥99% purity floor before release and signed off by a US-licensed
-        pharmacist. A certificate of analysis (COA) is available for
+        ≥99% purity floor before release by a laboratory independent of
+        the facility that made it. A certificate of analysis (COA) is available for
         any specific lot upon request. These quality measures support
         research integrity; they are not, and should not be construed
         as, clinical safety endorsements.
@@ -127,7 +127,7 @@ export default function ResearchDisclosurePage() {
       <p>
         For questions regarding this disclosure, the regulatory status
         of a specific compound, or COA access for any lot, contact our
-        pharmacy team at{' '}
+        team at{' '}
         <a href="mailto:rx@meritsciences.com">rx@meritsciences.com</a>.
       </p>
 

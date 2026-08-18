@@ -209,7 +209,7 @@ export default async function PractitionerPortalPage() {
           />
           <PortalCard
             tag="Support"
-            title="Reach the pharmacy team"
+            title="Reach the Merit team"
             body="Email info@meritpeptides.com — replies go to the same humans who packed your order."
             href="mailto:info@meritpeptides.com"
             cta="Email support →"

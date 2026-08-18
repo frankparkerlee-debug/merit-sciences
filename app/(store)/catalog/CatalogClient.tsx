@@ -347,7 +347,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
         </h1>
         {/* Tagline: hidden on mobile to reclaim ~80px. */}
         <p className="hidden sm:block mt-5 text-base lg:text-lg text-ink-soft max-w-xl leading-relaxed">
-          Organized by chemistry, not promise. Every batch pharmacy-verified,
+          Organized by chemistry, not promise. Every batch independently assayed,
           every shipment lot-documented. Pick a family to narrow it down.
         </p>
       </div>

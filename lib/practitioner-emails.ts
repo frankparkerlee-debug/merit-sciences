@@ -122,7 +122,7 @@ const PROSPECT: EmailDefinition[] = [
         <li><strong>API procurement</strong> — FDA-registered upstream suppliers, COA on receipt.</li>
         <li><strong>Compounding</strong> — under USP &lt;797&gt; in an ISO-certified facility. ISO Class 5 fill room.</li>
         <li><strong>Characterization</strong> — HPLC &ge;99% purity per lot. Sterility (USP &lt;71&gt;), endotoxin (USP &lt;85&gt;), particulate (USP &lt;788&gt;).</li>
-        <li><strong>Pharmacist release</strong> — a US-licensed pharmacist signs off on every batch.</li>
+        <li><strong>Independent release</strong> — every batch is released against an independent laboratory assay.</li>
         <li><strong>COA</strong> — accompanies every shipment. Lot # on the label.</li>
       </ol>
       <p>Every step is documented, dated, and traceable. That&rsquo;s the chain you can name.</p>
@@ -235,7 +235,7 @@ const PROSPECT: EmailDefinition[] = [
     subject: () => 'Still considering Merit?',
     body: (ctx) => `
       <p>Quick check-in. We don&rsquo;t want to add to your inbox without value.</p>
-      <p>If something specific would help you decide — sample COA, manufacturing walkthrough video, conversation with our chief pharmacist — reply to this email and we&rsquo;ll get it to you.</p>
+      <p>If something specific would help you decide — sample COA, manufacturing walkthrough video, a walk through a lot record — reply to this email and we&rsquo;ll get it to you.</p>
       <p>If now&rsquo;s not the right time, that&rsquo;s fine too. We&rsquo;re not going anywhere.</p>
       <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
       ${btn('Apply →', `${ctx.siteUrl}/practitioners#apply`)}
