@@ -306,7 +306,7 @@ function approvalEmailHtml(d: {
     btn('Sign in to your portal →', d.portalUrl) +
     note(`The link expires in 60 minutes. If it’s expired by the time you click, request a new one any time at ${link('meritsciences.com/practitioners/login', 'https://meritsciences.com/practitioners/login')}.`) +
     p(`Once signed in, browse the catalog at ${link('meritsciences.com/catalog', d.catalogUrl)}.`) +
-    p(`Questions? Reply to this email — you’ll reach the pharmacy team directly.`);
+    p(`Questions? Reply to this email — you’ll reach the Merit team directly.`);
 
   return wrapPractitionerEmail({
     subject: 'Your Merit Sciences Practitioner Account is active',

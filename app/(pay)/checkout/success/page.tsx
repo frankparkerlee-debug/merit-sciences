@@ -179,8 +179,8 @@ export default async function CheckoutSuccessPage({
           </h2>
           <p className="text-[13px] text-ink-soft leading-relaxed">
             Lyophilized vial, sealed, labeled with lot ID. UPS Ground
-            tracked + insured. Released only after our US-licensed
-            pharmacist signs off on the batch.
+            tracked + insured. Released only after an independent
+            laboratory returns its results for the lot.
           </p>
         </div>
 

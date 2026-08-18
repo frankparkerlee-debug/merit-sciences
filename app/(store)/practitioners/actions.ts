@@ -138,7 +138,7 @@ export async function submitPractitionerApplication(
           <h2 style="margin:0 0 12px;font-size:18px;">Thanks, ${escapeHtml(data.providerName.split(' ')[0])}.</h2>
           <p style="font-size:14px;line-height:22px;margin:0 0 16px;">
             We received your Practitioner Program application for
-            <strong>${escapeHtml(data.practiceName)}</strong>. Our pharmacy team verifies
+            <strong>${escapeHtml(data.practiceName)}</strong>. Our team verifies
             license + NPI within one business day; you&rsquo;ll get a follow-up with portal
             access and your account pricing tier.
           </p>

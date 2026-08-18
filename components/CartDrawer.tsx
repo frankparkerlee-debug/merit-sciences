@@ -229,7 +229,7 @@ export function CartDrawer({ freeShippingThresholdCents = 35_000 }: { freeShippi
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-cobalt" />
-                Pharmacist-released
+                Independently assayed
               </span>
             </div>
           </footer>

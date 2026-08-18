@@ -146,7 +146,7 @@ export default function AboutPage() {
             <Check>Every batch released only after HPLC purity testing</Check>
             <Check>Sterility, endotoxin, and particulate tested to USP standards</Check>
             <Check>Acetate counterion — not the cheaper TFA salt</Check>
-            <Check>A US-licensed pharmacist signs off on every lot</Check>
+            <Check>An independent laboratory assays every lot before release</Check>
             <Check>Certificate of Analysis ships with every order</Check>
             <Check>One purity floor — no good batches and bad batches</Check>
           </div>
@@ -174,7 +174,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-5">
             <Step n="01" title="Synthesis" body="Manufactured under controlled conditions — the starting material is identified, not assumed." />
             <Step n="02" title="Characterization" body="HPLC purity plus the USP panel: sterility, endotoxin, particulate. Pass or it doesn't ship." />
-            <Step n="03" title="Pharmacist release" body="A US-licensed pharmacist reviews the batch record and signs the lot off for release." />
+            <Step n="03" title="Independent release" body="A laboratory independent of the facility that made the lot returns its identity and purity results, and the lot is released against them." />
             <Step n="04" title="Documented" body="A Certificate of Analysis is generated for the lot and a lot number is printed on every vial." />
             <Step n="05" title="Shipped" body="Sealed, lot-stamped, and dispatched from Dallas within 48 hours — COA in the box." />
           </div>

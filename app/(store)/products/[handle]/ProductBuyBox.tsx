@@ -146,7 +146,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
 
       {/* Credential row — replaces the 5-star deco that read as fake.
           A skeptical research buyer would distrust "5 stars no count";
-          an honest credential ("Pharmacy-verified · HPLC ≥99% · Lot
+          an honest credential ("Independently assayed · HPLC ≥99% · Lot
           {product.lot.id}") builds far more credibility. */}
       <div className="inline-flex items-center gap-2 text-[11px] font-bold text-cobalt">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -154,7 +154,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
         </svg>
         <span className="tracking-[0.05em]">
-          Pharmacy-verified · HPLC {product.lot.purity || '≥99%'}
+          Independently assayed · HPLC {product.lot.purity || '≥99%'}
           {product.lot.id !== 'TBD' && <> · Lot {product.lot.id}</>}
         </span>
       </div>
@@ -267,7 +267,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       <div className="hidden sm:block bg-cobalt/5 border border-cobalt/10 rounded-xl p-4">
         <p className="text-sm text-ink leading-relaxed">
           {product.oneLiner ||
-            `${product.title} — pharmacy-verified, lot-tested, and shipped from our facility in Dallas. Released only after a US-licensed pharmacist signs off on the batch.`}
+            `${product.title} — independently assayed, lot-tested, and shipped from our facility in Dallas. Released only after an independent laboratory returns its results for the lot.`}
         </p>
       </div>
 

@@ -80,7 +80,7 @@ export default function ProtocolPage() {
           </div>
 
           <p className="text-cream/18 text-[10px] mt-5 leading-relaxed max-w-md">
-            Research use only. Compounds sourced and handled in an ISO-certified US facility under licensed pharmacist oversight.
+            Research use only. Compounds compounded to USP &lt;797&gt; in an ISO-certified US facility and released against an independent laboratory assay.
           </p>
 
         </div>
@@ -88,7 +88,7 @@ export default function ProtocolPage() {
 
       <div className="relative z-10 px-6 py-5 border-t border-white/5">
         <p className="max-w-2xl text-[10px] text-cream/12 leading-relaxed">
-          Merit Sciences research compounds are for research use only. Not for human or veterinary use. Not evaluated or approved by the FDA. Available to qualified researchers and licensed practitioners only. By proceeding, you confirm eligibility. Merit Sciences compounds are sourced and handled in an ISO-certified US facility under licensed pharmacist oversight.
+          Merit Sciences research compounds are for research use only. Not for human or veterinary use. Not evaluated or approved by the FDA. Available to qualified researchers and licensed practitioners only. By proceeding, you confirm eligibility. Merit Sciences compounds are compounded to USP &lt;797&gt; in an ISO-certified US facility and released against an independent laboratory assay.
         </p>
       </div>
 

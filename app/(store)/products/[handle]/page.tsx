@@ -37,8 +37,8 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
     a: 'Your vial label carries the lot number. Use that number to pull the COA on our site at any time — the COA for your specific batch lives at /coa/[lot-id] and stays accessible for the life of the product.',
   },
   {
-    q: 'What does "pharmacy-verified" actually mean?',
-    a: "A US-licensed pharmacist on our team reviews every batch before release. They sign off on the lot's purity, identity, and release. No batch ships without that sign-off — and that's what separates Merit from a reseller catalog.",
+    q: 'What does "independently assayed" actually mean?',
+    a: "Every lot is tested by a laboratory independent of the facility that made it, and the certificate is published before the lot is sold. You read the same identity and purity figures we do — that's what separates Merit from a reseller catalog.",
   },
   {
     q: 'Will my bank flag this purchase?',
@@ -338,7 +338,7 @@ export default async function ProductPage({ params }: Props) {
                     Research data verification in progress
                   </p>
                   <p className="text-sm text-ink-soft leading-relaxed">
-                    Our pharmacy team is validating the published research
+                    Our lab team is validating the published research
                     record for this compound. For detailed mechanism,
                     research applications, or citation requests, email{' '}
                     <a
@@ -496,7 +496,7 @@ export default async function ProductPage({ params }: Props) {
                   for the lot currently shipping —
                   {product.lot.id !== 'TBD' && <> lot <span className="font-bold text-ink">{product.lot.id}</span>,</>}
                   {' '}{product.lot.purity || '≥99% purity'}, released after
-                  US-pharmacist sign-off.
+                  an independent assay.
                 </p>
                 <p className="text-[12px] text-ink-muted">
                   Need the COA for a specific lot? Email{' '}
@@ -582,7 +582,7 @@ export default async function ProductPage({ params }: Props) {
                 compounding: 'on request',
               },
               {
-                criterion: 'US-pharmacist sign-off before release',
+                criterion: 'Independent assay before release',
                 merit: 'yes',
                 resellers: 'no',
                 compounding: 'yes',
@@ -723,14 +723,14 @@ export default async function ProductPage({ params }: Props) {
               },
               {
                 num: '04',
-                eyebrow: 'Sign-off',
-                headline: 'A US-licensed pharmacist releases the lot.',
+                eyebrow: 'Release',
+                headline: 'The lot is released against an independent assay.',
                 description:
-                  'No batch ships without a pharmacist reviewing the chromatogram, identity report, and lot documentation. The pharmacist holds the release authority.',
+                  'No batch ships until an independent laboratory has returned its identity and purity results and the certificate is published against that lot number.',
                 facts: [
-                  'US-licensed pharmacist on every lot',
-                  'Pharmacist holds release authority',
-                  'No batch ships unsigned — ever',
+                  'Independent laboratory on every lot',
+                  'Certificate published before sale',
+                  'Lot number resolves to its own report',
                 ],
                 icon: (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -828,7 +828,7 @@ export default async function ProductPage({ params }: Props) {
       {/* ═══════════════ RESEARCH REFERENCES ═══════════════
           Citation cards with DOI / PubMed links. The verify flag is
           NOT rendered to the buyer — it lives in the data file so the
-          pharmacy team can find unvalidated citations to check before
+          lab team can find unvalidated citations to check before
           launch (grep for `verify: true`). */}
       {research?.references && research.references.length > 0 && (
         <section className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14">
@@ -902,7 +902,7 @@ export default async function ProductPage({ params }: Props) {
 
       {/* ═══════════════ THE PHARMACIST'S SEAL ═══════════════
           Was a small italic note; rebuilt as a formal expert
-          endorsement block. Pharmacist endorsements convert hard for
+          endorsement block. A named lot note converts hard for
           pharma-adjacent buyers because they signal "a credentialed
           professional reviewed this and stands behind it". Even the
           composite-anonymous attribution is more credible than the
@@ -923,7 +923,7 @@ export default async function ProductPage({ params }: Props) {
 
                 {/* Eyebrow */}
                 <p className="relative text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-4">
-                  — The Pharmacist&apos;s Seal
+                  — The Lot Note
                 </p>
 
                 {/* The note itself */}
@@ -936,7 +936,7 @@ export default async function ProductPage({ params }: Props) {
 
                 {/* Signature block */}
                 <div className="relative flex items-center gap-4 pt-5 border-t border-cobalt/10">
-                  {/* Pharmacist avatar — generic cobalt seal until we have
+                  {/* Seal mark — generic cobalt seal until we have
                       a real photo. The named-credential is the trust
                       signal that matters; the photo is decorative. */}
                   <div
@@ -949,10 +949,10 @@ export default async function ProductPage({ params }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-display text-sm sm:text-base font-extrabold text-ink leading-tight">
-                      Merit Sciences Pharmacy Team
+                      Merit Sciences Lab Team
                     </p>
                     <p className="text-[11px] sm:text-[12px] text-ink-soft mt-0.5">
-                      US-licensed pharmacist · ISO-certified facility · Dallas, TX
+                      Independently assayed · ISO-certified facility · Dallas, TX
                     </p>
                   </div>
                   {/* Verified seal — top-right of signature block */}
@@ -1062,7 +1062,7 @@ export default async function ProductPage({ params }: Props) {
             ))}
           </div>
 
-          {/* Talk to a pharmacist callout */}
+          {/* Talk to the lab team callout */}
           <div className="bg-ink text-white rounded-2xl p-6 lg:p-7 flex flex-col h-fit">
             <div className="w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center mb-4">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
@@ -1251,7 +1251,7 @@ function ProductGallery({
         {[
           { label: 'Lot-Documented', icon: 'doc' },
           { label: 'HPLC-Verified', icon: 'flask' },
-          { label: 'US Pharmacist', icon: 'check' },
+          { label: 'Independent Assay', icon: 'check' },
           { label: 'Same Reorder Price', icon: 'refresh' },
         ].map((item) => (
           <div
