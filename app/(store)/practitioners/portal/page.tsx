@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getPractitionerSession } from '@/lib/practitioner-session';
 import { prisma } from '@/lib/db';
 import { getPricingContext, priceFor } from '@/lib/pricing';
+import { CardOnFile } from './CardOnFile';
 
 export const metadata = { title: { absolute: 'Practitioner Portal — Merit Sciences' } };
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,24 @@ export const dynamic = 'force-dynamic';
 export default async function PractitionerPortalPage() {
   const session = await getPractitionerSession();
   if (!session) redirect('/practitioners/login?error=Sign+in+required');
+
+  // Card facts for display only — brand, last4 and expiry. The instrument
+  // itself is at Stripe; nothing here could reconstruct a card.
+  const cardRow = await prisma.practitionerApplication
+    .findUnique({
+      where: { id: session.applicationId },
+      select: { cardBrand: true, cardLast4: true, cardExpMonth: true, cardExpYear: true },
+    })
+    .catch(() => null);
+  const savedCard =
+    cardRow?.cardBrand && cardRow.cardLast4 && cardRow.cardExpMonth && cardRow.cardExpYear
+      ? {
+          brand: cardRow.cardBrand,
+          last4: cardRow.cardLast4,
+          expMonth: cardRow.cardExpMonth,
+          expYear: cardRow.cardExpYear,
+        }
+      : null;
 
   /* Greeting name. Splitting on the first space returned the honorific for
      anyone stored as "Dr. Jane Smith" — and since the page appends its own
@@ -228,6 +247,12 @@ export default async function PractitionerPortalPage() {
             cta="Email support →"
           />
         </div>
+
+        {/* Card on file — sits above the account block because it is the one
+            thing on this page a practice acts on rather than reads. */}
+        <section className="mb-8">
+          <CardOnFile card={savedCard} />
+        </section>
 
         {/* Account info */}
         <section className="rounded-2xl border border-cobalt/15 bg-white p-7">
