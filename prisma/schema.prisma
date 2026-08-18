@@ -832,6 +832,15 @@ model PractitionerApplication {
   // for EVERY SKU — including SKUs that have no physician price at all,
   // which the book silently charges full retail for. Null = use the book.
   retailDiscountBps  Int?
+  // Which of the three bases actually applies. Defaults to RETAIL so an
+  // approved practice pays list until someone deliberately assigns pricing —
+  // before this existed, approval alone dropped a practice onto the physician
+  // book (10–44% off depending on SKU) with nobody having decided that.
+  //   RETAIL     — list price
+  //   BOOK       — physicianPriceCents x priceMultiplierBps
+  //   RETAIL_PCT — retail less retailDiscountBps
+  // Per-SKU override rows win over all three.
+  pricingBasis       String    @default("RETAIL")
   // Audit
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt

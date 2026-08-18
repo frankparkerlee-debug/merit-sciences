@@ -15,8 +15,9 @@ type Props = {
   applicationId: string;
   practiceName: string;
   currentMultiplierBps: number;
-  /** Flat bps off retail, or null when the practice is on the book. */
+  /** Flat bps off retail, used when the basis is RETAIL_PCT. */
   currentRetailDiscountBps: number | null;
+  currentBasis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
   products: ProductRow[];
   /** Map of productHandle → override priceCents. */
   currentOverrides: Record<string, number>;
@@ -41,6 +42,7 @@ function percentToBps(pct: number): number {
  */
 function effectivePerVial(
   product: ProductRow,
+  basis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT',
   multBps: number,
   retailBps: number | null,
   overrideDollars: string,
@@ -52,13 +54,13 @@ function effectivePerVial(
       return { cents: Math.round(v * 100), source: 'override' };
     }
   }
-  if (retailBps != null && retailBps > 0 && retailBps < 10000) {
+  if (basis === 'RETAIL_PCT' && retailBps != null && retailBps > 0 && retailBps < 10000) {
     return {
       cents: Math.max(1, Math.round((product.retailPriceCents * (10000 - retailBps)) / 10000)),
       source: 'retail-pct',
     };
   }
-  if (product.physicianPriceCents && product.physicianPriceCents > 0) {
+  if (basis === 'BOOK' && product.physicianPriceCents && product.physicianPriceCents > 0) {
     return {
       cents: Math.max(1, Math.round((product.physicianPriceCents * multBps) / 10000)),
       source: 'standard',
@@ -72,6 +74,7 @@ export function PricingSection({
   practiceName,
   currentMultiplierBps,
   currentRetailDiscountBps,
+  currentBasis,
   products,
   currentOverrides,
 }: Props) {
@@ -83,8 +86,9 @@ export function PricingSection({
   // Local state for live preview only — the form posts the actual values
   // to the server via field names, not these.
   const [multBps, setMultBps] = useState(currentMultiplierBps);
-  const [retailBps, setRetailBps] = useState<number | null>(currentRetailDiscountBps);
-  const onRetailBasis = retailBps != null;
+  const [basis, setBasis] = useState<'RETAIL' | 'BOOK' | 'RETAIL_PCT'>(currentBasis);
+  const [retailBps, setRetailBps] = useState<number | null>(currentRetailDiscountBps ?? 1000);
+  const onRetailBasis = basis === 'RETAIL_PCT';
   const [overrides, setOverrides] = useState<Record<string, string>>(() => {
     const seed: Record<string, string> = {};
     for (const [handle, cents] of Object.entries(currentOverrides)) {
@@ -98,13 +102,13 @@ export function PricingSection({
     let belowStandard = 0;
     let aboveStandard = 0;
     for (const p of products) {
-      const e = effectivePerVial(p, multBps, retailBps, overrides[p.handle] ?? '');
+      const e = effectivePerVial(p, basis, multBps, retailBps, overrides[p.handle] ?? '');
       if (e.source === 'override') overrideCount += 1;
       if (p.physicianPriceCents && e.cents < p.physicianPriceCents) belowStandard += 1;
       if (p.physicianPriceCents && e.cents > p.physicianPriceCents) aboveStandard += 1;
     }
     return { overrideCount, belowStandard, aboveStandard };
-  }, [products, multBps, retailBps, overrides]);
+  }, [products, basis, multBps, retailBps, overrides]);
 
   return (
     <form action={formAction} className="rounded-2xl border border-cobalt/15 bg-white p-6 mb-6">
@@ -134,38 +138,39 @@ export function PricingSection({
         </div>
       )}
 
-      {/* Basis selector — the two catalogue-wide modes are mutually exclusive,
-          so they are presented as a choice rather than two live fields. Both
-          being editable at once was the fastest way to promise a practice
-          "10% off list" and quietly hand them the book instead. */}
+      {/* Basis selector — three mutually exclusive catalogue-wide options.
+          RETAIL is the default and is what an approved practice gets until
+          someone deliberately assigns pricing: before this existed, approval
+          alone dropped a practice onto the book at 10–44% off with nobody
+          having made that call. */}
       <div className="mt-5 mb-5">
         <label className="block text-[10px] tracking-[0.18em] uppercase font-bold text-ink-soft mb-2">
           Catalogue-wide basis
         </label>
         <div className="inline-flex rounded-lg border border-cobalt/25 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setRetailBps(null)}
-            className={`px-4 py-2 text-[12px] font-bold transition-colors ${
-              !onRetailBasis ? 'bg-cobalt text-white' : 'bg-white text-ink-soft hover:bg-cobalt/5'
-            }`}
-          >
-            Physician book
-          </button>
-          <button
-            type="button"
-            onClick={() => setRetailBps(retailBps ?? 1000)}
-            className={`px-4 py-2 text-[12px] font-bold transition-colors border-l border-cobalt/25 ${
-              onRetailBasis ? 'bg-cobalt text-white' : 'bg-white text-ink-soft hover:bg-cobalt/5'
-            }`}
-          >
-            % off retail
-          </button>
+          {([
+            ['RETAIL', 'Retail'],
+            ['BOOK', 'Physician book'],
+            ['RETAIL_PCT', '% off retail'],
+          ] as const).map(([value, label], i) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setBasis(value)}
+              className={`px-4 py-2 text-[12px] font-bold transition-colors ${
+                i > 0 ? 'border-l border-cobalt/25' : ''
+              } ${basis === value ? 'bg-cobalt text-white' : 'bg-white text-ink-soft hover:bg-cobalt/5'}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        <p className="text-[12px] text-ink-soft leading-relaxed mt-2 max-w-[60ch]">
-          {onRetailBasis
-            ? 'A flat percentage off list, applied to every SKU — including any with no physician price set. Use this for a practice signed at "X% off retail".'
-            : 'Uses each SKU\u2019s physician price. The discount off retail therefore varies by SKU, and any SKU without a physician price is charged full retail.'}
+        <p className="text-[12px] text-ink-soft leading-relaxed mt-2 max-w-[62ch]">
+          {basis === 'RETAIL'
+            ? 'Pays list price. This is the default for a newly approved practice — nothing is discounted until you assign it here. Per-SKU prices below still apply if you set any.'
+            : basis === 'RETAIL_PCT'
+              ? 'A flat percentage off list, applied to every SKU — including any with no physician price set. Use this for a practice signed at "X% off retail".'
+              : 'Uses each SKU\u2019s physician price. The discount off retail therefore varies by SKU (currently 10–44% across the catalogue), and any SKU without a physician price is charged full retail.'}
         </p>
       </div>
 
@@ -181,7 +186,7 @@ export function PricingSection({
               step="0.5"
               min={0.5}
               max={99}
-              value={(retailBps! / 100).toFixed(2).replace(/\.00$/, '')}
+              value={((retailBps ?? 1000) / 100).toFixed(2).replace(/\.00$/, '')}
               onChange={(e) => {
                 const pct = Number.parseFloat(e.target.value);
                 if (Number.isFinite(pct)) setRetailBps(Math.round(pct * 100));
@@ -192,13 +197,14 @@ export function PricingSection({
           </div>
         </div>
       )}
-      {/* Empty string = clear the column and fall back to the book. */}
-      <input type="hidden" name="retailDiscountBps" value={onRetailBasis ? String(retailBps) : ''} />
+      <input type="hidden" name="pricingBasis" value={basis} />
+      {/* Only meaningful on the RETAIL_PCT basis; blank otherwise. */}
+      <input type="hidden" name="retailDiscountBps" value={onRetailBasis ? String(retailBps ?? '') : ''} />
 
       {/* Knob 1 — book-level multiplier */}
       <div
         className={`mt-5 mb-6 grid grid-cols-1 sm:grid-cols-[1fr,auto] gap-4 items-end ${
-          onRetailBasis ? 'opacity-40 pointer-events-none' : ''
+          basis !== 'BOOK' ? 'opacity-40 pointer-events-none' : ''
         }`}
       >
         <div>
@@ -269,7 +275,7 @@ export function PricingSection({
             </thead>
             <tbody>
               {products.map((p) => {
-                const e = effectivePerVial(p, multBps, retailBps, overrides[p.handle] ?? '');
+                const e = effectivePerVial(p, basis, multBps, retailBps, overrides[p.handle] ?? '');
                 return (
                   <tr key={p.handle} className="border-t border-cobalt/10">
                     <td className="px-3 py-2 align-middle">

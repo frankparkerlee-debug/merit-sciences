@@ -133,10 +133,23 @@ export default async function PractitionerPortalPage() {
             {firstName}<span className="text-cobalt">.</span>
           </h1>
           <p className="text-[15px] text-ink-soft">
-            Signed in to <strong>{session.practiceName}</strong>. Your account pricing is live on{' '}
-            <strong>{myPrices.total || 'every stocked'}</strong>
-            {myPrices.total ? ' compounds' : ' compound'} — applied automatically at the catalog and
-            at checkout, on every pack size.
+            {myPrices.rows.length > 0 ? (
+              <>
+                Signed in to <strong>{session.practiceName}</strong>. Your account pricing is live on{' '}
+                <strong>{myPrices.total}</strong>
+                {myPrices.total === 1 ? ' compound' : ' compounds'} — applied automatically at the
+                catalog and at checkout, on every pack size.
+              </>
+            ) : (
+              <>
+                {/* No assigned pricing yet. Saying "your account pricing is
+                    live" here would be a promise the catalog then breaks, so
+                    the portal states the real position instead. */}
+                Signed in to <strong>{session.practiceName}</strong>. Your account is active and
+                ordering is open at list price — account pricing hasn&rsquo;t been set for your
+                practice yet. Reply to your approval email and we&rsquo;ll get it assigned.
+              </>
+            )}
           </p>
         </div>
 
