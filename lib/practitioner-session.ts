@@ -22,16 +22,16 @@ export type PractitionerSession = {
   /** Pricing tier — currently always 'standard'. Custom tiers per
    *  practitioner will plug in here when admin assigns them. */
   tier: 'standard';
-  /** Book-level multiplier in basis points. 10000 = no change
-   *  (standard physician tier). Applied to physicianPriceCents in
-   *  lib/pricing.ts. Per-SKU override rows beat this. */
+  /** Legacy book multiplier. The tier it adjusted is retired; the column
+   *  is kept so historical rows stay readable, but nothing consumes it. */
   priceMultiplierBps: number;
   /** Flat discount off RETAIL in basis points (1000 = 10% off retail).
    *  When set, the resolver uses retail × (1 − bps) for every SKU and
    *  ignores the physician book. Null = book pricing. */
   retailDiscountBps: number | null;
-  /** RETAIL | BOOK | RETAIL_PCT — see PractitionerApplication.pricingBasis. */
-  pricingBasis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
+  /** RETAIL | RETAIL_PCT — see PractitionerApplication.pricingBasis. The
+   *  old BOOK tier is retired; a row still carrying it reads as RETAIL. */
+  pricingBasis: 'RETAIL' | 'RETAIL_PCT';
 };
 
 export async function getPractitionerSession(): Promise<PractitionerSession | null> {
@@ -55,7 +55,7 @@ export async function getPractitionerSession(): Promise<PractitionerSession | nu
     tier: 'standard',
     priceMultiplierBps: app.priceMultiplierBps ?? 10000,
     retailDiscountBps: app.retailDiscountBps ?? null,
-    pricingBasis: (app.pricingBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT') ?? 'RETAIL',
+    pricingBasis: app.pricingBasis === 'RETAIL_PCT' ? 'RETAIL_PCT' : 'RETAIL',
   };
 }
 

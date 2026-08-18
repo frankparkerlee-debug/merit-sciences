@@ -8,7 +8,6 @@ type ProductRow = {
   handle: string;
   title: string;
   retailPriceCents: number;
-  physicianPriceCents: number | null;
 };
 
 type Props = {
@@ -17,7 +16,7 @@ type Props = {
   currentMultiplierBps: number;
   /** Flat bps off retail, used when the basis is RETAIL_PCT. */
   currentRetailDiscountBps: number | null;
-  currentBasis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
+  currentBasis: 'RETAIL' | 'RETAIL_PCT';
   /** ACTIVE affiliates, for the referral picker. */
   affiliates: { id: string; name: string; slug: string }[];
   currentReferrerId: string | null;
@@ -45,11 +44,10 @@ function percentToBps(pct: number): number {
  */
 function effectivePerVial(
   product: ProductRow,
-  basis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT',
-  multBps: number,
+  basis: 'RETAIL' | 'RETAIL_PCT',
   retailBps: number | null,
   overrideDollars: string,
-): { cents: number; source: 'override' | 'retail-pct' | 'standard' | 'retail' } {
+): { cents: number; source: 'override' | 'retail-pct' | 'retail' } {
   const trimmed = overrideDollars.trim();
   if (trimmed !== '') {
     const v = Number.parseFloat(trimmed);
@@ -61,12 +59,6 @@ function effectivePerVial(
     return {
       cents: Math.max(1, Math.round((product.retailPriceCents * (10000 - retailBps)) / 10000)),
       source: 'retail-pct',
-    };
-  }
-  if (basis === 'BOOK' && product.physicianPriceCents && product.physicianPriceCents > 0) {
-    return {
-      cents: Math.max(1, Math.round((product.physicianPriceCents * multBps) / 10000)),
-      source: 'standard',
     };
   }
   return { cents: product.retailPriceCents, source: 'retail' };
@@ -91,7 +83,7 @@ export function PricingSection({
   // Local state for live preview only — the form posts the actual values
   // to the server via field names, not these.
   const [multBps, setMultBps] = useState(currentMultiplierBps);
-  const [basis, setBasis] = useState<'RETAIL' | 'BOOK' | 'RETAIL_PCT'>(currentBasis);
+  const [basis, setBasis] = useState<'RETAIL' | 'RETAIL_PCT'>(currentBasis === 'RETAIL_PCT' ? 'RETAIL_PCT' : 'RETAIL');
   const [retailBps, setRetailBps] = useState<number | null>(currentRetailDiscountBps ?? 1000);
   const onRetailBasis = basis === 'RETAIL_PCT';
   const [referrerId, setReferrerId] = useState<string>(currentReferrerId ?? '');
@@ -105,15 +97,13 @@ export function PricingSection({
 
   const stats = useMemo(() => {
     let overrideCount = 0;
-    let belowStandard = 0;
-    let aboveStandard = 0;
+    let discounted = 0;
     for (const p of products) {
-      const e = effectivePerVial(p, basis, multBps, retailBps, overrides[p.handle] ?? '');
+      const e = effectivePerVial(p, basis, retailBps, overrides[p.handle] ?? '');
       if (e.source === 'override') overrideCount += 1;
-      if (p.physicianPriceCents && e.cents < p.physicianPriceCents) belowStandard += 1;
-      if (p.physicianPriceCents && e.cents > p.physicianPriceCents) aboveStandard += 1;
+      if (e.cents < p.retailPriceCents) discounted += 1;
     }
-    return { overrideCount, belowStandard, aboveStandard };
+    return { overrideCount, discounted };
   }, [products, basis, multBps, retailBps, overrides]);
 
   return (
@@ -188,7 +178,6 @@ export function PricingSection({
         <div className="inline-flex rounded-lg border border-cobalt/25 overflow-hidden">
           {([
             ['RETAIL', 'Retail'],
-            ['BOOK', 'Physician book'],
             ['RETAIL_PCT', '% off retail'],
           ] as const).map(([value, label], i) => (
             <button
@@ -205,10 +194,8 @@ export function PricingSection({
         </div>
         <p className="text-[12px] text-ink-soft leading-relaxed mt-2 max-w-[62ch]">
           {basis === 'RETAIL'
-            ? 'Pays list price. This is the default for a newly approved practice — nothing is discounted until you assign it here. Per-SKU prices below still apply if you set any.'
-            : basis === 'RETAIL_PCT'
-              ? 'A flat percentage off list, applied to every SKU — including any with no physician price set. Use this for a practice signed at "X% off retail".'
-              : 'Uses each SKU\u2019s physician price. The discount off retail therefore varies by SKU (currently 10–44% across the catalogue), and any SKU without a physician price is charged full retail.'}
+            ? 'Pays list price. The default for a newly approved practice — nothing is discounted until you assign it. Per-SKU prices below still apply if you set any.'
+            : 'A flat percentage off list, applied to every SKU. Use this for a practice signed at "X% off retail", then pin individual SKUs below where the deal differs.'}
         </p>
       </div>
 
@@ -239,56 +226,23 @@ export function PricingSection({
       {/* Only meaningful on the RETAIL_PCT basis; blank otherwise. */}
       <input type="hidden" name="retailDiscountBps" value={onRetailBasis ? String(retailBps ?? '') : ''} />
 
-      {/* Knob 1 — book-level multiplier */}
-      <div
-        className={`mt-5 mb-6 grid grid-cols-1 sm:grid-cols-[1fr,auto] gap-4 items-end ${
-          basis !== 'BOOK' ? 'opacity-40 pointer-events-none' : ''
-        }`}
-      >
-        <div>
-          <label className="block text-[10px] tracking-[0.18em] uppercase font-bold text-ink-soft mb-1.5">
-            Book-level adjustment vs. standard physician tier
-          </label>
-          <p className="text-[12px] text-ink-soft leading-relaxed mb-2">
-            A single percentage applied across every SKU. Negative = discount, positive = markup. <strong>0%</strong> means everyone gets the catalog&apos;s standard physician price.
-          </p>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              step="0.25"
-              min={-90}
-              max={200}
-              value={bpsToPercent(multBps)}
-              onChange={(e) => {
-                const pct = Number.parseFloat(e.target.value);
-                if (Number.isFinite(pct)) setMultBps(percentToBps(pct));
-              }}
-              className="w-28 rounded-lg border border-cobalt/25 bg-white px-3 py-2 text-sm font-bold tracking-tight focus:outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/20"
-            />
-            <span className="text-sm text-ink-soft">%</span>
-            <span className="ml-3 text-xs text-ink-muted">
-              {multBps === 10000
-                ? 'standard tier (no adjustment)'
-                : multBps < 10000
-                  ? `${((10000 - multBps) / 100).toFixed(2)}% off standard`
-                  : `${((multBps - 10000) / 100).toFixed(2)}% above standard`}
-            </span>
-          </div>
-          <input type="hidden" name="priceMultiplierBps" value={multBps} />
-        </div>
-        <div className="text-[11px] tracking-[0.18em] uppercase font-bold text-ink-soft text-right">
-          <div>
-            {stats.overrideCount} <span className="font-normal normal-case tracking-normal text-ink-muted">override{stats.overrideCount === 1 ? '' : 's'}</span>
-          </div>
-          <div className="mt-1">
-            {stats.belowStandard}
-            <span className="font-normal normal-case tracking-normal text-ink-muted"> below standard</span>
-          </div>
-          <div className="mt-1">
-            {stats.aboveStandard}
-            <span className="font-normal normal-case tracking-normal text-ink-muted"> above standard</span>
-          </div>
-        </div>
+      {/* The book multiplier is gone with the tier it adjusted. What remains
+          is a summary of what this practice actually pays. The multiplier
+          column stays in the database untouched so no historical row loses
+          meaning; it is simply no longer an input. */}
+      <div className="mb-6 flex items-center gap-6 text-[11px] tracking-[0.18em] uppercase font-bold text-ink-soft">
+        <span>
+          {stats.overrideCount}
+          <span className="font-normal normal-case tracking-normal text-ink-muted">
+            {' '}pinned SKU{stats.overrideCount === 1 ? '' : 's'}
+          </span>
+        </span>
+        <span>
+          {stats.discounted}
+          <span className="font-normal normal-case tracking-normal text-ink-muted">
+            {' '}of {products.length} below list
+          </span>
+        </span>
       </div>
 
       {/* Knob 2 — per-SKU overrides */}
@@ -306,14 +260,13 @@ export function PricingSection({
               <tr className="text-left text-[10px] tracking-[0.18em] uppercase text-ink-soft">
                 <th className="px-3 py-2 font-bold">SKU</th>
                 <th className="px-3 py-2 font-bold text-right">Retail</th>
-                <th className="px-3 py-2 font-bold text-right">Standard physician</th>
                 <th className="px-3 py-2 font-bold text-right">Override</th>
                 <th className="px-3 py-2 font-bold text-right">Effective</th>
               </tr>
             </thead>
             <tbody>
               {products.map((p) => {
-                const e = effectivePerVial(p, basis, multBps, retailBps, overrides[p.handle] ?? '');
+                const e = effectivePerVial(p, basis, retailBps, overrides[p.handle] ?? '');
                 return (
                   <tr key={p.handle} className="border-t border-cobalt/10">
                     <td className="px-3 py-2 align-middle">
@@ -324,9 +277,6 @@ export function PricingSection({
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums text-ink-soft">
                       {money(p.retailPriceCents)}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums text-ink-soft">
-                      {p.physicianPriceCents ? money(p.physicianPriceCents) : '—'}
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="inline-flex items-center gap-1 justify-end">
@@ -351,9 +301,7 @@ export function PricingSection({
                         className={`font-bold ${
                           e.source === 'override' || e.source === 'retail-pct'
                             ? 'text-cobalt'
-                            : e.source === 'standard'
-                              ? 'text-ink'
-                              : 'text-ink-muted'
+                            : 'text-ink-muted'
                         }`}
                       >
                         {money(e.cents)}
@@ -363,9 +311,7 @@ export function PricingSection({
                           ? 'pinned'
                           : e.source === 'retail-pct'
                             ? '% off'
-                            : e.source === 'standard'
-                              ? 'book'
-                              : 'retail'}
+                            : 'list'}
                       </span>
                     </td>
                   </tr>

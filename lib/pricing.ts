@@ -2,9 +2,8 @@
  * Pricing source of truth.
  *
  * Public surfaces always render `effectivePriceCents` (not `priceCents`).
- * The helpers here resolve which price a buyer should see using a
- * four-step waterfall — per-SKU override → book-level multiplier on
- * Product.physicianPriceCents → bare physicianPriceCents → retail.
+ * Waterfall: per-SKU override → flat % off retail → retail. Every practice is
+ * priced individually; there is no shared physician tier.
  *
  *   const products = await withPricingMany(rawProducts);
  *   products[0].effectivePriceCents   // base price to render
@@ -77,7 +76,7 @@ export async function getPricingContext(): Promise<PricingContext> {
           tier: 'standard',
           priceMultiplierBps: app.priceMultiplierBps ?? 10000,
           retailDiscountBps: app.retailDiscountBps ?? null,
-          pricingBasis: (app.pricingBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT') ?? 'RETAIL',
+          pricingBasis: app.pricingBasis === 'RETAIL_PCT' ? 'RETAIL_PCT' : 'RETAIL',
         };
       }
     }
@@ -102,8 +101,8 @@ export async function getPricingContext(): Promise<PricingContext> {
  * Waterfall:
  *   1. No practitioner session → retail.
  *   2. Override row exists for (practitioner, handle) → use override.
- *   3. physicianPriceCents present → apply book-level multiplier.
- *   4. Fallback → retail (no practitioner price configured for this SKU).
+ *   3. Basis says a flat % off retail → retail less that percentage.
+ *   4. Fallback → retail (nothing assigned for this practice).
  */
 export function priceFor(
   p: PricingFields,
@@ -144,16 +143,12 @@ export function priceFor(
       return { effectivePriceCents: p.priceCents, isPractitionerPricing: false };
     }
 
-    case 'BOOK': {
-      if (p.physicianPriceCents != null && p.physicianPriceCents > 0) {
-        const mult = ctx.session.priceMultiplierBps ?? 10000;
-        const adjusted = Math.max(1, Math.round((p.physicianPriceCents * mult) / 10000));
-        return { effectivePriceCents: adjusted, isPractitionerPricing: true };
-      }
-      // On the book, a SKU with no physician price has no assigned price —
-      // it is list, and it is not practitioner pricing.
-      return { effectivePriceCents: p.priceCents, isPractitionerPricing: false };
-    }
+    /* BOOK (the standard physician tier) is RETIRED. It priced from
+       Product.physicianPriceCents — one wholesale figure per SKU shared by
+       every practice — and its implied discount ranged 10–44.2% off retail
+       depending on the product. Every practice is now priced individually, so
+       a shared tier has nothing to express. Any row still carrying the old
+       value falls through to RETAIL below rather than silently discounting. */
 
     case 'RETAIL':
     default:

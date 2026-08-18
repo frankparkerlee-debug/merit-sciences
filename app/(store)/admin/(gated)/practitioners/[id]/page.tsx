@@ -21,14 +21,13 @@ export default async function PractitionerApplicationDetail({
   let pricingProps: null | {
     currentMultiplierBps: number;
     currentRetailDiscountBps: number | null;
-    currentBasis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
+    currentBasis: 'RETAIL' | 'RETAIL_PCT';
     affiliates: { id: string; name: string; slug: string }[];
     currentReferrerId: string | null;
     products: {
       handle: string;
       title: string;
       retailPriceCents: number;
-      physicianPriceCents: number | null;
     }[];
     currentOverrides: Record<string, number>;
   } = null;
@@ -37,7 +36,7 @@ export default async function PractitionerApplicationDetail({
     const [products, overrides, affiliates] = await Promise.all([
       prisma.product.findMany({
         where: { status: 'ACTIVE' },
-        select: { handle: true, title: true, priceCents: true, physicianPriceCents: true },
+        select: { handle: true, title: true, priceCents: true },
         orderBy: { title: 'asc' },
       }),
       prisma.practitionerPriceOverride.findMany({
@@ -53,14 +52,14 @@ export default async function PractitionerApplicationDetail({
     pricingProps = {
       currentMultiplierBps: app.priceMultiplierBps ?? 10000,
       currentRetailDiscountBps: app.retailDiscountBps ?? null,
-      currentBasis: (app.pricingBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT') ?? 'RETAIL',
+      // A row still carrying the retired BOOK basis reads as RETAIL.
+      currentBasis: app.pricingBasis === 'RETAIL_PCT' ? 'RETAIL_PCT' : 'RETAIL',
       affiliates,
       currentReferrerId: app.referredByAffiliateId ?? null,
       products: products.map((p) => ({
         handle: p.handle,
         title: p.title,
         retailPriceCents: p.priceCents,
-        physicianPriceCents: p.physicianPriceCents ?? null,
       })),
       currentOverrides: Object.fromEntries(overrides.map((o) => [o.productHandle, o.priceCents])),
     };

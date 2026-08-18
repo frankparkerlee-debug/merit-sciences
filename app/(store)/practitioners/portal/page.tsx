@@ -49,18 +49,15 @@ export default async function PractitionerPortalPage() {
   // waterfall checkout uses, so they land on proof instead of a promise.
   const myPrices = await (async () => {
     try {
-      /* The catalogue query depends on the practice's basis, so resolve that
-         first rather than in parallel. A practice on a flat % off retail is
-         discounted on EVERY active SKU, including ones with no physician
-         price — filtering those out under-reported the count (30 of 32) and
-         hid products they are in fact getting a rate on. */
+      /* Every active SKU is in scope. A practice is priced individually now,
+         so there is no shared-tier subset to filter to — the earlier filter
+         under-reported the count (30 of 32) and hid products they were in
+         fact getting a rate on. */
       const ctx = await getPricingContext();
-      const onRetailBasis = (ctx.session?.retailDiscountBps ?? null) != null;
       const [products] = await Promise.all([
         prisma.product.findMany({
           where: {
             status: 'ACTIVE',
-            ...(onRetailBasis ? {} : { physicianPriceCents: { not: null, gt: 0 } }),
             NOT: [{ title: { contains: 'water', mode: 'insensitive' } }],
           },
           select: {
