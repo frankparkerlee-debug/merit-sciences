@@ -428,10 +428,10 @@ export async function savePractitionerPricing(
   }
 
   const rawBasis = String(formData.get('pricingBasis') ?? 'RETAIL').trim().toUpperCase();
-  if (!['RETAIL', 'BOOK', 'RETAIL_PCT'].includes(rawBasis)) {
+  if (!['RETAIL', 'RETAIL_PCT'].includes(rawBasis)) {
     return { ok: false, error: 'Unknown pricing basis.' };
   }
-  const pricingBasis = rawBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
+  const pricingBasis = rawBasis as 'RETAIL' | 'RETAIL_PCT';
 
   const rawRetail = String(formData.get('retailDiscountBps') ?? '').trim();
   let retailDiscountBps: number | null = null;
