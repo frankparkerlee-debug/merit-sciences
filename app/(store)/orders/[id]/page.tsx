@@ -82,7 +82,7 @@ export default async function CustomerOrderPage({
           <ol className="space-y-3">
             <TimelineStep label="Order received" date={order.paidAt} active />
             <TimelineStep label="Processing" date={order.processingAt} active={!!order.processingAt} />
-            <TimelineStep label="Shipped from Dallas" date={order.shippedAt} active={!!order.shippedAt} />
+            <TimelineStep label="Shipped from San Antonio" date={order.shippedAt} active={!!order.shippedAt} />
             <TimelineStep label="Delivered" date={order.deliveredAt} active={!!order.deliveredAt} />
             {order.refundedAt && <TimelineStep label="Refunded" date={order.refundedAt} active />}
           </ol>

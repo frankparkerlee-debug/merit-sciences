@@ -48,7 +48,7 @@ export function renderReplenishment(d: CustomerEmailData): Rendered {
       ) +
       cta('Reorder in one click →', d.reorderUrl) +
       quiet(
-        'Every restock ships the same way: sealed sterile vial, lot number on the label, HPLC-verified ≥99% before release, 48-hour dispatch from Dallas.',
+        'Every restock ships the same way: sealed sterile vial, lot number on the label, HPLC-verified ≥99% before release, 48-hour dispatch from San Antonio.',
       ),
     unsubscribeUrl: d.unsubscribeUrl,
   });
@@ -57,7 +57,7 @@ export function renderReplenishment(d: CustomerEmailData): Rendered {
 One tap rebuilds the exact order (same lineup, current lot) and drops you at checkout:
 ${d.reorderUrl}
 
-Sealed sterile vials, lot number on the label, HPLC-verified >=99%, 48-hour dispatch from Dallas.
+Sealed sterile vials, lot number on the label, HPLC-verified >=99%, 48-hour dispatch from San Antonio.
 
 — Merit Sciences`;
   return { subject, html, text };

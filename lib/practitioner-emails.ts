@@ -203,7 +203,7 @@ const PROSPECT: EmailDefinition[] = [
       <p><strong>Do I need an NPI?</strong> Yes — 10-digit NPI is required.</p>
       <p><strong>Can I apply with an NP / PA / PharmD / ND license?</strong> Yes — all licensed practitioners qualify.</p>
       <p><strong>Can multiple providers share one account?</strong> Yes — practice account, individual sign-ins.</p>
-      <p><strong>Lead time on first order?</strong> Same as retail: 48 hours dispatch from Dallas.</p>
+      <p><strong>Lead time on first order?</strong> Same as retail: 48 hours dispatch from San Antonio.</p>
       <p><strong>Approval time?</strong> One business day after we receive the application.</p>
       <p>Other questions? Reply directly to this email — you&rsquo;ll reach the team.</p>
       ${btn('Apply →', `${ctx.siteUrl}/practitioners#apply`)}
@@ -305,7 +305,7 @@ const ONBOARDING: EmailDefinition[] = [
     body: (ctx) => `
       <p>If you&rsquo;re ordering in the next week, here&rsquo;s the picture:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
-        <li><strong>Dispatch within 48 hours</strong> of order confirmation, from Dallas</li>
+        <li><strong>Dispatch within 48 hours</strong> of order confirmation, from San Antonio</li>
         <li><strong>Cold-chain shipping</strong> — temperature-controlled</li>
         <li><strong>Tracking number</strong> in your portal as soon as the label prints</li>
         <li><strong>COA archive</strong> in your portal — pull it anytime</li>

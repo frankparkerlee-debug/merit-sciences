@@ -71,7 +71,7 @@ export default function ProtocolPage() {
               ISO-certified US facility. Third-party verified, every lot.
             </p>
             <p className="text-cream/35 text-sm leading-relaxed max-w-md">
-              No appointment. Ships from Dallas in 48 hours.
+              No appointment. Ships from San Antonio in 48 hours.
             </p>
           </div>
 

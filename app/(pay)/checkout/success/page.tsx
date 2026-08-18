@@ -175,7 +175,7 @@ export default async function CheckoutSuccessPage({
             — What ships
           </p>
           <h2 className="font-display text-xl font-extrabold text-ink leading-tight mb-2">
-            48hr dispatch from Dallas<span className="text-cobalt">.</span>
+            48hr dispatch from San Antonio<span className="text-cobalt">.</span>
           </h2>
           <p className="text-[13px] text-ink-soft leading-relaxed">
             Lyophilized vial, sealed, labeled with lot ID. UPS Ground

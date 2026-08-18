@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'About',
   description:
-    'Why Merit Sciences exists: lab-verified compounds, tested and documented per lot, priced like the material they are. HPLC ≥99% purity, a COA with every shipment, shipped from Dallas.',
+    'Why Merit Sciences exists: lab-verified compounds, tested and documented per lot, priced like the material they are. HPLC ≥99% purity, a COA with every shipment, shipped from San Antonio.',
 };
 
 export default function AboutPage() {
@@ -138,7 +138,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-10">
             <Stat value="≥99%" label="HPLC purity, verified per lot" />
             <Stat value="100%" label="of shipments include the lot COA" />
-            <Stat value="48hr" label="from order to dispatch, Dallas" />
+            <Stat value="48hr" label="from order to dispatch, San Antonio" />
             <Stat value="Lot #" label="on every single vial label" />
           </div>
 
@@ -176,7 +176,7 @@ export default function AboutPage() {
             <Step n="02" title="Characterization" body="HPLC purity plus the USP panel: sterility, endotoxin, particulate. Pass or it doesn't ship." />
             <Step n="03" title="Independent release" body="A laboratory independent of the facility that made the lot returns its identity and purity results, and the lot is released against them." />
             <Step n="04" title="Documented" body="A Certificate of Analysis is generated for the lot and a lot number is printed on every vial." />
-            <Step n="05" title="Shipped" body="Sealed, lot-stamped, and dispatched from Dallas within 48 hours — COA in the box." />
+            <Step n="05" title="Shipped" body="Sealed, lot-stamped, and dispatched from San Antonio within 48 hours — COA in the box." />
           </div>
         </div>
       </section>
@@ -252,7 +252,7 @@ export default function AboutPage() {
             sold that way<span className="text-cobalt">.</span>
           </p>
           <p className="mt-5 text-[15px] lg:text-[16px] text-white/70 leading-relaxed max-w-2xl">
-            No hedging, no winking. Merit is a research-compound supplier shipping from Dallas. The
+            No hedging, no winking. Merit is a research-compound supplier shipping from San Antonio. The
             standard we hold is the whole product &mdash; and it&rsquo;s the part we&rsquo;re glad to
             put in writing.
           </p>

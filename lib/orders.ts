@@ -648,6 +648,7 @@ export async function issuePaymentRequestEmail(
       bundleLabel: l.bundleLabel,
       qty: l.qty,
       unitCents: Number(l.unitCents),
+      imageUrl: absoluteImageUrl(l.imageUrl),
     })),
     subtotalCents: Number(order.subtotalCents),
     shippingCents: Number(order.shippingCents),

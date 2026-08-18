@@ -46,7 +46,7 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: 'How fast does it ship?',
-    a: '48 hours from order to dispatch, Monday through Thursday. UPS Ground, tracked + insured. From Dallas, TX, most US addresses receive within 3-5 business days.',
+    a: '48 hours from order to dispatch, Monday through Thursday. UPS Ground, tracked + insured. From San Antonio, TX, most US addresses receive within 3-5 business days.',
   },
 ];
 
@@ -87,7 +87,7 @@ export async function generateMetadata({ params }: Props) {
   const title = `${name} ${p.vialSize} — ≥99% HPLC, Scan-to-Verify COA`;
   const entity = cls ? `${name}: ${cls.charAt(0).toLowerCase()}${cls.slice(1)}. ` : '';
   const description =
-    `${entity}${name} ${p.vialSize} research compound — HPLC-tested ≥99% purity, scan-to-verify COA on every label, ships 48hr from Dallas. Research use only — not for human or veterinary use.`;
+    `${entity}${name} ${p.vialSize} research compound — HPLC-tested ≥99% purity, scan-to-verify COA on every label, ships 48hr from San Antonio. Research use only — not for human or veterinary use.`;
 
   return {
     title,
@@ -282,7 +282,7 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-              48hr Dispatch from Dallas
+              48hr Dispatch from San Antonio
             </span>
           </div>
         </div>
@@ -743,11 +743,11 @@ export default async function ProductPage({ params }: Props) {
               {
                 num: '05',
                 eyebrow: 'Dispatch',
-                headline: 'Ships from Dallas in 48 hours.',
+                headline: 'Ships from San Antonio in 48 hours.',
                 description:
                   'Vials labeled with lot ID, tested date, and CAS. Order before 2pm CT Monday–Thursday for same-day dispatch. UPS Ground, tracked + insured.',
                 facts: [
-                  '48hr dispatch from Dallas, TX',
+                  '48hr dispatch from San Antonio, TX',
                   'Lot ID printed on every vial label',
                   'UPS Ground, tracked + insured',
                 ],

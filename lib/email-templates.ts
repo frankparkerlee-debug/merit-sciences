@@ -15,7 +15,14 @@ const COLOR_CREAM = '#F4F1EA';
 const COLOR_BORDER = '#E2E5EB';
 const COLOR_TEXT_SOFT = '#5C6378';
 
-const SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+// Single quotes on 'Segoe UI' are load-bearing: these constants are
+// interpolated into double-quoted style="" attributes, and a double quote
+// inside one terminates the attribute at that point. With "Segoe UI" the
+// font-family declaration die mid-value in EVERY template — which is why
+// Merit's transactional email has rendered in the client's default serif
+// since this file was written. Everything after the quote in the same
+// attribute (often the color) was silently dropped too.
+const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 const MONO = 'ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace';
 
 // Absolute origin for all asset URLs inside email HTML. Email clients
@@ -70,29 +77,29 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
     <tr>
       <td align="center" style="padding:30px 12px;">
 
-        <!-- Brand bar -->
+        <!-- Masthead — the site's wordmark, type-led so it renders identically
+             in every client. The 3px cobalt rule under it is the brand bar. -->
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="max-width:600px;width:100%;background-color:${COLOR_INK};border-radius:16px 16px 0 0;">
           <tr>
-            <td style="padding:20px 32px;">
+            <td class="px-32" style="padding:30px 40px 24px;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td align="left" valign="middle" style="vertical-align:middle;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td valign="middle" style="vertical-align:middle;padding-right:12px;">
-                          <img src="${SITE_URL}/icon.png" alt="" width="28" height="28" style="display:block;width:28px;height:28px;border-radius:6px;border:0;" />
-                        </td>
-                        <td valign="middle" style="vertical-align:middle;font-size:13px;font-weight:900;letter-spacing:0.14em;color:#ffffff;font-family:${SANS};text-transform:uppercase;">
-                          MERIT SCIENCES
-                        </td>
-                      </tr>
-                    </table>
+                  <td align="left" valign="bottom" style="vertical-align:bottom;font-size:30px;line-height:30px;font-weight:900;letter-spacing:-0.04em;color:#ffffff;font-family:${SANS};">
+                    Merit<span style="color:${COLOR_COBALT_SOFT};">.</span>
                   </td>
-                  <td align="right" valign="middle" style="vertical-align:middle;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;font-weight:700;color:${COLOR_COBALT_SOFT};font-family:${SANS};">${escapeHtml(eyebrow)}</td>
+                  <td align="right" valign="bottom" style="vertical-align:bottom;font-size:10px;letter-spacing:0.24em;text-transform:uppercase;font-weight:800;color:${COLOR_COBALT_SOFT};font-family:${SANS};padding-bottom:4px;">${escapeHtml(eyebrow)}</td>
                 </tr>
               </table>
             </td>
           </tr>
+          <tr>
+            <td style="padding:0 40px;" class="px-32">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr><td style="height:3px;font-size:0;line-height:0;background-color:${COLOR_COBALT};border-radius:2px;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr><td style="height:22px;font-size:0;line-height:0;">&nbsp;</td></tr>
         </table>
 
         <!-- Body card -->
@@ -111,7 +118,7 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
               <p style="margin:0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};letter-spacing:0.02em;">
                 <strong style="color:${COLOR_INK};font-weight:900;letter-spacing:-0.01em;">MERIT SCIENCES</strong>
               </p>
-              <p style="margin:4px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};font-style:italic;">Pharmacy-grade. Not pharmacy-priced.</p>
+              <p style="margin:4px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};font-style:italic;">Same stack. Better source.</p>
               <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">
                 Dallas, TX &middot; <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;">info@meritsciences.com</a>
               </p>
@@ -144,7 +151,7 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
 /* ─── Headline ─── */
 
 function headline(text: string, accentDot = true): string {
-  return `<h1 style="margin:0 0 18px 0;font-size:30px;line-height:34px;font-weight:900;letter-spacing:-0.035em;color:${COLOR_INK};font-family:${SANS};">${escapeHtml(text)}${accentDot ? `<span style="color:${COLOR_COBALT};">.</span>` : ''}</h1>`;
+  return `<h1 style="margin:0 0 16px 0;font-size:34px;line-height:37px;font-weight:900;letter-spacing:-0.04em;color:${COLOR_INK};font-family:${SANS};">${escapeHtml(text)}${accentDot ? `<span style="color:${COLOR_COBALT};">.</span>` : ''}</h1>`;
 }
 
 /* ─── Cross-sell product grid ─── */
@@ -227,6 +234,8 @@ export type OrderConfirmationData = {
     bundleLabel: string;
     qty: number;
     unitCents: number | bigint;
+    /** Absolute URL — the call site resolves relative paths + placeholder. */
+    imageUrl?: string | null;
   }>;
   subtotalCents: number | bigint;
   shippingCents: number | bigint;
@@ -274,7 +283,7 @@ export function renderPaymentRequest(d: PaymentRequestData): { subject: string; 
   const body = `
     ${headline(`Your order is ready, ${firstName}`)}
     <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      We&rsquo;ve put together the order below. Tap the button to pay securely &mdash; card, Apple Pay, or Google Pay &mdash; and we&rsquo;ll ship it from Dallas, usually within 24 hours of payment.
+      We&rsquo;ve put together the order below. Tap the button to pay securely &mdash; card, Apple Pay, or Google Pay &mdash; and we&rsquo;ll ship it from San Antonio, usually within 24 hours of payment.
     </p>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:8px;">
       ${lineRows}
@@ -306,7 +315,7 @@ For research use only. Reply with any questions.
 
   return {
     subject: `Complete your Merit Sciences order — ${fmtMoney(d.totalCents)}`,
-    html: shell({ preheader: `Tap to pay securely — ${fmtMoney(d.totalCents)}, ships from Dallas within 24h of payment.`, eyebrow: 'Payment request', body }),
+    html: shell({ preheader: `Tap to pay securely — ${fmtMoney(d.totalCents)}, ships from San Antonio within 24h of payment.`, eyebrow: 'Payment request', body }),
     text,
   };
 }
@@ -314,13 +323,22 @@ For research use only. Reply with any questions.
 export function renderOrderConfirmation(d: OrderConfirmationData): { subject: string; html: string; text: string } {
   const firstName = d.customerName.split(/\s+/)[0] || 'there';
 
+  /* ── Line items, with the product photo the order line already stores.
+     A receipt that shows the actual vials reads as "your order", not as a
+     database dump. 54px tile on a cream chip; clients that block images
+     collapse gracefully to the text column. ── */
   const lineRows = d.lines.map((l) => `
     <tr>
-      <td style="padding:12px 0;border-bottom:1px solid ${COLOR_BORDER};font-size:14px;line-height:20px;color:${COLOR_INK};">
+      <td width="66" style="padding:12px 0;border-bottom:1px solid ${COLOR_BORDER};vertical-align:top;">
+        <div style="width:54px;height:54px;background-color:${COLOR_CREAM};border-radius:10px;text-align:center;">
+          <img src="${escapeHtml(l.imageUrl || `${SITE_URL}/products/placeholder-vial.webp`)}" alt="${escapeHtml(l.title)}" width="54" height="54" style="display:block;width:54px;height:54px;border:0;border-radius:10px;object-fit:contain;" />
+        </div>
+      </td>
+      <td style="padding:12px 0 12px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:14px;line-height:20px;color:${COLOR_INK};vertical-align:middle;">
         <strong>${escapeHtml(l.title)}</strong><br />
         <span style="color:${COLOR_TEXT_SOFT};font-size:12px;">${escapeHtml(l.bundleLabel)} &middot; Qty ${l.qty}</span>
       </td>
-      <td align="right" style="padding:12px 0;border-bottom:1px solid ${COLOR_BORDER};font-size:14px;color:${COLOR_INK};font-weight:700;white-space:nowrap;vertical-align:top;">
+      <td align="right" style="padding:12px 0;border-bottom:1px solid ${COLOR_BORDER};font-size:14px;color:${COLOR_INK};font-weight:700;white-space:nowrap;vertical-align:middle;">
         ${fmtMoney(Number(l.unitCents) * l.qty)}
       </td>
     </tr>
@@ -333,26 +351,88 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
     </tr>
   ` : '';
 
+  /* ── Status timeline. Segmented bars rather than dots-and-connectors
+     because a row of coloured 4px cells renders identically everywhere
+     Outlook included, and a circle does not. Step 1 lit at confirmation;
+     the shipment email is the moment the rest light up in the buyer's
+     head, so this stays honest. ── */
+  const steps = ['Confirmed', 'Packed', 'Shipped', 'Delivered'];
+  const timeline = `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:6px 0 0 0;border-collapse:separate;border-spacing:4px 0;">
+      <tr>
+        ${steps.map((_, i) => `<td width="25%" style="height:4px;font-size:0;line-height:0;background-color:${i === 0 ? COLOR_COBALT : COLOR_BORDER};border-radius:2px;">&nbsp;</td>`).join('')}
+      </tr>
+      <tr>
+        ${steps.map((label, i) => `<td width="25%" align="left" style="padding:7px 2px 0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:${i === 0 ? '800' : '600'};color:${i === 0 ? COLOR_INK : COLOR_TEXT_SOFT};font-family:${SANS};">${label}${i === 0 ? `<br /><span style="color:${COLOR_COBALT};font-weight:800;">now</span>` : ''}</td>`).join('')}
+      </tr>
+    </table>`;
+
+  const faqs: Array<[string, string]> = [
+    ['When will it ship?',
+     `Within 48 hours from our San Antonio fulfillment facility &mdash; usually the same or next business day. Your tracking link lands in this inbox the moment the label prints.`],
+    ['Where&rsquo;s my certificate of analysis?',
+     `On the vial. Each label carries a QR code that resolves to that lot&rsquo;s published report &mdash; identity and purity, tested by an independent laboratory. The full library lives at <a href="${SITE_URL}/coa" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">meritsciences.com/coa</a>.`],
+    ['What will my bank statement show?',
+     `<span style="font-family:${MONO};">MERIT</span> &mdash; a plain merchant descriptor. No product names appear on your statement.`],
+    ['Something not right?',
+     `Reply to this email &mdash; it reaches the team that packed your order. And the purity guarantee is simple: if a lot fails our &ge;99% HPLC floor, full refund and replacement.`],
+  ];
+  const faqBlock = faqs.map(([q, a]) => `
+    <tr>
+      <td style="padding:13px 0;border-bottom:1px solid ${COLOR_BORDER};">
+        <p style="margin:0 0 3px 0;font-size:13px;font-weight:800;color:${COLOR_INK};font-family:${SANS};">${q}</p>
+        <p style="margin:0;font-size:12.5px;line-height:19px;color:${COLOR_TEXT_SOFT};font-family:${SANS};">${a}</p>
+      </td>
+    </tr>`).join('');
+
+  const resources: Array<[string, string, string]> = [
+    ['Research library', 'Monographs with mechanisms, published findings and references', `${SITE_URL}/library`],
+    ['How to verify a certificate of analysis', 'What a real COA states, and the red flags — for any supplier', `${SITE_URL}/library/how-to-verify-a-certificate-of-analysis`],
+    ['Published lab results', 'Every lot’s identity and purity report, before you buy', `${SITE_URL}/coa`],
+  ];
+  const resourceRows = resources.map(([title, sub, url]) => `
+    <tr>
+      <td style="padding:11px 0;border-bottom:1px solid ${COLOR_BORDER};">
+        <a href="${url}" style="text-decoration:none;">
+          <span style="font-size:13px;font-weight:800;color:${COLOR_INK};font-family:${SANS};">${title} <span style="color:${COLOR_COBALT};">&rarr;</span></span><br />
+          <span style="font-size:12px;line-height:18px;color:${COLOR_TEXT_SOFT};font-family:${SANS};">${sub}</span>
+        </a>
+      </td>
+    </tr>`).join('');
+
   const body = `
-    ${headline(`Thanks, ${firstName}`)}
-    <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      Your order is in. We&rsquo;ll send you a tracking link the moment it ships from our Dallas facility &mdash; usually within 24 hours.
+    ${headline(`Thank you, ${firstName}`)}
+    <p style="margin:0 0 18px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
+      Your order is confirmed. We spend on the lab, not the logo &mdash; orders like
+      yours are what keep every lot independently assayed and published. Genuinely: thank you.
     </p>
 
-    <!-- Order ref -->
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:20px;background-color:${COLOR_CREAM};border-radius:10px;">
+    <!-- Receipt card: ref + total + status in one glance -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:8px;background-color:${COLOR_CREAM};border-radius:14px;">
       <tr>
-        <td style="padding:14px 18px;font-size:12px;line-height:18px;color:${COLOR_TEXT_SOFT};">
-          <strong style="color:${COLOR_INK};">Order reference</strong><br />
-          <span style="font-family:${MONO};font-size:13px;color:${COLOR_INK};">${escapeHtml(d.paypalOrderId)}</span>
+        <td style="padding:18px 20px 6px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+              <td style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;font-weight:800;color:${COLOR_TEXT_SOFT};font-family:${SANS};">Order</td>
+              <td align="right" style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;font-weight:800;color:${COLOR_TEXT_SOFT};font-family:${SANS};">Total</td>
+            </tr>
+            <tr>
+              <td style="font-family:${MONO};font-size:14px;font-weight:600;color:${COLOR_INK};padding-top:2px;">${escapeHtml(d.paypalOrderId)}</td>
+              <td align="right" style="font-size:22px;font-weight:900;letter-spacing:-0.03em;color:${COLOR_INK};font-family:${SANS};padding-top:2px;">${fmtMoney(d.totalCents)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px 20px 16px;">
+          ${timeline}
         </td>
       </tr>
     </table>
-
     ${ctaButton('Track your order', d.lookupUrl)}
 
-    <!-- Line items -->
-    <h3 style="margin:30px 0 8px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— What ships</h3>
+    <!-- What ships -->
+    <h3 style="margin:26px 0 4px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">&mdash; What ships</h3>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
       ${lineRows}
     </table>
@@ -366,44 +446,80 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
     </table>
 
     <!-- Ship to -->
-    <h3 style="margin:28px 0 6px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— Ships to</h3>
+    <h3 style="margin:24px 0 6px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">&mdash; Ships to</h3>
     <p style="margin:0;font-size:13px;line-height:19px;color:${COLOR_INK};">
       ${escapeHtml(d.shippingFullName)}<br />
       ${escapeHtml(d.shippingLine1)}${d.shippingLine2 ? `<br />${escapeHtml(d.shippingLine2)}` : ''}<br />
       ${escapeHtml(d.shippingCity)}, ${escapeHtml(d.shippingState)} ${escapeHtml(d.shippingZip)}
     </p>
 
-    <!-- What's next -->
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:28px;background-color:${COLOR_CREAM};border-radius:10px;">
+    <!-- The certificate — the brand's signature move, in ink -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:28px;background-color:${COLOR_INK};border-radius:14px;">
+      <tr><td style="height:4px;font-size:0;line-height:0;background-color:${COLOR_COBALT};border-radius:14px 14px 0 0;">&nbsp;</td></tr>
       <tr>
-        <td style="padding:18px;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
-          <strong style="color:${COLOR_INK};">Next:</strong> Every lot is released against an independent laboratory assay. You&rsquo;ll get a tracking link within 24 hours and your CoA (Certificate of Analysis) attached when it ships.
+        <td style="padding:24px 26px;">
+          <p style="margin:0 0 6px 0;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;font-weight:800;color:${COLOR_COBALT_SOFT};font-family:${SANS};">&mdash; Your evidence</p>
+          <p style="margin:0 0 8px 0;font-size:18px;line-height:24px;font-weight:900;letter-spacing:-0.02em;color:#ffffff;font-family:${SANS};">Every vial ships with its certificate<span style="color:${COLOR_COBALT_SOFT};">.</span></p>
+          <p style="margin:0 0 14px 0;font-size:13px;line-height:20px;color:#B9C0D4;font-family:${SANS};">
+            Scan the QR on any label and it resolves to that lot&rsquo;s published report &mdash;
+            identity and purity, from a laboratory independent of the facility that made it.
+          </p>
+          <a href="${SITE_URL}/coa" style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;font-weight:800;color:#ffffff;text-decoration:none;border-bottom:2px solid ${COLOR_COBALT};padding-bottom:2px;">See the lab results library &rarr;</a>
         </td>
       </tr>
     </table>
 
-    ${renderCrossSell('You might also like', d.crossSell ?? [])}
+    ${renderCrossSell('Researchers also stock', d.crossSell ?? [])}
+
+    <!-- FAQ -->
+    <h3 style="margin:30px 0 2px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">&mdash; Quick answers</h3>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      ${faqBlock}
+    </table>
+
+    <!-- Resources -->
+    <h3 style="margin:26px 0 2px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">&mdash; While you wait</h3>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      ${resourceRows}
+    </table>
   `;
 
-  const text = `Order confirmed — Merit Sciences
+  const text = `Thank you, ${firstName} — order confirmed
 
-Hi ${firstName},
-
-Your order is in. We'll send a tracking link the moment it ships from Dallas (usually within 24 hours).
+We spend on the lab, not the logo. Orders like yours keep every lot independently assayed and published.
 
 Order reference: ${d.paypalOrderId}
-
+Status: Confirmed → Packed → Shipped → Delivered (you are at: Confirmed)
 Track your order: ${d.lookupUrl}
 
-Total: ${fmtMoney(d.totalCents)}
+WHAT SHIPS
+${d.lines.map((l) => `  ${l.title} (${l.bundleLabel}) x${l.qty} — ${fmtMoney(Number(l.unitCents) * l.qty)}`).join('\n')}
+  Subtotal: ${fmtMoney(d.subtotalCents)}${Number(d.discountCents) > 0 ? `\n  Discount: -${fmtMoney(d.discountCents)}` : ''}
+  Shipping: ${Number(d.shippingCents) === 0 ? 'Free' : fmtMoney(d.shippingCents)}
+  Total: ${fmtMoney(d.totalCents)}
+
 Ships to: ${d.shippingFullName}, ${d.shippingLine1}, ${d.shippingCity}, ${d.shippingState} ${d.shippingZip}
+
+YOUR EVIDENCE
+Scan the QR on any vial label — it resolves to that lot's published identity + purity report. Library: ${SITE_URL}/coa
+
+QUICK ANSWERS
+· Ships within 48 hours from San Antonio; tracking lands in this inbox when the label prints.
+· Certificate of analysis: QR on the vial label, or ${SITE_URL}/coa
+· Bank statement shows: MERIT (no product names)
+· Something not right? Reply to this email. If a lot fails our ≥99% HPLC floor: full refund + replacement.
+
+WHILE YOU WAIT
+· Research library: ${SITE_URL}/library
+· How to verify a COA: ${SITE_URL}/library/how-to-verify-a-certificate-of-analysis
+· Published lab results: ${SITE_URL}/coa
 
 — Merit Sciences`;
 
   return {
     subject: `Order confirmed — ${d.paypalOrderId}`,
     html: shell({
-      preheader: `Your order is in. We'll send tracking within 24 hours. Total ${fmtMoney(d.totalCents)}.`,
+      preheader: `Thank you — your order is confirmed. Ships within 48 hours from San Antonio. Total ${fmtMoney(d.totalCents)}.`,
       eyebrow: 'Order confirmed',
       body,
     }),
@@ -433,7 +549,7 @@ export function renderShipmentNotification(d: ShipmentData): { subject: string; 
   const body = `
     ${headline('On the way')}
     <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      ${firstName}, your order shipped from Dallas. Track it below.
+      ${firstName}, your order shipped from San Antonio. Track it below.
     </p>
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:18px;background-color:${COLOR_CREAM};border-radius:10px;">
@@ -463,7 +579,7 @@ export function renderShipmentNotification(d: ShipmentData): { subject: string; 
 
 Hi ${firstName},
 
-Your order shipped from Dallas.
+Your order shipped from San Antonio.
 
 Carrier: ${d.carrier.toUpperCase()}
 Tracking: ${d.trackingNumber}
@@ -751,7 +867,7 @@ export function renderAbandonedCart(d: AbandonedCartData): { subject: string; ht
       <tr>
         <td style="padding:18px;font-size:12px;line-height:18px;color:${COLOR_TEXT_SOFT};">
           <p style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:${COLOR_INK};">— Why Merit</p>
-          &ge;99% HPLC-verified purity &middot; ISO-certified US facility &middot; Lot-documented &middot; Ships 48hr from Dallas
+          &ge;99% HPLC-verified purity &middot; ISO-certified US facility &middot; Lot-documented &middot; Ships 48hr from San Antonio
         </td>
       </tr>
     </table>
@@ -852,7 +968,7 @@ Every lot we ship:
   · HPLC-verified ≥99% purity
   · Compounded in an ISO-certified US facility
   · Released against an independent laboratory assay
-  · Ships 48hr from Dallas
+  · Ships 48hr from San Antonio
 
 ${d.discountCode && d.discountPercent ? `Welcome gift: ${d.discountPercent}% off your first order with code ${d.discountCode.toUpperCase()}\n` : ''}
 Explore the catalog: ${d.catalogUrl}

@@ -63,7 +63,7 @@ export default function SuccessError({ error }: { error: Error & { digest?: stri
             way to your inbox.
           </p>
           <p className="text-sm text-ink-soft leading-relaxed mb-8">
-            Your order ships within 48 hours from our facility in Dallas. You&apos;ll
+            Your order ships within 48 hours from our fulfillment facility in San Antonio. You&apos;ll
             receive a tracking number as soon as it leaves.
           </p>
           <Link

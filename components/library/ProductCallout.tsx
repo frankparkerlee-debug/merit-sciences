@@ -12,7 +12,7 @@ export function ProductCallout({ title, product }: { title: string; product: Pro
     `${product.purity} HPLC purity`,
     'Third-party COA on every lot',
     'ISO-certified US facility',
-    'Ships 48h from Dallas',
+    'Ships 48h from San Antonio',
   ];
   return (
     <aside className="not-prose my-9 rounded-2xl border border-cobalt/15 bg-white overflow-hidden">

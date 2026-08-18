@@ -54,7 +54,7 @@ const SITE_SCHEMA = {
   '@graph': [
     {
       // Organization carries the local signals directly rather than emitting a
-      // separate LocalBusiness node. Merit ships from Dallas but is not a
+      // separate LocalBusiness node. Merit ships from San Antonio but is not a
       // walk-in storefront, and LocalBusiness implies premises the public can
       // visit — it would invite map/venue treatment the business can't honour.
       // Organization with address + contactPoint gives Google the same
@@ -68,7 +68,7 @@ const SITE_SCHEMA = {
       image: `${SITE}/og-image.jpg`,
       email: 'rx@meritsciences.com',
       description:
-        'Lab-verified research compounds — ≥99% HPLC purity, lot COA on every batch, ISO-certified US facility. Ships 48h from Dallas. For research use only.',
+        'Lab-verified research compounds — ≥99% HPLC purity, lot COA on every batch, ISO-certified US facility. Ships 48h from San Antonio. For research use only.',
       address: {
         '@type': 'PostalAddress',
         addressLocality: 'Dallas',
@@ -146,7 +146,7 @@ export const metadata: Metadata = {
   // we don't repeat it in the SERP impression so the brand reads as a
   // lab-verified supplier, not a research-chem shop.
   description:
-    'Lab-verified compounds from an ISO-certified US facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from Dallas.',
+    'Lab-verified compounds from an ISO-certified US facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from San Antonio.',
   // NOTE: molecule names deliberately kept OUT of the GLOBAL <head> — it rides
   // on every page incl. the /access ad gate, and a paid-platform crawler must
   // never see a compound there. Compound-level SEO lives on the per-product
@@ -191,13 +191,13 @@ export const metadata: Metadata = {
     // /access ad gate's <head>, so a paid-platform crawler can't surface a
     // compound. Per-product OG (on the product pages) carries the specifics.
     description:
-      'Lab-verified compounds from an ISO-certified US facility. Sealed sterile vials, lot COA on every batch, third-party tested. Ships 48hr from Dallas.',
+      'Lab-verified compounds from an ISO-certified US facility. Sealed sterile vials, lot COA on every batch, third-party tested. Ships 48hr from San Antonio.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, USP <797> compounded, every lot independently assayed, 48-hour dispatch from Dallas.',
+        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, USP <797> compounded, every lot independently assayed, 48-hour dispatch from San Antonio.',
         type: 'image/jpeg',
       },
     ],
@@ -208,7 +208,7 @@ export const metadata: Metadata = {
     title: 'Merit Sciences · Lab-verified compounds',
     // Twitter description — ~140 chars. ISO-certified channel framing.
     description:
-      'Lab-verified compounds from a US facility. Sealed sterile vials, lot COA, ≥99% HPLC purity. Ships 48hr from Dallas.',
+      'Lab-verified compounds from a US facility. Sealed sterile vials, lot COA, ≥99% HPLC purity. Ships 48hr from San Antonio.',
     images: ['/og-image.jpg'],
   },
   robots: {

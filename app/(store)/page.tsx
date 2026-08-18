@@ -16,19 +16,19 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: { absolute: 'Merit Sciences — Same Stack. Better Source.' },
   description:
-    'Research compounds compounded to USP <797> in a licensed US facility, independently assayed, with the certificate published for every lot. Ships 48hr from Dallas.',
+    'Research compounds compounded to USP <797> in a licensed US facility, independently assayed, with the certificate published for every lot. Ships 48hr from San Antonio.',
   alternates: { canonical: '/' },
   openGraph: {
     title: 'Merit Sciences — Same Stack. Better Source.',
     description:
-      'Compounded to USP <797>, assayed by an independent laboratory, certificate published on every lot. Ships 48 hours from Dallas.',
+      'Compounded to USP <797>, assayed by an independent laboratory, certificate published on every lot. Ships 48 hours from San Antonio.',
     url: 'https://meritsciences.com',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, USP <797> compounded, every lot assayed, 48-hour dispatch from Dallas.',
+        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, USP <797> compounded, every lot assayed, 48-hour dispatch from San Antonio.',
       },
     ],
   },
@@ -36,7 +36,7 @@ export const metadata = {
     card: 'summary_large_image' as const,
     title: 'Merit Sciences — Same Stack. Better Source.',
     description:
-      'USP <797> compounded, independently assayed, certificate published on every lot. Ships 48hr from Dallas.',
+      'USP <797> compounded, independently assayed, certificate published on every lot. Ships 48hr from San Antonio.',
     images: ['/og-image.jpg'],
   },
 };

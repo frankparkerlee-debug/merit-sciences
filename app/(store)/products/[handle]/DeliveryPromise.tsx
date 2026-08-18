@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
  * Renders an Amazon-style urgency line:
  *   "Order in the next 3h 24m → ships today → arrives Mon Jun 17"
  *
- * The math is conservative — Merit ships M-Th from Dallas via UPS
+ * The math is conservative — Merit ships M-Th from San Antonio via UPS
  * Ground, typical 3-business-day transit east of the Mississippi.
  * Worst case bumps to 5 business days.
  *
@@ -25,7 +25,7 @@ import { useEffect, useState } from 'react';
 
 const CUTOFF_HOUR_CT = 14;          // 2pm CT
 const SHIP_DAYS = [1, 2, 3, 4];     // Mon-Thu (Date.getDay: 0=Sun)
-const TRANSIT_BUSINESS_DAYS = 3;    // Dallas → typical destination
+const TRANSIT_BUSINESS_DAYS = 3;    // San Antonio → typical destination
 
 function formatDate(d: Date): string {
   return d.toLocaleDateString('en-US', {
@@ -133,7 +133,7 @@ export function DeliveryPromise() {
               <span className="text-cobalt">{formatDate(deliveryDate)}</span>
             </p>
             <p className="text-[10.5px] text-ink-soft mt-0.5">
-              Ships today from Dallas · UPS Ground tracked + insured
+              Ships today from San Antonio · UPS Ground tracked + insured
             </p>
           </>
         ) : (
@@ -145,7 +145,7 @@ export function DeliveryPromise() {
               <span className="text-cobalt">{formatDate(deliveryDate)}</span>
             </p>
             <p className="text-[10.5px] text-ink-soft mt-0.5">
-              From Dallas · UPS Ground tracked + insured
+              From San Antonio · UPS Ground tracked + insured
             </p>
           </>
         )}
