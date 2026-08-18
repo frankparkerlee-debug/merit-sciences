@@ -270,7 +270,7 @@ export default async function ProductPage({ params }: Props) {
           <div className="flex flex-wrap gap-6 lg:gap-8 font-black tracking-[0.18em] uppercase text-[10px] lg:text-[11px]">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-              Pharmacy-Verified
+              Independently Assayed
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
