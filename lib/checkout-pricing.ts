@@ -42,6 +42,11 @@ export const AD_FUNNEL_CODES = new Set(['welcome20']);
  * Anything unrecognised falls to ×1, the most expensive interpretation, so an
  * invented label can never buy a discount.
  */
+/* NOTE on stacking: for a signed-in practitioner the subscribe multiplier
+ * compounds with their account discount (10% off retail + subscribe 0.9 =
+ * 19% off, verified in the 2026-08-18 smoke test). Parker's call, same day:
+ * KEEP the compounding — subscribe acts as a loyalty kicker on top of account
+ * terms. Do not "fix" this without a new decision from him. */
 export function packMultiplier(bundleLabel: string): number {
   const l = (bundleLabel || '').toLowerCase();
   if (l.includes('6-pack') || l.includes('6 pack')) return 6 * 0.9;
