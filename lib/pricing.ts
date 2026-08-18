@@ -63,7 +63,7 @@ export async function getPricingContext(): Promise<PricingContext> {
           where: { id: applicationId, status: 'APPROVED' },
           select: {
             id: true, email: true, practiceName: true, providerName: true,
-            priceMultiplierBps: true, retailDiscountBps: true,
+            priceMultiplierBps: true, retailDiscountBps: true, pricingBasis: true,
           },
         })
         .catch(() => null);
@@ -77,6 +77,7 @@ export async function getPricingContext(): Promise<PricingContext> {
           tier: 'standard',
           priceMultiplierBps: app.priceMultiplierBps ?? 10000,
           retailDiscountBps: app.retailDiscountBps ?? null,
+          pricingBasis: (app.pricingBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT') ?? 'RETAIL',
         };
       }
     }
@@ -119,35 +120,48 @@ export function priceFor(
     }
   }
 
-  /* Flat "X% off retail" deals.
-   *
-   * This sits ABOVE the physician book on purpose. A practice signed at
-   * "10% off list" is not on the book, and the book cannot express that
-   * deal: physicianPriceCents is an absolute per-SKU price whose implied
-   * discount ranges from 10% to 44% off retail across the live catalog, so
-   * no single multiplier yields a flat percentage. Worse, a SKU with no
-   * physicianPriceCents falls through to full retail — the practice would
-   * silently get 0% off on exactly the products we forgot to price.
-   *
-   * Deriving from retail on every request also means the deal survives
-   * price changes. Per-SKU override rows store absolute cents, so raising
-   * a retail price quietly changes the practice's real discount; a bps
-   * figure stays 10% off forever. Explicit overrides still win, because
-   * those are a deliberate per-SKU decision.
-   */
-  const retailBps = ctx.session.retailDiscountBps;
-  if (retailBps != null && retailBps > 0 && retailBps < 10000) {
-    const discounted = Math.max(1, Math.round((p.priceCents * (10000 - retailBps)) / 10000));
-    return { effectivePriceCents: discounted, isPractitionerPricing: true };
-  }
+  /* Which catalogue-wide basis applies is now stated explicitly rather than
+     inferred from which fields happen to be populated.
+     It used to be inferred, and the default was the physician book — so
+     approving a practice was enough to hand it 10–44% off (varying by SKU,
+     since physicianPriceCents is an absolute per-SKU price) without anyone
+     deciding that. Pricing is a commercial decision, so it now has to be
+     made: an approved practice pays list until an admin assigns something. */
+  switch (ctx.session.pricingBasis) {
+    case 'RETAIL_PCT': {
+      /* A flat "X% off list" deal. The book cannot express one — no single
+         multiplier over per-SKU absolute prices yields a flat percentage, and
+         a SKU with no physician price would fall through at 0% off. Deriving
+         from retail per request also means the deal survives price changes,
+         where an absolute per-SKU override would silently drift. */
+      const retailBps = ctx.session.retailDiscountBps;
+      if (retailBps != null && retailBps > 0 && retailBps < 10000) {
+        const discounted = Math.max(1, Math.round((p.priceCents * (10000 - retailBps)) / 10000));
+        return { effectivePriceCents: discounted, isPractitionerPricing: true };
+      }
+      // Basis says percentage but none is set — charge list rather than
+      // inventing a discount.
+      return { effectivePriceCents: p.priceCents, isPractitionerPricing: false };
+    }
 
-  if (p.physicianPriceCents != null && p.physicianPriceCents > 0) {
-    const mult = ctx.session.priceMultiplierBps ?? 10000;
-    const adjusted = Math.max(1, Math.round((p.physicianPriceCents * mult) / 10000));
-    return { effectivePriceCents: adjusted, isPractitionerPricing: true };
-  }
+    case 'BOOK': {
+      if (p.physicianPriceCents != null && p.physicianPriceCents > 0) {
+        const mult = ctx.session.priceMultiplierBps ?? 10000;
+        const adjusted = Math.max(1, Math.round((p.physicianPriceCents * mult) / 10000));
+        return { effectivePriceCents: adjusted, isPractitionerPricing: true };
+      }
+      // On the book, a SKU with no physician price has no assigned price —
+      // it is list, and it is not practitioner pricing.
+      return { effectivePriceCents: p.priceCents, isPractitionerPricing: false };
+    }
 
-  return { effectivePriceCents: p.priceCents, isPractitionerPricing: false };
+    case 'RETAIL':
+    default:
+      // Approved, but no pricing assigned yet. Per-SKU overrides above still
+      // apply, so a practice can be given a handful of specific prices
+      // without being put on a whole catalogue basis.
+      return { effectivePriceCents: p.priceCents, isPractitionerPricing: false };
+  }
 }
 
 /**

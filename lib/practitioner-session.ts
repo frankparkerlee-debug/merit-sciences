@@ -30,6 +30,8 @@ export type PractitionerSession = {
    *  When set, the resolver uses retail × (1 − bps) for every SKU and
    *  ignores the physician book. Null = book pricing. */
   retailDiscountBps: number | null;
+  /** RETAIL | BOOK | RETAIL_PCT — see PractitionerApplication.pricingBasis. */
+  pricingBasis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
 };
 
 export async function getPractitionerSession(): Promise<PractitionerSession | null> {
@@ -40,7 +42,7 @@ export async function getPractitionerSession(): Promise<PractitionerSession | nu
 
   const app = await prisma.practitionerApplication.findFirst({
     where: { email, status: 'APPROVED' },
-    select: { id: true, practiceName: true, providerName: true, priceMultiplierBps: true, retailDiscountBps: true },
+    select: { id: true, practiceName: true, providerName: true, priceMultiplierBps: true, retailDiscountBps: true, pricingBasis: true },
   });
   if (!app) return null;
 
@@ -53,6 +55,7 @@ export async function getPractitionerSession(): Promise<PractitionerSession | nu
     tier: 'standard',
     priceMultiplierBps: app.priceMultiplierBps ?? 10000,
     retailDiscountBps: app.retailDiscountBps ?? null,
+    pricingBasis: (app.pricingBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT') ?? 'RETAIL',
   };
 }
 

@@ -407,8 +407,17 @@ export async function savePractitionerPricing(
   // is recomputed per request so it survives price changes.
   //
   // Empty = not on this basis, use the book.
+  const rawBasis = String(formData.get('pricingBasis') ?? 'RETAIL').trim().toUpperCase();
+  if (!['RETAIL', 'BOOK', 'RETAIL_PCT'].includes(rawBasis)) {
+    return { ok: false, error: 'Unknown pricing basis.' };
+  }
+  const pricingBasis = rawBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
+
   const rawRetail = String(formData.get('retailDiscountBps') ?? '').trim();
   let retailDiscountBps: number | null = null;
+  if (pricingBasis === 'RETAIL_PCT' && rawRetail === '') {
+    return { ok: false, error: 'Enter a discount percentage, or switch the basis off "% off retail".' };
+  }
   if (rawRetail !== '') {
     const parsedRetail = Number.parseInt(rawRetail, 10);
     if (!Number.isFinite(parsedRetail) || parsedRetail <= 0 || parsedRetail >= 10000) {
@@ -449,7 +458,7 @@ export async function savePractitionerPricing(
   await prisma.$transaction(async (tx) => {
     await tx.practitionerApplication.update({
       where: { id },
-      data: { priceMultiplierBps: parsedMult, retailDiscountBps },
+      data: { priceMultiplierBps: parsedMult, retailDiscountBps, pricingBasis },
     });
 
     for (const row of pending) {

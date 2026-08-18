@@ -21,6 +21,7 @@ export default async function PractitionerApplicationDetail({
   let pricingProps: null | {
     currentMultiplierBps: number;
     currentRetailDiscountBps: number | null;
+    currentBasis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
     products: {
       handle: string;
       title: string;
@@ -45,6 +46,7 @@ export default async function PractitionerApplicationDetail({
     pricingProps = {
       currentMultiplierBps: app.priceMultiplierBps ?? 10000,
       currentRetailDiscountBps: app.retailDiscountBps ?? null,
+      currentBasis: (app.pricingBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT') ?? 'RETAIL',
       products: products.map((p) => ({
         handle: p.handle,
         title: p.title,
@@ -136,6 +138,7 @@ export default async function PractitionerApplicationDetail({
             practiceName={app.practiceName}
             currentMultiplierBps={pricingProps.currentMultiplierBps}
             currentRetailDiscountBps={pricingProps.currentRetailDiscountBps}
+            currentBasis={pricingProps.currentBasis}
             products={pricingProps.products}
             currentOverrides={pricingProps.currentOverrides}
           />
