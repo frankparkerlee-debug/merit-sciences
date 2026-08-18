@@ -22,6 +22,8 @@ export default async function PractitionerApplicationDetail({
     currentMultiplierBps: number;
     currentRetailDiscountBps: number | null;
     currentBasis: 'RETAIL' | 'BOOK' | 'RETAIL_PCT';
+    affiliates: { id: string; name: string; slug: string }[];
+    currentReferrerId: string | null;
     products: {
       handle: string;
       title: string;
@@ -32,7 +34,7 @@ export default async function PractitionerApplicationDetail({
   } = null;
 
   if (app.status !== 'REJECTED') {
-    const [products, overrides] = await Promise.all([
+    const [products, overrides, affiliates] = await Promise.all([
       prisma.product.findMany({
         where: { status: 'ACTIVE' },
         select: { handle: true, title: true, priceCents: true, physicianPriceCents: true },
@@ -42,11 +44,18 @@ export default async function PractitionerApplicationDetail({
         where: { applicationId: app.id },
         select: { productHandle: true, priceCents: true },
       }),
+      prisma.affiliate.findMany({
+        where: { status: 'ACTIVE' },
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: 'asc' },
+      }),
     ]);
     pricingProps = {
       currentMultiplierBps: app.priceMultiplierBps ?? 10000,
       currentRetailDiscountBps: app.retailDiscountBps ?? null,
       currentBasis: (app.pricingBasis as 'RETAIL' | 'BOOK' | 'RETAIL_PCT') ?? 'RETAIL',
+      affiliates,
+      currentReferrerId: app.referredByAffiliateId ?? null,
       products: products.map((p) => ({
         handle: p.handle,
         title: p.title,
@@ -139,6 +148,8 @@ export default async function PractitionerApplicationDetail({
             currentMultiplierBps={pricingProps.currentMultiplierBps}
             currentRetailDiscountBps={pricingProps.currentRetailDiscountBps}
             currentBasis={pricingProps.currentBasis}
+            affiliates={pricingProps.affiliates}
+            currentReferrerId={pricingProps.currentReferrerId}
             products={pricingProps.products}
             currentOverrides={pricingProps.currentOverrides}
           />

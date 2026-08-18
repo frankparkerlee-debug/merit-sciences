@@ -384,7 +384,7 @@ export async function savePractitionerPricing(
 
   const app = await prisma.practitionerApplication.findUnique({
     where: { id },
-    select: { id: true, status: true },
+    select: { id: true, status: true, email: true },
   });
   if (!app) return { ok: false, error: 'Application not found' };
   // Pricing is configurable BEFORE approval on purpose: the terms are agreed
@@ -413,6 +413,20 @@ export async function savePractitionerPricing(
   // is recomputed per request so it survives price changes.
   //
   // Empty = not on this basis, use the book.
+  /* Referring affiliate, settable during onboarding — before approval, like
+     the pricing beside it, because who introduced the practice is known at
+     the same moment the terms are. Empty clears it. */
+  const rawAffiliate = String(formData.get('referredByAffiliateId') ?? '').trim();
+  const referredByAffiliateId = rawAffiliate || null;
+  if (referredByAffiliateId) {
+    const aff = await prisma.affiliate.findUnique({
+      where: { id: referredByAffiliateId },
+      select: { id: true, status: true },
+    });
+    if (!aff) return { ok: false, error: 'That affiliate no longer exists.' };
+    if (aff.status !== 'ACTIVE') return { ok: false, error: 'That affiliate is not active.' };
+  }
+
   const rawBasis = String(formData.get('pricingBasis') ?? 'RETAIL').trim().toUpperCase();
   if (!['RETAIL', 'BOOK', 'RETAIL_PCT'].includes(rawBasis)) {
     return { ok: false, error: 'Unknown pricing basis.' };
@@ -464,7 +478,7 @@ export async function savePractitionerPricing(
   await prisma.$transaction(async (tx) => {
     await tx.practitionerApplication.update({
       where: { id },
-      data: { priceMultiplierBps: parsedMult, retailDiscountBps, pricingBasis },
+      data: { priceMultiplierBps: parsedMult, retailDiscountBps, pricingBasis, referredByAffiliateId },
     });
 
     for (const row of pending) {
@@ -488,6 +502,25 @@ export async function savePractitionerPricing(
       }
     }
   });
+
+  /* The evergreen customer↔affiliate link is what commission actually hangs
+     off, and a practice that has never ordered has none. Create it here so the
+     first order earns, rather than discovering at fulfilment that the referral
+     was recorded on the application but nowhere the money code looks.
+     An existing link is left alone: the historical lock wins, exactly as it
+     does everywhere else in the affiliate system. */
+  if (referredByAffiliateId) {
+    const email = app.email?.toLowerCase();
+    if (email) {
+      await prisma.customerAffiliateLink
+        .upsert({
+          where: { customerEmail: email },
+          create: { customerEmail: email, affiliateId: referredByAffiliateId },
+          update: {},
+        })
+        .catch((err) => console.error('[practitioner-pricing] link upsert failed', err));
+    }
+  }
 
   revalidatePath(`/admin/practitioners/${id}`);
   revalidatePath('/catalog');
