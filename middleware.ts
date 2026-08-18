@@ -195,6 +195,21 @@ export async function middleware(req: NextRequest) {
     return res;
   };
 
+  // ── /card is checkout-domain ONLY ───────────────────────────────────────
+  // The page loads Stripe Elements, so whichever host serves it is a host
+  // Stripe sees. The whole point of the split domain is that meritsciences.com
+  // is never that host. The portal already links straight to the checkout
+  // origin, so nobody should arrive here — this is the fence for when someone
+  // does, by typing it or following a stale link.
+  if (pathname === '/card' && checkoutOrigin() && !isCheckoutHostname(reqHost)) {
+    const target = new URL(`${checkoutOrigin()}/card`);
+    const t = searchParams.get('t');
+    if (t) target.searchParams.set('t', t);
+    const res = NextResponse.redirect(target, 308);
+    res.headers.set('Referrer-Policy', 'no-referrer');
+    return res;
+  }
+
   // ── Bridge page: suppress the Referer on the hop to the checkout domain ──
   // /checkout on the STOREFRONT renders CheckoutBridge, which forwards to the
   // checkout domain. Sending this header lets the bridge use
