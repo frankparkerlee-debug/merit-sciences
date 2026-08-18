@@ -142,10 +142,18 @@ export async function createPaymentIntent(args: CreateIntentArgs): Promise<Strip
       // exports, and some receipt surfaces.
       description: 'Merit order',
       statement_descriptor_suffix: statementDescriptorSuffix(),
-      receipt_email: args.customerEmail || undefined,
+      /* No receipt_email — that is what makes Stripe send its own receipt.
+         Merit already sends a branded "Order confirmed" through Resend the
+         moment the order is fulfilled, so Stripe's was a second, off-brand
+         email for the same purchase. The buyer's address moves to metadata
+         below, because fulfilment reads it back and it is no longer on the
+         intent. */
       automatic_payment_methods: { enabled: true },
       metadata: {
         orderId: args.orderId,
+        // Carries the buyer address that receipt_email used to. Still just an
+        // identifier — no handles, no compound names, no storefront URLs.
+        buyerEmail: args.customerEmail || '',
         // Attribution, mirroring PayPal's custom_id. Ids and codes only.
         affiliateId: args.affiliateId ?? '',
         discountCode: args.discountCode ?? '',
@@ -191,6 +199,8 @@ export function paymentIntentAsPayPalOrder(pi: Stripe.PaymentIntent): any {
         },
       },
     ],
-    payer: { email_address: pi.receipt_email ?? undefined },
+    // metadata first; receipt_email is the fallback so any intent created
+    // before this change still fulfils correctly after it deploys.
+    payer: { email_address: pi.metadata?.buyerEmail || pi.receipt_email || undefined },
   };
 }
