@@ -58,6 +58,11 @@ export function isPaymentPath(pathname: string): boolean {
     // return/refresh URLs and sees the Referer on arrival — both must name
     // the checkout host, never the storefront (same doctrine as checkout).
     pathname.startsWith('/payout-setup/') ||
+    // Practitioner card-on-file capture. Same reason as the Connect links:
+    // Stripe renders Elements here and sees this host, so it must be the
+    // checkout domain and never the storefront.
+    pathname === '/card' ||
+    pathname.startsWith('/card/') ||
     pathname.startsWith('/pay/') ||
     pathname === '/reorder' ||
     pathname.startsWith('/reorder/') ||

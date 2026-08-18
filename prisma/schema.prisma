@@ -841,6 +841,18 @@ model PractitionerApplication {
   //   RETAIL_PCT — retail less retailDiscountBps
   // Per-SKU override rows win over all three.
   pricingBasis       String    @default("RETAIL")
+
+  // ── Card on file ──────────────────────────────────────────────────────
+  // Only the brand, last4 and expiry are mirrored here, purely so the portal
+  // and admin can name the card. The instrument itself lives at Stripe; none
+  // of this can reconstruct a card number.
+  stripeCustomerId    String?
+  cardPaymentMethodId String?
+  cardBrand           String?
+  cardLast4           String?
+  cardExpMonth        Int?
+  cardExpYear         Int?
+  cardAddedAt         DateTime?
   // Audit
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt

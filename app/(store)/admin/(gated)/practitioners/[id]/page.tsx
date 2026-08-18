@@ -31,7 +31,7 @@ export default async function PractitionerApplicationDetail({
     currentOverrides: Record<string, number>;
   } = null;
 
-  if (app.status === 'APPROVED') {
+  if (app.status !== 'REJECTED') {
     const [products, overrides] = await Promise.all([
       prisma.product.findMany({
         where: { status: 'ACTIVE' },

@@ -387,8 +387,14 @@ export async function savePractitionerPricing(
     select: { id: true, status: true },
   });
   if (!app) return { ok: false, error: 'Application not found' };
-  if (app.status !== 'APPROVED') {
-    return { ok: false, error: 'Pricing is only configurable on approved practices.' };
+  // Pricing is configurable BEFORE approval on purpose: the terms are agreed
+  // during the conversation that leads to approval, so they should be in place
+  // the moment the account goes live rather than being a second step someone
+  // has to remember after the practice can already order. Nothing is charged
+  // against a non-approved application — getPractitionerSession only resolves
+  // APPROVED rows — so setting it early is inert until approval flips.
+  if (app.status === 'REJECTED') {
+    return { ok: false, error: 'This application was rejected. Reinstate it before setting pricing.' };
   }
 
   // ── Knob 1: book-level multiplier ──
