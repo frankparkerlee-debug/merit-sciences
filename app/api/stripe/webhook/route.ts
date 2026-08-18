@@ -27,6 +27,8 @@ import { prisma } from '@/lib/db';
 import { stripe, paymentIntentAsPayPalOrder } from '@/lib/stripe';
 import { fulfillCapturedOrder } from '@/lib/paypal-fulfillment';
 import { recordOrderEvent } from '@/lib/orders';
+import { findByStripeId, syncStatus } from '@/lib/subscriptions';
+import { fulfillSubscriptionInvoice } from '@/lib/subscription-fulfillment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,6 +74,43 @@ export async function POST(req: Request) {
         console.log(
           `[stripe/webhook] succeeded pi=${pi.id} order=${result.orderId} new=${result.isNew} commission=${result.commissionCents}`,
         );
+        break;
+      }
+
+      /* A subscription renewal succeeded.
+         Stripe has taken the money; it does not know what to ship. Our mirror
+         row holds the frozen line snapshot, so the order is rebuilt from that
+         and pushed through the SAME fulfilment path a one-off purchase uses —
+         ShipStation, emails, commission. Deliberately keyed off invoice.paid
+         rather than a schedule of our own: Stripe's retries mean an invoice
+         can settle days late, and this fires whenever that actually happens. */
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subId =
+          typeof (invoice as any).subscription === 'string'
+            ? (invoice as any).subscription
+            : (invoice as any).subscription?.id ?? null;
+        if (!subId) break;
+
+        const mirror = await findByStripeId(subId);
+        if (!mirror) {
+          console.warn(`[stripe/webhook] invoice.paid for unmirrored subscription ${subId}`);
+          break;
+        }
+        if (invoice.amount_paid <= 0) break;
+
+        const result = await fulfillSubscriptionInvoice(mirror, invoice);
+        console.log(
+          `[stripe/webhook] invoice.paid sub=${subId} invoice=${invoice.id} order=${result.orderId} new=${result.isNew}`,
+        );
+        break;
+      }
+
+      /* Cancellations, past-due, reactivations — mirror Stripe's status so the
+         portal and admin show the truth rather than our last guess. */
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        await syncStatus(event.data.object as Stripe.Subscription);
         break;
       }
 

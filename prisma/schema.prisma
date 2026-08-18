@@ -1072,3 +1072,32 @@ enum SupplyCategory {
 
   @@map("supply_category")
 }
+
+/// Merit-side mirror of a Stripe Subscription.
+///
+/// Stripe owns the schedule, the automatic charge, retries and dunning. This
+/// row owns what to SHIP and at what price, because Stripe is deliberately
+/// told nothing product-identifying — see lib/subscriptions.ts.
+model PractitionerSubscription {
+  id                   String    @id @default(cuid())
+  stripeSubscriptionId String    @unique
+  stripeCustomerId     String
+  applicationId        String
+  customerEmail        String
+  /// CartLine[] frozen at subscribe time.
+  lines                Json
+  /// The charge amount, frozen at subscribe time. A later retail or basis
+  /// change does not move an existing subscription.
+  unitAmountCents      Int
+  intervalMonths       Int       @default(1)
+  affiliateId          String?
+  discountCode         String?
+  shipping             Json?
+  status               String    @default("ACTIVE")
+  canceledAt           DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([applicationId])
+  @@map("practitioner_subscriptions")
+}
