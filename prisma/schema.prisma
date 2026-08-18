@@ -1102,7 +1102,10 @@ model PractitionerSubscription {
   /// The charge amount, frozen at subscribe time. A later retail or basis
   /// change does not move an existing subscription.
   unitAmountCents      Int
-  intervalMonths       Int       @default(1)
+  /// 'week' | 'month'. Week granularity exists because the PDP sells
+  /// "Every 6 weeks", which whole months cannot express.
+  intervalUnit         String    @default("month")
+  intervalCount        Int       @default(1)
   affiliateId          String?
   discountCode         String?
   shipping             Json?

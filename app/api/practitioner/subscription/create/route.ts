@@ -17,7 +17,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getPricingContext } from '@/lib/pricing';
 import { sanitizeCartLines, priceCart, isPriceError } from '@/lib/checkout-pricing';
-import { createSubscription } from '@/lib/subscriptions';
+import { createSubscription, cadenceFromLabel } from '@/lib/subscriptions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,13 +52,40 @@ export async function POST(req: Request) {
   const lines = sanitizeCartLines(body?.lines);
   if (!lines) return NextResponse.json({ error: 'Invalid or empty cart' }, { status: 400 });
 
+  /* Every line must be a subscribe line, and all on the same cadence.
+     The smoke test showed why: priceCart() prices whatever cart it is handed,
+     so a mixed cart would freeze one-time items into the recurring amount and
+     re-ship them every cycle. The cadence is parsed from each line's own
+     bundleLabel — the string the buyer saw — never from a separate field. */
+  const cadences = lines.map((l) => cadenceFromLabel(l.bundleLabel));
+  if (cadences.some((c) => c === null)) {
+    return NextResponse.json(
+      { error: 'Recurring orders can only contain subscription items. Purchase one-time items separately.' },
+      { status: 400 },
+    );
+  }
+  const cadence = cadences[0]!;
+  if (!cadences.every((c) => c!.unit === cadence.unit && c!.count === cadence.count)) {
+    return NextResponse.json(
+      { error: 'All items in a recurring order must renew on the same schedule.' },
+      { status: 400 },
+    );
+  }
+
+  /* No discount codes on recurring orders. The frozen amount recurs for the
+     life of the subscription, so a one-time code (WELCOME10 is one per
+     customer) would silently become a permanent price cut — the smoke test
+     froze $90.99/mo where the honest recurring price is $99.98. */
+  if (String(body?.discountCode ?? '').trim()) {
+    return NextResponse.json(
+      { error: 'Discount codes cannot be applied to recurring orders.' },
+      { status: 400 },
+    );
+  }
+
   // The amount is whatever this cart costs today, resolved by the same pricer
   // the card checkout uses — never a figure from the client.
-  const priced = await priceCart({
-    lines,
-    discountCodeInput: String(body?.discountCode ?? ''),
-    buyerEmail: app.email,
-  });
+  const priced = await priceCart({ lines, buyerEmail: app.email });
   if (isPriceError(priced)) {
     return NextResponse.json({ error: priced.error }, { status: priced.status });
   }
@@ -70,12 +97,17 @@ export async function POST(req: Request) {
       customerEmail: app.email,
       lines: priced.lines,
       amountCents: priced.totalCents,
-      intervalMonths: Number(body?.intervalMonths) > 0 ? Number(body.intervalMonths) : 1,
+      cadence,
       affiliateId: priced.affiliateId,
       discountCode: priced.discountCode,
       shipping: body?.shipping ?? null,
     });
-    return NextResponse.json({ ok: true, subscriptionId: row.id, amountCents: row.unitAmountCents });
+    return NextResponse.json({
+      ok: true,
+      subscriptionId: row.id,
+      amountCents: row.unitAmountCents,
+      cadence: `${cadence.count} ${cadence.unit}${cadence.count === 1 ? '' : 's'}`,
+    });
   } catch (err) {
     console.error('[subscription/create] failed', err);
     return NextResponse.json({ error: 'Could not start the recurring order.' }, { status: 502 });

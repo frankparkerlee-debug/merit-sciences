@@ -65,6 +65,22 @@ async function ensureStripeProduct(): Promise<string> {
   return created.id;
 }
 
+export type Cadence = { unit: 'week' | 'month'; count: number };
+
+/**
+ * Cadence comes from the line's own bundleLabel — the string the buyer saw
+ * ("Subscribe · Every 6 weeks") — not from a separate client field that could
+ * disagree with it. Returns null for anything that is not a subscribe label,
+ * which doubles as the mixed-cart detector.
+ */
+export function cadenceFromLabel(bundleLabel: string): Cadence | null {
+  const m = /^subscribe\s*·\s*every\s+(?:(\d+)\s+)?(week|month)s?$/i.exec((bundleLabel || '').trim());
+  if (!m) return null;
+  const count = m[1] ? parseInt(m[1], 10) : 1;
+  if (!Number.isFinite(count) || count < 1 || count > 12) return null;
+  return { unit: m[2].toLowerCase() as 'week' | 'month', count };
+}
+
 export type SubscriptionInput = {
   applicationId: string;
   stripeCustomerId: string;
@@ -73,7 +89,7 @@ export type SubscriptionInput = {
   lines: CartLineIn[];
   /** The amount charged at checkout, frozen for the life of the subscription. */
   amountCents: number;
-  intervalMonths?: number;
+  cadence: Cadence;
   affiliateId?: string | null;
   discountCode?: string | null;
   shipping?: unknown;
@@ -90,8 +106,6 @@ export async function createSubscription(input: SubscriptionInput) {
   if (!Number.isFinite(input.amountCents) || input.amountCents <= 0) {
     throw new Error('Subscription amount must be positive');
   }
-  const intervalMonths = input.intervalMonths && input.intervalMonths > 0 ? input.intervalMonths : 1;
-
   const productId = await ensureStripeProduct();
 
   const sub = await stripe().subscriptions.create({
@@ -104,7 +118,7 @@ export async function createSubscription(input: SubscriptionInput) {
           // per-subscription name, so there is nothing to leak.
           product: productId,
           unit_amount: input.amountCents,
-          recurring: { interval: 'month', interval_count: intervalMonths },
+          recurring: { interval: input.cadence.unit, interval_count: input.cadence.count },
         },
       },
     ],
@@ -126,7 +140,8 @@ export async function createSubscription(input: SubscriptionInput) {
       customerEmail: input.customerEmail,
       lines: input.lines as unknown as object,
       unitAmountCents: input.amountCents,
-      intervalMonths,
+      intervalUnit: input.cadence.unit,
+      intervalCount: input.cadence.count,
       affiliateId: input.affiliateId ?? null,
       discountCode: input.discountCode ?? null,
       shipping: (input.shipping ?? null) as unknown as object,
