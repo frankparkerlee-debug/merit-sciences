@@ -188,7 +188,7 @@ export default async function StackPage({ params }: Props) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-cobalt flex-shrink-0">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                48-hour dispatch from Dallas
+                48-hour dispatch from San Antonio
               </li>
             </ul>
           </div>

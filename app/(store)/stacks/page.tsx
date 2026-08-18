@@ -19,7 +19,7 @@ export const metadata = {
   // Root template appends "· Merit Sciences".
   title: 'Research Stacks',
   description:
-    'Pre-built research compound stacks — the pairings most requested by the research community, bundled at a discount. Every component HPLC-tested ≥99% with a per-lot COA. Ships 48hr from Dallas.',
+    'Pre-built research compound stacks — the pairings most requested by the research community, bundled at a discount. Every component HPLC-tested ≥99% with a per-lot COA. Ships 48hr from San Antonio.',
   alternates: { canonical: 'https://meritsciences.com/stacks' },
 };
 

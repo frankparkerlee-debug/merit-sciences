@@ -267,7 +267,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       <div className="hidden sm:block bg-cobalt/5 border border-cobalt/10 rounded-xl p-4">
         <p className="text-sm text-ink leading-relaxed">
           {product.oneLiner ||
-            `${product.title} — independently assayed, lot-tested, and shipped from our facility in Dallas. Released only after an independent laboratory returns its results for the lot.`}
+            `${product.title} — independently assayed, lot-tested, and shipped from our fulfillment facility in San Antonio. Released only after an independent laboratory returns its results for the lot.`}
         </p>
       </div>
 

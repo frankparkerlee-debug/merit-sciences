@@ -138,14 +138,14 @@ function beatAngle(c: Counterpart, ctx: SequenceCtx): Rendered {
       seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h('Same molecule. The part the brand name hides.') +
       p(c.meritAngle) +
-      proof('Every Merit lot:<br>• HPLC-verified ≥99% before release<br>• Identity confirmed — or it doesn’t ship<br>• A per-lot COA behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from Dallas') +
+      proof('Every Merit lot:<br>• HPLC-verified ≥99% before release<br>• Identity confirmed — or it doesn’t ship<br>• A per-lot COA behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from San Antonio') +
       cta(`See ${c.compound} at Merit →`, shopUrl(c.handle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
   const text = `${c.meritAngle}
 
-Every Merit lot: HPLC-verified >=99%, identity confirmed or it doesn't ship, per-lot COA behind the QR, sealed sterile vial, 48-hour dispatch from Dallas.
+Every Merit lot: HPLC-verified >=99%, identity confirmed or it doesn't ship, per-lot COA behind the QR, sealed sterile vial, 48-hour dispatch from San Antonio.
 
 See it: ${shopUrl(c.handle, ctx.code)}
 

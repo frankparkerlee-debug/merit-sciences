@@ -16,7 +16,7 @@ import { EnterButton } from './EnterButton';
 export const metadata: Metadata = {
   title: 'Get 20% off · Merit Sciences',
   description:
-    'American made, lab-verified. The opposite of a mystery source — third-party tested, shipped from Dallas. 20% off your first order.',
+    'American made, lab-verified. The opposite of a mystery source — third-party tested, shipped from San Antonio. 20% off your first order.',
   robots: { index: false, follow: false },
 };
 
@@ -71,7 +71,7 @@ export default function AccessPage() {
         >
           Lab-tested compounds,
           <br />
-          <span className="text-cobalt-soft">shipped from Dallas.</span>
+          <span className="text-cobalt-soft">shipped from San Antonio.</span>
         </h1>
 
         <p className="mt-6 max-w-md text-lg leading-relaxed text-cream/70">

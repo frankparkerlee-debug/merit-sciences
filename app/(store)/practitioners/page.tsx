@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: { absolute: 'Practitioner Program — Merit Sciences' },
   description:
-    'Account pricing for licensed practitioners. USP <797> compounded, independently assayed, certificate published on every lot. Ships 48hr from Dallas. No minimums.',
+    'Account pricing for licensed practitioners. USP <797> compounded, independently assayed, certificate published on every lot. Ships 48hr from San Antonio. No minimums.',
   alternates: { canonical: '/practitioners' },
   openGraph: {
     title: 'Merit Sciences Practitioner Program — sourcing your practice can stand behind',
@@ -211,7 +211,7 @@ export default async function PractitionersPage() {
             ['USP <797>', 'compounded, licensed US facility'],
             ['≥99%', 'HPLC purity, assayed per lot'],
             ['Every lot', 'COA published before purchase'],
-            ['48 hrs', 'dispatch from Dallas · no minimums'],
+            ['48 hrs', 'dispatch from San Antonio · no minimums'],
           ].map(([big, small], i) => (
             <div
               key={big}
@@ -362,7 +362,7 @@ export default async function PractitionersPage() {
               ['No minimums', 'Order one vial or fifty — same price per unit'],
               ['No contracts', 'No commitment, no monthly spend requirement'],
               ['COA on every lot', 'Certificate ships with the order and lives at /coa'],
-              ['48-hour dispatch', 'Sealed, lot-numbered, from Dallas'],
+              ['48-hour dispatch', 'Sealed, lot-numbered, from San Antonio'],
               ['Order history + reorder', 'Past orders, lots and certificates in your portal'],
             ].map(([k, v]) => (
               <div key={k} className="px-6 py-3.5 border-b border-ink/8 last:border-b-0">

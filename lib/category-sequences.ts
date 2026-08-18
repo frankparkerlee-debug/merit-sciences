@@ -115,12 +115,12 @@ function beatAngle(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
       seqHero(ctx, `${cat.name} — Merit Sciences research compounds`) +
       h('The part a product photo can’t show you.') +
       p(`Anyone can list ${cat.name.toLowerCase()} compounds. The question is whether what’s in the vial is what the label says — and whether they’ll show you. Merit does, per lot.`) +
-      proof('Every Merit lot:<br>• HPLC-verified ≥99% before release<br>• Identity confirmed — or it doesn’t ship<br>• A per-lot COA behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from Dallas') +
+      proof('Every Merit lot:<br>• HPLC-verified ≥99% before release<br>• Identity confirmed — or it doesn’t ship<br>• A per-lot COA behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from San Antonio') +
       cta(`Browse the ${cat.name} class →`, shopUrl(cat.heroHandle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
-  const text = `Anyone can list ${cat.name.toLowerCase()} compounds. Merit shows you what's in the vial — per lot: HPLC-verified >=99%, identity confirmed or it doesn't ship, COA behind the QR, sealed sterile, 48-hour dispatch from Dallas.
+  const text = `Anyone can list ${cat.name.toLowerCase()} compounds. Merit shows you what's in the vial — per lot: HPLC-verified >=99%, identity confirmed or it doesn't ship, COA behind the QR, sealed sterile, 48-hour dispatch from San Antonio.
 
 ${shopUrl(cat.heroHandle, ctx.code)}
 

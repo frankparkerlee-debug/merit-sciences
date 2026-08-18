@@ -61,7 +61,7 @@ export default function ClinicSourcePage() {
               Pharmacy-grade compounds from an ISO-certified US facility.
             </p>
             <p className="text-cream/35 text-sm leading-relaxed max-w-md">
-              No appointment. No referral. No waitlist. Ships to your door in 48 hours from Dallas.
+              No appointment. No referral. No waitlist. Ships to your door in 48 hours from San Antonio.
             </p>
           </div>
 

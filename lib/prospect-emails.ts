@@ -93,7 +93,7 @@ export function renderProspectTelegram(d: ProspectEmailData): Rendered {
         ['Testing', "“trust me bro”", 'HPLC COA, every lot'],
         ['Identity', 'who knows', "confirmed or it doesn't ship"],
         ['If it’s wrong', 'you find out', 'we find out first'],
-        ['Ships from', 'a crypto wallet', 'a pharmacy in Dallas'],
+        ['Ships from', 'a crypto wallet', 'an ISO-certified US facility'],
       ]) +
       p('Not hypothetical: last month we held back a whole Semax lot because it came back as the <em>wrong molecule</em>. The group chat would’ve shipped it to you with a fire emoji.') +
       cta('Buy like a grown-up →', shop) +
@@ -112,9 +112,9 @@ export function renderProspectSourcing(d: ProspectEmailData): Rendered {
     h('Where your compounds actually come from.') +
       p('Most of what’s sold online is bulk-imported, repackaged in someone’s spare room, and sold on a guess.') +
       p('Merit is compounded to USP <797> in an ISO-certified US facility and released against an independent laboratory assay, with a COA on every lot. The difference is the part you can’t see in a product photo — so we document it instead of asking you to assume it.') +
-      stat('48 hrs', 'sealed, tested, and shipped from Dallas') +
+      stat('48 hrs', 'sealed, tested, and shipped from San Antonio') +
       cta('See how a Merit lot is made →', shop),
-    `Most online compounds are bulk-imported and sold on a guess. Merit is compounded to USP <797> in an ISO-certified US facility, independently assayed, COA on every lot, shipped from Dallas in 48 hours.\n${shop}`,
+    `Most online compounds are bulk-imported and sold on a guess. Merit is compounded to USP <797> in an ISO-certified US facility, independently assayed, COA on every lot, shipped from San Antonio in 48 hours.\n${shop}`,
     d,
   );
 }
@@ -146,11 +146,11 @@ export function renderProspectShipping(d: ProspectEmailData): Rendered {
     heroImg('/brand/merit-vial-hero.webp', 'A sealed, lot-labeled Merit Sciences research vial') +
       h('Sealed, labeled, and boring — on purpose.') +
       p('No mystery baggies. No hand-written Sharpie labels. No “should arrive in 3–5 weeks (maybe).”') +
-      p('A Merit order arrives as a sealed, lot-labeled vial with a scannable QR that pulls up its exact COA — shipped from Dallas, usually on your porch in 48 hours.') +
+      p('A Merit order arrives as a sealed, lot-labeled vial with a scannable QR that pulls up its exact COA — shipped from San Antonio, usually on your porch in 48 hours.') +
       proof('On every vial:<br>• The compound + dose<br>• The lot number<br>• A QR → the exact HPLC result') +
       cta('See what ships →', shop) +
       quiet(`Still holding your 20%: <strong>${d.code}</strong> — it applies itself when you use the button.`),
-    `A Merit order shows up sealed and lot-labeled, with a QR to its exact COA, shipped from Dallas in ~48 hours. No mystery baggies.\nSee what ships (${d.code} applies automatically): ${shop}`,
+    `A Merit order shows up sealed and lot-labeled, with a QR to its exact COA, shipped from San Antonio in ~48 hours. No mystery baggies.\nSee what ships (${d.code} applies automatically): ${shop}`,
     d,
   );
 }
@@ -196,10 +196,10 @@ export function renderProspectLastCall(d: ProspectEmailData): Rendered {
     'Before it slips your mind',
     h('Your 20% is getting lonely.') +
       p('No pressure — but your first-order 20% has been sitting in your inbox for a few weeks, and it won’t wait forever.') +
-      p('Whenever you’re ready, every lot comes with the same things: a published COA, ≥99% purity, and a 48-hour ship from Dallas. The hard part is on us. The first step — one tap, code included — is on you.') +
+      p('Whenever you’re ready, every lot comes with the same things: a published COA, ≥99% purity, and a 48-hour ship from San Antonio. The hard part is on us. The first step — one tap, code included — is on you.') +
       codeChip(d.code) +
       cta("Use it before it's gone →", shop),
-    `Your first-order 20% won't wait forever. Every lot: published COA, ≥99% purity, 48-hour ship from Dallas.\nOne tap, ${d.code} applies automatically: ${shop}`,
+    `Your first-order 20% won't wait forever. Every lot: published COA, ≥99% purity, 48-hour ship from San Antonio.\nOne tap, ${d.code} applies automatically: ${shop}`,
     d,
   );
 }
