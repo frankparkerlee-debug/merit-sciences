@@ -196,6 +196,7 @@ export async function preCreateOrder(args: {
   totalCents: number;
   discountCode?: string | null;
   affiliateId?: string | null;
+  practitionerApplicationId?: string | null;
   lines: Array<{
     handle: string;
     title: string;
@@ -233,6 +234,7 @@ export async function preCreateOrder(args: {
       totalCents: BigInt(args.totalCents),
       discountCode: args.discountCode ?? null,
       affiliateId: args.affiliateId ?? null,
+      practitionerApplicationId: args.practitionerApplicationId ?? null,
       shippingFullName: args.shippingFullName,
       shippingLine1: args.shippingLine1,
       shippingLine2: args.shippingLine2,

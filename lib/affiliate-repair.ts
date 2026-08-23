@@ -1,5 +1,6 @@
 import { prisma } from './db';
 import { tierForOrderCount } from './affiliate';
+import { computeGrossProfitCommission, referringAffiliateFor } from './practitioner-commission';
 
 /* ─────────────────────────────────────────────────────────────────────────
    COMMISSION REPAIR — create an OrderCommission from a PERSISTED order.
@@ -45,6 +46,7 @@ export type RepairResult = {
   commissionCents?: number;
   affiliateSlug?: string;
   selfPurchase?: boolean;
+  basis?: 'REVENUE' | 'GROSS_PROFIT';
   evergreenConflict?: { creditedSlug: string; linkedSlug: string } | null;
 };
 
@@ -64,6 +66,8 @@ export async function recordCommissionFromOrder(
       subtotalCents: true,
       discountCents: true,
       affiliateId: true,
+      practitionerApplicationId: true,
+      lines: { select: { handle: true, bundleLabel: true, unitCents: true, qty: true } },
     },
   });
   if (!order) throw new Error(`Order ${orderDbId} not found`);
@@ -138,8 +142,37 @@ export async function recordCommissionFromOrder(
   const trailing30 = await prisma.orderCommission.count({
     where: { affiliateId: creditedAffiliateId, occurredAt: { gte: since }, status: { not: 'CLAWED_BACK' } },
   });
-  const { rateBp } = tierForOrderCount(trailing30);
-  const commissionCents = isSelfPurchase ? 0 : Math.floor((orderTotalCents * rateBp) / 10_000);
+  let { rateBp } = tierForOrderCount(trailing30);
+  let commissionCents = isSelfPurchase ? 0 : Math.floor((orderTotalCents * rateBp) / 10_000);
+
+  /* Same basis rule as the live recorder: when the credited affiliate is the
+     one who introduced this practice, the commission is 20% of GROSS PROFIT,
+     not a share of revenue. Without this, a manual assign on a physician
+     order books at the flat tier — roughly double Parker's formula. */
+  let basis: 'REVENUE' | 'GROSS_PROFIT' = 'REVENUE';
+  let gp: Awaited<ReturnType<typeof computeGrossProfitCommission>> | null = null;
+  const practitionerReferrer = await referringAffiliateFor(
+    buyerEmail,
+    order.practitionerApplicationId,
+  ).catch(() => null);
+  if (practitionerReferrer != null && practitionerReferrer === creditedAffiliateId && order.lines.length > 0) {
+    gp = await computeGrossProfitCommission(
+      order.lines.map((l) => ({
+        handle: l.handle,
+        bundleLabel: l.bundleLabel,
+        unitCents: Number(l.unitCents),
+        qty: l.qty,
+      })),
+    );
+    basis = 'GROSS_PROFIT';
+    rateBp = gp.rateBp;
+    commissionCents = isSelfPurchase ? 0 : gp.commissionCents;
+    if (gp.uncostedHandles.length > 0) {
+      console.warn(
+        `[repair] gross-profit withheld on ${order.paypalOrderId}: no cost for ${gp.uncostedHandles.join(', ')}`,
+      );
+    }
+  }
 
   try {
     await prisma.$transaction([
@@ -153,6 +186,10 @@ export async function recordCommissionFromOrder(
           orderTotalCents: BigInt(orderTotalCents),
           commissionRateBp: rateBp,
           commissionCents: BigInt(commissionCents),
+          basis,
+          productCostCents: gp ? BigInt(gp.productCostCents) : null,
+          shippingDeductionCents: gp ? BigInt(gp.shippingDeductionCents) : null,
+          grossProfitCents: gp ? BigInt(gp.grossProfitCents) : null,
           status: 'PENDING',
         },
       }),
@@ -172,6 +209,7 @@ export async function recordCommissionFromOrder(
     commissionCents,
     affiliateSlug: affiliate.slug,
     selfPurchase: isSelfPurchase,
+    basis,
     evergreenConflict,
   };
 }

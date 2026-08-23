@@ -162,6 +162,7 @@ export async function POST(req: Request) {
       totalCents: priced.totalCents,
       discountCode: priced.discountCode,
       affiliateId: priced.affiliateId,
+      practitionerApplicationId: priced.practitionerApplicationId,
       lines: priced.lines.map((l) => ({
         handle: l.handle,
         title: l.title,

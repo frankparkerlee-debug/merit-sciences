@@ -107,8 +107,29 @@ export async function computeGrossProfitCommission(
   };
 }
 
-/** The affiliate who introduced this practice, if any. */
-export async function referringAffiliateFor(customerEmail: string): Promise<string | null> {
+/**
+ * The affiliate who introduced this practice, if any.
+ *
+ * Matches by the order's stamped application id FIRST — practices routinely
+ * order under a different email than they applied with (first live case:
+ * applied gmail, ordered under the clinic domain), so the email is only a
+ * fallback for orders that predate the stamp.
+ *
+ * This is Parker's assignment made in the admin dashboard ("Referred by" on
+ * the practitioner application). It is deliberately sufficient on its own —
+ * physicians are introduced offline and never carry a ?ref= cookie or code.
+ */
+export async function referringAffiliateFor(
+  customerEmail: string,
+  practitionerApplicationId?: string | null,
+): Promise<string | null> {
+  if (practitionerApplicationId) {
+    const byId = await prisma.practitionerApplication.findFirst({
+      where: { id: practitionerApplicationId, status: 'APPROVED' },
+      select: { referredByAffiliateId: true },
+    });
+    if (byId) return byId.referredByAffiliateId ?? null;
+  }
   const app = await prisma.practitionerApplication.findFirst({
     where: { email: customerEmail.toLowerCase(), status: 'APPROVED' },
     select: { referredByAffiliateId: true },

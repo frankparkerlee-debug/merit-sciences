@@ -41,7 +41,15 @@ export async function fulfillSubscriptionInvoice(
     payer: { email_address: mirror.customerEmail },
     purchase_units: [
       {
-        custom_id: JSON.stringify({ a: mirror.affiliateId ?? null, c: mirror.discountCode ?? null }),
+        // `p` rides along INTERNALLY only — this shaped object never reaches
+        // Stripe. It lets the commission recorder credit the practice's
+        // referring affiliate on renewals, where no order row exists yet at
+        // the moment the commission is written.
+        custom_id: JSON.stringify({
+          a: mirror.affiliateId ?? null,
+          c: mirror.discountCode ?? null,
+          p: mirror.applicationId ?? null,
+        }),
         amount: { value: (invoice.amount_paid / 100).toFixed(2) },
         shipping: mirror.shipping ?? undefined,
         items: lines.map((l) => ({
@@ -61,5 +69,16 @@ export async function fulfillSubscriptionInvoice(
   };
 
   const result = await fulfillCapturedOrder(asPayPalOrder, 'webhook');
+
+  // Stamp the practice onto the order row the fulfilment just created, so the
+  // repair path and exports see the same linkage the live commission used.
+  if (result.orderId && mirror.applicationId) {
+    await prisma.order
+      .update({
+        where: { id: result.orderId },
+        data: { practitionerApplicationId: mirror.applicationId },
+      })
+      .catch(() => {});
+  }
   return { orderId: result.orderId, isNew: result.isNew };
 }

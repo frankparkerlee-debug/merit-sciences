@@ -421,6 +421,13 @@ model Order {
   affiliateId  String? // affiliate credited (may differ from
   // code if evergreen lock took over)
 
+  // Approved practitioner whose account pricing applied to this order.
+  // Written server-side from the same verified session that priced the cart —
+  // never client-supplied. This is what lets the referring-affiliate
+  // commission match the practice even when the order email differs from the
+  // application email.
+  practitionerApplicationId String?
+
   // Shipping address (snapshotted JSON — we don't normalize because
   // each order is a point-in-time record)
   shippingFullName String

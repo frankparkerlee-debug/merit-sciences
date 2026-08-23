@@ -74,6 +74,8 @@ export type PricedCart = {
   affiliateId: string | null;
   affiliateSlug: string | null;
   attributionVia: 'discount_code' | 'cookie' | null;
+  /** Approved practitioner whose session priced this cart, if any. */
+  practitionerApplicationId: string | null;
 };
 
 export type PriceCartError = { error: string; field?: string; status: number };
@@ -322,5 +324,6 @@ export async function priceCart(args: {
     affiliateId,
     affiliateSlug,
     attributionVia,
+    practitionerApplicationId: practitionerSession?.applicationId ?? null,
   };
 }

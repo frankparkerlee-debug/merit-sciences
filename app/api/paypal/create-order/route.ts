@@ -457,6 +457,7 @@ export async function POST(req: Request) {
           totalCents,
           discountCode: discountCode?.toUpperCase() ?? null,
           affiliateId,
+          practitionerApplicationId: practitionerSession?.applicationId ?? null,
           lines: cleanLines.map((l) => ({
             handle: l.handle,
             title: l.title,

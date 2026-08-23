@@ -108,35 +108,38 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
   const orderId: string = paypalOrder.id;
   const amountCents = Math.round(parseFloat(capture.amount?.value ?? '0') * 100);
 
-  let attribution: { a?: string | null; c?: string | null } = {};
+  let attribution: { a?: string | null; c?: string | null; p?: string | null } = {};
   if (pu.custom_id) { try { attribution = JSON.parse(pu.custom_id); } catch { /* ignore */ } }
-  let affiliateId = attribution.a ?? null;
-  // Fallback: buyers who TYPE a code (no ?ref= cookie) carry no affiliate in
-  // custom_id, but order-persistence already resolved the code → Order.affiliateId.
-  // Use it so code-driven sales earn live, not only via a manual backfill.
-  if (!affiliateId) {
-    const persistedAff = await prisma.order.findUnique({
-      where: { paypalOrderId: orderId },
-      select: { affiliateId: true },
-    });
-    affiliateId = persistedAff?.affiliateId ?? null;
-  }
-  if (!affiliateId) return 0;
+
+  // One fetch serves three fallbacks below: affiliate resolved at persistence,
+  // buyer email for card-flow captures, and the practitioner stamp.
+  const persisted = await prisma.order.findUnique({
+    where: { paypalOrderId: orderId },
+    select: { affiliateId: true, customerEmail: true, practitionerApplicationId: true },
+  });
 
   const payerEmail = (paypalOrder.payer?.email_address ?? '').toLowerCase();
   const payerId: string | null = paypalOrder.payer?.payer_id ?? null;
 
   // Advanced Card Fields captures omit payer.email_address — fall back to the
   // pre-created order's email so card-flow referrals still earn.
-  let buyerEmail: string | null = payerEmail;
-  if (!buyerEmail) {
-    const persisted = await prisma.order.findUnique({
-      where: { paypalOrderId: orderId },
-      select: { customerEmail: true },
-    });
-    buyerEmail = persisted?.customerEmail?.toLowerCase() ?? null;
-  }
+  const buyerEmail: string | null = payerEmail || persisted?.customerEmail?.toLowerCase() || null;
   if (!buyerEmail) return 0;
+
+  /* Attribution, in priority order:
+       1. custom_id from the checkout session (?ref= cookie),
+       2. Order.affiliateId resolved at persistence (typed code),
+       3. the practice's referring affiliate, assigned by the admin on the
+          practitioner application. Physicians are introduced offline and
+          carry neither cookie nor code — the dashboard assignment IS their
+          attribution, and it also decides the gross-profit basis below. */
+  const practitionerReferrer = await referringAffiliateFor(
+    buyerEmail,
+    attribution.p ?? persisted?.practitionerApplicationId ?? null,
+  ).catch(() => null);
+
+  const affiliateId = attribution.a ?? persisted?.affiliateId ?? practitionerReferrer ?? null;
+  if (!affiliateId) return 0;
 
   const affiliate = await prisma.affiliate.findUnique({
     where: { id: affiliateId },
@@ -180,8 +183,9 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
      A practice buys at account pricing and reorders steadily, so a share of
      revenue there would pay commission on volume carrying very little margin.
      Only orders from a practice this same affiliate introduced switch basis —
-     an ordinary customer who happens to share an affiliate is unaffected. */
-  const practitionerReferrer = await referringAffiliateFor(buyerEmail).catch(() => null);
+     an ordinary customer who happens to share an affiliate is unaffected.
+     (practitionerReferrer was resolved above, id-first, alongside attribution
+     — one resolution decides both credit and basis, so they cannot drift.) */
   const useGrossProfit = practitionerReferrer != null && practitionerReferrer === affiliate.id;
 
   let rateBp = tierRateBp;
