@@ -9,7 +9,7 @@ export default async function NewOrderPage() {
   const products = await prisma.product.findMany({
     where: { status: 'ACTIVE' },
     orderBy: { title: 'asc' },
-    select: { handle: true, title: true, priceCents: true },
+    select: { handle: true, title: true, priceCents: true, vialSize: true },
   });
 
   return (

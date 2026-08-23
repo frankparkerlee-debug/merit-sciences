@@ -8,16 +8,18 @@ import { track, identify } from '@/lib/analytics';
 /**
  * Subscribe / exit-intent popup → email capture → 20%-off-first-order code.
  *
- * Full-screen cobalt takeover: the vial pattern fills the viewport behind a
- * deep cobalt→ink wash, the four colored lane vials float around the edges
- * for depth, and the offer sits center-stage in monumental cream type. Built
- * to stop the scroll and grab attention on the way out.
+ * Styled in the homepage's dark object-cinema language ("Same stack. Better
+ * source."): the defocused vial wall as ground, ink scrims, poster-black
+ * uppercase type with the outline-stroke second line, mono eyebrows, and the
+ * white→lime square CTA. One quiet lime accent — no gradients, no floaters.
  *
  * Triggers on desktop exit-intent (cursor leaves through the top) OR after a
  * timed delay (covers mobile, where exit-intent doesn't fire). Suppressed for
  * 14 days after a dismiss, a year after a successful subscribe, and never
  * shown on transactional/account flows.
  */
+
+const LIME = '#B9FF66';
 
 const STORAGE_KEY = 'merit_subscribe_popup_v1';
 const SUPPRESS_DAYS_DISMISS = 14;
@@ -35,17 +37,6 @@ const HIDDEN_PREFIXES = [
   // that with an offer to send certificates is nonsense.
   '/coa',
 ];
-
-// Decorative lane vials scattered around the offer. Each floats on its own
-// rhythm (--r tilt + staggered duration/delay) for a living, layered feel.
-// Smaller/blurred ones drop out on narrow screens to avoid clutter.
-const VIALS = [
-  { src: 'lane-nad-transparent',          cls: 'top-[-5%] left-[-3%] w-40 sm:w-56 lg:w-72',                r: '-12deg', dur: '7s',   delay: '0s',   op: 'opacity-90', blur: '' },
-  { src: 'lane-bpc-transparent',          cls: 'bottom-[-7%] right-[-4%] w-44 sm:w-60 lg:w-80',            r: '11deg',  dur: '8s',   delay: '.6s',  op: 'opacity-90', blur: '' },
-  { src: 'lane-blends-transparent',       cls: 'top-[7%] right-[3%] w-28 sm:w-40 lg:w-52 hidden sm:block', r: '8deg',   dur: '6.5s', delay: '1.2s', op: 'opacity-70', blur: 'blur-[1px]' },
-  { src: 'lane-selank-transparent',       cls: 'bottom-[9%] left-[2%] w-28 sm:w-40 lg:w-52 hidden sm:block', r: '-8deg', dur: '7.5s', delay: '.3s',  op: 'opacity-70', blur: 'blur-[1px]' },
-  { src: 'merit-vial-canonical-transparent', cls: 'top-[42%] left-[11%] w-20 lg:w-28 hidden lg:block',     r: '4deg',   dur: '9s',   delay: '.9s',  op: 'opacity-50', blur: 'blur-[2px]' },
-] as const;
 
 function suppressed(): boolean {
   try {
@@ -160,23 +151,21 @@ export function SubscribePopup() {
 
   return (
     <div
-      className="fixed inset-0 z-[80] overflow-hidden"
+      className="fixed inset-0 z-[80] overflow-hidden bg-[#08090A] text-white"
       role="dialog"
       aria-modal="true"
       aria-label="Subscribe for 20% off"
-      style={{ animation: 'meritPop .5s cubic-bezier(0.22,1,0.36,1) both' }}
+      style={{ animation: 'meritPop .45s cubic-bezier(0.22,1,0.36,1) both' }}
     >
       {/* Keyframes (scoped, self-contained) */}
       <style>{`
         @keyframes meritPop { from { opacity:0 } to { opacity:1 } }
-        @keyframes meritRise { from { opacity:0; transform:translateY(22px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes meritFloat { 0%,100% { transform:translateY(0) rotate(var(--r,0deg)) } 50% { transform:translateY(-22px) rotate(var(--r,0deg)) } }
-        @keyframes meritGlow { 0%,100% { opacity:.45; transform:translate(-50%,-50%) scale(1) } 50% { opacity:.8; transform:translate(-50%,-50%) scale(1.12) } }
+        @keyframes meritRise { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
       `}</style>
 
-      {/* 1 — Vial pattern, full-bleed */}
+      {/* 1 — The defocused vial wall, same ground as the hero */}
       <Image
-        src="/brand/scene-pattern-cobalt.webp"
+        src="/brand/pattern-vials-dof.webp"
         alt=""
         fill
         priority
@@ -184,83 +173,53 @@ export function SubscribePopup() {
         className="object-cover"
       />
 
-      {/* 2 — Cobalt→ink wash for drama + legibility */}
+      {/* 2 — Ink scrim, hero-matched: heavy center-low for type, easing at the
+          edges so the wall stays perceptible */}
       <div
+        aria-hidden="true"
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(120% 90% at 50% 38%, rgba(46,77,219,0.34) 0%, rgba(11,15,25,0.62) 45%, rgba(11,15,25,0.92) 100%)',
-        }}
-      />
-      {/* 2b — Vertical scrim so the top eyebrow + bottom microcopy stay legible
-          over the bright pattern (esp. on mobile) without dimming the vials. */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(to bottom, rgba(11,15,25,0.5) 0%, rgba(11,15,25,0) 28%, rgba(11,15,25,0) 66%, rgba(11,15,25,0.8) 100%)',
+            'radial-gradient(110% 85% at 50% 55%, rgba(8,9,10,0.82) 0%, rgba(8,9,10,0.62) 55%, rgba(8,9,10,0.42) 100%), linear-gradient(180deg, rgba(8,9,10,0.65) 0%, rgba(8,9,10,0.1) 35%, rgba(8,9,10,0.85) 100%)',
         }}
       />
 
-      {/* 3 — Soft glow behind the headline */}
-      <div
-        className="absolute left-1/2 top-1/2 w-[60vw] h-[60vw] max-w-[640px] max-h-[640px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(107,138,255,0.45) 0%, rgba(107,138,255,0) 65%)',
-          animation: 'meritGlow 6s ease-in-out infinite',
-        }}
-      />
-
-      {/* 4 — Floating lane vials */}
-      {VIALS.map((v, i) => (
-        <div
-          key={i}
-          aria-hidden
-          className={`pointer-events-none absolute ${v.cls} aspect-[1/2.3] ${v.op} ${v.blur}`}
-          style={{ ['--r' as string]: v.r, animation: `meritFloat ${v.dur} ease-in-out ${v.delay} infinite` } as React.CSSProperties}
-        >
-          <Image
-            src={`/brand/${v.src}.webp`}
-            alt=""
-            fill
-            sizes="320px"
-            className="object-contain"
-            style={{ filter: 'drop-shadow(0 24px 44px rgba(0,0,0,0.45))' }}
-          />
-        </div>
-      ))}
-
-      {/* 5 — Close */}
+      {/* 3 — Close */}
       <button
         type="button"
         onClick={dismiss}
         aria-label="Close"
-        className="absolute top-5 right-5 sm:top-7 sm:right-7 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/15 flex items-center justify-center text-cream/80 hover:text-white transition"
+        className="absolute top-5 right-5 sm:top-7 sm:right-7 z-10 w-11 h-11 border border-white/25 flex items-center justify-center text-white/70 hover:bg-white hover:text-black transition"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
 
-      {/* 6 — Centered offer */}
+      {/* 4 — Centered offer */}
       <div className="relative z-10 h-full w-full flex items-center justify-center px-6">
-        <div className="w-full max-w-xl text-center" style={{ animation: 'meritRise .6s cubic-bezier(0.22,1,0.36,1) .08s both' }}>
+        <div className="w-full max-w-2xl text-center" style={{ animation: 'meritRise .55s cubic-bezier(0.22,1,0.36,1) .06s both' }}>
           {status === 'done' ? (
             <>
-              <p className="font-display text-[12px] tracking-[0.28em] uppercase text-cobalt-soft font-bold mb-4">— You’re in</p>
-              <h2 className="font-display font-black text-cream tracking-[-0.03em] leading-[0.92] mb-5" style={{ fontSize: 'clamp(40px, 8vw, 76px)' }}>
-                Here’s your 20% off<span className="text-cobalt-soft">.</span>
+              <p className="font-mono text-[11px] sm:text-[12px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
+                You&rsquo;re on the list
+              </p>
+              <h2 className="font-poster font-black uppercase tracking-[-0.05em] leading-[0.86] mb-6" style={{ fontSize: 'clamp(40px, 8vw, 88px)' }}>
+                20% off,
+                <br />
+                <span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}>
+                  locked in.
+                </span>
               </h2>
-              <p className="text-base text-cream/70 mb-7">Use it at checkout — emailed to you too.</p>
-              <div className="inline-block font-mono text-2xl sm:text-3xl font-extrabold tracking-[0.14em] text-cream bg-white/10 backdrop-blur-sm border border-dashed border-cobalt-soft/60 rounded-2xl px-8 py-5 mb-8 shadow-2xl">
+              <p className="text-[15px] text-white/70 mb-7">Use it at checkout — emailed to you too.</p>
+              <div className="inline-block font-mono text-2xl sm:text-3xl font-bold tracking-[0.14em] border border-dashed px-8 py-5 mb-8" style={{ borderColor: LIME, color: LIME }}>
                 {code}
               </div>
               <div>
                 <a
                   href="/catalog"
                   onClick={() => setOpen(false)}
-                  className="inline-block text-white px-9 py-4 rounded-none text-base font-bold transition hover:opacity-95 shadow-xl"
-                  style={{ background: 'linear-gradient(135deg, #2E4DDB 0%, #6B8AFF 50%, #2E4DDB 100%)' }}
+                  className="inline-block bg-white text-black px-9 py-4 text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-[#B9FF66] transition"
                 >
                   Shop the catalog →
                 </a>
@@ -268,19 +227,25 @@ export function SubscribePopup() {
             </>
           ) : (
             <>
-              <p className="font-poster text-[12px] tracking-[0.28em] uppercase text-cobalt-soft font-bold mb-4">— Before you go</p>
+              <p className="font-mono text-[11px] sm:text-[12px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
+                Before you go
+              </p>
               {/* Lead with the thing no competitor can copy, not the discount.
                   "20% off" is the same offer every gray-market peptide site
                   runs, and it argues on price from a brand whose entire
                   position is that it argues on proof. The certificate is the
                   differentiator; the code is the close, not the headline. */}
-              <h2 className="font-poster font-black text-cream tracking-[-0.035em] leading-[0.9] mb-5" style={{ fontSize: 'clamp(38px, 8vw, 76px)' }}>
-                Read the lab<br />report first<span className="text-cobalt-soft">.</span>
+              <h2 className="font-poster font-black uppercase tracking-[-0.05em] leading-[0.86] mb-6" style={{ fontSize: 'clamp(38px, 7.5vw, 92px)' }}>
+                Read the lab
+                <br />
+                <span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}>
+                  report first.
+                </span>
               </h2>
-              <p className="text-base sm:text-lg text-cream/75 mb-7 leading-relaxed max-w-lg mx-auto">
+              <p className="text-[15px] sm:text-base text-white/70 mb-8 leading-[1.62] max-w-[52ch] mx-auto">
                 Every Merit lot is assayed by an independent laboratory before release, and the
                 certificate is published before it ships. Join the list and we&rsquo;ll send new lot
-                reports as they post — plus 20% off your first order.
+                reports as they post — plus <b className="text-white font-semibold">20% off your first order</b>.
               </p>
               <form onSubmit={handleSubmit} className="max-w-md mx-auto">
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -292,13 +257,12 @@ export function SubscribePopup() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="flex-1 rounded-none border border-white/20 bg-white/10 backdrop-blur-sm px-5 py-4 text-base text-cream placeholder:text-cream/45 focus:outline-none focus:border-cobalt-soft focus:ring-2 focus:ring-cobalt-soft/30 transition"
+                    className="flex-1 border border-white/25 bg-white/[0.06] px-5 py-4 text-base text-white placeholder:text-white/40 focus:outline-none focus:border-white/70 transition"
                   />
                   <button
                     type="submit"
                     disabled={status === 'submitting'}
-                    className="shrink-0 text-white px-7 py-4 rounded-none text-base font-bold transition hover:opacity-95 disabled:opacity-60 shadow-xl"
-                    style={{ background: 'linear-gradient(135deg, #2E4DDB 0%, #6B8AFF 50%, #2E4DDB 100%)' }}
+                    className="shrink-0 bg-white text-black px-8 py-4 text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-[#B9FF66] transition disabled:opacity-60"
                   >
                     {status === 'submitting' ? 'Sending…' : 'Send lot reports'}
                   </button>
@@ -308,11 +272,13 @@ export function SubscribePopup() {
               <button
                 type="button"
                 onClick={dismiss}
-                className="text-[11px] tracking-[0.18em] uppercase text-cream/50 font-bold mt-6 min-h-[44px] px-4 hover:text-cream/80 transition"
+                className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/45 mt-7 min-h-[44px] px-4 hover:text-white transition"
               >
                 Not now
               </button>
-              <p className="text-[11px] text-cream/40 mt-5">Research use only. No spam — unsubscribe anytime.</p>
+              <p className="font-mono text-[10px] tracking-[0.06em] text-white/35 mt-4">
+                Research use only · No spam — unsubscribe anytime
+              </p>
             </>
           )}
         </div>

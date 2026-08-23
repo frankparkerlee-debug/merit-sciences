@@ -264,22 +264,33 @@ export default async function HomePage() {
                   href={`/products/${p.handle}`}
                   className="group bg-[#08090A] hover:bg-[#0E1013] transition-colors"
                 >
-                  <div className="relative aspect-square overflow-hidden flex items-center px-5 lg:px-6">
-                    <div
-                      aria-hidden="true"
-                      className="absolute inset-x-[8%] top-[18%] aspect-square rounded-full"
-                      style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 52%, rgba(8,9,10,0) 72%)' }}
-                    />
-                    <div className="relative w-full rotate-[-2deg] shadow-[0_26px_54px_rgba(0,0,0,0.75)] group-hover:rotate-0 group-hover:-translate-y-1.5 transition-transform duration-500">
+                  {/* Real product photography — the composited labeled vial,
+                      full-bleed. The cream ground reads as specimen lighting
+                      against the dark grid; label art remains the fallback for
+                      any SKU without a render. */}
+                  <div className="relative aspect-square overflow-hidden">
+                    {p.imageUrl ? (
                       <Image
-                        src={p.labelArt}
-                        alt={`Merit ${p.title} vial label — Research Use Only`}
-                        width={1124}
-                        height={524}
+                        src={p.imageUrl}
+                        alt={`Merit ${p.title} vial — Research Use Only`}
+                        fill
                         sizes="(max-width: 1024px) 46vw, 22vw"
-                        className="w-full h-auto"
+                        className="object-cover group-hover:scale-[1.045] transition-transform duration-500"
                       />
-                    </div>
+                    ) : (
+                      <div className="h-full flex items-center px-5 lg:px-6">
+                        <div className="relative w-full rotate-[-2deg] shadow-[0_26px_54px_rgba(0,0,0,0.75)] group-hover:rotate-0 group-hover:-translate-y-1.5 transition-transform duration-500">
+                          <Image
+                            src={p.labelArt}
+                            alt={`Merit ${p.title} vial label — Research Use Only`}
+                            width={1124}
+                            height={524}
+                            sizes="(max-width: 1024px) 46vw, 22vw"
+                            className="w-full h-auto"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="border-t border-white/12 p-4 lg:p-5">
                     <div className="flex items-baseline justify-between gap-2">

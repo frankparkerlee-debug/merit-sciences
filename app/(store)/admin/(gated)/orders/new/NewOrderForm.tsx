@@ -8,6 +8,7 @@ type ProductOption = {
   handle: string;
   title: string;
   priceCents: number;
+  vialSize?: string | null;
 };
 
 type CustomerHit = {
@@ -132,7 +133,10 @@ export function NewOrderForm({ products }: { products: ProductOption[] }) {
       {
         id: `${Date.now()}-${Math.random()}`,
         handle: product.handle,
-        title: product.title,
+        // Size folded into the line title so the two same-name sizes (e.g.
+        // LY3437943 10mg vs 30mg) stay distinguishable on the order, the
+        // packing slip, and the confirmation email.
+        title: product.vialSize ? `${product.title} · ${product.vialSize}` : product.title,
         bundleLabel: 'Single',
         unitCents: priceForBuyer(product),
         qty: 1,
@@ -392,7 +396,8 @@ export function NewOrderForm({ products }: { products: ProductOption[] }) {
             <option value="">+ Add product…</option>
             {products.map((p) => (
               <option key={p.handle} value={p.handle}>
-                {p.title} — ${(p.priceCents / 100).toFixed(2)}
+                {p.title}
+                {p.vialSize ? ` · ${p.vialSize}` : ''} — ${(p.priceCents / 100).toFixed(2)}
               </option>
             ))}
           </select>
