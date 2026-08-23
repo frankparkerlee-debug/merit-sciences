@@ -81,6 +81,39 @@ function isCleanPath(p: string): boolean {
 }
 
 export async function middleware(req: NextRequest) {
+  // ── Stripe payment APIs are checkout-domain ONLY ───────────────────────
+  // The pages that mount Stripe.js are already fenced (/checkout bridge,
+  // /card 308, /pay redirect) — this closes the API layer underneath them, so
+  // even a future page mistake can't START a payment from the storefront
+  // origin. Same dead-end treatment as the page fences: a 404, never a
+  // redirect that names the other domain.
+  //
+  // MUST run before the canonical-host redirect: /api/stripe/webhook has to
+  // answer on EVERY host (Stripe delivers to whatever URL is configured and
+  // does not follow redirects), and /api was historically excluded from the
+  // matcher entirely for the same reason.
+  {
+    const p = req.nextUrl.pathname;
+    if (p.startsWith('/api/')) {
+      const host = (req.headers.get('host') || '').toLowerCase().split(':')[0];
+      const isStripeSurfaceApi =
+        (p.startsWith('/api/stripe/') && p !== '/api/stripe/webhook') ||
+        p === '/api/practitioner/card/setup-intent' ||
+        p === '/api/practitioner/card/save';
+      if (isStripeSurfaceApi && checkoutOrigin() && !isCheckoutHostname(host)) {
+        return new NextResponse('Not found', {
+          status: 404,
+          headers: {
+            'content-type': 'text/plain; charset=utf-8',
+            'x-robots-tag': 'noindex, nofollow, noarchive',
+          },
+        });
+      }
+      // API requests never run the page logic below (cookies, fences, gates).
+      return NextResponse.next();
+    }
+  }
+
   // ── Canonical-host redirect: onrender.com → meritsciences.com ──────────
   // The Render subdomain serves the same app and was getting indexed as a
   // duplicate site, splitting SEO authority. 301 every page request to the
@@ -287,5 +320,10 @@ export const config = {
     '/sitemap.xml',
     '/robots.txt',
     '/llms.txt',
+    // Stripe payment APIs — matched so the top-of-middleware host fence can
+    // refuse them off the checkout domain. All other /api/* stays excluded.
+    '/api/stripe/:path*',
+    '/api/practitioner/card/setup-intent',
+    '/api/practitioner/card/save',
   ],
 };
