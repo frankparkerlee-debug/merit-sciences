@@ -526,3 +526,105 @@ export async function savePractitionerPricing(
   revalidatePath('/catalog');
   return { ok: true, message: 'Pricing saved.' };
 }
+
+/**
+ * Create a physician profile directly from admin — no public application
+ * needed. Parker onboards physicians personally, so the profile is born
+ * APPROVED; pricing and the referring affiliate are then assigned on the
+ * detail page exactly like an applied-and-approved practice. The physician
+ * signs in with this email via the normal magic-link flow — first sign-in
+ * auto-creates their auth user, nothing else to provision.
+ */
+export async function createPractitionerProfile(
+  _prev: ReviewResult | null,
+  formData: FormData,
+): Promise<ReviewResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const practiceName = String(formData.get('practiceName') ?? '').trim();
+  const providerName = String(formData.get('providerName') ?? '').trim();
+  const credentials = String(formData.get('credentials') ?? '').trim() || 'MD';
+  const state = String(formData.get('state') ?? '').trim().toUpperCase();
+  const email = String(formData.get('email') ?? '').trim().toLowerCase();
+  const phone = String(formData.get('phone') ?? '').trim() || null;
+  const licenseNumber = String(formData.get('licenseNumber') ?? '').trim();
+  const npi = String(formData.get('npi') ?? '').trim();
+  const specialty = String(formData.get('specialty') ?? '').trim() || null;
+  const sendWelcome = String(formData.get('sendWelcome') ?? '') === 'on';
+
+  if (!practiceName) return { ok: false, error: 'Practice name is required.' };
+  if (!providerName) return { ok: false, error: 'Provider name is required.' };
+  if (!/^[A-Z]{2}$/.test(state)) return { ok: false, error: 'State must be a 2-letter code (e.g. TX).' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: 'Valid email is required.' };
+
+  const existing = await prisma.practitionerApplication.findFirst({
+    where: { email },
+    select: { id: true, status: true },
+  });
+  if (existing) {
+    return {
+      ok: false,
+      error: `An application for ${email} already exists (${existing.status}) — open it in the list instead of creating a duplicate.`,
+    };
+  }
+
+  const app = await prisma.practitionerApplication.create({
+    data: {
+      practiceName,
+      providerName,
+      credentials,
+      state,
+      email,
+      phone,
+      // Required columns the public form collects; blank is acceptable for an
+      // admin-onboarded profile and can be filled in later.
+      licenseNumber,
+      npi,
+      specialty,
+      status: 'APPROVED',
+      reviewedAt: new Date(),
+      reviewerEmail: admin.email,
+      reviewerNote: 'Profile created directly by admin.',
+    },
+    select: { id: true },
+  });
+
+  if (sendWelcome) {
+    await onApplicationApproved({
+      email,
+      firstName: providerName.split(' ')[0],
+      practiceName,
+    }).catch((err) =>
+      console.warn('[practitioner-create] onboarding sequence start failed', err),
+    );
+
+    let signInUrl = `${SITE_URL}/practitioners/login?email=${encodeURIComponent(email)}`;
+    try {
+      const { data: linkData, error: linkErr } = await supabaseAdmin().auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+        options: { redirectTo: `${SITE_URL}/auth/callback?next=/practitioners/portal` },
+      });
+      if (!linkErr && linkData?.properties?.action_link) {
+        signInUrl = linkData.properties.action_link;
+      }
+    } catch (err) {
+      console.warn('[practitioner-create] magic-link mint threw, using fallback', err);
+    }
+
+    await sendEmail({
+      to: email,
+      subject: 'Your Merit Sciences Practitioner Account is active',
+      html: approvalEmailHtml({
+        firstName: providerName.split(' ')[0],
+        practiceName,
+        portalUrl: signInUrl,
+        catalogUrl: `${SITE_URL}/catalog`,
+      }),
+    }).catch((err) => console.error('[practitioner-create] welcome email failed', err));
+  }
+
+  revalidatePath('/admin/practitioners');
+  return { ok: true, message: app.id };
+}

@@ -115,7 +115,15 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
   // buyer email for card-flow captures, and the practitioner stamp.
   const persisted = await prisma.order.findUnique({
     where: { paypalOrderId: orderId },
-    select: { affiliateId: true, customerEmail: true, practitionerApplicationId: true },
+    select: {
+      affiliateId: true,
+      customerEmail: true,
+      practitionerApplicationId: true,
+      // For the gross-profit basis. Stripe intents carry no line items
+      // (nothing product-identifying is sent to Stripe), so the persisted
+      // order is the only source of what actually shipped.
+      lines: { select: { handle: true, bundleLabel: true, unitCents: true, qty: true } },
+    },
   });
 
   const payerEmail = (paypalOrder.payer?.email_address ?? '').toLowerCase();
@@ -195,12 +203,22 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
 
   if (useGrossProfit && !isSelfPurchase) {
     const items: any[] = Array.isArray(pu.items) ? pu.items : [];
-    const lines = items.map((it) => ({
+    let lines = items.map((it) => ({
       handle: String(it?.sku ?? ''),
       bundleLabel: String(it?.description ?? ''),
       unitCents: Math.round(parseFloat(it?.unit_amount?.value ?? '0') * 100),
       qty: Math.max(1, parseInt(String(it?.quantity ?? '1'), 10) || 1),
     }));
+    // Stripe payloads carry no items — cost the order from its own lines, or
+    // the basis would silently fall back to revenue on every card order.
+    if (lines.length === 0 && persisted?.lines?.length) {
+      lines = persisted.lines.map((l) => ({
+        handle: l.handle,
+        bundleLabel: l.bundleLabel,
+        unitCents: Number(l.unitCents),
+        qty: l.qty,
+      }));
+    }
     if (lines.length > 0) {
       gp = await computeGrossProfitCommission(lines);
       basis = 'GROSS_PROFIT';

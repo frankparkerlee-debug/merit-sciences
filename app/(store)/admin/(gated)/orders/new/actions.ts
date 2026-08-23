@@ -113,6 +113,14 @@ export async function createManualOrder(
     create: { email: customerEmail, name: customerName, phone: customerPhone },
   });
 
+  // Derived server-side, never client-supplied: if this email is an approved
+  // practitioner, the order links to the practice — that stamp is what routes
+  // their referring affiliate's gross-profit commission when the order pays.
+  const practitionerApp = await prisma.practitionerApplication.findFirst({
+    where: { email: customerEmail, status: 'APPROVED' },
+    select: { id: true },
+  });
+
   // Synthetic PayPal order ID for manual orders
   const syntheticOrderId = `manual_${crypto.randomUUID().replace(/-/g, '').slice(0, 20)}`;
 
@@ -128,6 +136,7 @@ export async function createManualOrder(
       discountCents: BigInt(discountCents),
       totalCents: BigInt(totalCents),
       discountCode,
+      practitionerApplicationId: practitionerApp?.id ?? null,
       shippingFullName,
       shippingLine1,
       shippingLine2,

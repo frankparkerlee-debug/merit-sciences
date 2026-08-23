@@ -55,6 +55,12 @@ export default async function PractitionersAdminPage({
             Review, then Approve (sends portal welcome via Resend) or Reject (polite decline).
           </p>
         </div>
+        <Link
+          href="/admin/practitioners/new"
+          className="bg-ink text-white px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:bg-cobalt transition whitespace-nowrap"
+        >
+          + New practitioner
+        </Link>
       </div>
 
       {/* Status tabs */}

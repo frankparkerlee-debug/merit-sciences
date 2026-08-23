@@ -6,6 +6,7 @@ import { PayClient } from './PayClient';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isCheckoutHostname, checkoutOrigin } from '@/lib/checkout-domain';
+import { paymentsProvider } from '@/lib/stripe';
 import { PaymentShellHeader, PaymentShellFooter } from '@/components/PaymentShell';
 
 /**
@@ -31,9 +32,12 @@ export const metadata = {
   twitter: null,
 };
 
-type Props = { params: { token: string } };
+type Props = {
+  params: { token: string };
+  searchParams?: { redirect_status?: string };
+};
 
-export default async function PayPage({ params }: Props) {
+export default async function PayPage({ params, searchParams }: Props) {
   // Payment surface host-pin: when the split checkout domain is armed, this
   // page must never render (and mount payment SDKs) on the storefront host —
   // Stripe/PayPal would see the storefront origin. The signed token carries
@@ -57,20 +61,26 @@ export default async function PayPage({ params }: Props) {
     .catch(() => null);
   if (!order) notFound();
 
-  // PayPal client id — runtime-sourced (same pattern as /checkout) so the
-  // button matches the Merchant-of-Record account we capture against.
+  // Processor selection + keys — runtime-sourced, same pattern as /checkout:
+  // PAYMENTS_PROVIDER=stripe presents the Payment Element, anything else keeps
+  // the PayPal buttons for rollback.
+  const provider = paymentsProvider();
+  const stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY?.trim() ?? '';
   const paypalClientId =
     process.env.PAYPAL_CLIENT_ID || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
 
   const paid = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status);
   const dead = ['CANCELED', 'REFUNDED'].includes(order.status);
+  // Stripe redirects back here with redirect_status=succeeded before the
+  // webhook has necessarily promoted the order — treat it as paid for display.
+  const justPaid = searchParams?.redirect_status === 'succeeded';
 
   return (
     <main className="bg-cream min-h-screen">
       <PaymentShellHeader />
       <section className="max-w-[560px] mx-auto px-5 sm:px-6 pt-12 pb-16">
 
-        {paid ? (
+        {paid || justPaid ? (
           <Done title="This order is paid." body="Thanks — your payment is in and we're on it. A receipt is in your inbox; reply to it any time with questions." />
         ) : dead ? (
           <Done title="This order is closed." body="This order was canceled or refunded, so there's nothing to pay. If that's a surprise, just reply to your last email from us." />
@@ -110,8 +120,11 @@ export default async function PayPage({ params }: Props) {
 
             <PayClient
               token={params.token}
+              provider={provider}
               paypalClientId={paypalClientId}
-              totalUsd={(Number(order.totalCents) / 100).toFixed(2)}
+              stripePublishableKey={stripePublishableKey}
+              totalCents={Number(order.totalCents)}
+              justPaid={false}
             />
           </>
         )}
