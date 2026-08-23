@@ -85,12 +85,20 @@ export default async function AdminAffiliatesPage({
             <span className="text-cobalt">.</span>
           </h1>
         </div>
-        <Link
-          href="/admin/affiliates/payouts"
-          className="flex-none mt-1 inline-flex items-center bg-cobalt text-white font-bold tracking-[0.12em] uppercase text-[11px] px-4 py-2.5 rounded-lg hover:bg-ink transition-colors"
-        >
-          Payouts →
-        </Link>
+        <div className="flex-none mt-1 flex items-center gap-2">
+          <Link
+            href="/admin/affiliates/new"
+            className="inline-flex items-center bg-ink text-white font-bold tracking-[0.12em] uppercase text-[11px] px-4 py-2.5 rounded-lg hover:bg-cobalt transition-colors"
+          >
+            + Invite affiliate
+          </Link>
+          <Link
+            href="/admin/affiliates/payouts"
+            className="inline-flex items-center bg-cobalt text-white font-bold tracking-[0.12em] uppercase text-[11px] px-4 py-2.5 rounded-lg hover:bg-ink transition-colors"
+          >
+            Payouts →
+          </Link>
+        </div>
       </div>
 
       {/* Filter tabs */}
