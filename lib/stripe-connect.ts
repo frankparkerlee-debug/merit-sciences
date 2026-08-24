@@ -91,6 +91,12 @@ export async function sendStripeTransfer(args: {
   stripeAccountId: string;
   amountCents: number;
   payoutId: string;
+  /** Distinguishes retry attempts in the idempotency key. Stripe caches a
+   *  FAILED request's response per key for 24h, so a retry that reuses the
+   *  first attempt's key gets the original error replayed — "insufficient
+   *  funds" kept coming back after the balance was funded, because Stripe
+   *  never looked again. Same-attempt network retries still share one key. */
+  attempt?: string;
 }): Promise<{ ok: true; transferId: string } | { ok: false; error: string }> {
   try {
     const transfer = await stripe().transfers.create(
@@ -99,9 +105,13 @@ export async function sendStripeTransfer(args: {
         currency: 'usd',
         destination: args.stripeAccountId,
         description: 'Merit affiliate payout',
+        // transfer_group makes prior sends for this payout findable, which is
+        // what lets retryPayout heal instead of double-paying now that retry
+        // attempts use distinct idempotency keys.
+        transfer_group: `payout-${args.payoutId}`,
         metadata: { payoutId: args.payoutId },
       },
-      { idempotencyKey: `payout-${args.payoutId}` },
+      { idempotencyKey: `payout-${args.payoutId}${args.attempt ? `-${args.attempt}` : ''}` },
     );
     return { ok: true, transferId: transfer.id };
   } catch (err: any) {
@@ -155,4 +165,19 @@ export function verifyBounce(u: string, s: string): string | null {
     return null;
   }
   return url;
+}
+
+/**
+ * A transfer already sent for this payout, if any. Backs retryPayout's heal
+ * path: with per-attempt idempotency keys, "did the money actually move?" is
+ * answered by looking for the transfer itself (transfer_group) rather than by
+ * replaying a cached Stripe response.
+ */
+export async function findTransferForPayout(payoutId: string): Promise<string | null> {
+  try {
+    const list = await stripe().transfers.list({ transfer_group: `payout-${payoutId}`, limit: 1 });
+    return list.data[0]?.id ?? null;
+  } catch {
+    return null;
+  }
 }

@@ -29,7 +29,7 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
 import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
-import { sendStripeTransfer, transfersReady } from '@/lib/stripe-connect';
+import { sendStripeTransfer, transfersReady, findTransferForPayout } from '@/lib/stripe-connect';
 
 // Hold window before a commission can be paid — covers the refund /
 // chargeback period so we don't pay out money we may claw back.
@@ -277,9 +277,15 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
 
 /**
  * Retry a single FAILED payout — Stripe-only since PayPal's termination
- * (2026-08-12). The transfer's idempotency key is the payout id, so if the
- * original actually went through, Stripe returns that same transfer instead
- * of paying twice.
+ * (2026-08-12).
+ *
+ * Each attempt uses a DISTINCT idempotency key. The first design reused one
+ * key per payout so a retry could never double-pay — but Stripe replays a
+ * FAILED request's response for the same key for 24h, so a payout that failed
+ * on an empty balance kept "failing" after the balance was funded: Stripe
+ * was answering from cache without looking. Double-pay protection now comes
+ * from the heal check below — the transfer itself (found via transfer_group)
+ * is the source of truth for whether money moved, not a cached response.
  */
 export async function retryPayout(payoutId: string): Promise<{ ok: boolean; error?: string }> {
   const payout = await prisma.payout.findUnique({
@@ -295,11 +301,25 @@ export async function retryPayout(payoutId: string): Promise<{ ok: boolean; erro
     return { ok: false, error: 'Affiliate direct-deposit onboarding incomplete' };
   }
 
+  // Heal: if a prior attempt actually moved the money, record it, don't re-send.
+  const existing = await findTransferForPayout(payout.id);
+  if (existing) {
+    await prisma.$transaction([
+      prisma.payout.update({
+        where: { id: payoutId },
+        data: { status: 'PAID', paidAt: new Date(), stripeTransferId: existing, failureReason: null },
+      }),
+      prisma.orderCommission.updateMany({ where: { payoutId }, data: { status: 'PAID' } }),
+    ]);
+    return { ok: true };
+  }
+
   await prisma.payout.update({ where: { id: payoutId }, data: { status: 'PROCESSING' } });
   const send = await sendStripeTransfer({
     stripeAccountId: payout.affiliate.stripeAccountId,
     amountCents: Number(payout.totalCents),
     payoutId: payout.id,
+    attempt: `r${Date.now().toString(36)}`,
   });
 
   if (send.ok) {
