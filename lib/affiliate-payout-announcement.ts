@@ -35,6 +35,21 @@ function step(n: number, html: string): string {
   </tr>`;
 }
 
+/**
+ * The canonical direct-deposit setup walkthrough, shared by every email that
+ * needs it — this announcement, the admin invite, and the sign-up welcome —
+ * so the instructions can never drift between them.
+ */
+export function payoutSetupStepsHtml(): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 8px 0;">
+    ${step(1, `Sign in to your affiliate dashboard at <a href="${SITE}/affiliate/login" style="color:#2D6BE4;">${SITE.replace('https://', '')}/affiliate/login</a>`)}
+    ${step(2, 'Open <strong>Settings</strong> from the dashboard menu')}
+    ${step(3, 'Click <strong>Set up direct deposit</strong>')}
+    ${step(4, 'Complete the secure form — it asks for your identity details and the bank account you want paid into. This is handled by Stripe, our payments provider; Merit never sees your bank details.')}
+    ${step(5, 'You’re done when your settings page shows <strong>✓ Direct deposit connected</strong>')}
+  </table>`;
+}
+
 export function buildPayoutAnnouncement(args: {
   firstName: string;
   owedCents: number;
@@ -72,13 +87,7 @@ export function buildPayoutAnnouncement(args: {
       : '',
 
     p('<strong>How to set it up</strong>'),
-    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 8px 0;">
-      ${step(1, `Sign in to your affiliate dashboard at <a href="${SITE}/affiliate/login" style="color:#2D6BE4;">${SITE.replace('https://', '')}/affiliate/login</a>`)}
-      ${step(2, 'Open <strong>Settings</strong> from the dashboard menu')}
-      ${step(3, 'Click <strong>Set up direct deposit</strong>')}
-      ${step(4, 'Complete the secure form — it asks for your identity details and the bank account you want paid into. This is handled by Stripe, our payments provider; Merit never sees your bank details.')}
-      ${step(5, 'You\'re done when your settings page shows <strong>✓ Direct deposit connected</strong>')}
-    </table>`,
+    payoutSetupStepsHtml(),
 
     cta('Set up direct deposit', settingsUrl),
 

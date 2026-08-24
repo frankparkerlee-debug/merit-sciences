@@ -221,6 +221,7 @@ export async function inviteAffiliate(
   if (sendInvite) {
     const { sendEmail } = await import('@/lib/email');
     const { wrapMarketingEmail, h, p, cta, quiet, SITE } = await import('@/lib/marketing-email-shell');
+    const { payoutSetupStepsHtml } = await import('@/lib/affiliate-payout-announcement');
     const { supabaseAdmin } = await import('@/lib/supabase');
 
     // One-click sign-in; plain login URL if the mint hiccups.
@@ -256,9 +257,16 @@ export async function inviteAffiliate(
           `you keep earning on their reorders, not just the first sale.`,
       ),
       cta('Open your dashboard', dashUrl),
+      p('<strong>Getting paid — set up direct deposit once</strong>'),
+      p(
+        `Commissions pay by direct deposit, so connect your bank once and every payout ` +
+          `after that is automatic:`,
+      ),
+      payoutSetupStepsHtml(),
       quiet(
-        `Stats, links, and payout setup live in the dashboard. Add your direct-deposit ` +
-          `details there so commissions can pay out (30-day hold, $50 minimum).`,
+        `Payouts run after a 30-day hold on each sale with a $50 minimum balance. ` +
+          `Commissions accrue from your first sale either way — they just can't be sent ` +
+          `until direct deposit is connected.`,
       ),
     ].join('');
 
