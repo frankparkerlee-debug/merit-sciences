@@ -60,8 +60,13 @@ export default async function AnalyticsPage({
   const filterHref = (r: string, c: string | null) =>
     `/admin/analytics?range=${r}${c ? `&channel=${encodeURIComponent(c)}` : ''}`;
 
-  // ── Sales attribution (DB truth) — never blocks the rest of the page ──
-  const sales = await salesReport({ rangeDays: range.days, channel: channelFilter }).catch(() => null);
+  // ── Sales attribution (DB truth) — never blocks the rest of the page,
+  //    but a failure must be VISIBLE: this section silently vanishing is
+  //    indistinguishable from a stale tab, and both waste Parker's time.
+  const sales = await salesReport({ rangeDays: range.days, channel: channelFilter }).catch((err) => {
+    console.error('[analytics] salesReport failed', err);
+    return null;
+  });
 
   // ── Commerce KPIs (DB) — each independently resilient ──
   const [ordersTotal, orders30, revenueAgg, subscribers, activeAffiliates, pendingAgg] = await Promise.all([
@@ -184,6 +189,13 @@ export default async function AnalyticsPage({
         ))}
       </div>
 
+      {!sales && (
+        <div className="mb-8 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <strong>The sales-attribution section failed to load.</strong> The rest of the page is
+          unaffected; the error is in the server logs. Reload to retry.
+        </div>
+      )}
+
       {/* ── Where sales come from — DB truth, orders × attribution ── */}
       {sales && (
         <div className="space-y-6 mb-8">
@@ -259,13 +271,11 @@ export default async function AnalyticsPage({
                 {sales.weekly.map((w) => {
                   const max = Math.max(1, ...sales.weekly.map((x) => x.revenueCents));
                   return (
-                    <div key={w.weekStart} className="flex-1 flex flex-col justify-end h-full group">
-                      <div
-                        className="rounded-t bg-cobalt/80 group-hover:bg-cobalt transition-all"
-                        style={{ height: `${Math.max(2, (w.revenueCents / max) * 100)}%`, minHeight: '2px' }}
-                        title={`wk of ${w.weekStart} · ${money(w.revenueCents)} · ${w.orders} orders`}
-                      />
-                    </div>
+                    <Bar
+                      key={w.weekStart}
+                      heightPct={Math.max(2, (w.revenueCents / max) * 100)}
+                      tip={`wk of ${w.weekStart.slice(5)} · ${money(w.revenueCents)} · ${w.orders} orders`}
+                    />
                   );
                 })}
               </div>
@@ -428,13 +438,10 @@ export default async function AnalyticsPage({
             {traffic && traffic.length > 0 ? (
               <div className="flex items-end gap-1 h-32 mt-2">
                 {traffic.map((r, i) => (
-                  // Bar is the direct flex child so its % height resolves
-                  // against the h-32 row (a wrapper here collapses to 0).
-                  <div
+                  <Bar
                     key={i}
-                    className="flex-1 rounded-t bg-cobalt/80 hover:bg-cobalt transition-all"
-                    style={{ height: `${Math.max(2, (Number(r[1]) / maxViews) * 100)}%`, minHeight: '2px' }}
-                    title={`${String(r[0]).slice(0, 10)} · ${Number(r[1])} views`}
+                    heightPct={Math.max(2, (Number(r[1]) / maxViews) * 100)}
+                    tip={`${String(r[0]).slice(5, 10)} · ${Number(r[1]).toLocaleString()} views · ${Number(r[2]).toLocaleString()} visitors`}
                   />
                 ))}
               </div>
@@ -484,9 +491,34 @@ export default async function AnalyticsPage({
             Full session replays, custom funnels &amp; cohorts:{' '}
             <a href={POSTHOG_APP} target="_blank" rel="noopener noreferrer" className="text-cobalt font-bold hover:underline">open PostHog ↗</a>
           </p>
+
+          {/* Deploy marker — makes a stale tab self-evident. If the build hash
+              here doesn't match the latest deploy, the tab predates it. */}
+          <p className="text-[10px] text-ink-soft/40 tabular-nums">
+            Rendered {new Date().toISOString().replace('T', ' ').slice(0, 16)} UTC · build{' '}
+            {(process.env.RENDER_GIT_COMMIT ?? 'dev').slice(0, 7)}
+          </p>
         </div>
       )}
     </main>
+  );
+}
+
+/** Chart bar with an instant CSS tooltip. The old version relied on the
+ *  native `title` attribute, which waits ~1s, renders tiny, and never fires
+ *  on touch — "when I hover over the graphs no data shows". This one is a
+ *  styled label that appears on hover with no delay. */
+function Bar({ heightPct, tip }: { heightPct: number; tip: string }) {
+  return (
+    <div className="relative flex-1 h-full flex flex-col justify-end group">
+      <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-20 whitespace-nowrap rounded-lg bg-ink text-white text-[10px] font-bold px-2 py-1 shadow-lg">
+        {tip}
+      </div>
+      <div
+        className="rounded-t bg-cobalt/80 group-hover:bg-cobalt transition-colors"
+        style={{ height: `${heightPct}%`, minHeight: '2px' }}
+      />
+    </div>
   );
 }
 
