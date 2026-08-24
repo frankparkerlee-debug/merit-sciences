@@ -30,6 +30,7 @@ import 'server-only';
 import { prisma } from '@/lib/db';
 import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
 import { sendStripeTransfer, transfersReady, findTransferForPayout } from '@/lib/stripe-connect';
+import { sendPayoutPaidEmail } from '@/lib/affiliate-payout-paid-email';
 
 // Hold window before a commission can be paid — covers the refund /
 // chargeback period so we don't pay out money we may claw back.
@@ -262,6 +263,8 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
       ]);
       result.paidCount += 1;
       result.paidCents += claim.totalCents;
+      // Tell the affiliate their money moved — non-blocking by contract.
+      void sendPayoutPaidEmail({ to: p.email, name: p.name, amountCents: claim.totalCents });
     } else {
       await prisma.payout.update({
         where: { id: claim.payoutId },
@@ -290,7 +293,7 @@ export async function runPayouts(): Promise<RunPayoutsResult> {
 export async function retryPayout(payoutId: string): Promise<{ ok: boolean; error?: string }> {
   const payout = await prisma.payout.findUnique({
     where: { id: payoutId },
-    include: { affiliate: { select: { stripeAccountId: true } } },
+    include: { affiliate: { select: { stripeAccountId: true, email: true, name: true } } },
   });
   if (!payout) return { ok: false, error: 'Payout not found' };
   if (payout.status === 'PAID') return { ok: true };
@@ -311,6 +314,11 @@ export async function retryPayout(payoutId: string): Promise<{ ok: boolean; erro
       }),
       prisma.orderCommission.updateMany({ where: { payoutId }, data: { status: 'PAID' } }),
     ]);
+    void sendPayoutPaidEmail({
+      to: payout.affiliate.email,
+      name: payout.affiliate.name,
+      amountCents: Number(payout.totalCents),
+    });
     return { ok: true };
   }
 
@@ -330,6 +338,11 @@ export async function retryPayout(payoutId: string): Promise<{ ok: boolean; erro
       }),
       prisma.orderCommission.updateMany({ where: { payoutId }, data: { status: 'PAID' } }),
     ]);
+    void sendPayoutPaidEmail({
+      to: payout.affiliate.email,
+      name: payout.affiliate.name,
+      amountCents: Number(payout.totalCents),
+    });
     return { ok: true };
   }
   await prisma.payout.update({ where: { id: payoutId }, data: { status: 'FAILED', failureReason: send.error } });

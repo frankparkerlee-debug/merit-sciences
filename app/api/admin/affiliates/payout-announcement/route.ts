@@ -1,6 +1,25 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { requireAdmin } from '@/lib/admin-session';
 import { sendPayoutAnnouncement } from '@/lib/affiliate-payout-announcement';
+
+/** Operator identity for this request: a signed-in admin, or the ops secret
+ *  (Authorization: Bearer CRON_SECRET) for sends run from the ops tooling.
+ *  Both are humans deciding to send — the confirm token below still applies. */
+async function requireOperator(req: Request): Promise<string | null> {
+  const admin = await requireAdmin();
+  if (admin) return admin.email;
+  const secret = process.env.CRON_SECRET;
+  const header = req.headers.get('authorization') ?? '';
+  if (secret && header.startsWith('Bearer ')) {
+    const given = Buffer.from(header.slice(7));
+    const expected = Buffer.from(secret);
+    if (given.length === expected.length && timingSafeEqual(given, expected)) {
+      return 'ops-secret';
+    }
+  }
+  return null;
+}
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,9 +41,9 @@ export const maxDuration = 60;
  * be impossible to trigger by a stray click or a mis-typed curl. There is no
  * cron path — this only ever runs when a human asks for it.
  */
-export async function GET() {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(req: Request) {
+  const operator = await requireOperator(req);
+  if (!operator) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const result = await sendPayoutAnnouncement({ mode: 'dry-run' });
   return NextResponse.json({
@@ -36,8 +55,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const operator = await requireOperator(req);
+  if (!operator) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   let body: any = {};
   try {
@@ -47,7 +66,12 @@ export async function POST(req: Request) {
   }
 
   if (body?.test === true) {
-    const result = await sendPayoutAnnouncement({ mode: 'test', testTo: admin.email });
+    const testTo =
+      operator === 'ops-secret' ? String(body?.testTo ?? '').trim() : operator;
+    if (!testTo) {
+      return NextResponse.json({ error: 'test mode via ops secret requires testTo' }, { status: 400 });
+    }
+    const result = await sendPayoutAnnouncement({ mode: 'test', testTo });
     return NextResponse.json(result);
   }
 
@@ -62,6 +86,6 @@ export async function POST(req: Request) {
   }
 
   const result = await sendPayoutAnnouncement({ mode: 'broadcast' });
-  console.log(`[payout-announcement] broadcast authorized by ${admin.email}`);
+  console.log(`[payout-announcement] broadcast authorized by ${operator}`);
   return NextResponse.json(result);
 }
