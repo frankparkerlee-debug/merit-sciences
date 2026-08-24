@@ -31,6 +31,10 @@ type CoaRow = {
   appearance: string | null;
   testedDate: string | null;
   fileUrl: string | null;
+  /** Set when this legacy certificate has been superseded by newer testing. */
+  retiredAt: Date | null;
+  /** coaNumber of the certificate that now covers this compound. */
+  supersededBy: string | null;
 };
 
 /**
@@ -55,6 +59,7 @@ async function getLot(lotParam: string): Promise<CoaRow[]> {
       select: {
         id: true, compound: true, productHandle: true, lotId: true, coaNumber: true,
         purity: true, identity: true, appearance: true, testedDate: true, fileUrl: true,
+        retiredAt: true, supersededBy: true,
       },
     });
   } catch {
@@ -112,6 +117,9 @@ export async function generateMetadata({ params }: Props) {
     title,
     description: `Certificate of analysis for ${coa.compound} lot ${coa.lotId}: ${coa.purity} purity by HPLC${coa.identity ? `, identity confirmed (${coa.identity})` : ''}${coa.testedDate ? `, tested ${coa.testedDate}` : ''}. Independently verified before release. Research use only.`,
     alternates: { canonical: `https://meritsciences.com/coa/${encodeURIComponent(coa.lotId)}` },
+    // A superseded legacy certificate stays reachable for anyone holding an
+    // older vial, but must not be indexed as current release testing.
+    ...(coa.retiredAt ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -233,6 +241,34 @@ export default async function CoaLotPage({ params }: Props) {
   return (
     <main className="bg-white text-ink min-h-screen">
       <JsonLd data={jsonLd} />
+      {coa.retiredAt && (
+        /* A superseded legacy certificate. The page stays live so anyone
+           holding an older vial can still verify exactly what they have —
+           breaking that link would defeat the point of publishing at all —
+           but it says plainly that it is not current release testing and
+           points at the certificate that is. */
+        <div className="border-b border-amber-300 bg-amber-50">
+          <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 py-4">
+            <p className="text-[13px] leading-relaxed text-amber-900">
+              <strong>This is an archived certificate.</strong> It documents an earlier
+              third-party analysis of {coa.compound} and is kept online so this lot stays
+              verifiable. It does not reflect Merit&rsquo;s current release testing.
+              {coa.supersededBy && (
+                <>
+                  {' '}The current certificate for this compound is{' '}
+                  <a
+                    href={`/coa/${encodeURIComponent(coa.supersededBy)}`}
+                    className="font-bold underline underline-offset-2"
+                  >
+                    {coa.supersededBy}
+                  </a>
+                  .
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <section className="border-b border-ink/10">

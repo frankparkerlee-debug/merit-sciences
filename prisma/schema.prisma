@@ -43,6 +43,12 @@ model Coa {
   fileUrl       String?
   fileName      String?
   createdAt     DateTime @default(now())
+  /// Legacy third-party certificate superseded by newer Merit-branded
+  /// testing. Retired lots leave the public index and the sitemap but their
+  /// pages still resolve, so an older vial stays verifiable.
+  retiredAt     DateTime?
+  /// coaNumber of the certificate that now covers this compound.
+  supersededBy  String?
 
   @@index([compound])
   @@index([lotId])

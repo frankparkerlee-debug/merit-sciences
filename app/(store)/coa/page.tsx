@@ -104,16 +104,25 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
   let coas: CoaRow[] = [];
   try {
     coas = await prisma.coa.findMany({
-      where: q
-        ? {
-            OR: [
-              { compound: { contains: q, mode: 'insensitive' } },
-              { lotId: { contains: q, mode: 'insensitive' } },
-              { coaNumber: { contains: q, mode: 'insensitive' } },
-              { identity: { contains: q, mode: 'insensitive' } },
-            ],
-          }
-        : undefined,
+      /* Retired lots are excluded from the public index. These are legacy
+         third-party certificates whose material is covered by newer
+         Merit-branded testing (see `supersededBy`). They are NOT deleted —
+         their lot pages still resolve so a customer holding an older vial can
+         still verify it; they simply no longer represent current release
+         testing in the browsable index or the sitemap. */
+      where: {
+        retiredAt: null,
+        ...(q
+          ? {
+              OR: [
+                { compound: { contains: q, mode: 'insensitive' } },
+                { lotId: { contains: q, mode: 'insensitive' } },
+                { coaNumber: { contains: q, mode: 'insensitive' } },
+                { identity: { contains: q, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
       // Lots with a published certificate lead — they're the strongest proof.
       orderBy: [{ createdAt: 'desc' }, { compound: 'asc' }],
       take: 500,

@@ -58,6 +58,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let coaRoutes: MetadataRoute.Sitemap = [];
   try {
     const lots = await prisma.coa.findMany({
+      // Retired legacy certificates stay reachable but leave the sitemap —
+      // superseded testing should not be advertised as current.
+      where: { retiredAt: null },
       select: { lotId: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
       take: 500,
