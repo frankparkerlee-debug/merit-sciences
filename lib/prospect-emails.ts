@@ -98,7 +98,7 @@ export function renderProspectTelegram(d: ProspectEmailData): Rendered {
       p('Not hypothetical: last month we held back a whole Semax lot because it came back as the <em>wrong molecule</em>. The group chat would’ve shipped it to you with a fire emoji.') +
       cta('Buy like a grown-up →', shop) +
       quiet(`20% off your first tested, traceable order — <strong>${d.code}</strong> is baked into the button.`),
-    `That guy in the group chat is not a lab. No COA, no lot number, no idea what's in the vial. Merit: HPLC COA on every lot, identity confirmed or it doesn't ship, from a pharmacy in Dallas.\nBuy like a grown-up (${d.code} applies automatically): ${shop}`,
+    `That guy in the group chat is not a lab. No COA, no lot number, no idea what's in the vial. Merit: HPLC COA on every lot, identity confirmed or it doesn't ship, from an ISO-certified US facility.\nBuy like a grown-up (${d.code} applies automatically): ${shop}`,
     d,
   );
 }

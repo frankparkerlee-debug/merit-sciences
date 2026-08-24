@@ -606,7 +606,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="w-1 h-1 rounded-full bg-cobalt" />
-          Dallas, TX
+          San Antonio, TX
         </span>
       </div>
     </div>

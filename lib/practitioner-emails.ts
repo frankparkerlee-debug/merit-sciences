@@ -67,7 +67,7 @@ export function renderEmail(def: EmailDefinition, ctx: EmailContext): string {
           ${def.body(ctx)}
         </td></tr>
         <tr><td style="padding:18px 32px;border-top:1px solid #EBE6D7;font-size:11px;line-height:18px;color:${INK_SOFT};">
-          Merit Sciences &middot; Dallas, TX &middot; ISO-certified facility<br>
+          Merit Sciences &middot; ISO-certified US facility &middot; Ships from San Antonio, TX<br>
           <a href="${ctx.unsubscribeUrl}" style="color:${INK_SOFT};text-decoration:underline;">Unsubscribe</a> &middot;
           <a href="mailto:info@meritpeptides.com" style="color:${INK_SOFT};text-decoration:underline;">Reply directly</a>
         </td></tr>
@@ -169,7 +169,7 @@ const PROSPECT: EmailDefinition[] = [
     subject: () => 'The supplier story you can name',
     body: (ctx) => `
       <p>A lot of supplier stories are vapor — &ldquo;manufactured in a sterile lab, tested rigorously&rdquo; with no entity name, no facility address, no inspectable chain.</p>
-      <p>Ours: an <strong>ISO-certified US facility in Dallas</strong>, compounding to USP &lt;797&gt;. Lot-documented, third-party assayed, and named on your COA.</p>
+      <p>Ours: an <strong>ISO-certified US facility</strong>, compounding to USP &lt;797&gt;. Lot-documented, third-party assayed, and named on your COA.</p>
       <p>That&rsquo;s what we mean when we say sourcing that holds up to scrutiny.</p>
       ${btn('Apply →', `${ctx.siteUrl}/practitioners#apply`)}
     `,
@@ -345,7 +345,7 @@ const ONBOARDING: EmailDefinition[] = [
     body: (ctx) => `
       <p>A quick recap of what your account gives you:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
-        <li><strong>ISO-certified facility</strong> in Dallas</li>
+        <li><strong>ISO-certified US facility</strong>, USP &lt;797&gt;</li>
         <li><strong>HPLC &ge;99% per lot</strong> with full USP &lt;71&gt;/&lt;85&gt;/&lt;788&gt; characterization</li>
         <li><strong>Acetate counterion</strong> across the catalog</li>
         <li><strong>COA with every shipment</strong></li>

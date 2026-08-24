@@ -71,7 +71,7 @@ const SITE_SCHEMA = {
         'Lab-verified research compounds — ≥99% HPLC purity, lot COA on every batch, ISO-certified US facility. Ships 48h from San Antonio. For research use only.',
       address: {
         '@type': 'PostalAddress',
-        addressLocality: 'Dallas',
+        addressLocality: 'San Antonio',
         addressRegion: 'TX',
         addressCountry: 'US',
       },

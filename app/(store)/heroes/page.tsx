@@ -1,6 +1,12 @@
 import Image from 'next/image';
 
-export const metadata = { title: 'Hero direction — B vs D' };
+// Internal design-review route: never indexable. It holds superseded hero copy
+// (retired grade framing, the old dispatch city) and would read as the live
+// homepage contradicting itself.
+export const metadata = {
+  title: 'Hero direction — B vs D',
+  robots: { index: false, follow: false },
+};
 
 /**
  * Side-by-side hero comparison. Two finalist candidates:

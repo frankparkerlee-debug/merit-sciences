@@ -143,7 +143,7 @@ export default async function HomePage() {
   // Ticker facts — live prices where we have them, standing facts otherwise.
   const ticker = [
     'FREE SHIPPING OVER $300',
-    'SHIPS IN 48 HOURS FROM DALLAS',
+    'SHIPS IN 48 HOURS FROM SAN ANTONIO',
     '≥99% HPLC PURITY',
     'FENTANYL-SCREENED EVERY LOT',
     ...featured.slice(0, 2).map((p) => `${p.title.toUpperCase()} FROM ${money(p.priceCents)}`),
@@ -176,7 +176,7 @@ export default async function HomePage() {
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 pb-16 lg:pb-20">
           <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
-            {productCount} compounds in stock · Compounded in Dallas · Tested by ILS Laboratories
+            {productCount} compounds in stock · Compounded to USP &lt;797&gt; · Tested by ILS Laboratories
           </p>
           <h1
             className="font-poster font-black uppercase leading-[0.84] tracking-[-0.05em]"

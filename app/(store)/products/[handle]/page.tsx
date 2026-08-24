@@ -952,7 +952,7 @@ export default async function ProductPage({ params }: Props) {
                       Merit Sciences Lab Team
                     </p>
                     <p className="text-[11px] sm:text-[12px] text-ink-soft mt-0.5">
-                      Independently assayed · ISO-certified facility · Dallas, TX
+                      Independently assayed · ISO-certified US facility · Ships from San Antonio, TX
                     </p>
                   </div>
                   {/* Verified seal — top-right of signature block */}

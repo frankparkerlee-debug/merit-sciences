@@ -108,7 +108,7 @@ export default async function CheckoutSuccessPage({
           )}
           <p className="text-sm text-ink-soft leading-relaxed mb-8">
             Your order is processing and ships within 48 hours from our facility in
-            Dallas. You&apos;ll receive a tracking number as soon as it leaves.
+            San Antonio. You&apos;ll receive a tracking number as soon as it leaves.
           </p>
           {orderRef && (
             <p className="text-[11px] text-ink-muted font-mono">

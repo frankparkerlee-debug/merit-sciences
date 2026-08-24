@@ -75,7 +75,7 @@ export function renderWinBack(d: CustomerEmailData): Rendered {
       hero(d) +
       h('The catalog kept moving.') +
       p(
-        `${d.firstName}, it&rsquo;s been a while since your last Merit order. Since then: fresh lots posted to the public COA library, same ≥99% HPLC bar, same 48-hour Dallas dispatch.`,
+        `${d.firstName}, it&rsquo;s been a while since your last Merit order. Since then: fresh lots posted to the public COA library, same ≥99% HPLC bar, same 48-hour San Antonio dispatch.`,
       ) +
       proof(
         `Everything still works the way you vetted it:<br>• Per-lot COA behind the QR on every label<br>• Identity confirmed before anything ships<br>• The full lab library, public at ${coa.replace('https://', '')}`,
@@ -87,7 +87,7 @@ export function renderWinBack(d: CustomerEmailData): Rendered {
       quiet(`Or start fresh in the <a href="${catalog}" style="color:inherit;">catalog</a>. Either way: tested, traceable, fast.`),
     unsubscribeUrl: d.unsubscribeUrl,
   });
-  const text = `It's been a while since your last Merit order. Since then: fresh lots in the public COA library (${coa}), same >=99% HPLC bar, same 48-hour Dallas dispatch.
+  const text = `It's been a while since your last Merit order. Since then: fresh lots in the public COA library (${coa}), same >=99% HPLC bar, same 48-hour San Antonio dispatch.
 
 Your last order is saved — one tap rebuilds it (${d.primaryProductTitle} and all) at the current lot:
 ${d.reorderUrl}

@@ -24,6 +24,12 @@ const GATED = [
   '/home-enhanced.html',
   '/home-concepts.html',
   '/home-concepts-2.html',
+  // Superseded homepage/hero drafts still served by the router. They are a
+  // duplicate of the real homepage AND carry retired copy (grade framing, the
+  // old dispatch city), so a crawler reaching them finds Merit contradicting
+  // itself on facts the live pages state correctly.
+  '/home-v2',
+  '/heroes',
   // Internal team tooling served out of public/ (label print template etc.).
   // Files carry their own noindex meta; this keeps crawlers off the path.
   '/internal/',

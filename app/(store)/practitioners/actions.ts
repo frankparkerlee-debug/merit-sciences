@@ -147,7 +147,7 @@ export async function submitPractitionerApplication(
             <a href="https://meritsciences.com/catalog" style="color:#2E4DDB;">meritsciences.com/catalog</a>.
           </p>
           <p style="font-size:12px;color:#5C6378;margin-top:24px;">
-            Merit Sciences · Dallas, TX · ISO-certified facility
+            Merit Sciences · ISO-certified US facility · Ships from San Antonio, TX
           </p>
         </div>
       `,

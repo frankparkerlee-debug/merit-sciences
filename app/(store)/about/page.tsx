@@ -55,8 +55,9 @@ export default function AboutPage() {
           </h1>
           <p className="mt-7 max-w-xl text-[16px] lg:text-[19px] text-white/75 leading-relaxed">
             Research compounds force a choice no serious buyer should have to make: cheap and
-            unverified, or legitimate and overpriced. Merit refuses it &mdash; pharmacy-grade
-            material, fully documented, without the pharmacy markup.
+            unverified, or legitimate and overpriced. Merit refuses it &mdash; the same stack the
+            legitimate channel sells, assayed and documented lot by lot, priced like the material
+            it actually is.
           </p>
         </div>
       </section>
@@ -87,7 +88,7 @@ export default function AboutPage() {
             <BadOption
               tag="Option two"
               title="Legitimate but overpriced"
-              body="Genuine pharmacy-grade material, marked up like a prescription. You get the documentation and the quality — and pay a premium that has nothing to do with what's in the vial."
+              body="Genuinely verified material, marked up like a prescription. You get the documentation and the quality — and pay a premium that has nothing to do with what's in the vial."
             />
           </div>
 
@@ -96,7 +97,7 @@ export default function AboutPage() {
               — The third option
             </p>
             <p className="font-display font-black text-ink tracking-[-0.025em] leading-[1.05]" style={{ fontSize: 'clamp(24px, 3.4vw, 40px)' }}>
-              Pharmacy-grade material, documented to the same standard,
+              The same stack, documented to the same standard,
               <span className="text-cobalt"> without the markup.</span>
             </p>
             <p className="mt-4 text-[15px] lg:text-[16px] text-ink-soft leading-relaxed max-w-2xl">
@@ -201,8 +202,8 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
             <Principle n="01" title="Documentation over claims" body="Anyone can say ‘high purity.’ We hand you the COA. If the proof can't travel with the product, it isn't proof." />
             <Principle n="02" title="The same bar, every lot" body="Quality that varies batch-to-batch isn't quality — it's luck. One purity floor, held every single time." />
-            <Principle n="03" title="A source you can name" body="A US-licensed pharmacy chain of custody you can point to — not an anonymous reseller and a leap of faith." />
-            <Principle n="04" title="Price is not a quality signal" body="Pharmacy-grade shouldn't mean pharmacy markup. We price the material like the commodity it is, and let the documentation carry the trust." />
+            <Principle n="03" title="A source you can name" body="A licensed US facility and a chain of custody you can point to — not an anonymous reseller and a leap of faith." />
+            <Principle n="04" title="Price is not a quality signal" body="Verified shouldn't mean overpriced. We price the material like the commodity it is, and let the documentation carry the trust." />
           </div>
         </div>
       </section>
