@@ -40,11 +40,28 @@ function foldFirstTouch(raw: string): string {
   return v;
 }
 
-export default async function AnalyticsPage() {
+const RANGES = [
+  { key: '7', label: '7 days', days: 7, phDays: 7 },
+  { key: '30', label: '30 days', days: 30, phDays: 30 },
+  { key: '90', label: '90 days', days: 90, phDays: 90 },
+  { key: 'all', label: 'All time', days: null as number | null, phDays: 365 },
+] as const;
+
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams?: { range?: string; channel?: string };
+}) {
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
+  // ── Filters (server-rendered pill links — no client state) ──
+  const range = RANGES.find((r) => r.key === searchParams?.range) ?? RANGES[1];
+  const channelFilter = searchParams?.channel?.trim() || null;
+  const filterHref = (r: string, c: string | null) =>
+    `/admin/analytics?range=${r}${c ? `&channel=${encodeURIComponent(c)}` : ''}`;
+
   // ── Sales attribution (DB truth) — never blocks the rest of the page ──
-  const sales = await salesReport().catch(() => null);
+  const sales = await salesReport({ rangeDays: range.days, channel: channelFilter }).catch(() => null);
 
   // ── Commerce KPIs (DB) — each independently resilient ──
   const [ordersTotal, orders30, revenueAgg, subscribers, activeAffiliates, pendingAgg] = await Promise.all([
@@ -89,7 +106,7 @@ export default async function AnalyticsPage() {
   // Exclude internal /admin pageviews from the customer-facing charts; count
   // them separately so admin browsing never inflates traffic/top-pages.
   const NOT_ADMIN = `properties.$pathname NOT LIKE '/admin%'`;
-  const [traffic, topPages, sources, funnelRows, adminViewsRows, purchaseFirstTouch] = posthogReadConfigured
+  const [traffic, topPages, sources, funnelRows, adminViewsRows, purchaseFirstTouch, campaignTraffic] = posthogReadConfigured
     ? await Promise.all([
         hogql(`SELECT toStartOfDay(timestamp) AS day, count() AS views, uniq(person_id) AS visitors
                FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 14 DAY
@@ -112,10 +129,28 @@ export default async function AnalyticsPage() {
         // predate the server-side referrer capture.
         hogql(`SELECT coalesce(nullIf(person.properties.$initial_referring_domain, ''), '$direct') AS src,
                       count() AS purchases
-               FROM events WHERE event = 'purchase' AND timestamp >= now() - INTERVAL 90 DAY
+               FROM events WHERE event = 'purchase' AND timestamp >= now() - INTERVAL ${range.phDays} DAY
                GROUP BY src ORDER BY purchases DESC LIMIT 10`),
+        // Campaign traffic: UTM-tagged arrivals PLUS click-id-only arrivals.
+        // This exists because paid clicks routinely carry ONLY a click id —
+        // the TikTok campaign ran with ttclid and no utm_source, and TikTok's
+        // in-app webview sends no referrer, so 1,500+ ad visits were invisible
+        // in every referrer-based panel.
+        hogql(`SELECT coalesce(
+                 nullIf(extractURLParameter(properties.$current_url, 'utm_source'), ''),
+                 CASE WHEN properties.$current_url ILIKE '%ttclid=%' THEN 'tiktok (click id)'
+                      WHEN properties.$current_url ILIKE '%fbclid=%' THEN 'meta (click id)'
+                      WHEN properties.$current_url ILIKE '%gclid=%'  THEN 'google ads (click id)'
+                      WHEN properties.$current_url ILIKE '%msclkid=%' THEN 'microsoft (click id)'
+                 END) AS src,
+               count() AS views, uniq(person_id) AS visitors
+               FROM events
+               WHERE event = '$pageview' AND ${NOT_ADMIN}
+                 AND timestamp >= now() - INTERVAL ${range.phDays} DAY
+                 AND src IS NOT NULL
+               GROUP BY src ORDER BY visitors DESC LIMIT 10`),
       ])
-    : [null, null, null, null, null, null];
+    : [null, null, null, null, null, null, null];
 
   // Fold + re-aggregate the first-touch rows (several raw domains map to one label)
   const firstTouchAgg = new Map<string, number>();
@@ -152,12 +187,59 @@ export default async function AnalyticsPage() {
       {/* ── Where sales come from — DB truth, orders × attribution ── */}
       {sales && (
         <div className="space-y-6 mb-8">
+          {/* Filters — plain links, so the whole page (including the PostHog
+              panels below) re-renders against the selection */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] tracking-[0.14em] uppercase font-bold text-ink-soft/60 mr-1">Window</span>
+            {RANGES.map((r) => (
+              <Link
+                key={r.key}
+                href={filterHref(r.key, channelFilter)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${
+                  r.key === range.key
+                    ? 'bg-ink text-white border-ink'
+                    : 'bg-white text-ink-soft border-cobalt/15 hover:border-cobalt/40'
+                }`}
+              >
+                {r.label}
+              </Link>
+            ))}
+            <span className="text-[10px] tracking-[0.14em] uppercase font-bold text-ink-soft/60 ml-3 mr-1">Source</span>
+            <Link
+              href={filterHref(range.key, null)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${
+                !channelFilter ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-cobalt/15 hover:border-cobalt/40'
+              }`}
+            >
+              All
+            </Link>
+            {sales.channelNames.slice(0, 8).map((c) => (
+              <Link
+                key={c}
+                href={filterHref(range.key, c)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${
+                  channelFilter === c ? 'bg-cobalt text-white border-cobalt' : 'bg-white text-ink-soft border-cobalt/15 hover:border-cobalt/40'
+                }`}
+              >
+                {c}
+              </Link>
+            ))}
+          </div>
+
+          {channelFilter && (
+            <p className="text-[12px] text-ink-soft -mt-2">
+              Showing <strong className="text-ink">{channelFilter}</strong> · {range.label.toLowerCase()}:{' '}
+              <strong className="text-ink">{money(sales.windowRevenueCents)}</strong> across{' '}
+              <strong className="text-ink">{sales.windowOrders}</strong> orders — trend, products, codes and AOV below reflect this selection.
+            </p>
+          )}
+
           <div className="grid lg:grid-cols-2 gap-6">
             <Panel
-              title="Where sales come from · 30 days"
-              right={`${sales.channels30.reduce((n, c) => n + c.orders, 0)} orders`}
+              title={`Where sales come from · ${range.label.toLowerCase()}`}
+              right={`${sales.channelsWindow.reduce((n, c) => n + c.orders, 0)} orders`}
             >
-              <ChannelList rows={sales.channels30} />
+              <ChannelList rows={sales.channelsWindow} />
             </Panel>
             <Panel
               title="Where sales come from · all time"
@@ -169,7 +251,7 @@ export default async function AnalyticsPage() {
 
           {/* Weekly revenue trend */}
           <Panel
-            title="Revenue · last 12 weeks"
+            title={`Revenue · last 12 weeks${channelFilter ? ` · ${channelFilter}` : ''}`}
             right={money(sales.weekly.reduce((n, w) => n + w.revenueCents, 0))}
           >
             {sales.weekly.length > 0 ? (
@@ -203,15 +285,15 @@ export default async function AnalyticsPage() {
                 value={sales.buyers.totalRevenueCents ? `${Math.round((sales.buyers.repeatRevenueCents / sales.buyers.totalRevenueCents) * 100)}%` : '—'}
                 sub={`${money(sales.buyers.repeatRevenueCents)} from reorders`}
               />
-              <Stat label="AOV · 30d" value={money(sales.buyers.aov30Cents)} sub="average paid order" />
+              <Stat label={`AOV · ${range.label.toLowerCase()}`} value={money(sales.buyers.aovWindowCents)} sub={channelFilter ? `average · ${channelFilter}` : "average paid order"} />
             </div>
           </Panel>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <Panel title="Top products · 30 days">
-              {sales.topProducts30.length ? (
+            <Panel title={`Top products · ${range.label.toLowerCase()}${channelFilter ? ` · ${channelFilter}` : ''}`}>
+              {sales.topProducts.length ? (
                 <MoneyTable
-                  rows={sales.topProducts30.map((p) => ({ name: p.title, orders: p.units, revenueCents: p.revenueCents }))}
+                  rows={sales.topProducts.map((p) => ({ name: p.title, orders: p.units, revenueCents: p.revenueCents }))}
                   countLabel="units"
                 />
               ) : <Empty />}
@@ -224,10 +306,10 @@ export default async function AnalyticsPage() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <Panel title="Discount codes · all time">
+            <Panel title={`Discount codes · ${range.label.toLowerCase()}${channelFilter ? ` · ${channelFilter}` : ''}`}>
               {sales.topCodes.length ? <MoneyTable rows={sales.topCodes} countLabel="orders" /> : <Empty />}
             </Panel>
-            <Panel title="Purchases by first touch · 90 days" right="browser-side (PostHog)">
+            <Panel title={`Purchases by first touch · ${range.phDays >= 365 ? '12 months' : range.label.toLowerCase()}`} right="browser-side (PostHog)">
               {firstTouchRows.length ? (
                 <>
                   <List rows={firstTouchRows} />
@@ -240,6 +322,41 @@ export default async function AnalyticsPage() {
               ) : <Empty />}
             </Panel>
           </div>
+
+          {/* Campaign traffic — UTM + click-id arrivals. Referrer-based panels
+              miss paid clicks entirely when the ad platform's webview sends no
+              referrer (TikTok) and the ads carry only a click id. */}
+          <Panel
+            title={`Campaign traffic · ${range.phDays >= 365 ? '12 months' : range.label.toLowerCase()}`}
+            right="pageviews with UTM or ad click-id"
+          >
+            {campaignTraffic && campaignTraffic.length > 0 ? (
+              <ul className="space-y-1.5 mt-2">
+                {(() => {
+                  const max = Math.max(1, ...campaignTraffic.map((r: any[]) => Number(r[2])));
+                  return campaignTraffic.map((r: any[], i: number) => (
+                    <li key={i} className="relative flex items-center justify-between text-[12px] px-2.5 py-1.5 rounded-lg overflow-hidden">
+                      <div className="absolute inset-0 bg-cobalt/[0.06]" style={{ width: `${(Number(r[2]) / max) * 100}%` }} />
+                      <span className="relative truncate text-ink font-medium pr-2">{String(r[0])}</span>
+                      <span className="relative text-ink-soft tabular-nums whitespace-nowrap">
+                        <span className="font-bold text-ink">{Number(r[2]).toLocaleString()}</span> visitors
+                        <span className="text-ink-soft/60"> · {Number(r[1]).toLocaleString()} views</span>
+                      </span>
+                    </li>
+                  ));
+                })()}
+              </ul>
+            ) : (
+              <p className="text-[12px] text-ink-soft/60 py-3">
+                No UTM- or click-id-tagged traffic in this window. Tag every ad and email link
+                with utm_source / utm_medium / utm_campaign to populate this panel.
+              </p>
+            )}
+            <p className="text-[11px] text-ink-soft/60 mt-3 leading-relaxed">
+              Reach, not revenue — cross-reference the channel split above to see what converted.
+              A source that shows big here and $0 there drove clicks that didn&rsquo;t buy.
+            </p>
+          </Panel>
 
           <p className="text-[11px] text-ink-soft/70">
             Attribution coverage: <strong>{sales.coverage.withClickAttr}</strong> of{' '}
