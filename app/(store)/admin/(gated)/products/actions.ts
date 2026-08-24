@@ -177,7 +177,18 @@ export async function updateProduct(_prev: ActionResult | null, formData: FormDa
     data.bundles = null;
   }
 
-  await prisma.product.update({ where: { handle }, data });
+  /* Surface the failure. This used to be a bare call: any Prisma error became
+     an unhandled server-action exception, which reaches the client as a
+     generic rejection the form never renders — so a failed save looked
+     exactly like nothing happening. */
+  try {
+    await prisma.product.update({ where: { handle }, data });
+  } catch (err: any) {
+    console.error('[admin/products] update failed', handle, err);
+    if (err?.code === 'P2025') return { ok: false, error: `No product found with handle "${handle}".` };
+    if (err?.code === 'P2002') return { ok: false, error: 'That value must be unique — another product already uses it.' };
+    return { ok: false, error: `Could not save: ${err?.message ?? 'database error'}` };
+  }
 
   revalidatePath('/admin/products');
   revalidatePath(`/admin/products/${handle}`);

@@ -1,8 +1,31 @@
 'use client';
 
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { updateProduct, deleteProduct, type ActionResult } from '../actions';
 import { ImageUploader } from './ImageUploader';
+
+/**
+ * Detects a submit that completed without producing any result — the signature
+ * of a rejected Server Action (usually a stale action id after a deploy).
+ * useFormStatus only works inside the <form>, hence the separate component.
+ */
+function PendingWatcher({
+  submitted,
+  wasPending,
+  onSilentFailure,
+}: {
+  submitted: boolean;
+  wasPending: MutableRefObject<boolean>;
+  onSilentFailure: () => void;
+}) {
+  const { pending } = useFormStatus();
+  useEffect(() => {
+    if (wasPending.current && !pending && submitted) onSilentFailure();
+    wasPending.current = pending;
+  }, [pending, submitted, wasPending, onSilentFailure]);
+  return null;
+}
 
 type ProductFormData = {
   handle: string;
@@ -38,9 +61,37 @@ type ProductFormData = {
 
 export function ProductForm({ product }: { product: ProductFormData }) {
   const [result, formAction] = useFormState<ActionResult | null, FormData>(updateProduct, null);
+  /* Silent-failure guard. When the page was loaded before a deploy, the form
+     posts a Server Action id the running build no longer has; Next.js rejects
+     the request, useFormState never receives a result, and the save appears to
+     do nothing at all. We mark each submit and clear it when a result lands —
+     if a submit finishes with no result, we say so instead of sitting there
+     looking successful. */
+  const [submitted, setSubmitted] = useState(false);
+  const wasPending = useRef(false);
+  const [stale, setStale] = useState(false);
+
+  useEffect(() => {
+    if (result) {
+      setSubmitted(false);
+      setStale(false);
+    }
+  }, [result]);
 
   return (
-    <form action={formAction} className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+    <form
+      action={(fd) => {
+        setSubmitted(true);
+        setStale(false);
+        formAction(fd);
+      }}
+      className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6"
+    >
+      <PendingWatcher
+        submitted={submitted}
+        wasPending={wasPending}
+        onSilentFailure={() => setStale(true)}
+      />
       <input type="hidden" name="handle" value={product.handle} />
 
       {/* LEFT — content */}
@@ -335,6 +386,20 @@ export function ProductForm({ product }: { product: ProductFormData }) {
               }`}
             >
               {result.ok ? result.message : result.error}
+            </div>
+          )}
+          {stale && !result && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <strong>That didn&rsquo;t save.</strong> The page was loaded before the site was
+              last deployed, so the browser sent a request the server no longer recognises.
+              Reload this page and re-enter your change — nothing was written.
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="ml-2 underline font-bold"
+              >
+                Reload now
+              </button>
             </div>
           )}
         </div>
