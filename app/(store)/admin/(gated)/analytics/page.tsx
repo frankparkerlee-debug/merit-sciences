@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { hogql, posthogReadConfigured } from '@/lib/posthog-query';
 import { recoveryEmailsEnabled } from '@/lib/abandoned-cart';
+import { salesReport, type ChannelRow, type NamedRow } from '@/lib/analytics-sales';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Analytics · Admin' };
@@ -19,8 +20,31 @@ const FUNNEL_STEPS = [
   { event: 'purchase', label: 'Purchased' },
 ] as const;
 
+/** Fold PostHog's first-touch referrer values into readable channel names.
+ *  `$direct` (and empty) means "no referrer" — which includes clicks out of
+ *  the ChatGPT/Claude native apps, not just typed URLs, so it is labeled
+ *  honestly. Our own domains appearing as first touch are the storefront →
+ *  checkout hop, where the true origin is unknowable retroactively. */
+function foldFirstTouch(raw: string): string {
+  const v = raw.replace(/^www\./, '').toLowerCase();
+  if (v === '$direct' || v === '' || v === '(direct)') return 'Direct / app links';
+  if (/meritsciences\.com|meritcheckout\.com|onrender\.com|trymerit\.co/.test(v)) return '(cross-domain hop)';
+  if (/^google\./.test(v) || /\.google\./.test(v)) return 'Google';
+  if (v === 'bing.com') return 'Bing';
+  if (v === 'chatgpt.com' || v === 'chat.openai.com') return 'ChatGPT';
+  if (v === 'perplexity.ai') return 'Perplexity';
+  if (v === 'claude.ai') return 'Claude';
+  if (v === 'duckduckgo.com') return 'DuckDuckGo';
+  if (/facebook\.com|instagram\.com/.test(v)) return 'Facebook / Instagram';
+  if (/reddit\.com/.test(v)) return 'Reddit';
+  return v;
+}
+
 export default async function AnalyticsPage() {
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  // ── Sales attribution (DB truth) — never blocks the rest of the page ──
+  const sales = await salesReport().catch(() => null);
 
   // ── Commerce KPIs (DB) — each independently resilient ──
   const [ordersTotal, orders30, revenueAgg, subscribers, activeAffiliates, pendingAgg] = await Promise.all([
@@ -65,7 +89,7 @@ export default async function AnalyticsPage() {
   // Exclude internal /admin pageviews from the customer-facing charts; count
   // them separately so admin browsing never inflates traffic/top-pages.
   const NOT_ADMIN = `properties.$pathname NOT LIKE '/admin%'`;
-  const [traffic, topPages, sources, funnelRows, adminViewsRows] = posthogReadConfigured
+  const [traffic, topPages, sources, funnelRows, adminViewsRows, purchaseFirstTouch] = posthogReadConfigured
     ? await Promise.all([
         hogql(`SELECT toStartOfDay(timestamp) AS day, count() AS views, uniq(person_id) AS visitors
                FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 14 DAY
@@ -82,8 +106,24 @@ export default async function AnalyticsPage() {
         hogql(`SELECT count() AS n FROM events
                WHERE event = '$pageview' AND properties.$pathname LIKE '/admin%'
                AND timestamp >= now() - INTERVAL 14 DAY`),
+        // Browser-side purchase attribution: which first-touch source each
+        // buyer's tracked person carries. Complements (never replaces) the
+        // DB channel split above — this one sees organic arrivals that
+        // predate the server-side referrer capture.
+        hogql(`SELECT coalesce(nullIf(person.properties.$initial_referring_domain, ''), '$direct') AS src,
+                      count() AS purchases
+               FROM events WHERE event = 'purchase' AND timestamp >= now() - INTERVAL 90 DAY
+               GROUP BY src ORDER BY purchases DESC LIMIT 10`),
       ])
-    : [null, null, null, null, null];
+    : [null, null, null, null, null, null];
+
+  // Fold + re-aggregate the first-touch rows (several raw domains map to one label)
+  const firstTouchAgg = new Map<string, number>();
+  for (const r of purchaseFirstTouch ?? []) {
+    const label = foldFirstTouch(String(r[0]));
+    firstTouchAgg.set(label, (firstTouchAgg.get(label) ?? 0) + Number(r[1]));
+  }
+  const firstTouchRows = [...firstTouchAgg.entries()].sort((a, b) => b[1] - a[1]);
   const adminViews = Number(adminViewsRows?.[0]?.[0] ?? 0);
 
   const funnelMap = new Map<string, number>((funnelRows ?? []).map((r) => [String(r[0]), Number(r[1])]));
@@ -108,6 +148,108 @@ export default async function AnalyticsPage() {
           </div>
         ))}
       </div>
+
+      {/* ── Where sales come from — DB truth, orders × attribution ── */}
+      {sales && (
+        <div className="space-y-6 mb-8">
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Panel
+              title="Where sales come from · 30 days"
+              right={`${sales.channels30.reduce((n, c) => n + c.orders, 0)} orders`}
+            >
+              <ChannelList rows={sales.channels30} />
+            </Panel>
+            <Panel
+              title="Where sales come from · all time"
+              right={`${sales.channelsAll.reduce((n, c) => n + c.orders, 0)} orders`}
+            >
+              <ChannelList rows={sales.channelsAll} />
+            </Panel>
+          </div>
+
+          {/* Weekly revenue trend */}
+          <Panel
+            title="Revenue · last 12 weeks"
+            right={money(sales.weekly.reduce((n, w) => n + w.revenueCents, 0))}
+          >
+            {sales.weekly.length > 0 ? (
+              <div className="flex items-end gap-1.5 h-32 mt-2">
+                {sales.weekly.map((w) => {
+                  const max = Math.max(1, ...sales.weekly.map((x) => x.revenueCents));
+                  return (
+                    <div key={w.weekStart} className="flex-1 flex flex-col justify-end h-full group">
+                      <div
+                        className="rounded-t bg-cobalt/80 group-hover:bg-cobalt transition-all"
+                        style={{ height: `${Math.max(2, (w.revenueCents / max) * 100)}%`, minHeight: '2px' }}
+                        title={`wk of ${w.weekStart} · ${money(w.revenueCents)} · ${w.orders} orders`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : <Empty />}
+            <p className="text-[10px] text-ink-soft/50 mt-2 tabular-nums">
+              {sales.weekly[0]?.weekStart} → {sales.weekly[sales.weekly.length - 1]?.weekStart} · hover a bar for the week&rsquo;s number
+            </p>
+          </Panel>
+
+          {/* Buyer economics */}
+          <Panel title="Buyer economics">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+              <Stat label="Buyers" value={sales.buyers.total.toLocaleString()} sub="unique paying customers" />
+              <Stat label="Returning" value={`${sales.buyers.repeatRatePct}%`} sub={`${sales.buyers.returning} bought again`} />
+              <Stat
+                label="Repeat revenue"
+                value={sales.buyers.totalRevenueCents ? `${Math.round((sales.buyers.repeatRevenueCents / sales.buyers.totalRevenueCents) * 100)}%` : '—'}
+                sub={`${money(sales.buyers.repeatRevenueCents)} from reorders`}
+              />
+              <Stat label="AOV · 30d" value={money(sales.buyers.aov30Cents)} sub="average paid order" />
+            </div>
+          </Panel>
+
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Panel title="Top products · 30 days">
+              {sales.topProducts30.length ? (
+                <MoneyTable
+                  rows={sales.topProducts30.map((p) => ({ name: p.title, orders: p.units, revenueCents: p.revenueCents }))}
+                  countLabel="units"
+                />
+              ) : <Empty />}
+            </Panel>
+            <Panel title="Top affiliates by revenue driven · all time">
+              {sales.topAffiliates.length ? (
+                <MoneyTable rows={sales.topAffiliates} countLabel="orders" />
+              ) : <Empty />}
+            </Panel>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Panel title="Discount codes · all time">
+              {sales.topCodes.length ? <MoneyTable rows={sales.topCodes} countLabel="orders" /> : <Empty />}
+            </Panel>
+            <Panel title="Purchases by first touch · 90 days" right="browser-side (PostHog)">
+              {firstTouchRows.length ? (
+                <>
+                  <List rows={firstTouchRows} />
+                  <p className="text-[11px] text-ink-soft/60 mt-3 leading-relaxed">
+                    &ldquo;Direct / app links&rdquo; includes clicks out of native apps (ChatGPT,
+                    email clients) that send no referrer. Server-side referrer capture went live
+                    2026-08-24 — the channel split above sharpens from that date forward.
+                  </p>
+                </>
+              ) : <Empty />}
+            </Panel>
+          </div>
+
+          <p className="text-[11px] text-ink-soft/70">
+            Attribution coverage: <strong>{sales.coverage.withClickAttr}</strong> of{' '}
+            <strong>{sales.coverage.paid}</strong> paid orders carry click-level attribution,{' '}
+            <strong>{sales.coverage.withReferrer}</strong> carry a first-touch referrer. Orders
+            before 2026-08-24 mostly predate capture — their channel falls back to affiliate /
+            practitioner / code signals, or &ldquo;Direct / untracked&rdquo;.
+          </p>
+        </div>
+      )}
 
       {/* Abandoned carts — recoverable leads. DB-backed, so it renders even
           before PostHog read access is connected. */}
@@ -264,6 +406,53 @@ function Panel({ title, right, children }: { title: string; right?: string; chil
         {right && <p className="text-[11px] font-bold text-ink-soft tabular-nums">{right}</p>}
       </div>
       {children}
+    </div>
+  );
+}
+
+/** Channel rows: bar length = revenue share; identity lives in the row label
+ *  (one hue for magnitude — no color-coding of categories). */
+function ChannelList({ rows }: { rows: ChannelRow[] }) {
+  if (!rows.length) return <Empty />;
+  const max = Math.max(1, ...rows.map((r) => r.revenueCents));
+  return (
+    <ul className="space-y-1.5 mt-2">
+      {rows.map((r) => (
+        <li key={r.channel} className="relative flex items-center justify-between text-[12px] px-2.5 py-1.5 rounded-lg overflow-hidden">
+          <div className="absolute inset-0 bg-cobalt/[0.06]" style={{ width: `${(r.revenueCents / max) * 100}%` }} />
+          <span className="relative truncate text-ink font-medium pr-2">{r.channel}</span>
+          <span className="relative text-ink-soft tabular-nums whitespace-nowrap">
+            <span className="font-bold text-ink">{money(r.revenueCents)}</span>
+            <span className="text-ink-soft/60"> · {r.orders}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Name / count / revenue table used for products, affiliates and codes. */
+function MoneyTable({ rows, countLabel }: { rows: NamedRow[]; countLabel: string }) {
+  return (
+    <div className="overflow-x-auto mt-2 rounded-xl border border-cobalt/10">
+      <table className="w-full text-[12px]">
+        <thead>
+          <tr className="bg-cobalt/[0.04] text-ink-soft/70">
+            <th className="text-left font-bold uppercase tracking-wider px-3 py-2 text-[10px]">Name</th>
+            <th className="text-right font-bold uppercase tracking-wider px-3 py-2 text-[10px]">{countLabel}</th>
+            <th className="text-right font-bold uppercase tracking-wider px-3 py-2 text-[10px]">Revenue</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-cobalt/5">
+          {rows.map((r) => (
+            <tr key={r.name} className="text-ink">
+              <td className="px-3 py-2 truncate max-w-[240px]">{r.name}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-ink-soft">{r.orders.toLocaleString()}</td>
+              <td className="px-3 py-2 text-right font-bold tabular-nums">{money(r.revenueCents)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -32,6 +32,30 @@ export function hasAttributionParams(sp: URLSearchParams): boolean {
   return UTM_KEYS.some((k) => sp.has(k)) || CLICK_ID_KEYS.some((k) => sp.has(k));
 }
 
+// Own properties — a hop between these is navigation, not acquisition.
+const INTERNAL_HOSTS = /(^|\.)meritsciences\.com$|(^|\.)meritcheckout\.com$|(^|\.)onrender\.com$|(^|\.)trymerit\.co$|^localhost$/i;
+
+/**
+ * True when the request arrived from somewhere that tells us something —
+ * an external site (Google, ChatGPT, Reddit, a blog) rather than our own
+ * pages or an empty referrer.
+ *
+ * This exists because the first-touch stamp originally required UTM/click-id
+ * params, which only paid traffic carries. Organic and AI-assistant arrivals
+ * — the channels that actually convert for Merit — landed with a referrer
+ * and nothing else, so 172 of the first 175 paid orders had no attribution
+ * at all. Referrer-only first touch closes that hole.
+ */
+export function isExternalReferrer(referer: string | null): boolean {
+  if (!referer) return false;
+  try {
+    const host = new URL(referer).hostname;
+    return !!host && !INTERNAL_HOSTS.test(host);
+  } catch {
+    return false;
+  }
+}
+
 function clip(v: string | null, n = 120): string | null {
   if (!v) return null;
   const s = v.trim();

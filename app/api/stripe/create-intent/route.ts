@@ -22,8 +22,11 @@ import {
   stripeEnabled,
   STRIPE_MIN_CHARGE_CENTS,
 } from '@/lib/stripe';
+import { cookies } from 'next/headers';
+import { prisma } from '@/lib/db';
 import { preCreateOrder } from '@/lib/orders';
 import { sanitizeCartLines, priceCart, isPriceError } from '@/lib/checkout-pricing';
+import { ATTR_COOKIE, decodeAttrCookie } from '@/lib/attribution';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -171,6 +174,35 @@ export async function POST(req: Request) {
         qty: l.qty,
       })),
     });
+
+    // 2b. Attach first-touch attribution. The merit_attr cookie is stamped on
+    //     the storefront and re-set on this origin by /api/checkout/claim —
+    //     but until 2026-08-24 only the retired PayPal route ever READ it, so
+    //     every Stripe order landed attribution-less and the revenue-by-channel
+    //     report had nothing to say. Keyed by the processor id, same as the
+    //     order row. Non-fatal: a checkout must never fail over analytics.
+    try {
+      const attr = decodeAttrCookie(cookies().get(ATTR_COOKIE)?.value);
+      if (attr && (attr.source || attr.referrer || attr.clickId)) {
+        await prisma.orderAttribution.upsert({
+          where: { paypalOrderId: pi.id },
+          create: {
+            paypalOrderId: pi.id,
+            source: attr.source ?? null,
+            medium: attr.medium ?? null,
+            campaign: attr.campaign ?? null,
+            content: attr.content ?? null,
+            term: attr.term ?? null,
+            clickId: attr.clickId ?? null,
+            referrer: attr.referrer ?? null,
+            landing: attr.landing ?? null,
+          },
+          update: {},
+        });
+      }
+    } catch (err) {
+      console.error('[stripe/create-intent] attribution write failed', err);
+    }
 
     // 3. Point the intent's metadata at the real order id for the webhook.
     await stripe()

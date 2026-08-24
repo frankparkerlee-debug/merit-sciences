@@ -6,6 +6,7 @@ import {
   buildAttribution,
   encodeAttrCookie,
   hasAttributionParams,
+  isExternalReferrer,
 } from '@/lib/attribution';
 import {
   isCheckoutHostname,
@@ -208,11 +209,18 @@ export async function middleware(req: NextRequest) {
   const { searchParams, pathname } = req.nextUrl;
 
   // ── First-touch traffic attribution → merit_attr cookie ────────────────
-  // If this landing carries UTMs / a paid-click id and attribution isn't
-  // already locked, stamp a first-touch cookie. create-order reads it and
-  // writes an OrderAttribution row keyed by the PayPal order id (for ROAS).
+  // If this landing carries UTMs / a paid-click id OR arrived from an
+  // external site (Google, ChatGPT, Reddit…) and attribution isn't already
+  // locked, stamp a first-touch cookie. Checkout reads it and writes an
+  // OrderAttribution row keyed by the processor order id.
+  //
+  // The external-referrer clause was added 2026-08-24: requiring UTMs meant
+  // only paid clicks were ever attributed, and Merit's converting channels
+  // (organic + AI assistants) carry no UTMs — 172 of the first 175 paid
+  // orders had no attribution row.
   const attrValue =
-    !req.cookies.get(ATTR_COOKIE) && hasAttributionParams(searchParams)
+    !req.cookies.get(ATTR_COOKIE) &&
+    (hasAttributionParams(searchParams) || isExternalReferrer(req.headers.get('referer')))
       ? encodeAttrCookie(buildAttribution(searchParams, req.headers.get('referer'), pathname, Date.now()))
       : null;
   const withAttr = (res: NextResponse): NextResponse => {
