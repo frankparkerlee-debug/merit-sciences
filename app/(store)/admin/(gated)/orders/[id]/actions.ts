@@ -578,3 +578,93 @@ export async function assignAffiliate(_prev: ActionResult | null, formData: Form
   }
   return { ok: false, error: `Blocked: ${result.reason}` };
 }
+
+/* ─── Correct tracking on an already-shipped order ─── */
+
+/**
+ * Fix a wrong carrier / tracking number after the fact.
+ *
+ * Distinct from markShipped: it does NOT change status or shippedAt, and it
+ * repairs the two side-effects the bad number already caused —
+ *
+ *   · the carrier sync is stamped `paypalTrackingSyncedAt` and skips once
+ *     set, so the stamp is CLEARED here or the wrong number stays pushed;
+ *   · the customer already received the wrong number, so re-notifying is
+ *     offered (and defaulted on in the UI) — a wrong tracking number is
+ *     worse than none, it sends them to a stranger's package or a dead
+ *     lookup.
+ *
+ * The old values are written into the audit event so the correction is
+ * always reconstructable.
+ */
+export async function updateTracking(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const orderId = String(formData.get('orderId') ?? '');
+  const carrier = String(formData.get('carrier') ?? '').trim();
+  const trackingNumber = String(formData.get('trackingNumber') ?? '').trim();
+  const notify = String(formData.get('notify') ?? '') === 'on';
+  if (!orderId) return { ok: false, error: 'Missing order ID' };
+  if (!carrier) return { ok: false, error: 'Carrier required' };
+  if (!trackingNumber) return { ok: false, error: 'Tracking number required' };
+
+  const existing = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { shippingCarrier: true, trackingNumber: true, status: true },
+  });
+  if (!existing) return { ok: false, error: 'Order not found' };
+
+  const normalizedCarrier = normalizeCarrier(carrier);
+  const trackingUrl = trackingUrlFor(normalizedCarrier, trackingNumber);
+
+  if (existing.shippingCarrier === normalizedCarrier && existing.trackingNumber === trackingNumber) {
+    return { ok: false, error: 'That is already the tracking on this order — nothing to change.' };
+  }
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      shippingCarrier: normalizedCarrier,
+      trackingNumber,
+      trackingUrl,
+      // Re-open the carrier sync so the corrected number actually goes out.
+      paypalTrackingSyncedAt: null,
+    },
+  });
+
+  await recordOrderEvent({
+    orderId,
+    kind: 'ADMIN_COMMENT',
+    message:
+      `Tracking corrected: ${(existing.shippingCarrier ?? '—').toUpperCase()} ${existing.trackingNumber ?? '—'}` +
+      ` → ${normalizedCarrier.toUpperCase()} ${trackingNumber}.` +
+      (notify ? ' Customer re-notified.' : ' Customer NOT re-notified.'),
+    metadata: {
+      previous_carrier: existing.shippingCarrier,
+      previous_tracking_number: existing.trackingNumber,
+      carrier: normalizedCarrier,
+      tracking_number: trackingNumber,
+      tracking_url: trackingUrl,
+      renotified: notify,
+    },
+    actorEmail: admin.email,
+  });
+
+  void syncOrderTrackingToPayPal(orderId).catch(() => {});
+
+  let emailNote = ' Customer not notified.';
+  if (notify) {
+    const emailResult = await issueShipmentEmail(orderId);
+    emailNote = emailResult.ok
+      ? ` Corrected details emailed to the customer (id ${emailResult.id}).`
+      : ` ⚠ Re-notification email failed: ${emailResult.error}`;
+  }
+
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath('/admin/orders');
+  return {
+    ok: true,
+    message: `Tracking updated to ${normalizedCarrier.toUpperCase()} · ${trackingNumber}.${emailNote}`,
+  };
+}

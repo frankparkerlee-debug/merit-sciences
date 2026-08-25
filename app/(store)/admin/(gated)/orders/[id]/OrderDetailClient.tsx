@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import {
+  updateTracking,
   markProcessing,
   markShipped,
   markDelivered,
@@ -76,7 +78,7 @@ function StatusPanel({
         {refundedAt && <TimelineRow label="Refunded" date={refundedAt} active />}
       </div>
 
-      {/* Tracking display (if shipped) */}
+      {/* Tracking display + correction (if shipped) */}
       {shippingCarrier && trackingNumber && (
         <div className="border-t border-cobalt/10 pt-4">
           <p className="text-[10px] tracking-[0.18em] uppercase text-ink-soft font-bold mb-2">Tracking</p>
@@ -86,6 +88,11 @@ function StatusPanel({
               View carrier page ↗
             </a>
           )}
+          <EditTrackingForm
+            orderId={orderId}
+            currentCarrier={shippingCarrier}
+            currentNumber={trackingNumber}
+          />
         </div>
       )}
 
@@ -251,6 +258,80 @@ function ShipForm({ orderId }: { orderId: string }) {
         className="w-full rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-cobalt"
       />
       <SubmitButton label="Mark Shipped + Notify Customer" />
+      {result && <ResultBanner result={result} />}
+    </form>
+  );
+}
+
+/**
+ * Correct a wrong carrier / tracking number after shipping.
+ *
+ * Collapsed by default so the common case (tracking is right) stays quiet.
+ * Re-notify defaults ON: the customer already has the wrong number, and a
+ * wrong number is worse than none — it points them at a stranger's package
+ * or a dead lookup.
+ */
+function EditTrackingForm({
+  orderId,
+  currentCarrier,
+  currentNumber,
+}: {
+  orderId: string;
+  currentCarrier: string;
+  currentNumber: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [result, formAction] = useFormState<ActionResult | null, FormData>(updateTracking, null);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-3 text-[11px] font-bold uppercase tracking-wider text-ink-soft hover:text-cobalt underline underline-offset-2"
+      >
+        Edit tracking
+      </button>
+    );
+  }
+
+  return (
+    <form action={formAction} className="mt-3 space-y-2 border border-amber-300 bg-amber-50/60 rounded-xl p-3">
+      <input type="hidden" name="orderId" value={orderId} />
+      <p className="text-[11px] tracking-[0.14em] uppercase font-bold text-amber-800">Correct tracking</p>
+      <select
+        name="carrier"
+        required
+        defaultValue={currentCarrier}
+        className="w-full rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-cobalt"
+      >
+        <option value="usps">USPS</option>
+        <option value="ups">UPS</option>
+        <option value="fedex">FedEx</option>
+        <option value="dhl">DHL</option>
+      </select>
+      <input
+        type="text"
+        name="trackingNumber"
+        required
+        defaultValue={currentNumber}
+        placeholder="Tracking number"
+        className="w-full rounded-lg border border-cobalt/20 bg-white px-3 py-2 text-sm text-ink font-mono focus:outline-none focus:border-cobalt"
+      />
+      <label className="flex items-start gap-2 text-[12px] text-ink-soft leading-snug">
+        <input type="checkbox" name="notify" defaultChecked className="mt-0.5 h-4 w-4 accent-cobalt" />
+        <span>Email the customer the corrected tracking (they already have the wrong one).</span>
+      </label>
+      <div className="flex items-center gap-2">
+        <SubmitButton label="Save tracking" />
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-[11px] font-bold uppercase tracking-wider text-ink-soft hover:text-ink"
+        >
+          Cancel
+        </button>
+      </div>
       {result && <ResultBanner result={result} />}
     </form>
   );
