@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { prisma } from '@/lib/db';
 import { hogqlCached as hogql, posthogReadConfigured } from '@/lib/posthog-query';
 import { recoveryEmailsEnabled } from '@/lib/abandoned-cart';
@@ -70,10 +71,14 @@ export default async function AnalyticsPage({
   const windowLabel = customWindow
     ? `${searchParams!.from} → ${searchParams!.to}`
     : range.label.toLowerCase();
-  // PostHog interval: cover the custom window's age, else the preset.
-  const phDays = customWindow
+  // PostHog interval, QUANTIZED to four buckets. The interval is baked into
+  // the query text, and the query text is the cache key — a per-day interval
+  // meant every drill-down minted a fresh set of ClickHouse queries and paid
+  // the full 2-4s. Four buckets = four cache entries, warm nearly always.
+  const rawPhDays = customWindow
     ? Math.min(365, Math.max(1, Math.ceil((Date.now() - customWindow.fromMs) / 86400000)))
     : range.phDays;
+  const phDays = [7, 30, 90, 365].find((b) => rawPhDays <= b) ?? 365;
 
   // ── Sales attribution (DB truth) — never blocks the rest of the page,
   //    but a failure must be VISIBLE: this section silently vanishing is
@@ -126,72 +131,6 @@ export default async function AnalyticsPage({
     { label: 'Active affiliates', value: activeAffiliates.toLocaleString(), sub: 'approved' },
     { label: 'Commissions owed', value: money(pendingCommissionCents), sub: 'pending payout' },
   ];
-
-  // ── Native PostHog (Query API) — null when read access isn't configured ──
-  // Exclude internal /admin pageviews from the customer-facing charts; count
-  // them separately so admin browsing never inflates traffic/top-pages.
-  const NOT_ADMIN = `properties.$pathname NOT LIKE '/admin%'`;
-  const [traffic, topPages, sources, funnelRows, adminViewsRows, purchaseFirstTouch, campaignTraffic] = posthogReadConfigured
-    ? await Promise.all([
-        hogql(`SELECT toStartOfDay(timestamp) AS day, count() AS views, uniq(person_id) AS visitors
-               FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 14 DAY
-               GROUP BY day ORDER BY day`),
-        hogql(`SELECT properties.$pathname AS path, count() AS views
-               FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 7 DAY
-               GROUP BY path ORDER BY views DESC LIMIT 8`),
-        hogql(`SELECT coalesce(nullIf(properties.$referring_domain, ''), '(direct)') AS source, count() AS views
-               FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 7 DAY
-               GROUP BY source ORDER BY views DESC LIMIT 6`),
-        hogql(`SELECT event, count() AS n
-               FROM events WHERE event IN ('product_viewed','add_to_cart','begin_checkout','purchase')
-               AND timestamp >= now() - INTERVAL 14 DAY GROUP BY event`),
-        hogql(`SELECT count() AS n FROM events
-               WHERE event = '$pageview' AND properties.$pathname LIKE '/admin%'
-               AND timestamp >= now() - INTERVAL 14 DAY`),
-        // Browser-side purchase attribution: which first-touch source each
-        // buyer's tracked person carries. Complements (never replaces) the
-        // DB channel split above — this one sees organic arrivals that
-        // predate the server-side referrer capture.
-        hogql(`SELECT coalesce(nullIf(person.properties.$initial_referring_domain, ''), '$direct') AS src,
-                      count() AS purchases
-               FROM events WHERE event = 'purchase' AND timestamp >= now() - INTERVAL ${phDays} DAY
-               GROUP BY src ORDER BY purchases DESC LIMIT 10`),
-        // Campaign traffic: UTM-tagged arrivals PLUS click-id-only arrivals.
-        // This exists because paid clicks routinely carry ONLY a click id —
-        // the TikTok campaign ran with ttclid and no utm_source, and TikTok's
-        // in-app webview sends no referrer, so 1,500+ ad visits were invisible
-        // in every referrer-based panel.
-        hogql(`SELECT coalesce(
-                 nullIf(extractURLParameter(properties.$current_url, 'utm_source'), ''),
-                 CASE WHEN properties.$current_url ILIKE '%ttclid=%' THEN 'tiktok (click id)'
-                      WHEN properties.$current_url ILIKE '%fbclid=%' THEN 'meta (click id)'
-                      WHEN properties.$current_url ILIKE '%gclid=%'  THEN 'google ads (click id)'
-                      WHEN properties.$current_url ILIKE '%msclkid=%' THEN 'microsoft (click id)'
-                 END) AS src,
-               count() AS views, uniq(person_id) AS visitors
-               FROM events
-               WHERE event = '$pageview' AND ${NOT_ADMIN}
-                 AND timestamp >= now() - INTERVAL ${phDays} DAY
-                 AND src IS NOT NULL
-               GROUP BY src ORDER BY visitors DESC LIMIT 10`),
-      ])
-    : [null, null, null, null, null, null, null];
-
-  // Fold + re-aggregate the first-touch rows (several raw domains map to one label)
-  const firstTouchAgg = new Map<string, number>();
-  for (const r of purchaseFirstTouch ?? []) {
-    const label = foldFirstTouch(String(r[0]));
-    firstTouchAgg.set(label, (firstTouchAgg.get(label) ?? 0) + Number(r[1]));
-  }
-  const firstTouchRows = [...firstTouchAgg.entries()].sort((a, b) => b[1] - a[1]);
-  const adminViews = Number(adminViewsRows?.[0]?.[0] ?? 0);
-
-  const funnelMap = new Map<string, number>((funnelRows ?? []).map((r) => [String(r[0]), Number(r[1])]));
-  const funnel = FUNNEL_STEPS.map((s) => ({ ...s, count: funnelMap.get(s.event) ?? 0 }));
-  const funnelTop = Math.max(1, funnel[0].count);
-  const maxViews = Math.max(1, ...((traffic ?? []).map((r) => Number(r[1]))));
-  const totalViews = (traffic ?? []).reduce((n, r) => n + Number(r[1]), 0);
-  const totalVisitors = (traffic ?? []).reduce((n, r) => n + Number(r[2]), 0);
 
   return (
     <main className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
@@ -312,54 +251,8 @@ export default async function AnalyticsPage({
             <Panel title={`Discount codes · ${windowLabel}${channelFilter ? ` · ${channelFilter}` : ''}`}>
               {sales.topCodes.length ? <MoneyTable rows={sales.topCodes} countLabel="orders" /> : <Empty />}
             </Panel>
-            <Panel title={`Purchases by first touch · ${phDays >= 365 ? '12 months' : `${phDays}d`}`} right="browser-side (PostHog)">
-              {firstTouchRows.length ? (
-                <>
-                  <List rows={firstTouchRows} />
-                  <p className="text-[11px] text-ink-soft/60 mt-3 leading-relaxed">
-                    &ldquo;Direct / app links&rdquo; includes clicks out of native apps (ChatGPT,
-                    email clients) that send no referrer. Server-side referrer capture went live
-                    2026-08-24 — the channel split above sharpens from that date forward.
-                  </p>
-                </>
-              ) : <Empty />}
-            </Panel>
           </div>
 
-          {/* Campaign traffic — UTM + click-id arrivals. Referrer-based panels
-              miss paid clicks entirely when the ad platform's webview sends no
-              referrer (TikTok) and the ads carry only a click id. */}
-          <Panel
-            title={`Campaign traffic · ${phDays >= 365 ? '12 months' : `${phDays}d`}`}
-            right="pageviews with UTM or ad click-id"
-          >
-            {campaignTraffic && campaignTraffic.length > 0 ? (
-              <ul className="space-y-1.5 mt-2">
-                {(() => {
-                  const max = Math.max(1, ...campaignTraffic.map((r: any[]) => Number(r[2])));
-                  return campaignTraffic.map((r: any[], i: number) => (
-                    <li key={i} className="relative flex items-center justify-between text-[12px] px-2.5 py-1.5 rounded-lg overflow-hidden">
-                      <div className="absolute inset-0 bg-cobalt/[0.06]" style={{ width: `${(Number(r[2]) / max) * 100}%` }} />
-                      <span className="relative truncate text-ink font-medium pr-2">{String(r[0])}</span>
-                      <span className="relative text-ink-soft tabular-nums whitespace-nowrap">
-                        <span className="font-bold text-ink">{Number(r[2]).toLocaleString()}</span> visitors
-                        <span className="text-ink-soft/60"> · {Number(r[1]).toLocaleString()} views</span>
-                      </span>
-                    </li>
-                  ));
-                })()}
-              </ul>
-            ) : (
-              <p className="text-[12px] text-ink-soft/60 py-3">
-                No UTM- or click-id-tagged traffic in this window. Tag every ad and email link
-                with utm_source / utm_medium / utm_campaign to populate this panel.
-              </p>
-            )}
-            <p className="text-[11px] text-ink-soft/60 mt-3 leading-relaxed">
-              Reach, not revenue — cross-reference the channel split above to see what converted.
-              A source that shows big here and $0 there drove clicks that didn&rsquo;t buy.
-            </p>
-          </Panel>
 
           <p className="text-[11px] text-ink-soft/70">
             Attribution coverage: <strong>{sales.coverage.withClickAttr}</strong> of{' '}
@@ -422,78 +315,201 @@ export default async function AnalyticsPage({
         </Panel>
       </div>
 
-      {!posthogReadConfigured ? (
-        <ConnectCard />
-      ) : (
-        <div className="space-y-6">
-          {/* Traffic trend (customer-facing; /admin excluded) */}
-          <Panel title="Traffic · last 14 days" right={`${totalViews.toLocaleString()} views · ${totalVisitors.toLocaleString()} visitors`}>
-            {traffic && traffic.length > 0 ? (
-              <div className="flex items-end gap-1 h-32 mt-2">
-                {traffic.map((r, i) => (
-                  <Bar
-                    key={i}
-                    heightPct={Math.max(2, (Number(r[1]) / maxViews) * 100)}
-                    tip={`${String(r[0]).slice(5, 10)} · ${Number(r[1]).toLocaleString()} views · ${Number(r[2]).toLocaleString()} visitors`}
-                  />
-                ))}
-              </div>
-            ) : <Empty />}
-            {adminViews > 0 && (
-              <p className="text-[11px] text-ink-soft/60 mt-3">
-                Internal <code className="text-[11px] bg-cream px-1 py-0.5 rounded">/admin</code> views (tracked separately, excluded above):{' '}
-                <span className="font-bold text-ink-soft">{adminViews.toLocaleString()}</span>
-              </p>
-            )}
-          </Panel>
+      {/* Traffic / behavior — streamed. These panels wait on PostHog's Query
+          API (1-3s per query on a cache miss), so they render behind a
+          Suspense boundary: sales content above paints immediately and this
+          section fills in when ready. */}
+      <Suspense fallback={<TrafficSkeleton />}>
+        <TrafficSection phDays={phDays} />
+      </Suspense>
 
-          {/* Conversion funnel */}
-          <Panel title="Conversion funnel · last 14 days">
-            <div className="space-y-2.5 mt-2">
-              {funnel.map((s, i) => {
-                const pctOfTop = Math.round((s.count / funnelTop) * 100);
-                const stepConv = i === 0 ? null : funnel[i - 1].count ? Math.round((s.count / funnel[i - 1].count) * 100) : 0;
-                return (
-                  <div key={s.event}>
-                    <div className="flex items-center justify-between text-[12px] mb-1">
-                      <span className="font-bold text-ink">{s.label}</span>
-                      <span className="text-ink-soft tabular-nums">
-                        {s.count.toLocaleString()}{stepConv !== null && <span className="text-ink-soft/60"> · {stepConv}% from prev</span>}
-                      </span>
-                    </div>
-                    <div className="h-3 rounded-full bg-cobalt/10 overflow-hidden">
-                      <div className="h-full rounded-full bg-gradient-to-r from-cobalt to-[#5078FF]" style={{ width: `${pctOfTop}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-              <p className="text-[11px] text-ink-soft/70 pt-1">Populates as commerce events accumulate (just shipped).</p>
-            </div>
-          </Panel>
-
-          <div className="grid lg:grid-cols-2 gap-6">
-            <Panel title="Top pages · 7 days">
-              <List rows={topPages} />
-            </Panel>
-            <Panel title="Traffic sources · 7 days">
-              <List rows={sources} />
-            </Panel>
-          </div>
-
-          <p className="text-[11px] text-ink-soft/70">
-            Full session replays, custom funnels &amp; cohorts:{' '}
-            <a href={POSTHOG_APP} target="_blank" rel="noopener noreferrer" className="text-cobalt font-bold hover:underline">open PostHog ↗</a>
-          </p>
-
-          {/* Deploy marker — makes a stale tab self-evident. If the build hash
-              here doesn't match the latest deploy, the tab predates it. */}
-          <p className="text-[10px] text-ink-soft/40 tabular-nums">
-            Rendered {new Date().toISOString().replace('T', ' ').slice(0, 16)} UTC in {Date.now() - renderStart}ms · build{' '}
-            {(process.env.RENDER_GIT_COMMIT ?? 'dev').slice(0, 7)}
-          </p>
-        </div>
-      )}
+      {/* Deploy marker — makes a stale tab self-evident, and the ms figure
+          makes slow-vs-stale measurable. */}
+      <p className="mt-6 text-[10px] text-ink-soft/40 tabular-nums">
+        Rendered {new Date().toISOString().replace('T', ' ').slice(0, 16)} UTC in {Date.now() - renderStart}ms · build{' '}
+        {(process.env.RENDER_GIT_COMMIT ?? 'dev').slice(0, 7)}
+      </p>
     </main>
+  );
+}
+
+
+/** Everything that waits on PostHog, in one streamed unit. Renders behind a
+ *  Suspense boundary so the DB-backed sales content never waits for
+ *  ClickHouse; on a warm cache this resolves near-instantly anyway. */
+async function TrafficSection({ phDays }: { phDays: number }) {
+  if (!posthogReadConfigured) return <ConnectCard />;
+
+  const NOT_ADMIN = `properties.$pathname NOT LIKE '/admin%'`;
+  const label = phDays >= 365 ? '12 months' : `${phDays}d`;
+  const [traffic, topPages, sources, funnelRows, adminViewsRows, purchaseFirstTouch, campaignTraffic] =
+    await Promise.all([
+      hogql(`SELECT toStartOfDay(timestamp) AS day, count() AS views, uniq(person_id) AS visitors
+             FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 14 DAY
+             GROUP BY day ORDER BY day`),
+      hogql(`SELECT properties.$pathname AS path, count() AS views
+             FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 7 DAY
+             GROUP BY path ORDER BY views DESC LIMIT 8`),
+      hogql(`SELECT coalesce(nullIf(properties.$referring_domain, ''), '(direct)') AS source, count() AS views
+             FROM events WHERE event = '$pageview' AND ${NOT_ADMIN} AND timestamp >= now() - INTERVAL 7 DAY
+             GROUP BY source ORDER BY views DESC LIMIT 6`),
+      hogql(`SELECT event, count() AS n
+             FROM events WHERE event IN ('product_viewed','add_to_cart','begin_checkout','purchase')
+             AND timestamp >= now() - INTERVAL 14 DAY GROUP BY event`),
+      hogql(`SELECT count() AS n FROM events
+             WHERE event = '$pageview' AND properties.$pathname LIKE '/admin%'
+             AND timestamp >= now() - INTERVAL 14 DAY`),
+      // Browser-side purchase attribution — sees organic arrivals that predate
+      // the server-side referrer capture.
+      hogql(`SELECT coalesce(nullIf(person.properties.$initial_referring_domain, ''), '$direct') AS src,
+                    count() AS purchases
+             FROM events WHERE event = 'purchase' AND timestamp >= now() - INTERVAL ${phDays} DAY
+             GROUP BY src ORDER BY purchases DESC LIMIT 10`),
+      // Campaign traffic: UTM-tagged PLUS click-id-only arrivals (TikTok ran
+      // with only a ttclid, and its webview sends no referrer — 1,500+ ad
+      // visits were invisible in every referrer-based panel).
+      hogql(`SELECT coalesce(
+               nullIf(extractURLParameter(properties.$current_url, 'utm_source'), ''),
+               CASE WHEN properties.$current_url ILIKE '%ttclid=%' THEN 'tiktok (click id)'
+                    WHEN properties.$current_url ILIKE '%fbclid=%' THEN 'meta (click id)'
+                    WHEN properties.$current_url ILIKE '%gclid=%'  THEN 'google ads (click id)'
+                    WHEN properties.$current_url ILIKE '%msclkid=%' THEN 'microsoft (click id)'
+               END) AS src,
+             count() AS views, uniq(person_id) AS visitors
+             FROM events
+             WHERE event = '$pageview' AND ${NOT_ADMIN}
+               AND timestamp >= now() - INTERVAL ${phDays} DAY
+               AND src IS NOT NULL
+             GROUP BY src ORDER BY visitors DESC LIMIT 10`),
+    ]);
+
+  const firstTouchAgg = new Map<string, number>();
+  for (const r of purchaseFirstTouch ?? []) {
+    const lab = foldFirstTouch(String(r[0]));
+    firstTouchAgg.set(lab, (firstTouchAgg.get(lab) ?? 0) + Number(r[1]));
+  }
+  const firstTouchRows = [...firstTouchAgg.entries()].sort((a, b) => b[1] - a[1]);
+  const adminViews = Number(adminViewsRows?.[0]?.[0] ?? 0);
+  const funnelMap = new Map<string, number>((funnelRows ?? []).map((r) => [String(r[0]), Number(r[1])]));
+  const funnel = FUNNEL_STEPS.map((st) => ({ ...st, count: funnelMap.get(st.event) ?? 0 }));
+  const funnelTop = Math.max(1, funnel[0].count);
+  const maxViews = Math.max(1, ...((traffic ?? []).map((r) => Number(r[1]))));
+  const totalViews = (traffic ?? []).reduce((n, r) => n + Number(r[1]), 0);
+  const totalVisitors = (traffic ?? []).reduce((n, r) => n + Number(r[2]), 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Panel title={`Campaign traffic · ${label}`} right="UTM or ad click-id">
+          {campaignTraffic && campaignTraffic.length > 0 ? (
+            <ul className="space-y-1.5 mt-2">
+              {(() => {
+                const max = Math.max(1, ...campaignTraffic.map((r: any[]) => Number(r[2])));
+                return campaignTraffic.map((r: any[], i: number) => (
+                  <li key={i} className="relative flex items-center justify-between text-[12px] px-2.5 py-1.5 rounded-lg overflow-hidden">
+                    <div className="absolute inset-0 bg-cobalt/[0.06]" style={{ width: `${(Number(r[2]) / max) * 100}%` }} />
+                    <span className="relative truncate text-ink font-medium pr-2">{String(r[0])}</span>
+                    <span className="relative text-ink-soft tabular-nums whitespace-nowrap">
+                      <span className="font-bold text-ink">{Number(r[2]).toLocaleString()}</span> visitors
+                      <span className="text-ink-soft/60"> · {Number(r[1]).toLocaleString()} views</span>
+                    </span>
+                  </li>
+                ));
+              })()}
+            </ul>
+          ) : (
+            <p className="text-[12px] text-ink-soft/60 py-3">
+              No UTM- or click-id-tagged traffic in this window. Tag ad and email links with
+              utm_source / utm_medium / utm_campaign to populate this panel.
+            </p>
+          )}
+          <p className="text-[11px] text-ink-soft/60 mt-3 leading-relaxed">
+            Reach, not revenue — cross-reference the channel split above to see what converted.
+          </p>
+        </Panel>
+        <Panel title={`Purchases by first touch · ${label}`} right="browser-side (PostHog)">
+          {firstTouchRows.length ? (
+            <>
+              <List rows={firstTouchRows} />
+              <p className="text-[11px] text-ink-soft/60 mt-3 leading-relaxed">
+                &ldquo;Direct / app links&rdquo; includes clicks out of native apps (ChatGPT, email
+                clients) that send no referrer. Server-side referrer capture went live 2026-08-24.
+              </p>
+            </>
+          ) : <Empty />}
+        </Panel>
+      </div>
+
+      <Panel title="Traffic · last 14 days" right={`${totalViews.toLocaleString()} views · ${totalVisitors.toLocaleString()} visitors`}>
+        {traffic && traffic.length > 0 ? (
+          <div className="flex items-end gap-1 h-32 mt-2">
+            {traffic.map((r, i) => (
+              <Bar
+                key={i}
+                heightPct={Math.max(2, (Number(r[1]) / maxViews) * 100)}
+                tip={`${String(r[0]).slice(5, 10)} · ${Number(r[1]).toLocaleString()} views · ${Number(r[2]).toLocaleString()} visitors`}
+              />
+            ))}
+          </div>
+        ) : <Empty />}
+        {adminViews > 0 && (
+          <p className="text-[11px] text-ink-soft/60 mt-3">
+            Internal <code className="text-[11px] bg-cream px-1 py-0.5 rounded">/admin</code> views (tracked separately, excluded above):{' '}
+            <span className="font-bold text-ink-soft">{adminViews.toLocaleString()}</span>
+          </p>
+        )}
+      </Panel>
+
+      <Panel title="Conversion funnel · last 14 days">
+        <div className="space-y-2.5 mt-2">
+          {funnel.map((st, i) => {
+            const pctOfTop = Math.round((st.count / funnelTop) * 100);
+            const stepConv = i === 0 ? null : funnel[i - 1].count ? Math.round((st.count / funnel[i - 1].count) * 100) : 0;
+            return (
+              <div key={st.event}>
+                <div className="flex items-center justify-between text-[12px] mb-1">
+                  <span className="font-bold text-ink">{st.label}</span>
+                  <span className="text-ink-soft tabular-nums">
+                    {st.count.toLocaleString()}{stepConv !== null && <span className="text-ink-soft/60"> · {stepConv}% from prev</span>}
+                  </span>
+                </div>
+                <div className="h-3 rounded-full bg-cobalt/10 overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-cobalt to-[#5078FF]" style={{ width: `${pctOfTop}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Panel title="Top pages · 7 days">
+          <List rows={topPages} />
+        </Panel>
+        <Panel title="Traffic sources · 7 days">
+          <List rows={sources} />
+        </Panel>
+      </div>
+
+      <p className="text-[11px] text-ink-soft/70">
+        Full session replays, custom funnels &amp; cohorts:{' '}
+        <a href={POSTHOG_APP} target="_blank" rel="noopener noreferrer" className="text-cobalt font-bold hover:underline">open PostHog ↗</a>
+      </p>
+    </div>
+  );
+}
+
+/** Placeholder while TrafficSection streams. */
+function TrafficSkeleton() {
+  return (
+    <div className="space-y-6">
+      {Array.from({ length: 2 }).map((_, i) => (
+        <div key={i} className="rounded-2xl border border-cobalt/10 bg-white p-5 h-44 animate-pulse">
+          <div className="h-2.5 w-40 bg-cobalt/10 rounded mb-4" />
+          <div className="h-24 bg-cobalt/[0.06] rounded-xl" />
+        </div>
+      ))}
+    </div>
   );
 }
 
