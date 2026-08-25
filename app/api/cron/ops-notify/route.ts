@@ -17,6 +17,7 @@
  */
 import { NextResponse } from 'next/server';
 import { sweepOpsNotifications } from '@/lib/ops-notify';
+import { maybeRunListHealth } from '@/lib/list-health';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -33,11 +34,17 @@ export async function GET(request: Request) {
   const started = Date.now();
   try {
     const result = await sweepOpsNotifications();
+    // Piggybacked standing watch: self-gates to the 12:00-12:15 UTC window
+    // (daily anomaly check; Monday digest), so it needs no cron of its own.
+    const listHealth = await maybeRunListHealth().catch((err) => {
+      console.error('[cron/ops-notify] list-health check failed', err);
+      return { ran: false, sent: false, anomalies: 0 };
+    });
     if (result.sent > 0) {
       // Worth a log line: every one of these is an order the inline send lost.
       console.warn(`[cron/ops-notify] recovered ${result.sent} missed ops notification(s)`);
     }
-    return NextResponse.json({ ok: true, ...result, durationMs: Date.now() - started });
+    return NextResponse.json({ ok: true, ...result, listHealth, durationMs: Date.now() - started });
   } catch (err) {
     console.error('[cron/ops-notify] failed', err);
     return NextResponse.json(
