@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
-import { hogql, posthogReadConfigured } from '@/lib/posthog-query';
+import { hogqlCached as hogql, posthogReadConfigured } from '@/lib/posthog-query';
 import { recoveryEmailsEnabled } from '@/lib/abandoned-cart';
 import { salesReport, type ChannelRow, type NamedRow } from '@/lib/analytics-sales';
+import { FilterBar } from './FilterBar';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Analytics · Admin' };
@@ -54,11 +55,9 @@ export default async function AnalyticsPage({
 }) {
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  // ── Filters (server-rendered pill links — no client state) ──
+  // ── Filters (URL-driven; FilterBar renders the dropdowns) ──
   const range = RANGES.find((r) => r.key === searchParams?.range) ?? RANGES[1];
   const channelFilter = searchParams?.channel?.trim() || null;
-  const filterHref = (r: string, c: string | null) =>
-    `/admin/analytics?range=${r}${c ? `&channel=${encodeURIComponent(c)}` : ''}`;
 
   // ── Sales attribution (DB truth) — never blocks the rest of the page,
   //    but a failure must be VISIBLE: this section silently vanishing is
@@ -199,44 +198,14 @@ export default async function AnalyticsPage({
       {/* ── Where sales come from — DB truth, orders × attribution ── */}
       {sales && (
         <div className="space-y-6 mb-8">
-          {/* Filters — plain links, so the whole page (including the PostHog
-              panels below) re-renders against the selection */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] tracking-[0.14em] uppercase font-bold text-ink-soft/60 mr-1">Window</span>
-            {RANGES.map((r) => (
-              <Link
-                key={r.key}
-                href={filterHref(r.key, channelFilter)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${
-                  r.key === range.key
-                    ? 'bg-ink text-white border-ink'
-                    : 'bg-white text-ink-soft border-cobalt/15 hover:border-cobalt/40'
-                }`}
-              >
-                {r.label}
-              </Link>
-            ))}
-            <span className="text-[10px] tracking-[0.14em] uppercase font-bold text-ink-soft/60 ml-3 mr-1">Source</span>
-            <Link
-              href={filterHref(range.key, null)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${
-                !channelFilter ? 'bg-ink text-white border-ink' : 'bg-white text-ink-soft border-cobalt/15 hover:border-cobalt/40'
-              }`}
-            >
-              All
-            </Link>
-            {sales.channelNames.slice(0, 8).map((c) => (
-              <Link
-                key={c}
-                href={filterHref(range.key, c)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${
-                  channelFilter === c ? 'bg-cobalt text-white border-cobalt' : 'bg-white text-ink-soft border-cobalt/15 hover:border-cobalt/40'
-                }`}
-              >
-                {c}
-              </Link>
-            ))}
-          </div>
+          {/* Filters — dropdowns with a visible pending state while the
+              server renders the new selection */}
+          <FilterBar
+            range={range.key}
+            channel={channelFilter}
+            ranges={RANGES.map((r) => ({ key: r.key, label: r.label }))}
+            channels={sales.channelNames}
+          />
 
           {channelFilter && (
             <p className="text-[12px] text-ink-soft -mt-2">
@@ -251,13 +220,13 @@ export default async function AnalyticsPage({
               title={`Where sales come from · ${range.label.toLowerCase()}`}
               right={`${sales.channelsWindow.reduce((n, c) => n + c.orders, 0)} orders`}
             >
-              <ChannelList rows={sales.channelsWindow} />
+              <ChannelList rows={sales.channelsWindow} rangeKey={range.key} activeChannel={channelFilter} />
             </Panel>
             <Panel
               title="Where sales come from · all time"
               right={`${sales.channelsAll.reduce((n, c) => n + c.orders, 0)} orders`}
             >
-              <ChannelList rows={sales.channelsAll} />
+              <ChannelList rows={sales.channelsAll} rangeKey={range.key} activeChannel={channelFilter} />
             </Panel>
           </div>
 
@@ -303,7 +272,7 @@ export default async function AnalyticsPage({
             <Panel title={`Top products · ${range.label.toLowerCase()}${channelFilter ? ` · ${channelFilter}` : ''}`}>
               {sales.topProducts.length ? (
                 <MoneyTable
-                  rows={sales.topProducts.map((p) => ({ name: p.title, orders: p.units, revenueCents: p.revenueCents }))}
+                  rows={sales.topProducts.map((p) => ({ name: p.title, orders: p.units, revenueCents: p.revenueCents, href: p.href }))}
                   countLabel="units"
                 />
               ) : <Empty />}
@@ -561,21 +530,41 @@ function Panel({ title, right, children }: { title: string; right?: string; chil
 
 /** Channel rows: bar length = revenue share; identity lives in the row label
  *  (one hue for magnitude — no color-coding of categories). */
-function ChannelList({ rows }: { rows: ChannelRow[] }) {
+function ChannelList({
+  rows,
+  rangeKey,
+  activeChannel,
+}: {
+  rows: ChannelRow[];
+  rangeKey: string;
+  activeChannel: string | null;
+}) {
   if (!rows.length) return <Empty />;
   const max = Math.max(1, ...rows.map((r) => r.revenueCents));
   return (
     <ul className="space-y-1.5 mt-2">
-      {rows.map((r) => (
-        <li key={r.channel} className="relative flex items-center justify-between text-[12px] px-2.5 py-1.5 rounded-lg overflow-hidden">
-          <div className="absolute inset-0 bg-cobalt/[0.06]" style={{ width: `${(r.revenueCents / max) * 100}%` }} />
-          <span className="relative truncate text-ink font-medium pr-2">{r.channel}</span>
-          <span className="relative text-ink-soft tabular-nums whitespace-nowrap">
-            <span className="font-bold text-ink">{money(r.revenueCents)}</span>
-            <span className="text-ink-soft/60"> · {r.orders}</span>
-          </span>
-        </li>
-      ))}
+      {rows.map((r) => {
+        const active = activeChannel === r.channel;
+        return (
+          <li key={r.channel}>
+            {/* A channel row IS the drill-down: clicking applies it as the
+                source filter (click again to clear). */}
+            <Link
+              href={`/admin/analytics?range=${rangeKey}${active ? '' : `&channel=${encodeURIComponent(r.channel)}`}`}
+              className={`relative flex items-center justify-between text-[12px] px-2.5 py-1.5 rounded-lg overflow-hidden transition ${
+                active ? 'ring-1 ring-cobalt' : 'hover:ring-1 hover:ring-cobalt/30'
+              }`}
+            >
+              <div className="absolute inset-0 bg-cobalt/[0.06]" style={{ width: `${(r.revenueCents / max) * 100}%` }} />
+              <span className="relative truncate text-ink font-medium pr-2">{r.channel}</span>
+              <span className="relative text-ink-soft tabular-nums whitespace-nowrap">
+                <span className="font-bold text-ink">{money(r.revenueCents)}</span>
+                <span className="text-ink-soft/60"> · {r.orders}</span>
+              </span>
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -595,7 +584,15 @@ function MoneyTable({ rows, countLabel }: { rows: NamedRow[]; countLabel: string
         <tbody className="divide-y divide-cobalt/5">
           {rows.map((r) => (
             <tr key={r.name} className="text-ink">
-              <td className="px-3 py-2 truncate max-w-[240px]">{r.name}</td>
+              <td className="px-3 py-2 truncate max-w-[240px]">
+                {r.href ? (
+                  <Link href={r.href} className="text-cobalt font-medium hover:underline underline-offset-2">
+                    {r.name}
+                  </Link>
+                ) : (
+                  r.name
+                )}
+              </td>
               <td className="px-3 py-2 text-right tabular-nums text-ink-soft">{r.orders.toLocaleString()}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums">{money(r.revenueCents)}</td>
             </tr>

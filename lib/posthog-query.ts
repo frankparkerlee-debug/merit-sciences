@@ -36,3 +36,18 @@ export async function hogql(query: string): Promise<any[] | null> {
     return null;
   }
 }
+
+import { unstable_cache } from 'next/cache';
+
+/**
+ * hogql with a 5-minute server cache. The Query API round-trips ClickHouse
+ * and routinely takes 1–3s per query; the analytics page runs seven. Live
+ * freshness buys nothing on traffic panels, and uncached it made every
+ * filter click feel broken. The query text is part of the cache key, so
+ * range-dependent queries cache per range.
+ */
+export const hogqlCached = unstable_cache(
+  async (query: string) => hogql(query),
+  ['hogql'],
+  { revalidate: 300 },
+);
