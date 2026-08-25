@@ -40,6 +40,16 @@ const nextConfig = {
     // export) against the LIVE catalog. Rule: only redirect an old URL
     // if it does NOT already exist on the new site — handles like
     // tirzepatide-10mg / retatrutide-10mg are live and must NOT move.
+    /* next.config redirects run BEFORE middleware, so the two catch-alls
+       below would swallow legacy-domain traffic and discard the richer
+       per-URL mapping in lib/legacy-domain.ts (e.g. /pages/lab-results
+       belongs on /coa, not the homepage). Excluding the legacy host lets
+       middleware answer those with one precise 301 instead of a two-hop
+       chain that loses the destination. */
+    const LEGACY_HOST_MISSING = [
+      { type: 'host', value: 'meritpeptides.com' },
+      { type: 'host', value: 'www.meritpeptides.com' },
+    ];
     const p = (from, to) => ({ source: `/products/${from}`, destination: `/products/${to}`, permanent: true });
     const gone = (from) => ({ source: `/products/${from}`, destination: '/catalog', permanent: true });
     const lib = (from, to) => ({ source: `/library/${from}`, destination: `/library/${to}`, permanent: true });
@@ -93,12 +103,12 @@ const nextConfig = {
       gone('semax-selank-day-night-mind'),
       gone('ta-1-kpv-10mg-10mg-nasal-spray'),
       // ── Collections + Shopify pages ──
-      { source: '/collections/:slug*', destination: '/catalog', permanent: true },
+      { source: '/collections/:slug*', missing: LEGACY_HOST_MISSING, destination: '/catalog', permanent: true },
       { source: '/pages/privacy-policy', destination: '/privacy', permanent: true },
       { source: '/pages/refund-policy', destination: '/returns', permanent: true },
       { source: '/pages/terms-of-service', destination: '/terms', permanent: true },
       { source: '/pages/frequently-asked-questions', destination: '/catalog', permanent: true },
-      { source: '/pages/:slug*', destination: '/', permanent: true },
+      { source: '/pages/:slug*', missing: LEGACY_HOST_MISSING, destination: '/', permanent: true },
 
       // ── Retired reconstitution protocols (removed 2026-07-23) ──────────
       // The 16 Protocol articles were unpublished — step-by-step preparation
