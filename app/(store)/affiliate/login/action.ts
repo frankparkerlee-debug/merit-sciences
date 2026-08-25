@@ -1,6 +1,7 @@
 'use server';
 
 import { sendEmail } from '@/lib/email';
+import { mintSignInLink } from '@/lib/magic-link';
 import { supabaseAdmin } from '@/lib/supabase';
 import { prisma } from '@/lib/db';
 // Shared brand shell — generic despite the "practitioner" name (cream card,
@@ -56,25 +57,11 @@ export async function requestAffiliateMagicLink(
 
   // Mint the magic link we'll send ourselves (branded), instead of letting
   // Supabase send its default template.
-  let signInUrl: string;
-  try {
-    const { data, error } = await admin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: { redirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(next)}` },
-    });
-    if (error || !data?.properties?.hashed_token) {
-      console.error('[affiliate-login] magic-link mint failed', error);
-      return { ok: false, error: 'Could not generate a sign-in link. Please try again.' };
-    }
-    // Send a token_hash link pointed at OUR callback (verified server-side via
-    // verifyOtp). The raw action_link routes through Supabase's verify endpoint
-    // and lands code-less on our server route → "Missing sign-in code".
-    signInUrl =
-      `${SITE_URL}/auth/callback?token_hash=${encodeURIComponent(data.properties.hashed_token)}` +
-      `&type=magiclink&next=${encodeURIComponent(next)}`;
-  } catch (err) {
-    console.error('[affiliate-login] magic-link mint threw', err);
+  // Shared minter — always the server-verifiable token_hash shape,
+  // and it reads both the SDK-nested and REST-flat response shapes so a
+  // client-version change can't silently break sign-in.
+  const signInUrl = await mintSignInLink({ email, next: '/affiliate/dashboard' });
+  if (!signInUrl) {
     return { ok: false, error: 'Could not generate a sign-in link. Please try again.' };
   }
 

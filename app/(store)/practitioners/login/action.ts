@@ -1,7 +1,7 @@
 'use server';
 
 import { sendEmail } from '@/lib/email';
-import { supabaseAdmin } from '@/lib/supabase';
+import { mintSignInLink } from '@/lib/magic-link';
 import { isApprovedPractitioner } from '@/lib/practitioner-session';
 import { wrapPractitionerEmail, btn, heading, p, note, link } from '@/lib/practitioner-email-shell';
 
@@ -38,28 +38,11 @@ export async function requestPractitionerMagicLink(
     };
   }
 
-  // Mint the magic link
-  let signInUrl: string;
-  try {
-    const { data, error } = await supabaseAdmin().auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: {
-        redirectTo: `${SITE_URL}/auth/callback?next=/practitioners/portal`,
-      },
-    });
-    if (error || !data?.properties?.hashed_token) {
-      console.error('[practitioner-login] magic-link mint failed', error);
-      return { ok: false, error: 'Could not generate a sign-in link. Please try again.' };
-    }
-    // Send a token_hash link pointed at OUR callback (verified server-side via
-    // verifyOtp). The raw action_link routes through Supabase's verify endpoint
-    // and lands code-less on our server route → "Missing sign-in code".
-    signInUrl =
-      `${SITE_URL}/auth/callback?token_hash=${encodeURIComponent(data.properties.hashed_token)}` +
-      `&type=magiclink&next=${encodeURIComponent('/practitioners/portal')}`;
-  } catch (err) {
-    console.error('[practitioner-login] magic-link mint threw', err);
+  // Shared minter — always the server-verifiable token_hash shape,
+  // and it reads both the SDK-nested and REST-flat response shapes so a
+  // client-version change can't silently break sign-in.
+  const signInUrl = await mintSignInLink({ email, next: '/practitioners/portal' });
+  if (!signInUrl) {
     return { ok: false, error: 'Could not generate a sign-in link. Please try again.' };
   }
 
