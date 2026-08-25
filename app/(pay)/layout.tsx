@@ -3,6 +3,7 @@ import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
 import '../globals.css';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import { MarketingPixels } from '@/components/MarketingPixels';
+import { GoogleTagManager } from '@/components/GoogleTagManager';
 
 /**
  * ROOT LAYOUT FOR PAYMENT SURFACES — a second, independent root.
@@ -64,6 +65,8 @@ export default function PayRootLayout({ children }: { children: React.ReactNode 
   return (
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable}`}>
       <body className="font-sans">
+        {/* GTM: loader + noscript. Must be first inside <body>. */}
+        <GoogleTagManager />
         <MarketingPixels />
         <PostHogProvider>
           {/* No RUO banner on payment surfaces. The attestation that actually
