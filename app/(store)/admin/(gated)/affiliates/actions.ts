@@ -225,17 +225,9 @@ export async function inviteAffiliate(
     const { supabaseAdmin } = await import('@/lib/supabase');
 
     // One-click sign-in; plain login URL if the mint hiccups.
-    let dashUrl = `${SITE}/affiliate/login?email=${encodeURIComponent(email)}`;
-    try {
-      const { data: linkData, error: linkErr } = await supabaseAdmin().auth.admin.generateLink({
-        type: 'magiclink',
-        email,
-        options: { redirectTo: `${SITE}/auth/callback?next=/affiliate/dashboard` },
-      });
-      if (!linkErr && linkData?.properties?.action_link) dashUrl = linkData.properties.action_link;
-    } catch (err) {
-      console.warn('[affiliate-invite] magic-link mint failed, using login fallback', err);
-    }
+    const { mintSignInLink } = await import('@/lib/magic-link');
+    const mintedAff = await mintSignInLink({ email, next: '/affiliate/dashboard' });
+    const dashUrl = mintedAff ?? `${SITE}/affiliate/login?email=${encodeURIComponent(email)}`;
 
     const firstName = name.split(' ')[0];
     const refLink = `${SITE}/?ref=${slug}`;

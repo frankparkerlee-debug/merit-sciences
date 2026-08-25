@@ -28,6 +28,26 @@ const VALID_OTP_TYPES: readonly EmailOtpType[] = [
   'magiclink', 'signup', 'invite', 'recovery', 'email_change', 'email',
 ];
 
+/**
+ * HEAD must NOT consume the one-time token.
+ *
+ * Next.js auto-implements HEAD by running the exported GET handler. Mobile
+ * mail clients, messaging apps and link-preview/scanner services routinely
+ * send a HEAD (or a speculative fetch) to resolve a URL before the human
+ * navigates — so the preview burned the token and the real click landed on
+ * "That sign-in link was already used", forever, in a loop. Reproduced
+ * 2026-08-25: GET alone signs in; HEAD-then-GET fails on the same token.
+ *
+ * Answering HEAD explicitly with an empty 200 keeps previews working and
+ * leaves the token intact for the actual click.
+ */
+export async function HEAD() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow' },
+  });
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
@@ -63,7 +83,35 @@ export async function GET(req: Request) {
     return bounce('That sign-in link was already used or has expired. Request a fresh one below.');
   }
 
+  /* Explicit prefetch/preview signals: answer without touching the token.
+     Only unambiguous headers are honoured — never inferred from absence, so
+     an older browser that omits Sec-Fetch-* can still sign in. */
+  const purpose = (
+    req.headers.get('purpose') ??
+    req.headers.get('sec-purpose') ??
+    req.headers.get('x-purpose') ??
+    req.headers.get('x-moz') ??
+    ''
+  ).toLowerCase();
+  if (purpose.includes('prefetch') || purpose.includes('preview') || purpose.includes('prerender')) {
+    return new NextResponse(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+  }
+
   const supabase = await createServerSupabase();
+
+  /* If this browser already holds a valid session, the token is irrelevant —
+     go straight to the destination. Without this, a token consumed by a
+     preview/second tab bounced an ALREADY SIGNED-IN user back to the login
+     page, which is the loop Parker hit: sign in, get bounced, request a new
+     link, repeat. */
+  const alreadySignedIn = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      return !!user;
+    } catch {
+      return false;
+    }
+  };
 
   if (tokenHash) {
     // Branded, self-emailed link (affiliate / practitioner). Server-verifiable.
@@ -72,16 +120,16 @@ export async function GET(req: Request) {
         ? (typeParam as EmailOtpType)
         : 'magiclink';
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-    if (error) {
+    if (error && !(await alreadySignedIn())) {
       return bounce('That sign-in link was already used or has expired. Request a fresh one below.');
     }
   } else if (code) {
     // Client-initiated PKCE link (admin signInWithOtp).
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) {
+    if (error && !(await alreadySignedIn())) {
       return bounce('That sign-in link was already used or has expired. Request a fresh one below.');
     }
-  } else {
+  } else if (!(await alreadySignedIn())) {
     // No verifiable credential on the URL at all.
     return bounce('That sign-in link looks incomplete. Request a fresh one below.');
   }

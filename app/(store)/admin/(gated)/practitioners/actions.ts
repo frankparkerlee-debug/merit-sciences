@@ -6,6 +6,7 @@ import { sendEmail } from '@/lib/email';
 import { requireAdmin } from '@/lib/admin-session';
 import { onApplicationApproved } from '@/lib/practitioner-journey';
 import { supabaseAdmin } from '@/lib/supabase';
+import { mintSignInLink } from '@/lib/magic-link';
 import { wrapPractitionerEmail, btn, heading, p, note, link } from '@/lib/practitioner-email-shell';
 
 export type ReviewResult =
@@ -58,23 +59,11 @@ export async function approveApplication(
   // is sign-in-ready. If link generation fails (transient Supabase issue)
   // we fall back to the plain login URL — they can still type their
   // email and request a fresh link from /practitioners/login.
-  let signInUrl = `${SITE_URL}/practitioners/login?email=${encodeURIComponent(app.email)}`;
-  try {
-    const { data: linkData, error: linkErr } = await supabaseAdmin().auth.admin.generateLink({
-      type: 'magiclink',
-      email: app.email,
-      options: {
-        redirectTo: `${SITE_URL}/auth/callback?next=/practitioners/portal`,
-      },
-    });
-    if (!linkErr && linkData?.properties?.action_link) {
-      signInUrl = linkData.properties.action_link;
-    } else if (linkErr) {
-      console.warn('[practitioner-approve] magic-link mint failed, using fallback', linkErr);
-    }
-  } catch (err) {
-    console.warn('[practitioner-approve] magic-link mint threw, using fallback', err);
-  }
+  // token_hash link to OUR callback — the raw action_link returns the session
+  // in a URL fragment the server never sees, so it bounced every recipient.
+  const minted = await mintSignInLink({ email: app.email, next: '/practitioners/portal' });
+  const signInUrl =
+    minted ?? `${SITE_URL}/practitioners/login?email=${encodeURIComponent(app.email)}`;
 
   try {
     await sendEmail({
@@ -599,19 +588,9 @@ export async function createPractitionerProfile(
       console.warn('[practitioner-create] onboarding sequence start failed', err),
     );
 
-    let signInUrl = `${SITE_URL}/practitioners/login?email=${encodeURIComponent(email)}`;
-    try {
-      const { data: linkData, error: linkErr } = await supabaseAdmin().auth.admin.generateLink({
-        type: 'magiclink',
-        email,
-        options: { redirectTo: `${SITE_URL}/auth/callback?next=/practitioners/portal` },
-      });
-      if (!linkErr && linkData?.properties?.action_link) {
-        signInUrl = linkData.properties.action_link;
-      }
-    } catch (err) {
-      console.warn('[practitioner-create] magic-link mint threw, using fallback', err);
-    }
+    const mintedCreate = await mintSignInLink({ email, next: '/practitioners/portal' });
+    const signInUrl =
+      mintedCreate ?? `${SITE_URL}/practitioners/login?email=${encodeURIComponent(email)}`;
 
     await sendEmail({
       to: email,
