@@ -14,6 +14,7 @@ import {
   isSupplyPath,
   checkoutOrigin,
 } from '@/lib/checkout-domain';
+import { legacyPathTarget } from '@/lib/legacy-domain';
 
 /**
  * Affiliate click tracking.
@@ -82,6 +83,7 @@ function isCleanPath(p: string): boolean {
 }
 
 export async function middleware(req: NextRequest) {
+  const reqHostLegacy = (req.headers.get('host') || '').toLowerCase().split(':')[0];
   // ── Stripe payment APIs are checkout-domain ONLY ───────────────────────
   // The pages that mount Stripe.js are already fenced (/checkout bridge,
   // /card 308, /pay redirect) — this closes the API layer underneath them, so
@@ -113,6 +115,20 @@ export async function middleware(req: NextRequest) {
       // API requests never run the page logic below (cookies, fences, gates).
       return NextResponse.next();
     }
+  }
+
+  // ── Legacy domain: meritpeptides.com → meritsciences.com ───────────────
+  // The Shopify-era domain carries every pre-rebrand backlink and citation.
+  // PER-URL 301s (not a blanket homepage redirect, which Google reads as a
+  // soft-404 and largely refuses to pass signal through). Runs before every
+  // other rule so no legacy request can be swallowed by another fence.
+  if (reqHostLegacy === 'meritpeptides.com' || reqHostLegacy === 'www.meritpeptides.com') {
+    const target = new URL(req.nextUrl.toString());
+    target.protocol = 'https:';
+    target.host = 'meritsciences.com';
+    target.port = '';
+    target.pathname = legacyPathTarget(req.nextUrl.pathname);
+    return NextResponse.redirect(target, 301);
   }
 
   // ── Canonical-host redirect: onrender.com → meritsciences.com ──────────
