@@ -36,6 +36,7 @@ const PAID_STATUSES = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'PARTIALLY_
 export type ChannelRow = { channel: string; orders: number; revenueCents: number };
 export type NamedRow = { name: string; orders: number; revenueCents: number; href?: string };
 export type WeekRow = { weekStart: string; orders: number; revenueCents: number };
+export type TrendPoint = { start: string; startMs: number; endMs: number; orders: number; revenueCents: number };
 export type ProductRow = { title: string; units: number; revenueCents: number; href?: string };
 
 export type SalesParams = {
@@ -43,6 +44,10 @@ export type SalesParams = {
   rangeDays: number | null;
   /** Restrict trend / products / codes / AOV to one resolved channel. */
   channel: string | null;
+  /** Explicit date window (ms epoch) — from a chart-bar drill-down. When
+   *  set, overrides rangeDays. `toMs` is EXCLUSIVE. */
+  fromMs?: number | null;
+  toMs?: number | null;
 };
 
 export type SalesReport = {
@@ -51,7 +56,10 @@ export type SalesReport = {
   channelNames: string[];
   topAffiliates: NamedRow[];
   topCodes: NamedRow[];
-  weekly: WeekRow[];
+  /** Revenue trend over the ACTIVE window: daily bars up to 31 days,
+   *  weekly beyond. Each point carries its own [startMs, endMs) so the
+   *  page can render it as a drill-down link. */
+  trend: { bucket: 'day' | 'week'; points: TrendPoint[] };
   topProducts: ProductRow[];
   buyers: {
     total: number;
@@ -238,31 +246,62 @@ export async function salesReport(
   params: SalesParams = { rangeDays: 30, channel: null },
 ): Promise<SalesReport> {
   const base = await loadSalesBase();
-  const windowStartMs =
-    params.rangeDays != null ? Date.now() - params.rangeDays * 24 * 60 * 60 * 1000 : null;
-  const since12wMs = Date.now() - 12 * 7 * 24 * 60 * 60 * 1000;
+  const DAY = 24 * 60 * 60 * 1000;
+  const explicit = params.fromMs != null && params.toMs != null;
+  const windowStartMs = explicit
+    ? params.fromMs!
+    : params.rangeDays != null
+      ? Date.now() - params.rangeDays * DAY
+      : null;
+  const windowEndMs = explicit ? params.toMs! : null;
 
-  const inWindow = base.rows.filter((r) => !windowStartMs || r.paidMs >= windowStartMs);
+  const inWindow = base.rows.filter(
+    (r) => (!windowStartMs || r.paidMs >= windowStartMs) && (!windowEndMs || r.paidMs < windowEndMs),
+  );
   const filtered = params.channel ? inWindow.filter((r) => r.channel === params.channel) : inWindow;
 
   const channelsAll = aggregate(base.rows);
   const channelsWindow = aggregate(inWindow);
 
-  // Weekly revenue, last 12 weeks (Monday-start buckets, UTC), channel-aware
-  const trendBase = params.channel ? base.rows.filter((r) => r.channel === params.channel) : base.rows;
-  const weekMap = new Map<string, WeekRow>();
-  for (const r of trendBase) {
-    if (r.paidMs < since12wMs) continue;
-    const d = new Date(r.paidMs);
-    const day = (d.getUTCDay() + 6) % 7; // Mon=0
-    d.setUTCDate(d.getUTCDate() - day);
+  // Revenue trend over the ACTIVE window (channel-aware). Bucket size adapts:
+  // daily up to 31 days so a 7-day view visibly differs from a 30-day view;
+  // weekly (Monday-start, UTC) for longer spans. Zero-revenue buckets are
+  // filled in so the x-axis is honest time, not just "days with sales".
+  const filteredForTrend = filtered;
+  const trendStartMs =
+    windowStartMs ??
+    (filteredForTrend.length ? filteredForTrend[0].paidMs : Date.now() - 12 * 7 * DAY);
+  const trendEndMs = windowEndMs ?? Date.now();
+  const spanDays = Math.max(1, Math.ceil((trendEndMs - trendStartMs) / DAY));
+  const bucket: 'day' | 'week' = spanDays <= 31 ? 'day' : 'week';
+
+  function bucketStart(ms: number): number {
+    const d = new Date(ms);
     d.setUTCHours(0, 0, 0, 0);
-    const key = d.toISOString().slice(0, 10);
-    const cur = weekMap.get(key) ?? { weekStart: key, orders: 0, revenueCents: 0 };
-    cur.orders += 1;
-    cur.revenueCents += r.cents;
-    weekMap.set(key, cur);
+    if (bucket === 'week') {
+      const day = (d.getUTCDay() + 6) % 7; // Mon=0
+      d.setUTCDate(d.getUTCDate() - day);
+    }
+    return d.getTime();
   }
+  const step = bucket === 'day' ? DAY : 7 * DAY;
+  const pointMap = new Map<number, TrendPoint>();
+  for (let ms = bucketStart(trendStartMs); ms < trendEndMs; ms += step) {
+    pointMap.set(ms, {
+      start: new Date(ms).toISOString().slice(0, 10),
+      startMs: ms,
+      endMs: ms + step,
+      orders: 0,
+      revenueCents: 0,
+    });
+  }
+  for (const r of filteredForTrend) {
+    const p = pointMap.get(bucketStart(r.paidMs));
+    if (!p) continue;
+    p.orders += 1;
+    p.revenueCents += r.cents;
+  }
+  const trendPoints = [...pointMap.values()].sort((a, b) => a.startMs - b.startMs).slice(-92);
 
   // Buyer economics — identity metrics stay all-time; AOV follows the filters.
   const seen = new Set<string>();
@@ -319,7 +358,7 @@ export async function salesReport(
       return [...m.values()].sort((a, b) => b.revenueCents - a.revenueCents).slice(0, 8);
     })(),
     topCodes: topNamed(filtered, (r) => (r.code ? r.code.toUpperCase() : null)),
-    weekly: [...weekMap.values()].sort((a, b) => a.weekStart.localeCompare(b.weekStart)),
+    trend: { bucket, points: trendPoints },
     topProducts: [...prodMap.values()].sort((a, b) => b.revenueCents - a.revenueCents).slice(0, 8),
     buyers: {
       total: seen.size,

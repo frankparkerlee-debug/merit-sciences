@@ -48,21 +48,42 @@ const RANGES = [
   { key: 'all', label: 'All time', days: null as number | null, phDays: 365 },
 ] as const;
 
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams?: { range?: string; channel?: string };
+  searchParams?: { range?: string; channel?: string; from?: string; to?: string };
 }) {
+  const renderStart = Date.now();
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   // ── Filters (URL-driven; FilterBar renders the dropdowns) ──
   const range = RANGES.find((r) => r.key === searchParams?.range) ?? RANGES[1];
   const channelFilter = searchParams?.channel?.trim() || null;
+  // Explicit window from a chart-bar drill-down — overrides the range preset.
+  const fromMs =
+    searchParams?.from && ISO_DAY.test(searchParams.from) ? Date.parse(`${searchParams.from}T00:00:00Z`) : null;
+  const toMs =
+    searchParams?.to && ISO_DAY.test(searchParams.to) ? Date.parse(`${searchParams.to}T00:00:00Z`) : null;
+  const customWindow = fromMs != null && toMs != null && toMs > fromMs ? { fromMs, toMs } : null;
+  const windowLabel = customWindow
+    ? `${searchParams!.from} → ${searchParams!.to}`
+    : range.label.toLowerCase();
+  // PostHog interval: cover the custom window's age, else the preset.
+  const phDays = customWindow
+    ? Math.min(365, Math.max(1, Math.ceil((Date.now() - customWindow.fromMs) / 86400000)))
+    : range.phDays;
 
   // ── Sales attribution (DB truth) — never blocks the rest of the page,
   //    but a failure must be VISIBLE: this section silently vanishing is
   //    indistinguishable from a stale tab, and both waste Parker's time.
-  const sales = await salesReport({ rangeDays: range.days, channel: channelFilter }).catch((err) => {
+  const sales = await salesReport({
+    rangeDays: range.days,
+    channel: channelFilter,
+    fromMs: customWindow?.fromMs ?? null,
+    toMs: customWindow?.toMs ?? null,
+  }).catch((err) => {
     console.error('[analytics] salesReport failed', err);
     return null;
   });
@@ -133,7 +154,7 @@ export default async function AnalyticsPage({
         // predate the server-side referrer capture.
         hogql(`SELECT coalesce(nullIf(person.properties.$initial_referring_domain, ''), '$direct') AS src,
                       count() AS purchases
-               FROM events WHERE event = 'purchase' AND timestamp >= now() - INTERVAL ${range.phDays} DAY
+               FROM events WHERE event = 'purchase' AND timestamp >= now() - INTERVAL ${phDays} DAY
                GROUP BY src ORDER BY purchases DESC LIMIT 10`),
         // Campaign traffic: UTM-tagged arrivals PLUS click-id-only arrivals.
         // This exists because paid clicks routinely carry ONLY a click id —
@@ -150,7 +171,7 @@ export default async function AnalyticsPage({
                count() AS views, uniq(person_id) AS visitors
                FROM events
                WHERE event = '$pageview' AND ${NOT_ADMIN}
-                 AND timestamp >= now() - INTERVAL ${range.phDays} DAY
+                 AND timestamp >= now() - INTERVAL ${phDays} DAY
                  AND src IS NOT NULL
                GROUP BY src ORDER BY visitors DESC LIMIT 10`),
       ])
@@ -205,11 +226,12 @@ export default async function AnalyticsPage({
             channel={channelFilter}
             ranges={RANGES.map((r) => ({ key: r.key, label: r.label }))}
             channels={sales.channelNames}
+            customLabel={customWindow ? windowLabel : null}
           />
 
           {channelFilter && (
             <p className="text-[12px] text-ink-soft -mt-2">
-              Showing <strong className="text-ink">{channelFilter}</strong> · {range.label.toLowerCase()}:{' '}
+              Showing <strong className="text-ink">{channelFilter}</strong> · {windowLabel}:{' '}
               <strong className="text-ink">{money(sales.windowRevenueCents)}</strong> across{' '}
               <strong className="text-ink">{sales.windowOrders}</strong> orders — trend, products, codes and AOV below reflect this selection.
             </p>
@@ -217,7 +239,7 @@ export default async function AnalyticsPage({
 
           <div className="grid lg:grid-cols-2 gap-6">
             <Panel
-              title={`Where sales come from · ${range.label.toLowerCase()}`}
+              title={`Where sales come from · ${windowLabel}`}
               right={`${sales.channelsWindow.reduce((n, c) => n + c.orders, 0)} orders`}
             >
               <ChannelList rows={sales.channelsWindow} rangeKey={range.key} activeChannel={channelFilter} />
@@ -230,27 +252,29 @@ export default async function AnalyticsPage({
             </Panel>
           </div>
 
-          {/* Weekly revenue trend */}
+          {/* Revenue trend — follows the active window + source, and every bar
+              is a drill-down: click a week/day to zoom the whole page to it. */}
           <Panel
-            title={`Revenue · last 12 weeks${channelFilter ? ` · ${channelFilter}` : ''}`}
-            right={money(sales.weekly.reduce((n, w) => n + w.revenueCents, 0))}
+            title={`Revenue by ${sales.trend.bucket} · ${windowLabel}${channelFilter ? ` · ${channelFilter}` : ''}`}
+            right={money(sales.trend.points.reduce((n, w) => n + w.revenueCents, 0))}
           >
-            {sales.weekly.length > 0 ? (
-              <div className="flex items-end gap-1.5 h-32 mt-2">
-                {sales.weekly.map((w) => {
-                  const max = Math.max(1, ...sales.weekly.map((x) => x.revenueCents));
+            {sales.trend.points.length > 0 ? (
+              <div className="flex items-end gap-1 h-32 mt-2">
+                {sales.trend.points.map((w) => {
+                  const max = Math.max(1, ...sales.trend.points.map((x) => x.revenueCents));
                   return (
                     <Bar
-                      key={w.weekStart}
+                      key={w.startMs}
                       heightPct={Math.max(2, (w.revenueCents / max) * 100)}
-                      tip={`wk of ${w.weekStart.slice(5)} · ${money(w.revenueCents)} · ${w.orders} orders`}
+                      tip={`${sales.trend.bucket === 'week' ? 'wk of ' : ''}${w.start.slice(5)} · ${money(w.revenueCents)} · ${w.orders} orders`}
+                      href={`/admin/analytics?from=${w.start}&to=${new Date(w.endMs).toISOString().slice(0, 10)}${channelFilter ? `&channel=${encodeURIComponent(channelFilter)}` : ''}`}
                     />
                   );
                 })}
               </div>
             ) : <Empty />}
             <p className="text-[10px] text-ink-soft/50 mt-2 tabular-nums">
-              {sales.weekly[0]?.weekStart} → {sales.weekly[sales.weekly.length - 1]?.weekStart} · hover a bar for the week&rsquo;s number
+              {sales.trend.points[0]?.start} → {sales.trend.points[sales.trend.points.length - 1]?.start} · hover for numbers · click a bar to zoom the page to that {sales.trend.bucket}
             </p>
           </Panel>
 
@@ -264,12 +288,12 @@ export default async function AnalyticsPage({
                 value={sales.buyers.totalRevenueCents ? `${Math.round((sales.buyers.repeatRevenueCents / sales.buyers.totalRevenueCents) * 100)}%` : '—'}
                 sub={`${money(sales.buyers.repeatRevenueCents)} from reorders`}
               />
-              <Stat label={`AOV · ${range.label.toLowerCase()}`} value={money(sales.buyers.aovWindowCents)} sub={channelFilter ? `average · ${channelFilter}` : "average paid order"} />
+              <Stat label={`AOV · ${customWindow ? 'window' : range.label.toLowerCase()}`} value={money(sales.buyers.aovWindowCents)} sub={channelFilter ? `average · ${channelFilter}` : "average paid order"} />
             </div>
           </Panel>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <Panel title={`Top products · ${range.label.toLowerCase()}${channelFilter ? ` · ${channelFilter}` : ''}`}>
+            <Panel title={`Top products · ${windowLabel}${channelFilter ? ` · ${channelFilter}` : ''}`}>
               {sales.topProducts.length ? (
                 <MoneyTable
                   rows={sales.topProducts.map((p) => ({ name: p.title, orders: p.units, revenueCents: p.revenueCents, href: p.href }))}
@@ -285,10 +309,10 @@ export default async function AnalyticsPage({
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <Panel title={`Discount codes · ${range.label.toLowerCase()}${channelFilter ? ` · ${channelFilter}` : ''}`}>
+            <Panel title={`Discount codes · ${windowLabel}${channelFilter ? ` · ${channelFilter}` : ''}`}>
               {sales.topCodes.length ? <MoneyTable rows={sales.topCodes} countLabel="orders" /> : <Empty />}
             </Panel>
-            <Panel title={`Purchases by first touch · ${range.phDays >= 365 ? '12 months' : range.label.toLowerCase()}`} right="browser-side (PostHog)">
+            <Panel title={`Purchases by first touch · ${phDays >= 365 ? '12 months' : `${phDays}d`}`} right="browser-side (PostHog)">
               {firstTouchRows.length ? (
                 <>
                   <List rows={firstTouchRows} />
@@ -306,7 +330,7 @@ export default async function AnalyticsPage({
               miss paid clicks entirely when the ad platform's webview sends no
               referrer (TikTok) and the ads carry only a click id. */}
           <Panel
-            title={`Campaign traffic · ${range.phDays >= 365 ? '12 months' : range.label.toLowerCase()}`}
+            title={`Campaign traffic · ${phDays >= 365 ? '12 months' : `${phDays}d`}`}
             right="pageviews with UTM or ad click-id"
           >
             {campaignTraffic && campaignTraffic.length > 0 ? (
@@ -464,7 +488,7 @@ export default async function AnalyticsPage({
           {/* Deploy marker — makes a stale tab self-evident. If the build hash
               here doesn't match the latest deploy, the tab predates it. */}
           <p className="text-[10px] text-ink-soft/40 tabular-nums">
-            Rendered {new Date().toISOString().replace('T', ' ').slice(0, 16)} UTC · build{' '}
+            Rendered {new Date().toISOString().replace('T', ' ').slice(0, 16)} UTC in {Date.now() - renderStart}ms · build{' '}
             {(process.env.RENDER_GIT_COMMIT ?? 'dev').slice(0, 7)}
           </p>
         </div>
@@ -477,9 +501,9 @@ export default async function AnalyticsPage({
  *  native `title` attribute, which waits ~1s, renders tiny, and never fires
  *  on touch — "when I hover over the graphs no data shows". This one is a
  *  styled label that appears on hover with no delay. */
-function Bar({ heightPct, tip }: { heightPct: number; tip: string }) {
-  return (
-    <div className="relative flex-1 h-full flex flex-col justify-end group">
+function Bar({ heightPct, tip, href }: { heightPct: number; tip: string; href?: string }) {
+  const inner = (
+    <>
       <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-20 whitespace-nowrap rounded-lg bg-ink text-white text-[10px] font-bold px-2 py-1 shadow-lg">
         {tip}
       </div>
@@ -487,7 +511,14 @@ function Bar({ heightPct, tip }: { heightPct: number; tip: string }) {
         className="rounded-t bg-cobalt/80 group-hover:bg-cobalt transition-colors"
         style={{ height: `${heightPct}%`, minHeight: '2px' }}
       />
-    </div>
+    </>
+  );
+  return href ? (
+    <Link href={href} className="relative flex-1 h-full flex flex-col justify-end group">
+      {inner}
+    </Link>
+  ) : (
+    <div className="relative flex-1 h-full flex flex-col justify-end group">{inner}</div>
   );
 }
 

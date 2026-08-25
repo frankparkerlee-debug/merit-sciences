@@ -14,11 +14,14 @@ export function FilterBar({
   channel,
   ranges,
   channels,
+  customLabel,
 }: {
   range: string;
   channel: string | null;
   ranges: { key: string; label: string }[];
   channels: string[];
+  /** Set when a chart-bar drill-down pinned an explicit date window. */
+  customLabel?: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -35,16 +38,30 @@ export function FilterBar({
     <div className="flex flex-wrap items-center gap-3">
       <label className="flex items-center gap-2">
         <span className="text-[10px] tracking-[0.14em] uppercase font-bold text-ink-soft/60">Window</span>
-        <select
-          className={selectCls}
-          value={range}
-          onChange={(e) => navigate(e.target.value, channel)}
-          disabled={pending}
-        >
-          {ranges.map((r) => (
-            <option key={r.key} value={r.key}>{r.label}</option>
-          ))}
-        </select>
+        {customLabel ? (
+          <span className="inline-flex items-center gap-2 rounded-lg border border-cobalt bg-cobalt/[0.06] px-3 py-2 text-[12px] font-bold text-ink tabular-nums">
+            {customLabel}
+            <button
+              type="button"
+              onClick={() => navigate(range, channel)}
+              className="text-cobalt hover:text-ink font-black"
+              title="Clear the zoomed window"
+            >
+              ✕
+            </button>
+          </span>
+        ) : (
+          <select
+            className={selectCls}
+            value={range}
+            onChange={(e) => navigate(e.target.value, channel)}
+            disabled={pending}
+          >
+            {ranges.map((r) => (
+              <option key={r.key} value={r.key}>{r.label}</option>
+            ))}
+          </select>
+        )}
       </label>
       <label className="flex items-center gap-2">
         <span className="text-[10px] tracking-[0.14em] uppercase font-bold text-ink-soft/60">Source</span>
