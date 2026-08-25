@@ -62,7 +62,7 @@ export function EnterButton({
         await fetch('/api/newsletter', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: addr, source: 'access' }),
+          body: JSON.stringify({ email: addr, source: 'access', t: (await fetch('/api/newsletter').then((r) => r.json()).catch(() => ({})))?.t }),
         });
       } catch {
         /* non-fatal */

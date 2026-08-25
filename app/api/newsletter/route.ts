@@ -8,6 +8,49 @@ export const runtime = 'nodejs';
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
 const WELCOME_CODE = 'WELCOME20';
 
+/* ── Signed submission token ─────────────────────────────────────────────
+   The Aug-5 gates (honeypot / Origin / rate limit) did not stop the
+   list-bombing: the addresses are REAL scraped ones, the bots send a
+   Referer, rotate IPs, and post only the visible field. What they do NOT
+   do is execute our client code. Every legitimate consumer of this API is
+   a client component, so each now GETs a short-lived signed token and
+   threads it into the POST. No token, no signup — the response still says
+   ok so the bot doesn't adapt. */
+import { createHmac, timingSafeEqual } from 'crypto';
+
+function tokenSecret(): string {
+  return createHmac('sha256', process.env.CRON_SECRET || 'dev-secret')
+    .update('newsletter-token-v1')
+    .digest('hex');
+}
+
+function mintToken(): string {
+  const ts = Date.now().toString(36);
+  const sig = createHmac('sha256', tokenSecret()).update(ts).digest('base64url').slice(0, 24);
+  return `${ts}.${sig}`;
+}
+
+function tokenValid(t: string): boolean {
+  const dot = t.indexOf('.');
+  if (dot <= 0) return false;
+  const ts = t.slice(0, dot);
+  const given = t.slice(dot + 1);
+  const expected = createHmac('sha256', tokenSecret()).update(ts).digest('base64url').slice(0, 24);
+  if (given.length !== expected.length) return false;
+  try {
+    if (!timingSafeEqual(Buffer.from(given), Buffer.from(expected))) return false;
+  } catch {
+    return false;
+  }
+  const age = Date.now() - parseInt(ts, 36);
+  return age >= 0 && age < 24 * 60 * 60 * 1000;
+}
+
+/** Clients fetch their submission token here before posting. */
+export async function GET() {
+  return NextResponse.json({ t: mintToken() }, { headers: { 'cache-control': 'no-store' } });
+}
+
 /**
  * Newsletter / subscribe-popup capture.
  *
@@ -83,31 +126,35 @@ export async function POST(req: Request) {
   const isForm =
     ctype.includes('application/x-www-form-urlencoded') || ctype.includes('multipart/form-data');
 
-  let email = '';
-  let source = 'popup';
-  let honeypot = '';
-  if (isForm) {
-    const fd = await req.formData();
-    email = String(fd.get('email') ?? '').trim().toLowerCase();
-    source = String(fd.get('source') ?? 'footer');
-    honeypot = String(fd.get('website') ?? '').trim();
-  } else {
-    const body = await req.json().catch(() => ({}));
-    email = String(body.email ?? '').trim().toLowerCase();
-    source = String(body.source ?? 'popup');
-    honeypot = String(body.website ?? '').trim();
-  }
-
   const fakeOk = () =>
     isForm
       ? NextResponse.redirect(`${SITE_URL}/?subscribe=ok#newsletter`, 303)
       : NextResponse.json({ ok: true, code: WELCOME_CODE });
 
+  /* Form-encoded submissions are REJECTED outright. Every live consumer of
+     this API (popup, LP capture, /access gate) posts JSON; there is no
+     form-encoded surface on the site anymore. The 948-address "footer" list
+     — 30-43 bot signups/day, ZERO buyers ever, boeing.com next to
+     besttempmail.com — arrived entirely through this shape. The bot still
+     sees a success redirect so it has nothing to adapt to. */
+  if (isForm) {
+    console.warn('[newsletter] rejected form-encoded signup (bot vector)');
+    return fakeOk();
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const email = String(body.email ?? '').trim().toLowerCase();
+  const source = String(body.source ?? 'popup');
+  const honeypot = String(body.website ?? '').trim();
+  const token = String(body.t ?? '');
+
   const ip =
     (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
   const domain = email.split('@')[1] ?? '';
-  if (honeypot || !originAllowed(req) || rateLimited(ip) || DISPOSABLE_DOMAINS.has(domain)) {
-    console.warn('[newsletter] rejected signup', { ip, source, domain, honeypot: !!honeypot });
+  if (!tokenValid(token) || honeypot || !originAllowed(req) || rateLimited(ip) || DISPOSABLE_DOMAINS.has(domain)) {
+    console.warn('[newsletter] rejected signup', {
+      ip, source, domain, honeypot: !!honeypot, badToken: !tokenValid(token),
+    });
     return fakeOk();
   }
 
@@ -121,9 +168,16 @@ export async function POST(req: Request) {
   try {
     const existing = await prisma.newsletterSubscriber.findUnique({
       where: { email },
-      select: { id: true },
+      select: { id: true, tags: true },
     });
     isNew = !existing;
+    // A quarantined (list-bombed) address never auto-resubscribes — the bot
+    // re-posting its scraped list must not undo the scrub. A real owner of
+    // one of these addresses can write in; nobody has.
+    if (existing?.tags?.some((t) => t.startsWith('scrub-'))) {
+      console.warn('[newsletter] blocked resubscribe of quarantined address', { domain });
+      return fakeOk();
+    }
     await prisma.newsletterSubscriber.upsert({
       where: { email },
       update: { isSubscribed: true, unsubscribedAt: null },

@@ -33,7 +33,7 @@ export function LpEmailCapture({
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, source }),
+        body: JSON.stringify({ email: trimmed, source, t: (await fetch('/api/newsletter').then((r) => r.json()).catch(() => ({})))?.t }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setErr(data.error || 'Something went wrong.'); setStatus('error'); return; }
