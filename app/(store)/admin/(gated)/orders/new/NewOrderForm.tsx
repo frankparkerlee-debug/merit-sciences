@@ -9,6 +9,9 @@ type ProductOption = {
   title: string;
   priceCents: number;
   vialSize?: string | null;
+  /** DRAFT products are sellable on a manual order but not on the public
+   *  storefront — the picker marks them so the operator knows. */
+  status?: string | null;
 };
 
 type CustomerHit = {
@@ -396,8 +399,10 @@ export function NewOrderForm({ products }: { products: ProductOption[] }) {
             <option value="">+ Add product…</option>
             {products.map((p) => (
               <option key={p.handle} value={p.handle}>
+                {p.status && p.status !== 'ACTIVE' ? '◦ ' : ''}
                 {p.title}
                 {p.vialSize ? ` · ${p.vialSize}` : ''} — ${(p.priceCents / 100).toFixed(2)}
+                {p.status && p.status !== 'ACTIVE' ? '  (draft — not public)' : ''}
               </option>
             ))}
           </select>

@@ -6,10 +6,14 @@ export const metadata = { title: 'New order — Merit Admin' };
 export const dynamic = 'force-dynamic';
 
 export default async function NewOrderPage() {
+  /* Drafts are INCLUDED here on purpose. This is an authenticated admin
+     tool: phone orders, comps and pre-launch sales all legitimately need a
+     product that is not on the public catalogue yet. They are labelled in
+     the picker so the operator always knows. The public checkout refuses
+     drafts separately (lib/checkout-pricing.ts). */
   const products = await prisma.product.findMany({
-    where: { status: 'ACTIVE' },
-    orderBy: { title: 'asc' },
-    select: { handle: true, title: true, priceCents: true, vialSize: true },
+    orderBy: [{ status: 'asc' }, { title: 'asc' }],
+    select: { handle: true, title: true, priceCents: true, vialSize: true, status: true },
   });
 
   return (

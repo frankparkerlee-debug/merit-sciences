@@ -179,6 +179,13 @@ export async function priceCart(args: {
     const perVial = (handle: string): number | null => {
       const p = productMap.get(handle);
       if (!p || p.priceCents <= 0) return null;
+      /* DRAFT products are not for sale. `status` was already selected here
+         but never tested, so anything unpublished — placeholder price, no
+         stock, no COA — could be bought by anyone who had the direct PDP
+         URL. Returning null makes the caller fail closed with "no longer
+         available". Admins can still put a draft on a MANUAL order, which
+         is a deliberate, authenticated action. */
+      if (p.status !== 'ACTIVE') return null;
       return priceFor(
         { handle, priceCents: p.priceCents, physicianPriceCents: p.physicianPriceCents },
         pricingCtx,
