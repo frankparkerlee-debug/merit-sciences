@@ -158,6 +158,28 @@ export async function updateProduct(_prev: ActionResult | null, formData: FormDa
   // Validate required fields
   if (!data.title) return { ok: false, error: 'Title is required.' };
   if (!data.compound) return { ok: false, error: 'Compound is required.' };
+
+  /* Asset links. These carry EITHER an absolute http(s) URL or a site-relative
+     path ("/products/….webp") — the image uploader writes the latter for every
+     product. The inputs are plain text for that reason (a type="url" field
+     rejects relative paths and makes the browser cancel the submit silently),
+     so the real check lives here. */
+  for (const [field, label] of [
+    ['imageUrl', 'Primary image URL'],
+    ['lotCoaUrl', 'COA URL'],
+  ] as const) {
+    const v = data[field];
+    if (!v) continue;
+    const ok = v.startsWith('/')
+      ? !v.startsWith('//') // "//host/path" is protocol-relative, not a site path
+      : /^https?:\/\/\S+$/i.test(v);
+    if (!ok) {
+      return {
+        ok: false,
+        error: `${label} must be a full https:// address or a site path starting with "/" — got "${v}".`,
+      };
+    }
+  }
   if (!data.vialSize) return { ok: false, error: 'Vial size is required.' };
   if (data.priceCents <= 0) return { ok: false, error: 'Price must be greater than 0.' };
 

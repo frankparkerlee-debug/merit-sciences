@@ -70,6 +70,16 @@ export function ProductForm({ product }: { product: ProductFormData }) {
   const [submitted, setSubmitted] = useState(false);
   const wasPending = useRef(false);
   const [stale, setStale] = useState(false);
+  /* Blocked-by-validation guard. If any control fails HTML5 constraint
+     validation the browser cancels the submit itself — React's action never
+     runs, so neither the result banner nor the stale-action watcher above can
+     ever fire. Worse, a control inside a collapsed <details> is not focusable,
+     so the browser cannot even show its validation bubble: the Save button
+     just does nothing, forever, with one console line as the only trace.
+     (That is exactly what made every product unsaveable — a type="url" field
+     holding a relative image path, hidden in the Advanced section.)
+     `invalid` does not bubble, so we listen in the capture phase. */
+  const [invalid, setInvalid] = useState<{ field: string; message: string } | null>(null);
 
   useEffect(() => {
     if (result) {
@@ -83,7 +93,21 @@ export function ProductForm({ product }: { product: ProductFormData }) {
       action={(fd) => {
         setSubmitted(true);
         setStale(false);
+        setInvalid(null);
         formAction(fd);
+      }}
+      onInvalidCapture={(e) => {
+        const el = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+        // Reveal it — otherwise the browser silently refuses to report on a
+        // control it cannot focus, and the operator sees nothing at all.
+        for (let p = el.parentElement; p; p = p.parentElement) {
+          if (p instanceof HTMLDetailsElement) p.open = true;
+        }
+        setInvalid((prev) =>
+          // Keep the FIRST invalid field; that is the one the browser stops on.
+          prev ?? { field: el.name || 'a field', message: el.validationMessage || 'Invalid value.' },
+        );
+        requestAnimationFrame(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }));
       }}
       className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6"
     >
@@ -292,13 +316,19 @@ export function ProductForm({ product }: { product: ProductFormData }) {
               />
             </Field>
           </Row>
-          <Field label="COA URL" hint="Link to Certificate of Analysis PDF.">
+          <Field label="COA URL" hint="Link to Certificate of Analysis PDF. Absolute URL or a site path like /coa/….">
+            {/* NOT type="url": Merit's own assets are stored as site-relative
+                paths ("/coa/lot-….pdf"), which type="url" rejects as invalid.
+                The browser then cancels the submit before React ever sees it —
+                a completely silent dead Save button. Validated server-side
+                instead, where a relative path is a legitimate value. */}
             <input
-              type="url"
+              type="text"
+              inputMode="url"
               name="lotCoaUrl"
               defaultValue={product.lotCoaUrl ?? ''}
               className={inputCls}
-              placeholder="https://…"
+              placeholder="https://… or /coa/…"
             />
           </Field>
         </Card>
@@ -315,13 +345,17 @@ export function ProductForm({ product }: { product: ProductFormData }) {
               Advanced — paste URLs directly
             </summary>
             <div className="mt-3 space-y-3">
-              <Field label="Primary image URL">
+              <Field label="Primary image URL" hint="Absolute URL or a site path like /products/….webp.">
+                {/* type="text", not "url" — see the COA URL note above. Every
+                    product image the uploader writes is a relative path, so
+                    type="url" made all 64 products unsaveable. */}
                 <input
-                  type="url"
+                  type="text"
+                  inputMode="url"
                   name="imageUrl"
                   defaultValue={product.imageUrl ?? ''}
                   className={inputCls}
-                  placeholder="https://cdn…/aod-9604_1200x.png"
+                  placeholder="/products/sku-….webp or https://…"
                 />
               </Field>
               <Field label="Gallery image URLs" hint="One URL per line OR comma-separated.">
@@ -386,6 +420,17 @@ export function ProductForm({ product }: { product: ProductFormData }) {
               }`}
             >
               {result.ok ? result.message : result.error}
+            </div>
+          )}
+          {invalid && (
+            <div
+              role="alert"
+              className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900"
+            >
+              <strong>Not saved — check &ldquo;{invalid.field}&rdquo;.</strong> {invalid.message}
+              <span className="block mt-1 text-rose-800/80">
+                The browser blocked this save. The field has been scrolled into view.
+              </span>
             </div>
           )}
           {stale && !result && (
