@@ -40,6 +40,97 @@ export type ResearchData = {
 };
 
 export const RESEARCH_DATA: Record<string, ResearchData> = {
+  // ── Kisspeptin-10 (KP-10, metastin 45-54) ──
+  'kisspeptin-10': {
+    compoundClass:
+      'Endogenous decapeptide, RFamide peptide family (Tyr-Asn-Trp-Asn-Ser-Phe-Gly-Leu-Arg-Phe-NH₂) — the C-terminal 45–54 fragment of the KISS1 gene product metastin / kisspeptin-54',
+    discovery:
+      'Identified in 2001 by Ohtaki and colleagues, who isolated the amidated 54-residue KISS1 gene product metastin from human placenta and showed it to be the endogenous ligand of the orphan receptor hOT7T175 (GPR54, now KISS1R). Kisspeptin-10 is the C-terminal 45–54 fragment of that peptide, derived from the KISS1 metastasis-suppressor gene.',
+    description: [
+      'Kisspeptin-10 is the C-terminal decapeptide of metastin, the 54-residue, carboxy-terminally amidated product of the KISS1 gene. KISS1 was characterised in the 1990s as a suppressor of melanoma and breast-carcinoma metastasis, but its peptide product was not matched to a receptor until 2001, when Ohtaki and colleagues at Takeda isolated metastin from human placenta and identified it as the endogenous ligand of the orphan G-protein-coupled receptor hOT7T175 — the receptor subsequently known as GPR54 and now designated KISS1R. The 45–54 fragment retains receptor-activating potency and is the form most commonly used in laboratory work. Like other members of the RFamide family, the decapeptide terminates in an amidated Arg-Phe motif; that C-terminal amide is a structural requirement rather than a formality, and the free-acid form YNWNSFGLRF-OH is a different compound, not KP-10.',
+      'The field was opened by human genetics rather than by pharmacology. In 2003 two groups reported independently — de Roux and colleagues in PNAS, and Seminara and colleagues in the New England Journal of Medicine — that loss-of-function mutations in GPR54/KISS1R segregate with idiopathic hypogonadotropic hypogonadism, with affected individuals showing absent or arrested puberty and low gonadotropins despite an anatomically intact hypothalamus and pituitary. Because the pituitary in those individuals remained responsive to exogenous gonadotropin-releasing hormone (GnRH), the lesion was placed upstream of the GnRH neuron. That work positioned kisspeptin signalling as a proximate gatekeeper of the hypothalamic-pituitary-gonadal axis rather than as a peripheral modulator, and it remains the principal evidence for that placement.',
+      'Human investigation of the peptide has been conducted largely as academic clinical research, much of it by Waljit Dhillo\'s group at Imperial College London. Dhillo and colleagues reported the first administration of kisspeptin-54 to healthy male volunteers in 2005, observing higher plasma LH, FSH and testosterone during the peptide infusion than during the saline control in those six enrolled subjects. Jayasena and colleagues subsequently characterised kisspeptin-10 specifically and reported a marked sexual dimorphism among their participants: gonadotropin release was observed in the healthy men studied and in women studied during the preovulatory phase, but not in women studied during the follicular phase. A 2015 head-to-head study from the same group compared intravenous kisspeptin-10, kisspeptin-54 and GnRH in healthy men and reported that at the levels tested the two kisspeptin species were associated with broadly similar gonadotrophin secretion as one another, while GnRH was associated with higher levels than either. These are findings in small enrolled study populations under controlled clinical conditions, reported here as literature only; Merit Sciences material is supplied strictly for laboratory research use and is not for human or veterinary administration.',
+    ],
+    mechanism:
+      'Kisspeptin-10 is described in the literature as a high-affinity agonist at KISS1R (GPR54), a Gq/11-coupled receptor whose activation drives phospholipase C-β, inositol trisphosphate generation, intracellular calcium mobilisation and ERK1/2 phosphorylation. KISS1R is expressed on GnRH neurons of the hypothalamus, and the proposed mechanism situates kisspeptin one synaptic step upstream of the GnRH pulse generator: kisspeptinergic neurons in the arcuate nucleus and the anteroventral periventricular nucleus are held to relay gonadal steroid feedback and metabolic state onto GnRH neurons, which in turn govern pituitary gonadotropin release. The human loss-of-function genetics are the principal evidence for this placement — inactivating KISS1R mutations produce hypogonadotropic hypogonadism while the pituitary remains responsive to exogenous GnRH. Consistent with an action upstream of the pituitary rather than at it, the 2015 human comparison found GnRH associated with higher gonadotrophin output than either kisspeptin species at the levels tested. Receptor desensitisation on sustained exposure, and rapid enzymatic cleavage of the decapeptide, are recurring variables in the published pharmacology and remain areas of active investigation.',
+    halfLife:
+      'Short, and markedly shorter than that of the parent 54-mer. In the 2005 human infusion study by Dhillo and colleagues the plasma half-life of kisspeptin-54 was calculated at 27.6 ± 1.1 minutes. A comparably precise human plasma half-life for kisspeptin-10 could not be confirmed against the primary sources checked for this entry, so no figure is asserted for it here; the draft value of "approximately 4 minutes" was removed for that reason. What is documented is rapid loss of the decapeptide: Liu and colleagues (2013) reported decomposition half-lives of 6.8, 2.9 and 1.7 minutes in rat plasma at 4 °C, 25 °C and 37 °C respectively, with cleavage of the N-terminal tyrosine as the principal decomposition route, and rapid elimination in rats following intravenous bolus. Brief circulating persistence is therefore a defining experimental variable in the published record. Stated for interpretation of the research literature only; not a handling, preparation or administration instruction.',
+    solubility:
+      'Supplied lyophilised, commonly as the trifluoroacetate or acetate salt. Reported as soluble in water and in aqueous buffers. The single arginine together with the free N-terminus gives the peptide a net positive charge at neutral pH, while the tryptophan and two phenylalanine residues contribute local hydrophobicity. Published stability work on the decapeptide reports rapid decomposition in plasma at ambient and physiological temperature, with loss of the N-terminal tyrosine as the principal route; tryptophan-containing peptides are more generally reported as oxidation-sensitive. Physicochemical context only — Merit Sciences publishes no preparation or reconstitution procedures.',
+    researchApplications: [
+      'KISS1R (GPR54) receptor pharmacology and agonist characterisation',
+      'Hypothalamic-pituitary-gonadal axis and GnRH pulse-generator neuroendocrinology',
+      'Models of pubertal onset and idiopathic hypogonadotropic hypogonadism',
+      'RFamide peptide structure-activity and C-terminal amidation studies',
+      'KISS1 metastasis-suppressor biology in oncology models',
+    ],
+    references: [
+      {
+        title: 'Metastasis suppressor gene KiSS-1 encodes peptide ligand of a G-protein-coupled receptor',
+        authors: 'Ohtaki T, Shintani Y, Honda S, Matsumoto H, Hori A, Kanehashi K, Terao Y, Kumano S, et al.',
+        journal: 'Nature',
+        year: 2001,
+        pubmedId: '11385580',
+        doi: '10.1038/35079135',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/11385580/',
+      },
+      {
+        title: 'Hypogonadotropic hypogonadism due to loss of function of the KiSS1-derived peptide receptor GPR54',
+        authors: 'de Roux N, Genin E, Carel JC, Matsuda F, Chaussain JL, Milgrom E',
+        journal: 'Proceedings of the National Academy of Sciences of the United States of America',
+        year: 2003,
+        pubmedId: '12944565',
+        doi: '10.1073/pnas.1834399100',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/12944565/',
+      },
+      {
+        title: 'The GPR54 gene as a regulator of puberty',
+        authors: 'Seminara SB, Messager S, Chatzidaki EE, Thresher RR, Acierno JS Jr, Shagoury JK, Bo-Abbas Y, Kuohung W, et al.',
+        journal: 'The New England Journal of Medicine',
+        year: 2003,
+        pubmedId: '14573733',
+        doi: '10.1056/NEJMoa035322',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/14573733/',
+      },
+      {
+        title: 'Kisspeptin-54 stimulates the hypothalamic-pituitary gonadal axis in human males',
+        authors: 'Dhillo WS, Chaudhri OB, Patterson M, Thompson EL, Murphy KG, Badman MK, McGowan BM, Amber V, et al.',
+        journal: 'The Journal of Clinical Endocrinology and Metabolism',
+        year: 2005,
+        pubmedId: '16174713',
+        doi: '10.1210/jc.2005-1468',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/16174713/',
+      },
+      {
+        title: 'The effects of kisspeptin-10 on reproductive hormone release show sexual dimorphism in humans',
+        authors: 'Jayasena CN, Nijher GM, Comninos AN, Abbara A, Januszewki A, Vaal ML, Sriskandarajah L, Murphy KG, et al.',
+        journal: 'The Journal of Clinical Endocrinology and Metabolism',
+        year: 2011,
+        pubmedId: '21976724',
+        doi: '10.1210/jc.2011-1408',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/21976724/',
+      },
+      {
+        title: 'Direct comparison of the effects of intravenous kisspeptin-10, kisspeptin-54 and GnRH on gonadotrophin secretion in healthy men',
+        authors: 'Jayasena CN, Abbara A, Narayanaswamy S, Comninos AN, Ratnasabapathy R, Bassett P, Mogford JT, Malik Z, et al.',
+        journal: 'Human Reproduction',
+        year: 2015,
+        pubmedId: '26089302',
+        doi: '10.1093/humrep/dev143',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/26089302/',
+      },
+      {
+        title: 'LC-MS/MS quantification of a neuropeptide fragment kisspeptin-10 (NSC 741805) and characterization of its decomposition product and pharmacokinetics in rats',
+        authors: 'Liu Z, Ren C, Jones W, Chen P, Seminara SB, Chan YM, Smith NF, Covey JM, Wang J, Chan KK',
+        journal: 'Journal of Chromatography B: Analytical Technologies in the Biomedical and Life Sciences',
+        year: 2013,
+        pubmedId: '23524040',
+        doi: '10.1016/j.jchromb.2013.02.027',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/23524040/',
+      },
+    ],
+  },
+
 
   // ═════════════════════════════════════════════════════════════════════
   // PEPTIDES — repair / growth / signaling
@@ -1070,6 +1161,9 @@ function normKey(s: string): string {
  * handle is a code, a real name, or a long blend slug.
  */
 export function getResearchData(handle: string, compound?: string): ResearchData | null {
+  // Product handle carries the vial size ('kisspeptin-10mg'); the entry is
+  // keyed on the compound name, so map it explicitly.
+  if (normKey(handle).startsWith('kisspeptin')) return RESEARCH_DATA['kisspeptin-10'] ?? null;
   if (RESEARCH_DATA[handle]) return RESEARCH_DATA[handle];
 
   const hKey = NAME_TO_KEY[normKey(handle)];
