@@ -5,6 +5,7 @@ import { notifyOpsOfOrder } from './ops-notify';
 import { sendMetaPurchase } from './meta-capi';
 import { notifyAffiliateOfSale } from './affiliate-sale-email';
 import { computeGrossProfitCommission, referringAffiliateFor } from './practitioner-commission';
+import { detectSelfPurchase } from './self-purchase';
 
 /**
  * Everything that must happen once a PayPal capture is COMPLETED: persist/
@@ -118,6 +119,10 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
     select: {
       affiliateId: true,
       customerEmail: true,
+      // Names feed the self-purchase check: an affiliate ordering under a
+      // second email is still identifiable by who the parcel is addressed to.
+      customerName: true,
+      shippingFullName: true,
       practitionerApplicationId: true,
       // For the gross-profit basis. Stripe intents carry no line items
       // (nothing product-identifying is sent to Stripe), so the persisted
@@ -151,11 +156,9 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
 
   const affiliate = await prisma.affiliate.findUnique({
     where: { id: affiliateId },
-    select: { id: true, email: true, status: true },
+    select: { id: true, email: true, status: true, name: true, paypalEmail: true },
   });
   if (!affiliate || affiliate.status !== 'ACTIVE') return 0;
-
-  const isSelfPurchase = buyerEmail === affiliate.email.toLowerCase();
 
   // Evergreen lock: find-or-create by email; historical lock wins.
   let link = await prisma.customerAffiliateLink.findUnique({ where: { customerEmail: buyerEmail } });
@@ -167,6 +170,31 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
     affiliate.id = link.affiliateId; // credit the original affiliate
   } else if (payerId && !link.paypalPayerId) {
     await prisma.customerAffiliateLink.update({ where: { id: link.id }, data: { paypalPayerId: payerId } });
+  }
+
+  /* Self-purchase is judged AFTER the lock, against the affiliate actually
+     being credited. The lock above can redirect credit to a different
+     affiliate while `affiliate` still holds the previous one's email and
+     name — checking before this point tested the wrong person, and paid
+     full commission on orders that should have earned nothing. */
+  const creditedIdentity =
+    affiliate.id === affiliateId
+      ? affiliate
+      : await prisma.affiliate.findUnique({
+          where: { id: affiliate.id },
+          select: { email: true, name: true, paypalEmail: true },
+        });
+
+  const selfPurchase = detectSelfPurchase(creditedIdentity, {
+    email: buyerEmail,
+    customerName: persisted?.customerName ?? null,
+    shippingFullName: persisted?.shippingFullName ?? null,
+  });
+  const isSelfPurchase = selfPurchase.isSelf;
+  if (isSelfPurchase) {
+    console.warn(
+      `[affiliate] self-purchase (${selfPurchase.reason}) on ${orderId} — $0 commission for ${affiliate.id}`,
+    );
   }
 
   // Commissionable base = items − discount (fall back to capture amount).

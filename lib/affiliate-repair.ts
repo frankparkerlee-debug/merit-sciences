@@ -1,6 +1,7 @@
 import { prisma } from './db';
 import { tierForOrderCount } from './affiliate';
 import { computeGrossProfitCommission, referringAffiliateFor } from './practitioner-commission';
+import { detectSelfPurchase } from './self-purchase';
 
 /* ─────────────────────────────────────────────────────────────────────────
    COMMISSION REPAIR — create an OrderCommission from a PERSISTED order.
@@ -62,6 +63,9 @@ export async function recordCommissionFromOrder(
       paypalCaptureId: true,
       paypalPayerId: true,
       customerEmail: true,
+      // Names feed the self-purchase check (see lib/self-purchase.ts).
+      customerName: true,
+      shippingFullName: true,
       status: true,
       subtotalCents: true,
       discountCents: true,
@@ -102,7 +106,7 @@ export async function recordCommissionFromOrder(
 
   const affiliate = await prisma.affiliate.findUnique({
     where: { id: affiliateId },
-    select: { id: true, slug: true, email: true, status: true },
+    select: { id: true, slug: true, email: true, status: true, name: true, paypalEmail: true },
   });
   if (!affiliate || affiliate.status !== 'ACTIVE') {
     return { ...base, reason: 'affiliate-not-active' };
@@ -110,8 +114,6 @@ export async function recordCommissionFromOrder(
 
   const buyerEmail = order.customerEmail?.toLowerCase() ?? null;
   if (!buyerEmail) return { ...base, reason: 'no-buyer-email' };
-
-  const isSelfPurchase = buyerEmail === affiliate.email.toLowerCase();
 
   // Evergreen link: find-or-create by email, exactly like the live path.
   let creditedAffiliateId = affiliate.id;
@@ -134,6 +136,23 @@ export async function recordCommissionFromOrder(
       creditedAffiliateId = link.affiliateId; // historical lock wins, as live
     }
   }
+
+  /* Judged against the CREDITED affiliate, after the lock above — same rule as
+     the live recorder. See lib/self-purchase.ts for why an email equality
+     against the pre-lock affiliate was wrong twice over. */
+  const creditedIdentity =
+    creditedAffiliateId === affiliate.id
+      ? affiliate
+      : await prisma.affiliate.findUnique({
+          where: { id: creditedAffiliateId },
+          select: { email: true, name: true, paypalEmail: true },
+        });
+
+  const isSelfPurchase = detectSelfPurchase(creditedIdentity, {
+    email: buyerEmail,
+    customerName: order.customerName ?? null,
+    shippingFullName: order.shippingFullName ?? null,
+  }).isSelf;
 
   const orderTotalCents = Number(order.subtotalCents) - Number(order.discountCents);
   if (!(orderTotalCents > 0)) return { ...base, reason: 'zero-base' };
