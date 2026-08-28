@@ -58,7 +58,7 @@ export default function ClinicSourcePage() {
               You found us.
             </h1>
             <p className="text-cream/60 text-base leading-relaxed mb-1.5 max-w-md">
-              Pharmacy-grade compounds from an ISO-certified US facility.
+              Lab-verified compounds from an ISO-certified US facility.
             </p>
             <p className="text-cream/35 text-sm leading-relaxed max-w-md">
               No appointment. No referral. No waitlist. Ships to your door in 48 hours from San Antonio.

@@ -6,10 +6,17 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-// Clean-room landing for the "Pharmacy-grade. Not 'trust me bro'-grade." brand
+// Clean-room landing for the "Lab-verified. Not 'trust me bro'-verified." brand
 // ad. Lives under /lp so ChromeGate strips nav/footer/cart — a Meta crawler sees
 // NO catalog and NO compound names here. Shows the proof (a representative HPLC
 // trace + the verification checks), then gates the real library by email.
+//
+// The hook ran as "Pharmacy-grade" until 2026-08-28. Dropped here for the same
+// reason it was dropped site-wide on 2026-08-11: a pharmacy exists to dispense
+// to people, so the word implies human use — which this product is not for.
+// "Lab-verified" carries the same quality signal from the supply side and keeps
+// the contrast the hook is actually built on. The paid creative pointing here
+// must carry the same words; the claim lives in the ad, not just the page.
 export default function ReceiptsPage() {
   return (
     <div className="bg-[#04060E] text-cream font-sans min-h-screen flex flex-col">
@@ -23,9 +30,9 @@ export default function ReceiptsPage() {
             Merit Sciences · Third-party tested
           </p>
           <h1 className="font-black leading-[0.95] tracking-[-0.04em] mb-5" style={{ fontSize: 'clamp(34px, 7vw, 64px)' }}>
-            Pharmacy-grade.
+            Lab-verified.
             <br />
-            Not <span className="text-cobalt-soft">&lsquo;trust me bro&rsquo;</span>-grade
+            Not <span className="text-cobalt-soft">&lsquo;trust me bro&rsquo;</span>-verified
             <span className="text-cobalt-soft">.</span>
           </h1>
           <p className="text-cream/60 text-base leading-relaxed mb-8 max-w-md">

@@ -162,7 +162,7 @@ export function BuyBox({ product }: { product: Product }) {
           </span>
           <span className="flex-1 text-xs text-ink-soft">
             <strong className="text-ink font-semibold text-[13px]">Add BAC Water</strong>{' '}
-            — 10mL bacteriostatic water, pharmacy-grade reconstitution carrier
+            — 10mL bacteriostatic water, sterile reconstitution carrier
           </span>
           <span className="font-display text-sm font-bold">+ {money(kitCents)}</span>
         </button>

@@ -932,7 +932,7 @@ export function renderWelcome(d: WelcomeData): { subject: string; html: string; 
   const body = `
     ${headline(`Welcome, ${name}`)}
     <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      You&rsquo;re in. Merit is built on a simple premise: pharmacy-grade research compounds shouldn&rsquo;t cost pharmacy prices. Every lot we ship is HPLC-verified to &ge;99% purity, compounded in an ISO-certified US facility, and released against an independent laboratory assay.
+      You&rsquo;re in. Merit is built on a simple premise: lab-verified research compounds shouldn&rsquo;t cost pharmacy prices. Every lot we ship is HPLC-verified to &ge;99% purity, compounded in an ISO-certified US facility, and released against an independent laboratory assay.
     </p>
 
     ${incentive}
@@ -962,7 +962,7 @@ export function renderWelcome(d: WelcomeData): { subject: string; html: string; 
 
 Hi ${name},
 
-You're in. Merit is built on a simple premise: pharmacy-grade research compounds shouldn't cost pharmacy prices.
+You're in. Merit is built on a simple premise: lab-verified research compounds shouldn't cost pharmacy prices.
 
 Every lot we ship:
   · HPLC-verified ≥99% purity
@@ -984,7 +984,7 @@ Research compounds for laboratory use only. Not for human or veterinary consumpt
     html: shell({
       preheader: d.discountCode
         ? `${d.discountPercent}% off your first order with code ${d.discountCode.toUpperCase()}.`
-        : 'Pharmacy-grade. Not pharmacy-priced. Welcome to Merit.',
+        : 'Lab-verified. Not pharmacy-priced. Welcome to Merit.',
       eyebrow: 'Welcome',
       body,
     }),

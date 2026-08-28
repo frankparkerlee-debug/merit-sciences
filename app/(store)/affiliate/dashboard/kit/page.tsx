@@ -23,7 +23,7 @@ export default async function KitPage() {
     },
     {
       platform: 'Story / quick',
-      text: `My code ${code} = 10% off Merit Sciences 👀 Pharmacy-grade, third-party tested, ships fast. Link in bio. #ad`,
+      text: `My code ${code} = 10% off Merit Sciences 👀 Lab-verified, third-party tested, ships fast. Link in bio. #ad`,
     },
     {
       platform: 'TikTok / Reels caption',
@@ -31,7 +31,7 @@ export default async function KitPage() {
     },
     {
       platform: 'Bio / link-in-bio line',
-      text: `Merit Sciences — pharmacy-grade & third-party tested. 10% off with ${code}. #ad`,
+      text: `Merit Sciences — lab-verified & third-party tested. 10% off with ${code}. #ad`,
     },
     {
       platform: 'Newsletter / longer',
