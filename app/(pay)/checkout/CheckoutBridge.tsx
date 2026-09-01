@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useCart } from '@/lib/cart';
+import { trackBeginCheckoutAds } from '@/lib/analytics';
 
 /**
  * Storefront-side bridge to the split checkout domain.
@@ -33,6 +34,16 @@ export function CheckoutBridge() {
       welcomeCode = localStorage.getItem('merit_welcome_code');
     } catch {
       /* private mode */
+    }
+
+    // Google Ads begin-checkout, before we leave for the checkout domain.
+    // This origin holds `_gcl_aw`; the next one does not.
+    try {
+      trackBeginCheckoutAds({
+        value: lines.reduce((n, l) => n + l.unitCents * l.qty, 0) / 100,
+      });
+    } catch {
+      /* never block the handoff on analytics */
     }
 
     (async () => {

@@ -72,6 +72,35 @@ export function trackViewContent(props: { value: number; currency?: string; [k: 
 /** Google Ads "Begin Checkout (Merit)" label — see the add-to-cart note. */
 const GADS_BEGIN_CHECKOUT_SEND_TO = process.env.NEXT_PUBLIC_GADS_BEGIN_CHECKOUT_SEND_TO || '';
 
+/**
+ * Google Ads begin-checkout, fired from the STOREFRONT only.
+ *
+ * Deliberately separate from trackInitiateCheckout, which runs on
+ * meritcheckout.com and keeps feeding Meta and TikTok there. Google is
+ * different: it attributes a conversion using the `_gcl_aw` cookie, which is
+ * written on meritsciences.com and unreadable from the checkout origin. Fired
+ * at checkout it would record with no click attached and count toward no
+ * campaign.
+ *
+ * So it fires here instead, at the moment the storefront mints the handoff —
+ * the last point where the click id is still in reach, and a truer definition
+ * of "began checkout" anyway.
+ */
+export function trackBeginCheckoutAds(props: { value: number; currency?: string }): void {
+  const { value, currency = 'USD' } = props;
+  try {
+    if (GADS_BEGIN_CHECKOUT_SEND_TO) {
+      (window as any).gtag?.('event', 'conversion', {
+        send_to: GADS_BEGIN_CHECKOUT_SEND_TO,
+        value,
+        currency,
+      });
+    }
+  } catch {
+    /* gtag not loaded — ignore */
+  }
+}
+
 /** Google Ads "Add to Cart (Merit)" label. Env-driven: paste the label from
  *  the conversion action once it exists; unset means the gtag call is skipped
  *  rather than firing at a nonexistent action. */
@@ -115,17 +144,6 @@ export function trackInitiateCheckout(props: { value: number; currency?: string;
     (window as any).ttq?.track?.('InitiateCheckout', { value, currency });
   } catch {
     /* pixel not loaded — ignore */
-  }
-  try {
-    if (GADS_BEGIN_CHECKOUT_SEND_TO) {
-      (window as any).gtag?.('event', 'conversion', {
-        send_to: GADS_BEGIN_CHECKOUT_SEND_TO,
-        value,
-        currency,
-      });
-    }
-  } catch {
-    /* gtag not loaded — ignore */
   }
 }
 
