@@ -157,7 +157,7 @@ export default async function HomePage() {
       <section className="relative isolate flex h-[92svh] min-h-[560px] max-h-[880px] items-end overflow-hidden bg-[#08090A] text-white">
         <Image
           src="/brand/pattern-vials-dof.webp"
-          alt=""
+          alt="A defocused wall of sealed Merit Sciences research compound vials in repeating rows"
           fill
           priority
           sizes="100vw"
@@ -464,7 +464,13 @@ export default async function HomePage() {
 
       {/* ════════════════ §06 · CLOSE ══════════════════════════════════════ */}
       <section className="relative isolate flex h-[70svh] min-h-[480px] max-h-[760px] items-end overflow-hidden bg-black text-white">
-        <Image src="/brand/hero-monolith.webp" alt="" fill sizes="100vw" className="object-cover" />
+        <Image
+          src="/brand/hero-monolith.webp"
+          alt="A single sealed glass research vial with an aluminium crimp cap, lit against a dark ground"
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
         <div
           aria-hidden="true"
           className="absolute inset-0"

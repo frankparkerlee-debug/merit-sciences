@@ -154,8 +154,10 @@ export const metadata: Metadata = {
   // RUO compliance lives in the top steel banner + Footer + Terms —
   // we don't repeat it in the SERP impression so the brand reads as a
   // lab-verified supplier, not a research-chem shop.
+  // 152 chars. Bing flags >160 as a GEO error, and answer engines quote the
+  // description directly, so it has to say what Merit is inside the limit.
   description:
-    'Lab-verified compounds from an ISO-certified US facility. Sealed sterile lyophilized vials, lot COA on every batch, ≥99% HPLC purity. Ships 48hr from San Antonio.',
+    'Lab-verified research compounds. Sealed sterile vials, ≥99% HPLC purity, a published COA for every lot. Ships 48hr from San Antonio. Research use only.',
   // NOTE: molecule names deliberately kept OUT of the GLOBAL <head> — it rides
   // on every page incl. the /access ad gate, and a paid-platform crawler must
   // never see a compound there. Compound-level SEO lives on the per-product
