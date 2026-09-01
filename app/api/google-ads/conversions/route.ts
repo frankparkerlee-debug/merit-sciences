@@ -82,12 +82,26 @@ export async function GET(request: Request) {
     orderBy: { paidAt: 'desc' },
   });
 
+  /* `clickId` is ONE column shared by every network — it holds whichever of
+     fbclid / ttclid / gclid / msclkid was on the landing URL, without
+     recording which. Today every stored value is a Facebook fbclid, so a feed
+     that trusted the column alone would hand Meta's click ids to Google
+     labelled as gclids: junk uploads, and Merit's Meta activity disclosed to
+     Google for no benefit.
+
+     `source` is the reliable discriminator. buildAttribution() stamps
+     source='google' exactly when gclid/gbraid/wbraid was present, so gating on
+     it keeps other networks' ids out by construction. */
   const attrs = await prisma.orderAttribution.findMany({
-    where: { paypalOrderId: { in: orders.map((o) => o.paypalOrderId) } },
+    where: {
+      paypalOrderId: { in: orders.map((o) => o.paypalOrderId) },
+      source: { equals: 'google', mode: 'insensitive' },
+      clickId: { not: null },
+    },
     select: { paypalOrderId: true, clickId: true },
   });
   const gclidByOrder = new Map(
-    attrs.filter((a) => a.clickId).map((a) => [a.paypalOrderId, a.clickId as string]),
+    attrs.map((a) => [a.paypalOrderId, a.clickId as string]),
   );
 
   const rows: string[] = [];
