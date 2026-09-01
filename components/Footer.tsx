@@ -27,6 +27,14 @@ export function Footer() {
             <li><a href="/library" className="hover:text-white transition">Research Library</a></li>
             <li><a href="/coa" className="hover:text-white transition">Certificates of Analysis</a></li>
             <li><a href="/about" className="hover:text-white transition">About</a></li>
+            <li>
+              <a
+                href="https://theassay.co"
+                className="hover:text-white transition"
+              >
+                The Assay
+              </a>
+            </li>
             <li><a href="/practitioners" className="hover:text-white transition">Practitioner Program</a></li>
             <li><a href="/affiliate" className="hover:text-white transition">Affiliate Program</a></li>
           </ul>

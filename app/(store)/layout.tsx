@@ -49,7 +49,16 @@ const SITE = 'https://meritsciences.com';
 
 /** Verified public profiles Merit controls, for the Organization's `sameAs`.
  *  Add a URL here ONLY after confirming it resolves and is ours. */
-const SAME_AS: string[] = [];
+const SAME_AS: string[] = [
+  // theassay.co — Merit's editorial property, publicly disclosing Merit as its
+  // publisher in both its visible colophon and its own Organization schema.
+  // That mutual, verifiable declaration is what makes this a legitimate
+  // sameAs edge rather than an asserted one: an answer engine can follow it
+  // in either direction and find the claim confirmed at the other end. It is
+  // the first entity edge Merit has ever had; every additional one should
+  // clear the same bar (owned, live, and confirming the relationship back).
+  'https://theassay.co',
+];
 const SITE_SCHEMA = {
   '@context': 'https://schema.org',
   '@graph': [
