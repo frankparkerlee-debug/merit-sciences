@@ -23,6 +23,7 @@
  * resurrect a stale cart).
  */
 import 'server-only';
+import { decodeAttrCookie } from './attribution';
 import { randomBytes } from 'crypto';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { prisma } from './db';
@@ -91,7 +92,33 @@ export async function createHandoff(payload: HandoffPayload): Promise<string> {
       expiresAt: new Date(Date.now() + TTL_MS),
     },
   });
-  return `${origin}/checkout?c=${token}`;
+
+  /* Carry the Google click id across on the URL itself.
+   *
+   * Google attributes a conversion through the `_gcl_aw` cookie, which gtag
+   * writes per-origin from the `gclid` it finds on the landing URL. The
+   * storefront gets one for free from auto-tagging; the checkout domain never
+   * saw a gclid, so its purchase tag fired with nothing to attribute to.
+   *
+   * gtag re-reads `gclid` from the URL on every page load, so simply putting
+   * it on the redirect makes the checkout origin mint its own `_gcl_aw` and
+   * the existing purchase conversion attributes natively. This is not a
+   * cross-domain linker and shares no cookie state — it is one query
+   * parameter, and the same AW tag already runs on both origins.
+   *
+   * Gated on source='google' so no other network's click id is ever handed
+   * to Google. */
+  let gclid: string | null = null;
+  try {
+    const a = decodeAttrCookie(payload.attr);
+    if (a?.clickId && (a.source ?? '').toLowerCase() === 'google') gclid = a.clickId;
+  } catch {
+    /* attribution is best-effort; never block the handoff on it */
+  }
+
+  return gclid
+    ? `${origin}/checkout?c=${token}&gclid=${encodeURIComponent(gclid)}`
+    : `${origin}/checkout?c=${token}`;
 }
 
 /**
