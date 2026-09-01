@@ -91,13 +91,12 @@ const SITE_SCHEMA = {
       // company, so any mention found off-site can't be resolved back to this
       // one — a real ceiling on citability.
       //
-      // Deliberately EMPTY: Merit currently operates no verified public
-      // profile (checked 2026-08-13 — the obvious LinkedIn and Reddit handles
-      // 404). Only profiles Merit actually controls may go here; asserting an
-      // unowned or dead URL is a false identity claim in machine-readable
-      // form, and it degrades the node rather than strengthening it. Populate
-      // the moment a real profile exists — this is the single cheapest
-      // entity-resolution win available.
+      // Populated 2026-09-01 with theassay.co, Merit's editorial property —
+      // the first edge that clears the bar. Only profiles Merit actually
+      // controls may go here; asserting an unowned or dead URL is a false
+      // identity claim in machine-readable form and degrades the node. A
+      // LinkedIn company page and Crunchbase entry are the next cheapest
+      // additions, and each must confirm the relationship back.
       ...(SAME_AS.length ? { sameAs: SAME_AS } : {}),
       // What the organization actually does, in machine-readable form — this
       // is what a "who sells research peptides in the US" style query matches
@@ -224,6 +223,19 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  /* Search-console ownership. Bing matters here beyond ordinary SEO: ChatGPT
+     and Copilot retrieval lean on Bing's index, so a verified Bing property
+     (plus the IndexNow pings already wired) is the most direct lever on how
+     often answer engines can find this site at all. Set the codes as env vars
+     — no deploy-time code change needed to claim either property. */
+  verification: {
+    ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+      : {}),
+    ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { other: { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION } }
+      : {}),
   },
 };
 
