@@ -69,6 +69,14 @@ export function trackViewContent(props: { value: number; currency?: string; [k: 
   }
 }
 
+/** Google Ads "Begin Checkout (Merit)" label — see the add-to-cart note. */
+const GADS_BEGIN_CHECKOUT_SEND_TO = process.env.NEXT_PUBLIC_GADS_BEGIN_CHECKOUT_SEND_TO || '';
+
+/** Google Ads "Add to Cart (Merit)" label. Env-driven: paste the label from
+ *  the conversion action once it exists; unset means the gtag call is skipped
+ *  rather than firing at a nonexistent action. */
+const GADS_ADD_TO_CART_SEND_TO = process.env.NEXT_PUBLIC_GADS_ADD_TO_CART_SEND_TO || '';
+
 export function trackAddToCart(props: { value: number; currency?: string; [k: string]: unknown }): void {
   const { value, currency = 'USD', ...rest } = props;
   track('add_to_cart', { value_usd: value, currency, ...rest });
@@ -81,6 +89,17 @@ export function trackAddToCart(props: { value: number; currency?: string; [k: st
     (window as any).ttq?.track?.('AddToCart', { value, currency });
   } catch {
     /* pixel not loaded — ignore */
+  }
+  try {
+    if (GADS_ADD_TO_CART_SEND_TO) {
+      (window as any).gtag?.('event', 'conversion', {
+        send_to: GADS_ADD_TO_CART_SEND_TO,
+        value,
+        currency,
+      });
+    }
+  } catch {
+    /* gtag not loaded — ignore */
   }
 }
 
@@ -96,6 +115,17 @@ export function trackInitiateCheckout(props: { value: number; currency?: string;
     (window as any).ttq?.track?.('InitiateCheckout', { value, currency });
   } catch {
     /* pixel not loaded — ignore */
+  }
+  try {
+    if (GADS_BEGIN_CHECKOUT_SEND_TO) {
+      (window as any).gtag?.('event', 'conversion', {
+        send_to: GADS_BEGIN_CHECKOUT_SEND_TO,
+        value,
+        currency,
+      });
+    }
+  } catch {
+    /* gtag not loaded — ignore */
   }
 }
 
