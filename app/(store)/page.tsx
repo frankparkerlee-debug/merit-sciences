@@ -15,8 +15,10 @@ export const dynamic = 'force-dynamic';
    afford to lead with the locked positioning line. */
 export const metadata = {
   title: { absolute: 'Merit Sciences — Same Stack. Better Source.' },
+  // 141 chars. Page metadata OVERRIDES the layout, so this is the one Bing
+  // actually reads — the earlier 167-char string here is what it flagged.
   description:
-    'Research compounds compounded to USP <797> in a licensed US facility, independently assayed, with the certificate published for every lot. Ships 48hr from San Antonio.',
+    'Research compounds compounded to USP <797>, independently assayed, with the certificate published for every lot. Ships 48hr from San Antonio.',
   alternates: { canonical: '/' },
   openGraph: {
     title: 'Merit Sciences — Same Stack. Better Source.',
