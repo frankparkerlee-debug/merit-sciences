@@ -26,9 +26,12 @@ type Props = {
   siblings: Sibling[];
   /** Buyer discount % from an active ?ref= affiliate link. 0 = none. */
   referralPct?: number;
+  /** Bacteriostatic water, resolved from the DB by the page. Null hides the
+   *  add-on rather than adding a line checkout cannot price. */
+  bacWater?: { handle: string; title: string; unitCents: number } | null;
 };
 
-export function ProductBuyBox({ product, family, pharmacistNote, restock, siblings, referralPct = 0 }: Props) {
+export function ProductBuyBox({ product, family, pharmacistNote, restock, siblings, referralPct = 0, bacWater = null }: Props) {
   const bundles = product.bundles ?? [
     { label: 'Single', vials: 1, priceCents: product.priceCents },
   ];
@@ -50,17 +53,18 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
   // price on a single non-recurring order (and let the referral stack on it).
   const packBundles = bundles.filter((b) => !b.label.toLowerCase().includes('subscribe'));
   const selected = packBundles[selectedIdx] ?? packBundles[0];
-  // MUST match the live `bacteriostatic-water` product price ($19.99). This was
-  // a stale $9.99 hardcode that sold BAC water at half price on every PDP add —
-  // losing money on every order. TODO: source from the DB product so it can't
-  // drift again (the checkout cross-sell already does via getProduct).
-  const bacWaterCents = 1999;
+  // Sourced from the DB row the page resolved, never hardcoded. Two separate
+  // bugs came from hardcoding it: a stale $9.99 that sold the water at half
+  // price, and a 'bac-water' handle matching no product, which made every cart
+  // containing it fail checkout outright once pricing began failing closed.
+  const bacWaterCents = bacWater?.unitCents ?? 0;
 
   // If subscribe selected, find subscribe bundle for pricing
   const subscribeBundle = bundles.find((b) => b.label.toLowerCase().includes('subscribe'));
   const effectiveBundle = purchaseType === 'subscribe' && subscribeBundle ? subscribeBundle : selected;
 
-  const subtotalCents = effectiveBundle.priceCents + (addBacWater ? bacWaterCents : 0);
+  const canAddBacWater = !!bacWater;
+  const subtotalCents = effectiveBundle.priceCents + (addBacWater && canAddBacWater ? bacWaterCents : 0);
 
   // Referral / welcome discounts apply at CHECKOUT (auto-filled code) — never
   // baked into the PDP price. The storefront always shows full retail so the
@@ -103,13 +107,13 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       },
       1,
     );
-    if (addBacWater) {
+    if (addBacWater && bacWater) {
       add(
         {
-          handle: 'bac-water',
-          title: 'BAC Water',
+          handle: bacWater.handle,
+          title: bacWater.title,
           bundleLabel: '10mL bacteriostatic',
-          unitCents: bacWaterCents,
+          unitCents: bacWater.unitCents,
         },
         1,
       );
@@ -476,7 +480,10 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       </div>
 
       {/* BAC Water add-on — bacteriostatic water only.
-          Merit does NOT supply syringes or swabs. */}
+          Merit does NOT supply syringes or swabs.
+          Hidden when the product row is unavailable (or when this IS that
+          product), so the checkbox can never add a line checkout can't price. */}
+      {canAddBacWater && (
       <button
         type="button"
         onClick={() => setAddBacWater(!addBacWater)}
@@ -505,6 +512,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           + {money(bacWaterCents)}
         </span>
       </button>
+      )}
 
       {/* Delivery promise — concrete date/time math. Amazon-pattern
           urgency: "Order in the next 3h 24m for Mon Jun 17 delivery". */}

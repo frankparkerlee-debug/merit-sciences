@@ -144,14 +144,15 @@ export default async function CatalogPage() {
   const products = await withPricingMany(rawProducts);
   const isPractitionerPricing = products[0]?.isPractitionerPricing ?? false;
 
-  // Accessories = bacteriostatic water + anything explicitly tagged.
-  // Everything else goes in the main grid — including newly-imported
-  // drafts that aren't yet hand-mapped in FAMILY_BY_HANDLE. Family is
-  // resolved per-product via getFamilyForProduct() with a compound-
-  // keyword fallback.
-  const isAccessory = (p: Product) => /bacteriostatic|bac-water|bac_water/i.test(p.handle);
-  const main = products.filter((p) => !isAccessory(p));
-  const accessories = products.filter(isAccessory);
+  // Everything sells from ONE grid, bacteriostatic water included.
+  //
+  // It used to be split into a separate "Reconstitution" block below the fold,
+  // which took it out of search and every filter — a buyer who typed "water"
+  // got nothing, and the item most carts need was the hardest one to find.
+  // It carries no family, so familySortRank() lands it at 999 and it sorts to
+  // the end of the grid on its own, without a special case.
+  const main = products;
+  const accessories: Product[] = [];
 
   // Enrich each product with its family + pharmacist note + restock signal
   // so the client doesn't need to do this lookup work.

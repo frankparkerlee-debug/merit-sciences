@@ -189,6 +189,25 @@ export default async function ProductPage({ params }: Props) {
   // size in the family.
   const siblings = await getSiblings(product.compound, product.handle);
 
+  /* Bacteriostatic water for the reconstitution add-on, resolved from the
+     database rather than hardcoded in the client.
+     The buybox used to add a line with handle 'bac-water' at a literal price.
+     No such product exists — the row is 'bacteriostatic-water' — which was
+     harmless only while checkout trusted the client's unitCents. Once pricing
+     moved server-side and started failing closed on unresolvable handles
+     (822de4a), every cart containing that line became unpurchasable.
+     Sourcing the row here fixes the handle and the price-drift TODO together;
+     it is the same thing the checkout cross-sell already does. */
+  const bacWaterRow = await getProduct('bacteriostatic-water');
+  const bacWater =
+    bacWaterRow && bacWaterRow.handle !== product.handle
+      ? {
+          handle: bacWaterRow.handle,
+          title: bacWaterRow.title,
+          unitCents: bacWaterRow.priceCents,
+        }
+      : null;
+
   // A chromatogram image is sometimes present at images[1] (Shopify
   // CDN naming convention: chromatogram-{handle}_*.png). Render the
   // Lab Analysis section only when it's there.
@@ -260,6 +279,7 @@ export default async function ProductPage({ params }: Props) {
             restock={restock}
             siblings={siblings}
             referralPct={referral?.discountPct ?? 0}
+            bacWater={bacWater}
           />
         </div>
       </section>
