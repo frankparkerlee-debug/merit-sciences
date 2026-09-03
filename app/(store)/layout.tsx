@@ -105,7 +105,7 @@ const SITE_SCHEMA = {
         'Research peptides',
         'Certificate of analysis',
         'High-performance liquid chromatography',
-        'USP <797> sterile compounding',
+        'Independent laboratory assay',
         'Lot traceability',
       ],
       contactPoint: [
@@ -208,7 +208,7 @@ export const metadata: Metadata = {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, USP <797> compounded, every lot independently assayed, 48-hour dispatch from San Antonio.',
+        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, compounded in a licensed US facility, every lot independently assayed, 48-hour dispatch from San Antonio.',
         type: 'image/jpeg',
       },
     ],

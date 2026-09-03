@@ -18,19 +18,19 @@ export const metadata = {
   // 141 chars. Page metadata OVERRIDES the layout, so this is the one Bing
   // actually reads — the earlier 167-char string here is what it flagged.
   description:
-    'Research compounds compounded to USP <797>, independently assayed, with the certificate published for every lot. Ships 48hr from San Antonio.',
+    'Research compounds compounded in a licensed US facility, independently assayed, certificate published for every lot. Ships 48hr from San Antonio.',
   alternates: { canonical: '/' },
   openGraph: {
     title: 'Merit Sciences — Same Stack. Better Source.',
     description:
-      'Compounded to USP <797>, assayed by an independent laboratory, certificate published on every lot. Ships 48 hours from San Antonio.',
+      'Compounded in a licensed US facility, assayed by an independent laboratory, certificate published on every lot. Ships 48 hours from San Antonio.',
     url: 'https://meritsciences.com',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, USP <797> compounded, every lot assayed, 48-hour dispatch from San Antonio.',
+        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, compounded in a licensed US facility, every lot assayed, 48-hour dispatch from San Antonio.',
       },
     ],
   },
@@ -38,7 +38,7 @@ export const metadata = {
     card: 'summary_large_image' as const,
     title: 'Merit Sciences — Same Stack. Better Source.',
     description:
-      'USP <797> compounded, independently assayed, certificate published on every lot. Ships 48hr from San Antonio.',
+      'Compounded in a licensed US facility, independently assayed, certificate published on every lot. Ships 48hr from San Antonio.',
     images: ['/og-image.jpg'],
   },
 };
@@ -178,7 +178,7 @@ export default async function HomePage() {
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 pb-16 lg:pb-20">
           <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
-            {productCount} compounds in stock · Compounded to USP &lt;797&gt; · Tested by ILS Laboratories
+            {productCount} compounds in stock · Licensed US facility · Tested by ILS Laboratories
           </p>
           <h1
             className="font-poster font-black uppercase leading-[0.84] tracking-[-0.05em]"
@@ -192,7 +192,7 @@ export default async function HomePage() {
           </h1>
           <div className="mt-9 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
             <p className="max-w-[48ch] text-[15px] leading-[1.62] text-white/70">
-              The compounds you already source — compounded to USP &lt;797&gt; in a licensed US
+              The compounds you already source — compounded in a licensed US
               facility, tested by an outside laboratory on every lot, certificate published before
               you pay. From <b className="text-white font-semibold">$0.17 per mg</b>.
             </p>
@@ -348,7 +348,7 @@ export default async function HomePage() {
             </h2>
             <div className="mt-8 space-y-5 max-w-[54ch]">
               {[
-                ['Compounded, not imported blind', 'Licensed US facility, compounded to USP <797> — the sterile-compounding standard, on every lot.'],
+                ['Compounded, not imported blind', 'Compounded in a licensed US facility — not drop-shipped from an overseas broker.'],
                 ['Tested by an outside lab', 'Identity, purity, heavy metals, fentanyl screen — run by ILS Laboratories, not by us.'],
                 ['Published before you pay', 'Scan the QR on any vial and that exact lot’s certificate opens. No account, no email chain.'],
               ].map(([t, b]) => (

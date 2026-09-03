@@ -111,10 +111,10 @@ export function renderProspectSourcing(d: ProspectEmailData): Rendered {
     'Where it comes from',
     h('Where your compounds actually come from.') +
       p('Most of what’s sold online is bulk-imported, repackaged in someone’s spare room, and sold on a guess.') +
-      p('Merit is compounded to USP <797> in an ISO-certified US facility and released against an independent laboratory assay, with a COA on every lot. The difference is the part you can’t see in a product photo — so we document it instead of asking you to assume it.') +
+      p('Merit is compounded in an ISO-certified US facility and released against an independent laboratory assay, with a COA on every lot. The difference is the part you can’t see in a product photo — so we document it instead of asking you to assume it.') +
       stat('48 hrs', 'sealed, tested, and shipped from San Antonio') +
       cta('See how a Merit lot is made →', shop),
-    `Most online compounds are bulk-imported and sold on a guess. Merit is compounded to USP <797> in an ISO-certified US facility, independently assayed, COA on every lot, shipped from San Antonio in 48 hours.\n${shop}`,
+    `Most online compounds are bulk-imported and sold on a guess. Merit is compounded in an ISO-certified US facility, independently assayed, COA on every lot, shipped from San Antonio in 48 hours.\n${shop}`,
     d,
   );
 }

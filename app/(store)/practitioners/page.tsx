@@ -9,19 +9,19 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: { absolute: 'Practitioner Program — Merit Sciences' },
   description:
-    'Account pricing for licensed practitioners. USP <797> compounded, independently assayed, certificate published on every lot. Ships 48hr from San Antonio. No minimums.',
+    'Account pricing for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate published on every lot. No minimums.',
   alternates: { canonical: '/practitioners' },
   openGraph: {
     title: 'Merit Sciences Practitioner Program — sourcing your practice can stand behind',
     description:
-      'Verified-account access for licensed practitioners. USP <797> compounded, independently assayed, certificate published on every lot. No minimums, no contracts.',
+      'Verified-account access for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate published on every lot. No minimums, no contracts.',
     url: 'https://meritsciences.com/practitioners',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences Practitioner Program — USP <797> compounded research compounds, every lot independently assayed with a published certificate of analysis.',
+        alt: 'Merit Sciences Practitioner Program — research compounds compounded in a licensed US facility, every lot independently assayed with a published certificate of analysis.',
       },
     ],
   },
@@ -29,7 +29,7 @@ export const metadata = {
     card: 'summary_large_image' as const,
     title: 'Merit Sciences Practitioner Program',
     description:
-      'Verified-account access for licensed practitioners. USP <797> compounded, independently assayed, certificate on every lot.',
+      'Verified-account access for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate on every lot.',
     images: ['/og-image.jpg'],
   },
 };
@@ -58,7 +58,7 @@ export const metadata = {
       and is no less persuasive for it.
 
    3. IT CLAIMED "40+ TEXAS PRACTICES". There are 4 applications in the
-      database. Removed — the verifiable credentials (USP <797>, independent
+      database. Removed — the verifiable credentials (licensed US facility, independent
       assay, published COA, 48hr dispatch) carry more weight anyway.
 
    4. NO GRADE FRAMING. "Pharmacy-grade" is retired site-wide per the
@@ -161,8 +161,8 @@ export default async function PractitionersPage() {
               <span className="text-cobalt">stand behind.</span>
             </h1>
             <p className="mt-7 max-w-[52ch] text-[15px] lg:text-[16px] leading-[1.62] text-ink-soft">
-              Account pricing for licensed practitioners — on compounds compounded to USP
-              &lt;797&gt; in a licensed US facility, assayed by an independent laboratory, with the
+              Account pricing for licensed practitioners — on compounds compounded in a
+              licensed US facility, assayed by an independent laboratory, with the
               certificate for every lot published before you buy. No minimums, no contracts.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
@@ -208,7 +208,7 @@ export default async function PractitionersPage() {
       <section className="border-y border-ink/10 bg-cream">
         <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4">
           {[
-            ['USP <797>', 'compounded, licensed US facility'],
+            ['Licensed', 'US compounding facility'],
             ['≥99%', 'HPLC purity, assayed per lot'],
             ['Every lot', 'COA published before purchase'],
             ['48 hrs', 'dispatch from San Antonio · no minimums'],
@@ -338,7 +338,7 @@ export default async function PractitionersPage() {
             </h2>
             <div className="mt-8 space-y-5 max-w-[54ch]">
               {[
-                ['Compounded, not imported blind', 'Licensed US facility, compounded to USP <797> — the sterile-compounding standard, on every lot.'],
+                ['Compounded, not imported blind', 'Compounded in a licensed US facility — not drop-shipped from an overseas broker.'],
                 ['Assayed by an outside laboratory', 'Identity, purity, heavy metals and a fentanyl screen — run by ILS Laboratories, not by us.'],
                 ['Published before you buy', 'Scan the QR on any vial and that exact lot’s certificate opens. No account needed, no request form.'],
                 ['Acetate, not TFA', 'We pay for the acetate exchange most discount sources skip. It shows up in the assay, not the invoice.'],

@@ -141,7 +141,7 @@ export default async function HomeV2() {
     },
     {
       q: 'How are Merit compounds produced?',
-      a: 'Compounds are produced in an ISO-certified US facility under USP <797> sterile practices, sealed and lot-labeled to clinical standard, and released only after a licensed pharmacist signs off on the batch.',
+      a: 'Compounds are produced in an ISO-certified US facility under sterile compounding practices, sealed and lot-labeled, and released against an independent laboratory assay.',
     },
     {
       q: 'Who can purchase?',
@@ -237,7 +237,7 @@ export default async function HomeV2() {
           <ul className="mt-7 space-y-4">
             {[
               ['In your hands in 48 hours', 'Cold-chain and tracked from Dallas — not two weeks from overseas.'],
-              ['Made in a sterile US facility', 'ISO-certified, USP <797> cleanroom, released by a licensed pharmacist.'],
+              ['Made in a sterile US facility', 'ISO-certified cleanroom, released against an independent laboratory assay.'],
               ['Labeled to clinical standard', 'Compound, dose, lot, and handling on every vial. No unmarked grey-market glass.'],
               ['Verified ≥99% purity', 'Independently HPLC-tested, COA a QR-scan away on every label, acetate salt — never TFA.'],
             ].map(([t, b]) => (
