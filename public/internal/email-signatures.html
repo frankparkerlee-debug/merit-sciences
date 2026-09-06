@@ -139,7 +139,9 @@ function buildSignature() {
 }
 
 function render() {
-  $('sigHolder').innerHTML = buildSignature();
+  // Preview loads images same-origin so it works even mid-deploy / on localhost.
+  // The copied signature keeps absolute meritsciences.com URLs.
+  $('sigHolder').innerHTML = buildSignature().replaceAll(`src="${BASE}/brand/email/`, `src="/brand/email/`);
   $('copied').textContent = '';
 }
 
