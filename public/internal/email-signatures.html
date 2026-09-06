@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merit — Email Signatures</title>
+<style>
+  :root { --cobalt:#2E4DDB; --ink:#0B0F19; --ink-soft:#4A5160; --ink-muted:#94A0B0; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"Helvetica Neue",Arial,sans-serif; background:#f2f3f5; color:#1a1a1a; }
+  header { background:#fff; border-bottom:1px solid #e2e4e8; padding:14px 24px; }
+  header h1 { margin:0; font-size:17px; }
+  header p { margin:4px 0 0; font-size:12px; color:#667; }
+  main { display:flex; gap:24px; padding:24px; align-items:flex-start; flex-wrap:wrap; }
+  .panel { background:#fff; border:1px solid #e2e4e8; border-radius:10px; padding:18px 20px; }
+  #controls { width:320px; flex-shrink:0; }
+  #controls label { display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:#556; margin:12px 0 4px; }
+  #controls input, #controls select { width:100%; padding:7px 9px; font-size:13px; border:1px solid #c9ccd2; border-radius:6px; font-family:inherit; }
+  .buttons { display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+  button { padding:10px 12px; font-size:13px; font-weight:600; border:none; border-radius:7px; cursor:pointer; font-family:inherit; }
+  #btnCopy { background:var(--cobalt); color:#fff; }
+  #btnHtml { background:#1a1a1a; color:#fff; }
+  #copied { font-size:12px; color:#1a7f37; text-align:center; min-height:16px; margin-top:8px; }
+  #preview { flex:1; min-width:520px; }
+  #preview h2 { margin:0 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:#556; }
+  #sigHolder { background:#fff; border:1px dashed #c9ccd2; border-radius:8px; padding:24px; overflow-x:auto; }
+  .howto { margin-top:14px; font-size:12px; line-height:1.6; color:#667; max-width:640px; }
+  .howto strong { color:#334; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Merit — Team Email Signatures</h1>
+  <p>Pick your team, fill in your details, hit Copy, then paste into your email client's signature editor.</p>
+</header>
+
+<main>
+  <div class="panel" id="controls">
+    <label for="fTeam">Team</label>
+    <select id="fTeam">
+      <option value="rx">RX Team</option>
+      <option value="support">Support Team</option>
+    </select>
+
+    <label for="fName">Full name</label>
+    <input id="fName" value="" placeholder="First Last">
+
+    <label for="fTitle">Title</label>
+    <input id="fTitle" value="" placeholder="Account Manager">
+
+    <label for="fEmail">Email</label>
+    <input id="fEmail" value="" placeholder="you@meritpeptides.com">
+
+    <label for="fPhone">Phone (optional)</label>
+    <input id="fPhone" value="" placeholder="(512) 555-0100">
+
+    <div class="buttons">
+      <button id="btnCopy">Copy signature</button>
+      <button id="btnHtml">Copy HTML source</button>
+    </div>
+    <div id="copied"></div>
+  </div>
+
+  <div class="panel" id="preview">
+    <h2>Preview</h2>
+    <div id="sigHolder"></div>
+    <p class="howto">
+      <strong>Gmail:</strong> Settings → See all settings → Signature → paste (Cmd-V).<br>
+      <strong>Apple Mail:</strong> Settings → Signatures → paste.<br>
+      <strong>Outlook:</strong> Settings → Compose → Signatures → paste, or use “Copy HTML source” if your admin sets signatures centrally.<br>
+      Images are hosted on meritsciences.com, so the signature stays intact for recipients.
+    </p>
+  </div>
+</main>
+
+<script>
+const BASE = 'https://meritsciences.com';
+const TEAMS = {
+  rx: {
+    label: 'RX Team',
+    banner: BASE + '/brand/email/banner-rx-2x.png',
+    bannerAlt: 'Merit Practitioner Program',
+    bannerLink: BASE + '/practitioners',
+  },
+  support: {
+    label: 'Support Team',
+    banner: BASE + '/brand/email/banner-support-2x.png',
+    bannerAlt: 'Merit — Same Stack. Better Source.',
+    bannerLink: BASE + '/',
+  },
+};
+
+const DISCLAIMER =
+  'All Merit compounds are research chemicals supplied for laboratory research use only. ' +
+  'They are not for human or veterinary use, and are not intended for therapeutic or diagnostic purposes.';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function buildSignature() {
+  const t = TEAMS[$('fTeam').value];
+  const name  = $('fName').value.trim()  || 'First Last';
+  const title = $('fTitle').value.trim() || 'Team Member';
+  const email = $('fEmail').value.trim() || 'you@meritpeptides.com';
+  const phone = $('fPhone').value.trim();
+
+  const contactBits = [
+    `<a href="mailto:${esc(email)}" style="color:#2E4DDB;text-decoration:none;">${esc(email)}</a>`,
+    phone ? `<span style="color:#0B0F19;">${esc(phone)}</span>` : '',
+    `<a href="${BASE}" style="color:#2E4DDB;text-decoration:none;">meritsciences.com</a>`,
+  ].filter(Boolean).join(`<span style="color:#c9ccd2;">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`);
+
+  return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="font-family:Arial,Helvetica,sans-serif;border-collapse:collapse;">
+  <tr>
+    <td style="padding:0 0 12px 0;">
+      <a href="${BASE}" style="text-decoration:none;"><img src="${BASE}/brand/email/merit-logo-2x.png" width="118" height="53" alt="Merit" style="display:block;border:0;"></a>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 0 2px 0;font-size:15px;line-height:20px;color:#0B0F19;"><strong>${esc(name)}</strong></td>
+  </tr>
+  <tr>
+    <td style="padding:0 0 8px 0;font-size:13px;line-height:18px;color:#4A5160;">${esc(title)} &middot; ${esc(t.label)} &middot; Merit Sciences</td>
+  </tr>
+  <tr>
+    <td style="padding:0 0 14px 0;font-size:13px;line-height:18px;">${contactBits}</td>
+  </tr>
+  <tr>
+    <td style="padding:0;">
+      <a href="${t.bannerLink}" style="text-decoration:none;"><img src="${t.banner}" width="600" height="80" alt="${esc(t.bannerAlt)}" style="display:block;border:0;max-width:600px;width:100%;height:auto;"></a>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:10px 0 0 0;font-size:11px;line-height:15px;color:#94A0B0;max-width:600px;">${DISCLAIMER}</td>
+  </tr>
+</table>`;
+}
+
+function render() {
+  $('sigHolder').innerHTML = buildSignature();
+  $('copied').textContent = '';
+}
+
+document.querySelectorAll('#controls input, #controls select')
+  .forEach(el => el.addEventListener('input', render));
+
+function flash(msg) { $('copied').textContent = msg; setTimeout(() => $('copied').textContent = '', 2500); }
+
+$('btnCopy').addEventListener('click', async () => {
+  const html = buildSignature();
+  const plain = $('sigHolder').innerText;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html':  new Blob([html],  { type: 'text/html' }),
+      'text/plain': new Blob([plain], { type: 'text/plain' }),
+    })]);
+    flash('Signature copied — paste into your email client.');
+  } catch (e) {
+    // fallback: select the preview so the user can Cmd-C
+    const r = document.createRange();
+    r.selectNodeContents($('sigHolder'));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    flash('Press Cmd-C to copy the selected signature.');
+  }
+});
+
+$('btnHtml').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(buildSignature());
+  flash('HTML source copied.');
+});
+
+render();
+</script>
+</body>
+</html>
