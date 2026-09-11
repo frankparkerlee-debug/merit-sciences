@@ -12,6 +12,13 @@ import { notFound } from 'next/navigation';
  * Every specific route in either group still wins over a catch-all, and the
  * checkout host never gets this far: middleware dead-ends its unknown paths.
  */
+// Without its own metadata, the store layout's default title and
+// index, follow take over once the page hydrates.
+export const metadata = {
+  title: 'Page not found',
+  robots: { index: false, follow: true },
+};
+
 export default function CatchAll() {
   notFound();
 }
