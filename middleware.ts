@@ -54,6 +54,33 @@ const GATE_HOSTS = (process.env.GATE_HOST || 'trymerit.co')
   .map((h) => h.trim().toLowerCase())
   .filter(Boolean);
 
+// Landing host: shop.meritsciences.com, served by this same app.
+//
+// It exists to host ONE page. Everything else on it 308s to the canonical
+// store, because a second host serving the whole catalog is a duplicate copy
+// of every product page and splits their ranking. SHOP_LANDING_PATH is the
+// route served at shop.meritsciences.com/; while it is null the host is
+// parked and "/" redirects too, so the DNS record can go live before the page
+// exists without exposing anything.
+const SHOP_HOSTS = ['shop.meritsciences.com'];
+const SHOP_LANDING_PATH: string | null = null;
+
+function isShopHost(host: string): boolean {
+  return SHOP_HOSTS.includes(host.toLowerCase().split(':')[0]);
+}
+
+// Attribution and affiliate cookies are scoped to the parent domain so a click
+// captured on shop.meritsciences.com is still there when the buyer reaches the
+// store on meritsciences.com. Host-only cookies stay on the host that set them,
+// so every paid click routed through a subdomain would lose its source.
+// (meritcheckout.com is a different site entirely; the handoff carries these
+// across that boundary, not the cookie.)
+const COOKIE_PARENT = 'meritsciences.com';
+function sharedCookieDomain(host: string): string | undefined {
+  const h = host.toLowerCase().split(':')[0];
+  return h === COOKIE_PARENT || h.endsWith(`.${COOKIE_PARENT}`) ? `.${COOKIE_PARENT}` : undefined;
+}
+
 function isGateHost(host: string): boolean {
   const h = host.toLowerCase().split(':')[0]; // strip any port
   return GATE_HOSTS.some((g) => h === g || h === `www.${g}`);
@@ -247,10 +274,39 @@ export async function middleware(req: NextRequest) {
         sameSite: 'lax',
         path: '/',
         maxAge: ATTR_COOKIE_MAX_AGE,
+        domain: sharedCookieDomain(reqHost),
       });
     }
     return res;
   };
+
+  // ── Landing host: shop.meritsciences.com ───────────────────────────────
+  // Runs after the ad-crawler fence on purpose: Meta and TikTok crawlers get
+  // the /access gate here exactly as they do on the store. Whether a given
+  // landing page should be shown to them is decided when that page exists.
+  if (isShopHost(reqHost)) {
+    // An affiliate link can land here too. Let the ?ref= handler below stamp
+    // the cookie and bounce to the clean URL; that request comes back through.
+    const refSlug = (searchParams.get('ref') || '').trim().toLowerCase();
+    if (!(refSlug && SLUG_RE.test(refSlug))) {
+      if (pathname === '/' && SHOP_LANDING_PATH) {
+        const landing = req.nextUrl.clone();
+        landing.pathname = SHOP_LANDING_PATH;
+        const res = NextResponse.rewrite(landing);
+        // The landing duplicates store content; the store is the page to rank.
+        res.headers.set('X-Robots-Tag', 'noindex, follow');
+        return withAttr(res);
+      }
+      // Everything else, and "/" while parked, lives on the store. Path and
+      // query survive, so a gclid or UTM on a shop link still arrives; the
+      // cookie is stamped on this response as well, domain-wide.
+      const store = req.nextUrl.clone();
+      store.protocol = 'https:';
+      store.host = 'meritsciences.com';
+      store.port = '';
+      return withAttr(NextResponse.redirect(store, 308));
+    }
+  }
 
   // ── /card is checkout-domain ONLY ───────────────────────────────────────
   // The page loads Stripe Elements, so whichever host serves it is a host
@@ -306,6 +362,7 @@ export async function middleware(req: NextRequest) {
     sameSite: 'lax',
     path: '/',
     maxAge: COOKIE_MAX_AGE_SECONDS,
+    domain: sharedCookieDomain(reqHost),
   });
 
   // Fire-and-forget click log. We never await this — if it fails, the
