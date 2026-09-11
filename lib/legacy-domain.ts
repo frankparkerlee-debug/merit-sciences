@@ -37,7 +37,7 @@ const PRODUCT_HANDLES = [
   'semaglutide-20mg',
   'semaglutide-10mg',
   'retatrutide-10mg',
-  'tirzepatide-10mg',
+  'ly3298176-10mg',
   'tesamorelin-20mg',
   'ipamorelin-10mg',
   'melanotan-ii',
@@ -84,7 +84,8 @@ const HANDLE_ALIASES: Record<string, string> = {
   'cjc-ipamorelin': 'cjc-1295-w-o-dac-10-ipa-10-20mg',
   tesamorelin: 'tesamorelin-20mg',
   'tesamorelin-10mg': 'th9507',
-  tirzepatide: 'tirzepatide-10mg',
+  // Active SKU, not the 10mg draft: legacy backlinks should land on something buyable.
+  tirzepatide: 'ly3298176',
   retatrutide: 'retatrutide-10mg',
   reta: 'retatrutide-10mg',
   semaglutide: 'semaglutide-10mg',

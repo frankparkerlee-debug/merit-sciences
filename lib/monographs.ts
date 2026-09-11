@@ -31,7 +31,7 @@ export const COMPOUND_META: CompoundMeta[] = [
     key: 'ly3298176', slug: 'tirzepatide', title: 'Tirzepatide',
     aka: ['LY3298176', 'GIP/GLP-1 receptor agonist', 'dual incretin agonist'],
     tagline: 'The dual GIP/GLP-1 receptor agonist studied in the SURMOUNT and SURPASS programs.',
-    product: { handle: 'tirzepatide-10mg', fromPrice: 75, purity: '≥99%', vialSize: '10 mg' },
+    product: { handle: 'ly3298176-10mg', fromPrice: 75, purity: '≥99%', vialSize: '10 mg' },
     relatedSlugs: ['surmount-1-tirzepatide-obesity-research', 'surpass-2-tirzepatide-vs-semaglutide'],
   },
   {

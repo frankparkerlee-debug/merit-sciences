@@ -137,7 +137,7 @@ const SNAPSHOT = [
     "imageUrl": null
   },
   {
-    "handle": "tirzepatide-10mg",
+    "handle": "ly3298176-10mg",
     "title": "Tirzepatide",
     "compound": "Tirzepatide",
     "vialSize": "10 mg",

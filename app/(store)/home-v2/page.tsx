@@ -35,7 +35,7 @@ export const metadata = {
 
 // Curated top-sellers, in display order. Matched against live catalog.
 const FEATURED_HANDLES = [
-  'tirzepatide-10mg',
+  'ly3298176-10mg',
   'retatrutide-10mg',
   'semaglutide-10mg',
   'bpc-10mg-tb-10mg-wolverine-20mg',
@@ -48,7 +48,7 @@ const FEATURED_HANDLES = [
 // Static fallback so the page NEVER renders an empty shelf (DB cold start,
 // local dev). Prices verified against catalog 2026-07.
 const FALLBACK_FEATURED = [
-  { handle: 'tirzepatide-10mg', title: 'Tirzepatide 10 mg', priceCents: 7499, imageUrl: '/products/sku-tirzepatide-10mg.webp' },
+  { handle: 'ly3298176-10mg', title: 'Tirzepatide 10 mg', priceCents: 7499, imageUrl: '/products/sku-tirzepatide-10mg.webp' },
   { handle: 'retatrutide-10mg', title: 'Retatrutide 10 mg', priceCents: 9999, imageUrl: '/products/sku-retatrutide-10mg.webp' },
   { handle: 'semaglutide-10mg', title: 'Semaglutide 10 mg', priceCents: 6499, imageUrl: '/products/sku-semaglutide-10mg.webp' },
   { handle: 'bpc-10mg-tb-10mg-wolverine-20mg', title: 'BPC-157 + TB-500 20 mg', priceCents: 9999, imageUrl: '/products/sku-bpc-10mg-tb-10mg-wolverine-20mg.webp' },
