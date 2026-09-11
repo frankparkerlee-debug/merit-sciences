@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { resolveHandle } from '@/lib/handle-aliases';
+import { resolvePublicHandle } from '@/lib/handle-aliases';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProduct, listProducts } from '@/lib/catalog';
@@ -130,8 +130,10 @@ export default async function ProductPage({ params }: Props) {
   if (!raw) {
     // A renamed product: 308 so links, emails and AI citations to the old
     // handle land here and engines transfer what they'd attributed to it.
-    const current = await resolveHandle(params.handle);
-    if (current !== params.handle) permanentRedirect(`/products/${current}`);
+    // An ORPHANED handle (null) 404s instead: forwarding it would transfer
+    // exactly the association the rename was meant to drop.
+    const current = await resolvePublicHandle(params.handle);
+    if (current && current !== params.handle) permanentRedirect(`/products/${current}`);
     return notFound();
   }
   // Decorate with effective pricing — practitioner pricing replaces

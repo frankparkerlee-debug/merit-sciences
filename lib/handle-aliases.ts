@@ -23,7 +23,26 @@ import { COUNTERPARTS } from './approved-counterparts';
 
 export const HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** The current handle for `handle`, or `handle` itself when it isn't retired. */
+/**
+ * Where a PUBLIC request for `handle` should go. Returns the current handle
+ * for a forwarding alias, `handle` itself when it isn't retired, and null when
+ * it was ORPHANED: the caller should 404 rather than reveal where it went.
+ * Orphaning exists for handles whose name we want gone from the public record,
+ * where a 308 would hand that name's association straight to the product.
+ */
+export async function resolvePublicHandle(handle: string): Promise<string | null> {
+  const row = await prisma.productHandleAlias.findUnique({
+    where: { oldHandle: handle },
+    select: { newHandle: true, redirect: true },
+  });
+  if (!row) return handle;
+  return row.redirect ? row.newHandle : null;
+}
+
+/**
+ * Where `handle` points INTERNALLY, orphaned or not. For admin navigation and
+ * anything that never produces a public response.
+ */
 export async function resolveHandle(handle: string): Promise<string> {
   const row = await prisma.productHandleAlias.findUnique({
     where: { oldHandle: handle },
@@ -32,7 +51,11 @@ export async function resolveHandle(handle: string): Promise<string> {
   return row?.newHandle ?? handle;
 }
 
-/** Batch form for checkout: one query, returns old → current for any retired. */
+/**
+ * Batch form for checkout: one query, returns old → current for any retired
+ * handle, INCLUDING orphaned ones. Orphaning severs the public URL, not the
+ * buyer's saved cart. Nothing here reaches a crawler.
+ */
 export async function resolveHandles(handles: string[]): Promise<Map<string, string>> {
   const unique = [...new Set(handles.filter(Boolean))];
   if (unique.length === 0) return new Map();

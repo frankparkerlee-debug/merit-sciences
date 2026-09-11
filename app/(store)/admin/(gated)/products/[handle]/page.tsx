@@ -25,13 +25,11 @@ export default async function EditProductPage({
     notFound();
   }
 
-  const aliases = (
-    await prisma.productHandleAlias.findMany({
-      where: { newHandle: product.handle },
-      orderBy: { createdAt: 'asc' },
-      select: { oldHandle: true },
-    })
-  ).map((a) => a.oldHandle);
+  const aliases = await prisma.productHandleAlias.findMany({
+    where: { newHandle: product.handle },
+    orderBy: { createdAt: 'asc' },
+    select: { oldHandle: true, redirect: true },
+  });
 
   return (
     <main className="max-w-[1240px] mx-auto px-5 sm:px-6 lg:px-8 py-8">

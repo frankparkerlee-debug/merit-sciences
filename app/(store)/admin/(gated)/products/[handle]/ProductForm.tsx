@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { useEffect, useRef, useState, useTransition, type MutableRefObject } from 'react';
+import { useRouter } from 'next/navigation';
 import { useFormState, useFormStatus } from 'react-dom';
-import { updateProduct, deleteProduct, changeProductHandle, type ActionResult } from '../actions';
+import { updateProduct, deleteProduct, changeProductHandle, setAliasForwarding, type ActionResult } from '../actions';
 import { ImageUploader } from './ImageUploader';
 
 /**
@@ -60,8 +61,8 @@ type ProductFormData = {
 };
 
 type HandleInfo = {
-  /** Retired handles that already forward to this product. */
-  aliases: string[];
+  /** Retired handles resolving to this product; redirect=false means orphaned. */
+  aliases: { oldHandle: string; redirect: boolean }[];
   /** Places in source code that key on this handle literally. */
   codeRefs: string[];
 };
@@ -108,11 +109,16 @@ export function ProductForm({ product, handleInfo }: { product: ProductFormData;
       id={HANDLE_FORM_ID}
       action={handleAction}
       onSubmit={(e) => {
-        const next = (new FormData(e.currentTarget).get('newHandle') ?? '').toString().trim();
+        const fd = new FormData(e.currentTarget);
+        const next = (fd.get('newHandle') ?? '').toString().trim();
+        const forward = fd.get('forward') === 'on';
+        const fate = forward
+          ? 'The old URL will forward to the new one. Saved carts keep working.'
+          : 'The old URL will be ORPHANED: it will 404 and not point here. Saved carts keep working.';
         const refs = handleInfo.codeRefs.length
           ? `\n\nThis handle is also hardcoded in code (${handleInfo.codeRefs.join(', ')}). Those will need updating separately.`
           : '';
-        if (!next || !window.confirm(`Change /${product.handle} to /${next}?\n\nOld links, emails and saved carts will forward to the new handle.${refs}`)) {
+        if (!next || !window.confirm(`Change /${product.handle} to /${next}?\n\n${fate}${refs}`)) {
           e.preventDefault();
         }
       }}
@@ -574,6 +580,13 @@ function HandleSection({
         placeholder="new-handle"
         className={`${inputCls} font-mono`}
       />
+      <label className="flex items-start gap-2 text-[11px] text-ink-soft leading-snug cursor-pointer">
+        <input form={HANDLE_FORM_ID} type="checkbox" name="forward" defaultChecked className="mt-0.5" />
+        <span>
+          Forward the old URL here. Untick to <b className="text-ink">orphan</b> it instead: it 404s and
+          stops pointing at this product. Use that when the old name itself is the problem.
+        </span>
+      </label>
       <button
         form={HANDLE_FORM_ID}
         type="submit"
@@ -582,16 +595,9 @@ function HandleSection({
         Change handle
       </button>
       <p className="text-[10px] text-ink-soft/70 leading-relaxed">
-        Lowercase letters, numbers and hyphens. The old URL keeps working and forwards here.
+        Lowercase letters, numbers and hyphens. Saved carts holding the old handle keep working either way.
       </p>
-      {info.aliases.length > 0 && (
-        <p className="text-[11px] text-ink-soft leading-relaxed">
-          Forwarding here:{' '}
-          {info.aliases.map((a, i) => (
-            <span key={a} className="font-mono">{i > 0 ? ', ' : ''}/{a}</span>
-          ))}
-        </p>
-      )}
+      {info.aliases.length > 0 && <AliasList aliases={info.aliases} />}
       {info.codeRefs.length > 0 && (
         <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-600/25 rounded-lg px-3 py-2 leading-relaxed">
           Also hardcoded in code: {info.codeRefs.join(', ')}. A rename here won't update those, so ask for them to be changed too.
@@ -599,6 +605,45 @@ function HandleSection({
       )}
       {result && !result.ok && <p className="text-xs text-rose-700">{result.error}</p>}
     </Card>
+  );
+}
+
+function AliasList({ aliases }: { aliases: HandleInfo['aliases'] }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  // Called directly rather than through a <form>: this renders inside the
+  // product form, and forms cannot nest.
+  const toggle = (oldHandle: string, redirect: boolean) => {
+    if (!redirect && !window.confirm(`Orphan /${oldHandle}?\n\nIt will 404 and stop pointing at this product. Saved carts keep working.`)) return;
+    setError(null);
+    startTransition(async () => {
+      const r = await setAliasForwarding(oldHandle, redirect);
+      if (!r.ok) setError(r.error);
+      router.refresh();
+    });
+  };
+  return (
+    <div className="space-y-1.5 pt-1">
+      <p className="text-[10px] tracking-[0.14em] uppercase text-ink-soft font-bold">Old handles</p>
+      {aliases.map((a) => (
+        <div key={a.oldHandle} className="flex items-center justify-between gap-2 text-[11px]">
+          <span className={`font-mono truncate ${a.redirect ? 'text-ink' : 'text-ink-soft/60 line-through'}`}>/{a.oldHandle}</span>
+          <span className="flex items-center gap-2 shrink-0">
+            <span className={a.redirect ? 'text-emerald-700' : 'text-amber-700'}>{a.redirect ? 'forwards' : 'orphaned'}</span>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => toggle(a.oldHandle, !a.redirect)}
+              className="underline underline-offset-2 text-cobalt disabled:opacity-50"
+            >
+              {a.redirect ? 'Orphan' : 'Restore'}
+            </button>
+          </span>
+        </div>
+      ))}
+      {error && <p className="text-xs text-rose-700">{error}</p>}
+    </div>
   );
 }
 

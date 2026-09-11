@@ -287,6 +287,9 @@ export async function changeProductHandle(_prev: ActionResult | null, formData: 
 
   const oldHandle = String(formData.get('handle') ?? '').trim();
   const newHandle = String(formData.get('newHandle') ?? '').trim().toLowerCase();
+  // Unchecked = orphan the old URL: it 404s instead of forwarding, so the old
+  // name's association isn't transferred. Checkout still resolves it.
+  const forward = formData.get('forward') === 'on';
 
   if (!oldHandle) return { ok: false, error: 'Missing current handle.' };
   if (newHandle === oldHandle) return { ok: false, error: 'That is already the handle.' };
@@ -316,7 +319,7 @@ export async function changeProductHandle(_prev: ActionResult | null, formData: 
       if (priorAlias) await tx.productHandleAlias.delete({ where: { oldHandle: newHandle } });
       await tx.product.update({ where: { handle: oldHandle }, data: { handle: newHandle } });
       await tx.coa.updateMany({ where: { productHandle: oldHandle }, data: { productHandle: newHandle } });
-      await tx.productHandleAlias.create({ data: { oldHandle, newHandle } });
+      await tx.productHandleAlias.create({ data: { oldHandle, newHandle, redirect: forward } });
     });
   } catch (err: any) {
     console.error('[admin/products] handle change failed', oldHandle, newHandle, err);
@@ -334,6 +337,34 @@ export async function changeProductHandle(_prev: ActionResult | null, formData: 
     `https://meritsciences.com/products/${oldHandle}`,
   ]);
   redirect(`/admin/products/${newHandle}?renamed=${encodeURIComponent(oldHandle)}`);
+}
+
+/* ─── Orphan / restore an old handle ─── */
+
+/**
+ * Flip whether a retired handle forwards publicly. Orphaning (false) makes the
+ * old URL 404 so its name stops pointing at the product; restoring (true)
+ * brings the 308 back. Either way checkout keeps resolving it, so a buyer's
+ * saved cart holding the old handle never breaks.
+ */
+export async function setAliasForwarding(oldHandle: string, redirect: boolean): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+  try {
+    const row = await prisma.productHandleAlias.update({
+      where: { oldHandle },
+      data: { redirect },
+      select: { newHandle: true },
+    });
+    revalidatePath(`/products/${oldHandle}`);
+    revalidatePath(`/admin/products/${row.newHandle}`);
+    // Tell engines the old URL changed: now gone, or forwarding again.
+    await pingIndexNow([`https://meritsciences.com/products/${oldHandle}`]);
+  } catch (err: any) {
+    if (err?.code === 'P2025') return { ok: false, error: `"${oldHandle}" is not a retired handle.` };
+    return { ok: false, error: err?.message ?? 'database error' };
+  }
+  return { ok: true, message: redirect ? `/${oldHandle} forwards again.` : `/${oldHandle} is orphaned.` };
 }
 
 /* ─── Delete product ─── */

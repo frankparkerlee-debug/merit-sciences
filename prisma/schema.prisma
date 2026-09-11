@@ -1143,6 +1143,10 @@ model PractitionerSubscription {
 model ProductHandleAlias {
   oldHandle String   @id
   newHandle String
+  /// true: the old URL 308s here. false: the old URL is ORPHANED (404s) to
+  /// sever the public association on purpose, while checkout still resolves
+  /// the handle so saved carts and reorder links keep working.
+  redirect  Boolean  @default(true)
   createdAt DateTime @default(now())
 
   product Product @relation(fields: [newHandle], references: [handle], onDelete: Cascade, onUpdate: Cascade)
