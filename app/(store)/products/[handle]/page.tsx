@@ -71,7 +71,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props) {
   const p = await getProduct(params.handle);
-  if (!p) return { title: 'Product' };
+  // Missing, retired or orphaned: this request ends in the 404 page, so say
+  // so. Returning a generic "Product" title here won over the not-found
+  // metadata once the page hydrated, leaving a 404 titled "Product" and
+  // flagged index, follow.
+  if (!p) return { title: 'Page not found', robots: { index: false, follow: true } };
 
   // Entity-rich metadata: leads with the real compound name + its class
   // so both Google and AI answer-engines map this page to the entity and
