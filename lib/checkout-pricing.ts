@@ -17,6 +17,7 @@ import { prisma } from './db';
 import { validateDiscountCode } from './discount';
 import { getPricingContext, priceFor } from './pricing';
 import { STACK_TEMPLATES } from './catalog-meta';
+import { resolveHandles } from './handle-aliases';
 
 export const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300
 export const FLAT_SHIPPING_CENTS = 999; // $9.99
@@ -141,10 +142,6 @@ export async function priceCart(args: {
   const practitionerSession = pricingCtx.session;
 
   {
-    const productHandles = [...new Set(
-      lines.filter((l) => !l.handle.startsWith('supply:') && !l.handle.startsWith('stack:'))
-           .map((l) => l.handle).filter(Boolean),
-    )];
     const stackSlugs = [...new Set(
       lines.filter((l) => l.handle.startsWith('stack:'))
            .map((l) => l.handle.slice('stack:'.length)),
@@ -153,10 +150,29 @@ export async function priceCart(args: {
       lines.filter((l) => l.handle.startsWith('supply:'))
            .map((l) => l.handle.slice('supply:'.length)),
     )];
-    // Stack member prices have to be resolved too, so fetch them alongside.
-    const stackMemberHandles = stackSlugs.flatMap(
+    // Stack members are hardcoded in STACK_TEMPLATES, so they go through the
+    // same forwarding as cart lines.
+    const rawStackMembers = stackSlugs.flatMap(
       (s) => STACK_TEMPLATES.find((t) => t.slug === s)?.handles ?? [],
     );
+
+    // Forward retired handles BEFORE pricing. Pricing fails closed on any
+    // handle it can't find, so without this a renamed product would make every
+    // cart, reorder link and abandoned-cart recovery still carrying the old
+    // handle unpurchasable. Rewriting line.handle also means the order records
+    // the product under its current name.
+    const forward = await resolveHandles([
+      ...lines.map((l) => l.handle),
+      ...rawStackMembers,
+    ]);
+    const current = (h: string) => forward.get(h) ?? h;
+    for (const line of lines) line.handle = current(line.handle);
+
+    const productHandles = [...new Set(
+      lines.filter((l) => !l.handle.startsWith('supply:') && !l.handle.startsWith('stack:'))
+           .map((l) => l.handle).filter(Boolean),
+    )];
+    const stackMemberHandles = rawStackMembers.map(current);
 
     const [products, supplies] = await Promise.all([
       productHandles.length + stackMemberHandles.length > 0
@@ -198,7 +214,7 @@ export async function priceCart(args: {
       if (line.handle.startsWith('stack:')) {
         const tpl = STACK_TEMPLATES.find((t) => t.slug === line.handle.slice('stack:'.length));
         if (tpl) {
-          const parts = tpl.handles.map(perVial);
+          const parts = tpl.handles.map(current).map(perVial);
           if (parts.every((c): c is number => c != null)) {
             const sum = parts.reduce((a, b) => a + b, 0);
             authoritative = Math.round(sum * (1 - tpl.bundleDiscountPct / 100));

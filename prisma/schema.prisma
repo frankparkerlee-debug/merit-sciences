@@ -740,6 +740,8 @@ model Product {
 
   // Back-relation for per-practitioner price overrides on this SKU.
   practitionerPriceOverrides PractitionerPriceOverride[]
+  // Retired handles that now resolve to this product.
+  handleAliases ProductHandleAlias[]
 
   @@index([status, channel])
   @@index([segment])
@@ -905,7 +907,7 @@ model PractitionerPriceOverride {
   updatedAt     DateTime @updatedAt
 
   application PractitionerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  product     Product                 @relation(fields: [productHandle], references: [handle], onDelete: Cascade)
+  product     Product                 @relation(fields: [productHandle], references: [handle], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([applicationId, productHandle])
   @@index([applicationId])
@@ -1129,4 +1131,22 @@ model PractitionerSubscription {
 
   @@index([applicationId])
   @@map("practitioner_subscriptions")
+}
+
+// A retired product handle and the handle it now resolves to.
+//
+// handle is Product's primary key and it travels everywhere: storefront URLs,
+// emailed links, AI citations, carts persisted in localStorage, reorder links.
+// Renaming it without a forwarding record would 404 every old link and, worse,
+// make any cart still holding the old handle fail closed at checkout.
+// Chains are collapsed on write, so resolution is always a single hop.
+model ProductHandleAlias {
+  oldHandle String   @id
+  newHandle String
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [newHandle], references: [handle], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([newHandle])
+  @@map("product_handle_aliases")
 }

@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 import { supabaseAdmin } from '@/lib/supabase';
+import { HANDLE_PATTERN } from '@/lib/handle-aliases';
 
 export type ActionResult =
   | { ok: true; message: string }
@@ -262,6 +263,77 @@ export async function createProduct(_prev: ActionResult | null, formData: FormDa
 
   revalidatePath('/admin/products');
   redirect(`/admin/products/${handle}`);
+}
+
+/* ─── Change handle ─── */
+
+/**
+ * Rename a product's handle (its primary key) without breaking anything that
+ * already points at the old one.
+ *
+ * In one transaction: the product row moves to the new key, practitioner
+ * overrides follow by FK cascade, any earlier alias pointing at this product
+ * follows by cascade too (so chains collapse to one hop), the loosely-linked
+ * COA rows are repointed by hand, and old → new is recorded. From then on the
+ * old URL 308s to the new one and a cart still holding the old handle prices
+ * normally at checkout.
+ *
+ * Order history is deliberately left alone: a line records what was sold under
+ * the name it was sold under.
+ */
+export async function changeProductHandle(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const oldHandle = String(formData.get('handle') ?? '').trim();
+  const newHandle = String(formData.get('newHandle') ?? '').trim().toLowerCase();
+
+  if (!oldHandle) return { ok: false, error: 'Missing current handle.' };
+  if (newHandle === oldHandle) return { ok: false, error: 'That is already the handle.' };
+  if (!HANDLE_PATTERN.test(newHandle) || newHandle.length < 2 || newHandle.length > 60) {
+    return { ok: false, error: 'Use 2 to 60 lowercase letters, numbers and single hyphens, like "ly3298176-30mg".' };
+  }
+
+  const [product, clash, priorAlias] = await Promise.all([
+    prisma.product.findUnique({ where: { handle: oldHandle }, select: { handle: true } }),
+    prisma.product.findUnique({ where: { handle: newHandle }, select: { handle: true } }),
+    prisma.productHandleAlias.findUnique({ where: { oldHandle: newHandle } }),
+  ]);
+  if (!product) return { ok: false, error: `No product found with handle "${oldHandle}".` };
+  if (clash) return { ok: false, error: `"${newHandle}" is already another product's handle.` };
+  // A retired handle still forwards its old links somewhere. Reusing it for a
+  // different product would silently send those links to the wrong item, so
+  // it's only allowed when it's this product reclaiming its own old name.
+  if (priorAlias && priorAlias.newHandle !== oldHandle) {
+    return {
+      ok: false,
+      error: `"${newHandle}" was retired and still forwards to "${priorAlias.newHandle}". Pick a different handle.`,
+    };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (priorAlias) await tx.productHandleAlias.delete({ where: { oldHandle: newHandle } });
+      await tx.product.update({ where: { handle: oldHandle }, data: { handle: newHandle } });
+      await tx.coa.updateMany({ where: { productHandle: oldHandle }, data: { productHandle: newHandle } });
+      await tx.productHandleAlias.create({ data: { oldHandle, newHandle } });
+    });
+  } catch (err: any) {
+    console.error('[admin/products] handle change failed', oldHandle, newHandle, err);
+    return { ok: false, error: `Could not change the handle: ${err?.message ?? 'database error'}` };
+  }
+
+  revalidatePath('/admin/products');
+  revalidatePath(`/products/${oldHandle}`);
+  revalidatePath(`/products/${newHandle}`);
+  revalidatePath('/catalog'); revalidateTag('products');
+  // Both: the new URL so it's crawled, the old so engines see the 308 and
+  // transfer what they'd attributed to it.
+  await pingIndexNow([
+    `https://meritsciences.com/products/${newHandle}`,
+    `https://meritsciences.com/products/${oldHandle}`,
+  ]);
+  redirect(`/admin/products/${newHandle}?renamed=${encodeURIComponent(oldHandle)}`);
 }
 
 /* ─── Delete product ─── */

@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
+import { resolveHandle } from '@/lib/handle-aliases';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProduct, listProducts } from '@/lib/catalog';
@@ -126,7 +127,13 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ProductPage({ params }: Props) {
   const raw = await getProduct(params.handle);
-  if (!raw) return notFound();
+  if (!raw) {
+    // A renamed product: 308 so links, emails and AI citations to the old
+    // handle land here and engines transfer what they'd attributed to it.
+    const current = await resolveHandle(params.handle);
+    if (current !== params.handle) permanentRedirect(`/products/${current}`);
+    return notFound();
+  }
   // Decorate with effective pricing — practitioner pricing replaces
   // priceCents in-place, retail stays available on retailPriceCents for
   // strikethrough comparison.

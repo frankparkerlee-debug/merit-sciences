@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
-import { updateProduct, deleteProduct, type ActionResult } from '../actions';
+import { updateProduct, deleteProduct, changeProductHandle, type ActionResult } from '../actions';
 import { ImageUploader } from './ImageUploader';
 
 /**
@@ -59,7 +59,21 @@ type ProductFormData = {
   images: string[];
 };
 
-export function ProductForm({ product }: { product: ProductFormData }) {
+type HandleInfo = {
+  /** Retired handles that already forward to this product. */
+  aliases: string[];
+  /** Places in source code that key on this handle literally. */
+  codeRefs: string[];
+};
+
+/* The handle form lives OUTSIDE the product <form>: forms cannot nest, and a
+   nested one is dropped by the HTML parser, so its button would submit the
+   outer save instead. Its controls sit in the sidebar and reach it through the
+   HTML `form` attribute. */
+const HANDLE_FORM_ID = 'product-handle-form';
+
+export function ProductForm({ product, handleInfo }: { product: ProductFormData; handleInfo: HandleInfo }) {
+  const [handleResult, handleAction] = useFormState<ActionResult | null, FormData>(changeProductHandle, null);
   const [result, formAction] = useFormState<ActionResult | null, FormData>(updateProduct, null);
   /* Silent-failure guard. When the page was loaded before a deploy, the form
      posts a Server Action id the running build no longer has; Next.js rejects
@@ -89,6 +103,20 @@ export function ProductForm({ product }: { product: ProductFormData }) {
   }, [result]);
 
   return (
+    <>
+    <form
+      id={HANDLE_FORM_ID}
+      action={handleAction}
+      onSubmit={(e) => {
+        const next = (new FormData(e.currentTarget).get('newHandle') ?? '').toString().trim();
+        const refs = handleInfo.codeRefs.length
+          ? `\n\nThis handle is also hardcoded in code (${handleInfo.codeRefs.join(', ')}). Those will need updating separately.`
+          : '';
+        if (!next || !window.confirm(`Change /${product.handle} to /${next}?\n\nOld links, emails and saved carts will forward to the new handle.${refs}`)) {
+          e.preventDefault();
+        }
+      }}
+    />
     <form
       action={(fd) => {
         setSubmitted(true);
@@ -449,9 +477,12 @@ export function ProductForm({ product }: { product: ProductFormData }) {
           )}
         </div>
 
+        <HandleSection handle={product.handle} info={handleInfo} result={handleResult} />
+
         <DeleteSection handle={product.handle} />
       </aside>
     </form>
+    </>
   );
 }
 
@@ -507,6 +538,67 @@ function SaveButton() {
     >
       {pending ? 'Saving…' : 'Save product'}
     </button>
+  );
+}
+
+function HandleSection({
+  handle,
+  info,
+  result,
+}: {
+  handle: string;
+  info: HandleInfo;
+  result: ActionResult | null;
+}) {
+  return (
+    <Card label="URL handle">
+      <p className="text-xs text-ink-soft leading-relaxed">
+        Current: <span className="font-mono text-ink">/products/{handle}</span>
+      </p>
+      {/* No required/pattern here on purpose: the product form listens for
+          `invalid` in the capture phase, and events travel the DOM tree, so a
+          failing constraint on this field would raise the main form's banner.
+          The server validates instead. */}
+      <input
+        form={HANDLE_FORM_ID}
+        type="hidden"
+        name="handle"
+        value={handle}
+      />
+      <input
+        form={HANDLE_FORM_ID}
+        name="newHandle"
+        type="text"
+        autoComplete="off"
+        spellCheck={false}
+        placeholder="new-handle"
+        className={`${inputCls} font-mono`}
+      />
+      <button
+        form={HANDLE_FORM_ID}
+        type="submit"
+        className="w-full border border-ink/20 text-ink px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase hover:border-cobalt hover:text-cobalt transition"
+      >
+        Change handle
+      </button>
+      <p className="text-[10px] text-ink-soft/70 leading-relaxed">
+        Lowercase letters, numbers and hyphens. The old URL keeps working and forwards here.
+      </p>
+      {info.aliases.length > 0 && (
+        <p className="text-[11px] text-ink-soft leading-relaxed">
+          Forwarding here:{' '}
+          {info.aliases.map((a, i) => (
+            <span key={a} className="font-mono">{i > 0 ? ', ' : ''}/{a}</span>
+          ))}
+        </p>
+      )}
+      {info.codeRefs.length > 0 && (
+        <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-600/25 rounded-lg px-3 py-2 leading-relaxed">
+          Also hardcoded in code: {info.codeRefs.join(', ')}. A rename here won't update those, so ask for them to be changed too.
+        </p>
+      )}
+      {result && !result.ok && <p className="text-xs text-rose-700">{result.error}</p>}
+    </Card>
   );
 }
 

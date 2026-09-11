@@ -1,16 +1,37 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
+import { codeReferencesFor, resolveHandle } from '@/lib/handle-aliases';
 import { ProductForm } from './ProductForm';
 
 export const metadata = { title: 'Edit product — Merit Admin' };
 export const dynamic = 'force-dynamic';
 
-export default async function EditProductPage({ params }: { params: Promise<{ handle: string }> }) {
+export default async function EditProductPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ handle: string }>;
+  searchParams: Promise<{ renamed?: string }>;
+}) {
   const { handle: handleParam } = await params;
+  const { renamed } = await searchParams;
   const handle = decodeURIComponent(handleParam);
   const product = await prisma.product.findUnique({ where: { handle } });
-  if (!product) notFound();
+  if (!product) {
+    // A bookmarked admin URL for a renamed product lands on its new page.
+    const current = await resolveHandle(handle);
+    if (current !== handle) redirect(`/admin/products/${current}`);
+    notFound();
+  }
+
+  const aliases = (
+    await prisma.productHandleAlias.findMany({
+      where: { newHandle: product.handle },
+      orderBy: { createdAt: 'asc' },
+      select: { oldHandle: true },
+    })
+  ).map((a) => a.oldHandle);
 
   return (
     <main className="max-w-[1240px] mx-auto px-5 sm:px-6 lg:px-8 py-8">
@@ -37,7 +58,15 @@ export default async function EditProductPage({ params }: { params: Promise<{ ha
         </Link>
       </div>
 
+      {renamed && (
+        <div className="mb-6 rounded-xl border border-emerald-600/30 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          Handle changed from <span className="font-mono">/{renamed}</span> to{' '}
+          <span className="font-mono">/{product.handle}</span>. Old links and carts forward here automatically.
+        </div>
+      )}
+
       <ProductForm
+        handleInfo={{ aliases, codeRefs: codeReferencesFor(product.handle) }}
         product={{
           handle: product.handle,
           title: product.title,
