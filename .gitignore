@@ -22,3 +22,4 @@ public/products/_edit-mask.png
 # 33MB of source PNGs are not. scripts/generate-supply-photos.mjs recreates
 # them (and skips any that already exist).
 public/supply/photo/*.png
+.playwright-mcp/
