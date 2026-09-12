@@ -13,6 +13,7 @@
  * unchanged.
  */
 import 'server-only';
+import { WELCOME_PCT } from './welcome-offer';
 import {
   wrapMarketingEmail,
   heroImg,
@@ -55,7 +56,7 @@ export function renderProspectWelcome(d: ProspectEmailData): Rendered {
       codeChip(d.code) +
       cta("See what's inside →", shop) +
       quiet('Tap the button and the code applies itself at checkout — nothing to type. No spam, just the occasional note actually worth opening.'),
-    `You're on the Merit list. Every lot is HPLC-tested to ≥99% purity, US-made, shipped in 48 hours.\nYour code ${d.code} (20% off your first order) applies automatically through this link:\n${shop}`,
+    `You're on the Merit list. Every lot is HPLC-tested to ≥99% purity, US-made, shipped in 48 hours.\nYour code ${d.code} (${WELCOME_PCT}% off your first order) applies automatically through this link:\n${shop}`,
     d,
   );
 }
@@ -97,7 +98,7 @@ export function renderProspectTelegram(d: ProspectEmailData): Rendered {
       ]) +
       p('Not hypothetical: last month we held back a whole Semax lot because it came back as the <em>wrong molecule</em>. The group chat would’ve shipped it to you with a fire emoji.') +
       cta('Buy like a grown-up →', shop) +
-      quiet(`20% off your first tested, traceable order — <strong>${d.code}</strong> is baked into the button.`),
+      quiet(`${WELCOME_PCT}% off your first tested, traceable order — <strong>${d.code}</strong> is baked into the button.`),
     `That guy in the group chat is not a lab. No COA, no lot number, no idea what's in the vial. Merit: HPLC COA on every lot, identity confirmed or it doesn't ship, from an ISO-certified US facility.\nBuy like a grown-up (${d.code} applies automatically): ${shop}`,
     d,
   );
@@ -163,11 +164,11 @@ export function renderProspectReengage(d: ProspectEmailData): Rendered {
     'Checking in',
     h('Did we lose you? Or are you just busy?') +
       p('You joined the list, we sent a few (genuinely useful, we like to think) emails, and then… crickets. No judgment — inboxes are a warzone.') +
-      p('Quick gut check. If it’s a “not right now,” all good, we’ll be here. If it’s a “I completely forgot I had 20% off,” well — you have 20% off, and the button below applies it for you.') +
+      p(`Quick gut check. If it’s a “not right now,” all good, we’ll be here. If it’s a “I completely forgot I had ${WELCOME_PCT}% off,” well — you have ${WELCOME_PCT}% off, and the button below applies it for you.`) +
       codeChip(d.code) +
       p(`And if it’s a “please stop,” there’s a one-tap unsubscribe right down there, zero hard feelings.`) +
       cta('Okay, show me the goods →', shop),
-    `Did we lose you, or are you just busy? If you forgot you had 20% off — you have 20% off, and it applies automatically through this link:\n${shop}\nIf you're done, one-tap unsubscribe below, no hard feelings.`,
+    `Did we lose you, or are you just busy? If you forgot you had ${WELCOME_PCT}% off — you have ${WELCOME_PCT}% off, and it applies automatically through this link:\n${shop}\nIf you're done, one-tap unsubscribe below, no hard feelings.`,
     d,
   );
 }

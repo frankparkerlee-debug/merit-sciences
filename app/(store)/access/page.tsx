@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
 import { EnterButton } from './EnterButton';
 
 /**
@@ -10,13 +11,13 @@ import { EnterButton } from './EnterButton';
  * Design (per direction): bold, offer-led, immersive — the conversion energy
  * of a full-bleed cobalt takeover, but built flag-safe (no vials) and
  * fast-loading (one optimized form + CSS) so it actually delivers at scale.
- * Mechanism: offer + one-click hybrid — "20% off" hook, one tap into the
+ * Mechanism: offer + one-click hybrid: the welcome-offer hook, one tap into the
  * catalog (welcome code stashed for the site to apply). No email friction.
  */
 export const metadata: Metadata = {
-  title: 'Get 20% off · Merit Sciences',
+  title: `Get ${WELCOME_PCT}% off · Merit Sciences`,
   description:
-    'American made, lab-verified. The opposite of a mystery source — third-party tested, shipped from San Antonio. 20% off your first order.',
+    `American made, lab-verified. The opposite of a mystery source: third-party tested, shipped from San Antonio. ${WELCOME_PCT}% off your first order.`,
   robots: { index: false, follow: false },
 };
 
@@ -75,11 +76,11 @@ export default function AccessPage() {
         </h1>
 
         <p className="mt-6 max-w-md text-lg leading-relaxed text-cream/70">
-          American-made and independently tested. Your first order is 20% off.
+          American-made and independently tested. Your first order is {WELCOME_PCT}% off.
         </p>
 
         <div className="mt-7">
-          <EnterButton href="/catalog" label="Enter the catalog" code="WELCOME20" />
+          <EnterButton href="/catalog" label="Enter the catalog" code={WELCOME_CODE} />
         </div>
 
         <p className="mt-5 text-xs text-cream/40">Research use only.</p>

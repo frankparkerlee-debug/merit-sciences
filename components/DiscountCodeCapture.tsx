@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 /**
  * Site-wide `?code=` capture — the low-friction bridge from email links to
- * checkout. An email CTA can point anywhere (`/catalog?code=WELCOME20`,
+ * checkout. An email CTA can point anywhere (`/catalog?code=WELCOME15`,
  * `/coa?code=...`) and the code rides along: we stash it in the SAME
  * localStorage slot the /access ad gate uses (`merit_welcome_code`), which
  * checkout already auto-applies silently as its highest-priority code. The

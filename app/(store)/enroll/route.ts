@@ -23,7 +23,7 @@ import crypto from 'crypto';
 export const dynamic = 'force-dynamic';
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
-const CODE = 'WELCOME20';
+import { WELCOME_CODE as CODE } from '@/lib/welcome-offer';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);

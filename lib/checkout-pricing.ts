@@ -17,17 +17,14 @@ import { prisma } from './db';
 import { validateDiscountCode } from './discount';
 import { getPricingContext, priceFor } from './pricing';
 import { STACK_TEMPLATES } from './catalog-meta';
+import { AD_FUNNEL_CODES } from './welcome-offer';
 import { resolveHandles } from './handle-aliases';
 
 export const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300
 export const FLAT_SHIPPING_CENTS = 999; // $9.99
 
-/**
- * Ad-funnel / paid-acquisition codes. A sale arriving on one of these is our
- * own paid ad's sale, so it OVERRIDES any ?ref= cookie — we don't pay
- * affiliate commission on traffic we already bought. Stored lowercase.
- */
-export const AD_FUNNEL_CODES = new Set(['welcome20']);
+// Ad-funnel codes live in lib/welcome-offer.ts, with the offer they belong to.
+export { AD_FUNNEL_CODES } from './welcome-offer';
 
 /**
  * Multiplier from the per-vial price to a pack line's unit price.

@@ -1,4 +1,5 @@
 'use client';
+import { WELCOME_PCT } from '@/lib/welcome-offer';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -81,14 +82,14 @@ export function EnterButton({
 
   return (
     <form onSubmit={submit} className="w-full max-w-md mx-auto">
-      {/* Optional email — only for the 20% code, never a wall */}
+      {/* Optional email, only for the welcome code, never a wall */}
       <input
         type="email"
         inputMode="email"
         autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email for 20% off (optional)"
+        placeholder={`Email for ${WELCOME_PCT}% off (optional)`}
         aria-label="Email address (optional)"
         className="w-full rounded-2xl bg-white/10 border border-white/20 px-5 py-4 text-base text-cream placeholder:text-cream/40 focus:outline-none focus:border-cobalt-soft focus:ring-2 focus:ring-cobalt-soft/25 transition"
       />

@@ -1,3 +1,4 @@
+import { WELCOME_PCT } from './welcome-offer';
 /**
  * Elevated brand shell for consumer marketing emails (the prospect drip).
  * Kept separate from the practitioner shell so we can push the design further
@@ -114,7 +115,7 @@ export function codeChip(code: string): string {
   return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:4px 0 18px;"><tr><td style="background:${INK};border-radius:10px;padding:12px 20px;">
     <span style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE};">Your code &nbsp;</span>
     <span style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:17px;font-weight:800;letter-spacing:0.08em;color:#fff;">${esc(code)}</span>
-    <span style="font-size:12px;color:${INK_MUTE};"> &nbsp;— 20% off #1</span>
+    <span style="font-size:12px;color:${INK_MUTE};"> &nbsp;— ${WELCOME_PCT}% off #1</span>
   </td></tr></table>`;
 }
 

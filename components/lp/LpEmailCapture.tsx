@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { track, identify } from '@/lib/analytics';
+import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
 
 export function LpEmailCapture({
   source,
-  label = 'Get access + 20% off your first order',
+  label = `Get access + ${WELCOME_PCT}% off your first order`,
   theme = 'dark',
 }: {
   source: string;
@@ -14,7 +15,7 @@ export function LpEmailCapture({
 }) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
-  const [code, setCode] = useState('WELCOME20');
+  const [code, setCode] = useState(WELCOME_CODE);
   const [err, setErr] = useState('');
 
   const isDark = theme === 'dark';
@@ -54,7 +55,7 @@ export function LpEmailCapture({
           — You're in
         </p>
         <p className={`text-lg font-bold mb-4 ${isDark ? 'text-cream' : 'text-ink'}`}>
-          Your 20% off code:
+          Your {WELCOME_PCT}% off code:
         </p>
         <div className={`inline-block font-mono text-2xl font-extrabold tracking-[0.14em] px-8 py-4 rounded-2xl border border-dashed mb-5 ${
           isDark ? 'text-cream bg-white/10 border-cobalt-soft/50' : 'text-ink bg-cobalt/5 border-cobalt/30'

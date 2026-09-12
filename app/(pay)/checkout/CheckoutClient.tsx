@@ -284,7 +284,7 @@ export function CheckoutClient({
   // in components/DiscountCodeCapture.tsx). Runs BEFORE the referral
   // auto-apply and shares autoAppliedRef, so the promised code wins
   // (matches the server: funnel codes override ?ref). Without this, the
-  // gate/email promised "20% off" but the buyer hit full price.
+  // gate/email promised the welcome offer but the buyer hit full price.
   //
   // Waits on claimPending so a handed-off code isn't missed by racing the
   // localStorage write above.

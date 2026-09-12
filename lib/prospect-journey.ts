@@ -29,7 +29,7 @@ import {
 } from './prospect-emails';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
-const CODE = 'WELCOME20';
+import { WELCOME_CODE as CODE } from './welcome-offer';
 // Sign unsubscribe tokens with an existing server secret (never exposed).
 const UNSUB_SECRET = process.env.UNSUB_SECRET || process.env.CRON_SECRET || 'merit-unsub-fallback';
 

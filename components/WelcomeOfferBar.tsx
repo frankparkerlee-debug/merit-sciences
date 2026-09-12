@@ -1,11 +1,12 @@
 'use client';
+import { WELCOME_PCT } from '@/lib/welcome-offer';
 
 import { useEffect, useState } from 'react';
 
 const DISMISS_KEY = 'merit_welcome_bar_dismissed';
 
 /**
- * Thin promo bar that keeps the gate's "20% off" promise visible the entire
+ * Thin promo bar that keeps the gate's welcome-offer promise visible the entire
  * time the buyer is shopping. Reads the WELCOME code the /access gate stashed
  * in localStorage; renders nothing if there's no code (organic visitors) or it
  * was dismissed. The discount actually applies via the checkout auto-apply —
@@ -36,7 +37,7 @@ export function WelcomeOfferBar() {
       <div className="relative mx-auto flex max-w-[1300px] items-center justify-center gap-2 px-9 py-2 text-center text-[12.5px] font-bold tracking-tight">
         <span aria-hidden>🎉</span>
         <span>
-          20% off your first order is active — applied automatically at checkout
+          {WELCOME_PCT}% off your first order is active, applied automatically at checkout
           <span className="ml-1.5 hidden font-mono opacity-75 sm:inline">· {code}</span>
         </span>
         <button

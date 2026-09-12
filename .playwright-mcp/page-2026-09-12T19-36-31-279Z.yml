@@ -1,0 +1,239 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e2]: For Research Use Only · Not For Human or Veterinary Use · Not FDA-Approved
+  - navigation [ref=f3e3]:
+    - generic [ref=f3e4]:
+      - link "Merit." [ref=f3e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f3e6]:
+        - link "Catalog" [ref=f3e7] [cursor=pointer]:
+          - /url: /catalog
+        - link "COA" [ref=f3e8] [cursor=pointer]:
+          - /url: /coa
+        - link "Library" [ref=f3e9] [cursor=pointer]:
+          - /url: /library
+        - link "Practitioner Program" [ref=f3e10] [cursor=pointer]:
+          - /url: /practitioners
+        - link "About" [ref=f3e11] [cursor=pointer]:
+          - /url: /about
+      - generic [ref=f3e12]:
+        - link "Sign in" [ref=f3e13] [cursor=pointer]:
+          - /url: /practitioners/login
+        - button "Open cart" [ref=f3e14] [cursor=pointer]:
+          - generic [ref=f3e19]: Cart
+  - main [ref=f3e20]:
+    - main [ref=f3e21]:
+      - article [ref=f3e22]:
+        - navigation "Breadcrumb" [ref=f3e23]:
+          - link "Library" [ref=f3e24] [cursor=pointer]:
+            - /url: /library
+          - text: ›Research monograph
+        - paragraph [ref=f3e25]: — Research monograph
+        - heading "Tirzepatide" [level=1] [ref=f3e26]
+        - generic [ref=f3e27]:
+          - generic [ref=f3e28]: LY3298176
+          - generic [ref=f3e29]: GIP/GLP-1 receptor agonist
+          - generic [ref=f3e30]: dual incretin agonist
+        - paragraph [ref=f3e31]: The dual GIP/GLP-1 receptor agonist studied in the SURMOUNT and SURPASS programs.
+        - generic [ref=f3e32]:
+          - generic [ref=f3e33]:
+            - term [ref=f3e34]: Class
+            - definition [ref=f3e35]: Dual GIP / GLP-1 receptor agonist (synthetic 39-amino-acid peptide)
+          - generic [ref=f3e36]:
+            - term [ref=f3e37]: Half-life (research)
+            - definition [ref=f3e38]: ~5 days (preclinical and clinical).
+          - generic [ref=f3e39]:
+            - term [ref=f3e40]: Origin
+            - definition [ref=f3e41]: Developed by Eli Lilly. First characterized in the open scientific literature in 2018 (Coskun et al.). Approved by the FDA as Mounjaro (2022) for type 2 diabetes and as Zepbound (2023) for chronic weight management.
+          - generic [ref=f3e42]:
+            - term [ref=f3e43]: Solubility
+            - definition [ref=f3e44]: Reconstitutes in bacteriostatic water; clear solution.
+        - generic [ref=f3e45]:
+          - heading "What is Tirzepatide?" [level=2] [ref=f3e46]
+          - generic [ref=f3e47]:
+            - paragraph [ref=f3e48]: Tirzepatide (research code LY3298176) is a synthetic 39-amino-acid peptide engineered to act as a single-molecule dual agonist at the glucose-dependent insulinotropic polypeptide (GIP) receptor and the glucagon-like peptide-1 (GLP-1) receptor. The molecule incorporates a C20 fatty-acid moiety that supports extended duration of action via albumin binding.
+            - paragraph [ref=f3e49]: Tirzepatide is a regulated therapeutic compound approved for human use under separate brand names in regulated channels. The Merit Sciences offering is supplied for research use only — not for human or veterinary administration. Researchers must confirm jurisdictional eligibility before procurement.
+        - generic [ref=f3e50]:
+          - heading "How does Tirzepatide work?" [level=2] [ref=f3e51]
+          - paragraph [ref=f3e53]: Binds and activates both the GIP receptor and the GLP-1 receptor with picomolar affinity. The dual-incretin pharmacology is reported to produce additive effects on insulin secretion and glucagon suppression in preclinical metabolic research models.
+        - generic [ref=f3e54]:
+          - heading "What the research shows" [level=2] [ref=f3e55]
+          - list [ref=f3e57]:
+            - listitem [ref=f3e58]: In SURMOUNT-1 (NEJM 2022), a 72-week randomized trial in 2,539 adults with obesity, participants in the highest-dose arm saw a mean body-weight reduction of roughly 20.9% from baseline versus about 3.1% on placebo — the largest effect reported for an incretin agent at the time of publication.
+            - listitem [ref=f3e60]: In SURPASS-2 (NEJM 2021), tirzepatide was compared head-to-head against semaglutide 1 mg in type-2-diabetes research; all three tirzepatide doses produced greater reductions in HbA1c and body weight than semaglutide in the study population.
+            - listitem [ref=f3e62]: The dual mechanism — simultaneous agonism at the GIP and GLP-1 receptors — is the design feature most cited in the literature as the basis for its effect size relative to single-incretin GLP-1 agonists.
+            - listitem [ref=f3e64]: Gastrointestinal effects (nausea, diarrhea) were the most frequently reported adverse events across the trial program, generally mild-to-moderate and most common during dose escalation.
+        - generic [ref=f3e66]:
+          - heading "Research applications" [level=2] [ref=f3e67]
+          - list [ref=f3e69]:
+            - listitem [ref=f3e70]: Incretin signaling research
+            - listitem [ref=f3e71]: Glucose homeostasis models
+            - listitem [ref=f3e72]: Dual receptor pharmacology
+            - listitem [ref=f3e73]: Body weight regulation studies
+            - listitem [ref=f3e74]: Comparative GLP-1 / GIP agonist work
+        - complementary [ref=f3e75]:
+          - generic [ref=f3e76]:
+            - generic [ref=f3e77]:
+              - paragraph [ref=f3e78]: — Research-grade, from Merit
+              - paragraph [ref=f3e79]: Tirzepatide · 10 mg
+              - list [ref=f3e80]:
+                - listitem [ref=f3e81]: ≥99% HPLC purity
+                - listitem [ref=f3e84]: Third-party COA on every lot
+                - listitem [ref=f3e87]: ISO-certified US facility
+                - listitem [ref=f3e90]: Ships 48h from San Antonio
+            - generic [ref=f3e93]:
+              - generic [ref=f3e94]:
+                - text: from
+                - generic [ref=f3e95]: $75
+              - link "View Tirzepatide" [ref=f3e96] [cursor=pointer]:
+                - /url: /products/ly3298176-10mg
+                - text: View Tirzepatide
+                - generic [aria-hidden] [ref=f3e97]: →
+          - paragraph [ref=f3e98]: Sold for research use only — not for human or veterinary use. Pricing shown is retail; practitioner pricing is available through the Practitioner Program.
+        - generic [ref=f3e99]:
+          - heading "Form & storage" [level=2] [ref=f3e100]
+          - paragraph [ref=f3e102]: Tirzepatide ships as a sealed, lyophilized (freeze-dried) powder. Reconstitutes in bacteriostatic water; clear solution. Store sealed, light-protected, and follow your institution’s handling procedures for research materials.
+        - generic [ref=f3e103]:
+          - heading "Frequently asked questions" [level=2] [ref=f3e104]
+          - generic [ref=f3e106]:
+            - generic [ref=f3e107]:
+              - heading "What is tirzepatide?" [level=3] [ref=f3e108]
+              - paragraph [ref=f3e109]: Tirzepatide (research code LY3298176) is a synthetic dual agonist that activates both the GIP and GLP-1 receptors. It is the compound studied in the SURMOUNT (obesity) and SURPASS (type-2-diabetes) clinical-trial programs. Merit supplies it as a lyophilized research compound for research use only — not for human or veterinary use.
+            - generic [ref=f3e110]:
+              - heading "How does tirzepatide work?" [level=3] [ref=f3e111]
+              - paragraph [ref=f3e112]: It is a "dual incretin" — a single peptide engineered to activate two gut-hormone receptors at once (GIP and GLP-1). Published trials attribute its effect size relative to single-receptor GLP-1 agonists to this combined mechanism. Mechanistic descriptions here summarize published findings and are not clinical claims.
+            - generic [ref=f3e113]:
+              - heading "What did the tirzepatide trials show?" [level=3] [ref=f3e114]
+              - paragraph [ref=f3e115]: In SURMOUNT-1, the highest-dose arm showed a mean body-weight reduction of about 20.9% over 72 weeks versus ~3.1% on placebo. In SURPASS-2, it produced greater HbA1c and weight reductions than semaglutide 1 mg. See the linked SURMOUNT-1 and SURPASS-2 summaries for trial design and full outcomes.
+            - generic [ref=f3e116]:
+              - heading "Is Merit tirzepatide for human use?" [level=3] [ref=f3e117]
+              - paragraph [ref=f3e118]: No. It is sold strictly for research use only — not for human or veterinary use, and not for diagnostic or therapeutic use. Every lot ships with a certificate of analysis documenting ≥99% HPLC purity.
+        - generic [ref=f3e119]:
+          - heading "References" [level=2] [ref=f3e120]
+          - list [ref=f3e122]:
+            - listitem [ref=f3e123]:
+              - link "LY3298176, a novel dual GIP and GLP-1 receptor agonist for the treatment of type 2 diabetes mellitus" [ref=f3e124] [cursor=pointer]:
+                - /url: https://pubmed.ncbi.nlm.nih.gov/30473097/
+              - text: . Coskun T, Sloop KW, Loghin C, et al..
+              - emphasis [ref=f3e125]: Molecular Metabolism
+              - text: ", 2018 · PMID 30473097"
+            - listitem [ref=f3e126]:
+              - 'link "Efficacy and safety of LY3298176, a novel dual GIP and GLP-1 receptor agonist, in patients with type 2 diabetes: a randomised, placebo-controlled and active comparator-controlled phase 2 trial" [ref=f3e127] [cursor=pointer]':
+                - /url: https://pubmed.ncbi.nlm.nih.gov/30293770/
+              - text: . Frias JP, Nauck MA, Van J, et al..
+              - emphasis [ref=f3e128]: The Lancet
+              - text: ", 2018 · PMID 30293770"
+            - listitem [ref=f3e129]:
+              - link "Tirzepatide versus Semaglutide Once Weekly in Patients with Type 2 Diabetes" [ref=f3e130] [cursor=pointer]:
+                - /url: https://pubmed.ncbi.nlm.nih.gov/34170647/
+              - text: . Frias JP, Davies MJ, Rosenstock J, et al..
+              - emphasis [ref=f3e131]: New England Journal of Medicine
+              - text: ", 2021 · PMID 34170647"
+            - listitem [ref=f3e132]:
+              - link "Tirzepatide Once Weekly for the Treatment of Obesity" [ref=f3e133] [cursor=pointer]:
+                - /url: https://pubmed.ncbi.nlm.nih.gov/35658024/
+              - text: . Jastreboff AM, Aronne LJ, Ahmad NN, et al..
+              - emphasis [ref=f3e134]: New England Journal of Medicine
+              - text: ", 2022 · PMID 35658024"
+        - paragraph [ref=f3e135]: For research use only. Not for human or veterinary use. Not FDA-approved. Reference information summarized from published literature — not medical or dosing advice.
+        - generic [ref=f3e136]:
+          - paragraph [ref=f3e137]: — Keep reading
+          - generic [ref=f3e138]:
+            - link [ref=f3e139] [cursor=pointer]:
+              - /url: /library/surmount-1-tirzepatide-obesity-research
+              - text: Research
+              - paragraph [ref=f3e140]: "SURMOUNT-1: what the tirzepatide obesity data showed"
+            - link [ref=f3e141] [cursor=pointer]:
+              - /url: /library/surpass-2-tirzepatide-vs-semaglutide
+              - text: Research
+              - paragraph [ref=f3e142]: "SURPASS-2: tirzepatide vs. semaglutide head-to-head"
+  - contentinfo [ref=f3e143]:
+    - generic [ref=f3e144]:
+      - generic [ref=f3e145]:
+        - generic [ref=f3e146]: Merit.
+        - paragraph [ref=f3e147]: Research compounds from an ISO-certified US facility, shipped from San Antonio.
+        - link "rx@meritsciences.com" [ref=f3e148] [cursor=pointer]:
+          - /url: mailto:rx@meritsciences.com
+      - generic [ref=f3e149]:
+        - paragraph [ref=f3e150]: Shop
+        - list [ref=f3e151]:
+          - listitem [ref=f3e152]:
+            - link "Catalog" [ref=f3e153] [cursor=pointer]:
+              - /url: /catalog
+          - listitem [ref=f3e154]:
+            - link "Stacks" [ref=f3e155] [cursor=pointer]:
+              - /url: /catalog#stacks
+          - listitem [ref=f3e156]:
+            - link "Research Library" [ref=f3e157] [cursor=pointer]:
+              - /url: /library
+          - listitem [ref=f3e158]:
+            - link "Certificates of Analysis" [ref=f3e159] [cursor=pointer]:
+              - /url: /coa
+          - listitem [ref=f3e160]:
+            - link "About" [ref=f3e161] [cursor=pointer]:
+              - /url: /about
+          - listitem [ref=f3e162]:
+            - link "The Assay" [ref=f3e163] [cursor=pointer]:
+              - /url: https://theassay.co
+          - listitem [ref=f3e164]:
+            - link "Practitioner Program" [ref=f3e165] [cursor=pointer]:
+              - /url: /practitioners
+          - listitem [ref=f3e166]:
+            - link "Affiliate Program" [ref=f3e167] [cursor=pointer]:
+              - /url: /affiliate
+      - generic [ref=f3e168]:
+        - paragraph [ref=f3e169]: Policies
+        - list [ref=f3e170]:
+          - listitem [ref=f3e171]:
+            - link "Shipping" [ref=f3e172] [cursor=pointer]:
+              - /url: /shipping
+          - listitem [ref=f3e173]:
+            - link "Returns" [ref=f3e174] [cursor=pointer]:
+              - /url: /returns
+          - listitem [ref=f3e175]:
+            - link "Terms of Service" [ref=f3e176] [cursor=pointer]:
+              - /url: /terms
+          - listitem [ref=f3e177]:
+            - link "Privacy" [ref=f3e178] [cursor=pointer]:
+              - /url: /privacy
+      - generic [ref=f3e179]:
+        - paragraph [ref=f3e180]: Compliance
+        - list [ref=f3e181]:
+          - listitem [ref=f3e182]:
+            - link "Research Disclosure" [ref=f3e183] [cursor=pointer]:
+              - /url: /research-disclosure
+          - listitem [ref=f3e184]: For Research Use Only · Not for human or veterinary use
+    - navigation "Popular research" [ref=f3e185]:
+      - generic [ref=f3e186]: Research
+      - link "Tirzepatide" [ref=f3e187] [cursor=pointer]:
+        - /url: /library/tirzepatide
+      - link "Retatrutide" [ref=f3e188] [cursor=pointer]:
+        - /url: /library/retatrutide
+      - link "Semaglutide" [ref=f3e189] [cursor=pointer]:
+        - /url: /library/semaglutide
+      - link "Tesamorelin" [ref=f3e190] [cursor=pointer]:
+        - /url: /library/tesamorelin
+      - link "BPC-157 + TB-500" [ref=f3e191] [cursor=pointer]:
+        - /url: /library/bpc-157-tb-500
+      - link "GHK-Cu" [ref=f3e192] [cursor=pointer]:
+        - /url: /library/ghk-cu
+      - link "NAD+" [ref=f3e193] [cursor=pointer]:
+        - /url: /library/nad
+      - link "MOTS-c" [ref=f3e194] [cursor=pointer]:
+        - /url: /library/mots-c
+      - link "PT-141" [ref=f3e195] [cursor=pointer]:
+        - /url: /library/pt-141
+    - paragraph [ref=f3e196]: All Merit Sciences products are sold strictly for laboratory and scientific research use only. Products have not been evaluated by the FDA and are not intended to diagnose, treat, cure, or prevent any disease. By purchasing, you confirm that you are a qualified researcher 21+ purchasing for in-vitro research, laboratory analysis, or other lawful scientific use.
+    - paragraph [ref=f3e197]: © 2026 Merit Sciences LLC · Dallas, TX
+  - dialog "Shopping cart" [ref=f3e198]:
+    - banner [ref=f3e199]:
+      - generic [ref=f3e201]:
+        - generic [ref=f3e203]:
+          - paragraph [ref=f3e204]: Merit.
+          - heading "Your cart" [level=2] [ref=f3e205]
+        - button "Close cart" [ref=f3e206] [cursor=pointer]
+    - generic [ref=f3e211]:
+      - paragraph [ref=f3e217]: Cart is empty.
+      - paragraph [ref=f3e218]: Pick a research compound from the catalog. Every batch HPLC-verified, every shipment lot-documented.
+      - link "Browse catalog →" [ref=f3e219] [cursor=pointer]:
+        - /url: /catalog
+  - alert [ref=f3e220]

@@ -6,7 +6,7 @@ import { wrapPractitionerEmail, heading, p, btn, note } from '@/lib/practitioner
 export const runtime = 'nodejs';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
-const WELCOME_CODE = 'WELCOME20';
+import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
 
 /* ── Signed submission token ─────────────────────────────────────────────
    The Aug-5 gates (honeypot / Origin / rate limit) did not stop the
@@ -56,12 +56,12 @@ export async function GET() {
  *
  * Accepts JSON (popup fetch) or form-encoded (the homepage <form> POST,
  * which previously 404'd — this route is its missing handler). Captures the
- * email, ensures the WELCOME20 first-order discount exists, and sends a
+ * email, ensures the first-order welcome discount exists, and sends a
  * branded welcome email carrying the code. The welcome email is the first
  * touch of the nurture funnel.
  */
 
-// Idempotent: create the 20%-off first-order code if it isn't there yet.
+// Idempotent: create the first-order welcome code if it isn't there yet.
 // update:{} so we never clobber an admin-edited version.
 async function ensureWelcomeDiscount() {
   await prisma.discount.upsert({
@@ -69,9 +69,9 @@ async function ensureWelcomeDiscount() {
     update: {},
     create: {
       code: WELCOME_CODE.toLowerCase(),
-      title: 'Welcome — 20% off first order',
+      title: `Welcome, ${WELCOME_PCT}% off first order`,
       type: 'PERCENT',
-      value: 2000, // 20% in basis points
+      value: WELCOME_PCT * 100, // basis points
       oncePerCustomer: true,
     },
   });
@@ -202,16 +202,16 @@ export async function POST(req: Request) {
     const codeChip = `<span style="display:inline-block;font-family:monospace;font-size:18px;font-weight:800;letter-spacing:0.08em;background:#F4F1EA;border:1px dashed #C9CBD1;border-radius:8px;padding:10px 18px;">${WELCOME_CODE}</span>`;
     const bodyHtml =
       heading('Welcome to Merit Sciences.') +
-      p('Here’s <strong>20% off your first order</strong> — use this code at checkout:') +
+      p(`Here’s <strong>${WELCOME_PCT}% off your first order</strong>. Use this code at checkout:`) +
       p(codeChip) +
       btn('Shop the catalog →', `${SITE_URL}/catalog`) +
       note('Every lot is HPLC-tested to ≥99% purity and ships with its Certificate of Analysis. For research use only.');
     sendEmail({
       to: email,
-      subject: `Your 20% code: ${WELCOME_CODE}`,
+      subject: `Your ${WELCOME_PCT}% code: ${WELCOME_CODE}`,
       html: wrapPractitionerEmail({
-        subject: `Your 20% code: ${WELCOME_CODE}`,
-        eyebrow: 'Welcome · 20% off',
+        subject: `Your ${WELCOME_PCT}% code: ${WELCOME_CODE}`,
+        eyebrow: `Welcome · ${WELCOME_PCT}% off`,
         bodyHtml,
         footerNote: 'Merit Sciences &middot; Dallas, TX',
       }),

@@ -89,10 +89,8 @@ function cleanAddress(a: AddressIn | undefined): {
 const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300 — authoritative free-shipping gate
 const FLAT_SHIPPING_CENTS = 999;               // $9.99
 
-// Ad-funnel / paid-acquisition codes. A sale that arrives on one of these is
-// OUR paid ad's sale, so it OVERRIDES any ?ref= affiliate cookie — we don't
-// pay affiliate commission on traffic we already bought. Stored lowercase.
-const AD_FUNNEL_CODES = new Set(['welcome20']);
+// Ad-funnel codes live in lib/welcome-offer.ts, with the offer they belong to.
+import { AD_FUNNEL_CODES } from '@/lib/welcome-offer';
 
 type CartLineIn = {
   handle: string;

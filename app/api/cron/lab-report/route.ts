@@ -7,7 +7,7 @@
  *       &days=30        window for "new lots" (default 30)
  *       &batch=150      max sends this invocation (default 150)
  *       &vote=A,B,C     reply-to-vote options (optional)
- *       &code=WELCOME20 promo to ride the CTAs (optional — omit for none)
+ *       &code=WELCOME15 promo to ride the CTAs (optional, omit for none)
  *       &to=me@x.com    TEST MODE: send only to this address, no tagging
  *       &dry=1          DRY RUN: report counts + subject, send nothing
  *   Authorization: Bearer ${CRON_SECRET}

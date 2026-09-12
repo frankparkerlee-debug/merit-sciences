@@ -1,4 +1,5 @@
 'use client';
+import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
@@ -6,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { track, identify } from '@/lib/analytics';
 
 /**
- * Subscribe / exit-intent popup → email capture → 20%-off-first-order code.
+ * Subscribe / exit-intent popup → email capture → first-order welcome code.
  *
  * Styled in the homepage's dark object-cinema language ("Same stack. Better
  * source."): the defocused vial wall as ground, ink scrims, poster-black
@@ -63,7 +64,7 @@ export function SubscribePopup() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [code, setCode] = useState('WELCOME20');
+  const [code, setCode] = useState(WELCOME_CODE);
 
   const hidden = HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p));
 
@@ -154,7 +155,7 @@ export function SubscribePopup() {
       className="fixed inset-0 z-[80] overflow-hidden bg-[#08090A] text-white"
       role="dialog"
       aria-modal="true"
-      aria-label="Subscribe for 20% off"
+      aria-label={`Subscribe for ${WELCOME_PCT}% off`}
       style={{ animation: 'meritPop .45s cubic-bezier(0.22,1,0.36,1) both' }}
     >
       {/* Keyframes (scoped, self-contained) */}
@@ -205,7 +206,7 @@ export function SubscribePopup() {
                 You&rsquo;re on the list
               </p>
               <h2 className="font-poster font-black uppercase tracking-[-0.05em] leading-[0.86] mb-6" style={{ fontSize: 'clamp(40px, 8vw, 88px)' }}>
-                20% off,
+                {WELCOME_PCT}% off,
                 <br />
                 <span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}>
                   locked in.
@@ -231,7 +232,7 @@ export function SubscribePopup() {
                 Before you go
               </p>
               {/* Lead with the thing no competitor can copy, not the discount.
-                  "20% off" is the same offer every gray-market peptide site
+                  a percentage off is the same offer every gray-market peptide site
                   runs, and it argues on price from a brand whose entire
                   position is that it argues on proof. The certificate is the
                   differentiator; the code is the close, not the headline. */}
@@ -245,7 +246,7 @@ export function SubscribePopup() {
               <p className="text-[15px] sm:text-base text-white/70 mb-8 leading-[1.62] max-w-[52ch] mx-auto">
                 Every Merit lot is assayed by an independent laboratory before release, and the
                 certificate is published before it ships. Join the list and we&rsquo;ll send new lot
-                reports as they post — plus <b className="text-white font-semibold">20% off your first order</b>.
+                reports as they post — plus <b className="text-white font-semibold">{WELCOME_PCT}% off your first order</b>.
               </p>
               <form onSubmit={handleSubmit} className="max-w-md mx-auto">
                 <div className="flex flex-col sm:flex-row gap-3">

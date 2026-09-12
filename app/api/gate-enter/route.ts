@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { WELCOME_CODE } from '@/lib/welcome-offer';
 
 export const runtime = 'nodejs';
 
@@ -8,7 +9,7 @@ export const runtime = 'nodejs';
  * The static /gate.html (served for every path on the gate domain) POSTs the
  * visitor's email here. We:
  *   1. Capture it through the existing /api/newsletter flow (subscriber row +
- *      WELCOME20 discount + branded welcome email) — zero duplication.
+ *      welcome discount + branded welcome email) — zero duplication.
  *   2. Return the REAL store URL in the JSON body.
  *
  * Why the redirect target lives here and not in gate.html: the meritsciences.com
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'Enter a valid email to continue.' }, { status: 400 });
   }
 
-  // Reuse the live newsletter capture (subscriber + WELCOME20 + welcome email).
+  // Reuse the live newsletter capture (subscriber + welcome code + welcome email).
   // Same-origin call on the gate host; best-effort — a capture hiccup must never
   // block the visitor's entry (the welcome email is a backstop for the code).
   try {
@@ -53,9 +54,9 @@ export async function POST(req: Request) {
   }
 
   // Build the handoff URL. Forward the ad's UTMs (carries the A/B utm_content),
-  // tag the welcome code so the store can surface the 20% on arrival.
+  // tag the welcome code so the store can surface the offer on arrival.
   const params = new URLSearchParams((search || '').replace(/^\?/, ''));
-  params.set('welcome', 'WELCOME20');
+  params.set('welcome', WELCOME_CODE);
   if (!params.has('utm_source')) params.set('utm_source', 'meta');
   if (!params.has('utm_medium')) params.set('utm_medium', 'paid_social');
 

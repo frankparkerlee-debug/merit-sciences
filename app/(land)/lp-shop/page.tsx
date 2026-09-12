@@ -1,9 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
 
 /**
  * Google Ads landing page, served at shop.meritsciences.com/ (middleware
  * rewrites that host's "/" here; everything else on the host 308s to the store).
+ * Lives under the (land) root layout so the storefront's nav, cart, footer and
+ * catalog JSON-LD are structurally absent, not hidden.
  *
  * WRITTEN TO GOOGLE'S HEALTHCARE AND MEDICINES POLICY, which covers the landing
  * page and the keywords, not just the ad text. It prohibits products subject to
@@ -22,7 +25,7 @@ import Link from 'next/link';
  * fence in middleware matches Meta and TikTok only; showing Google anything
  * different would be cloaking, which suspends the account outright.
  *
- * Nav and footer are stripped under /lp, so business identity, contact and
+ * The (land) root carries no nav or footer, so business identity, contact and
  * policies are rendered here: Google's misrepresentation policy expects them.
  */
 
@@ -58,6 +61,32 @@ const STEPS: [string, string][] = [
   ['The vial carries a lot number', 'Printed on every label, with a QR code beside it.'],
   ['The report is published first', 'An outside laboratory tests the lot, and the certificate goes live before that lot is sold.'],
   ['You read the same numbers we do', 'Scan the code or type the lot number. No account, no request form.'],
+];
+
+// Only what is already stated on the live store. No guarantee is claimed
+// because none is on the books; adding one here would be a promise the
+// policies pages don't back.
+const PILLARS: [string, string][] = [
+  ['Ships in 48 hours', 'Monday to Thursday, UPS Ground, tracked and insured'],
+  ['Lab report on every lot', 'Published before the lot is sold'],
+  ['Licensed US facility', 'Compounded in the United States'],
+  [`${WELCOME_PCT}% off your first order`, `Code ${WELCOME_CODE}, applied at checkout`],
+];
+
+// Same answers the product pages give. Google reads landing-page depth as
+// part of landing-page experience, and every one of these is a question a
+// first-time visitor actually has. Nothing here describes what a compound does.
+const FAQ: [string, string][] = [
+  ['What do I actually receive?',
+   'A sealed vial of lyophilized material with a lot number printed on the label. The certificate for that lot is published on our site before the lot ships.'],
+  ['Who does the testing?',
+   'A laboratory independent of the facility that made the lot. The certificate is published before the lot is sold, so the identity and purity figures you read are the same ones we read.'],
+  ['How do I check a lot?',
+   'Scan the QR code on the label, or type the lot number into the lookup on our site. No account and no request form.'],
+  ['How fast does it ship?',
+   'Orders dispatch within 48 hours, Monday through Thursday, by UPS Ground with tracking and insurance. Most US addresses receive within 3 to 5 business days.'],
+  ['What does research use only mean?',
+   'Everything we supply is for laboratory and scientific research. It is not for human or veterinary use and has not been evaluated or approved by the FDA.'],
 ];
 
 const POLICIES: [string, string][] = [
@@ -116,7 +145,7 @@ export default function ShopLanding() {
               so you can read the results before you order.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-              <Link href={`${STORE}/catalog`} className={primaryCta}>
+              <Link href={`${STORE}/catalog?code=${WELCOME_CODE}`} className={primaryCta}>
                 Shop the catalog
               </Link>
               <Link href={`${STORE}/coa`} className={secondaryCta}>
@@ -147,7 +176,23 @@ export default function ShopLanding() {
         `}</style>
       </section>
 
-      {/* §03 WHAT EACH LOT IS TESTED FOR */}
+      {/* §03 OFFER + PILLARS: facts already on the store, and the welcome code.
+          The code rides ?code= to the catalog, where DiscountCodeCapture
+          stashes it and checkout applies it. A discount is not a health claim,
+          so it's safe to show; it's also the one thing on this page that a
+          searcher comparing suppliers can act on immediately. */}
+      <section className="bg-[#0E1013] text-white border-b border-white/5">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 lg:py-16 grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10">
+          {PILLARS.map(([t, b]) => (
+            <div key={t} className="bg-[#0E1013] p-6 lg:p-8">
+              <p className="font-display text-[17px] lg:text-[19px] font-bold leading-snug text-white">{t}</p>
+              <p className="mt-2 text-[13px] leading-[1.55] text-white/50">{b}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* §04 WHAT EACH LOT IS TESTED FOR */}
       <section className="bg-[#08090A] text-white">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div className="relative aspect-[3/2] overflow-hidden border border-white/10">
@@ -191,7 +236,7 @@ export default function ShopLanding() {
         </div>
       </section>
 
-      {/* §04 HOW TO CHECK A LOT */}
+      {/* §05 HOW TO CHECK A LOT */}
       <section className="bg-[#0E1013] text-white border-t border-white/5">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
           <p className="font-mono text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
@@ -222,7 +267,32 @@ export default function ShopLanding() {
         </div>
       </section>
 
-      {/* §05 CLOSE */}
+      {/* §06 FAQ */}
+      <section className="bg-[#08090A] text-white border-t border-white/5">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16">
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
+              Before you order
+            </p>
+            <h2
+              className="font-poster font-black uppercase leading-[0.92] tracking-[-0.04em] max-w-[12ch]"
+              style={{ fontSize: 'clamp(28px, 4.2vw, 62px)' }}
+            >
+              Straight answers.
+            </h2>
+          </div>
+          <dl className="divide-y divide-white/10 border-y border-white/10">
+            {FAQ.map(([q, a]) => (
+              <div key={q} className="py-5 lg:py-6 grid grid-cols-1 md:grid-cols-[minmax(0,17ch)_1fr] gap-2 md:gap-8">
+                <dt className="font-display text-[15.5px] font-bold text-white leading-snug">{q}</dt>
+                <dd className="text-[14.5px] leading-[1.65] text-white/60 m-0">{a}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* §07 CLOSE */}
       <section className="relative isolate flex h-[64svh] min-h-[440px] max-h-[700px] items-end overflow-hidden bg-black text-white">
         <Image
           src="/brand/hero-monolith.webp"
@@ -248,8 +318,8 @@ export default function ShopLanding() {
             </span>
           </h2>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href={`${STORE}/catalog`} className={primaryCta}>
-              Shop the catalog
+            <Link href={`${STORE}/catalog?code=${WELCOME_CODE}`} className={primaryCta}>
+              Shop with {WELCOME_PCT}% off
             </Link>
           </div>
         </div>

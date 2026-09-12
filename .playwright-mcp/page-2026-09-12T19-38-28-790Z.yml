@@ -1,0 +1,470 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e2]: For Research Use Only · Not For Human or Veterinary Use · Not FDA-Approved
+  - navigation [ref=f5e3]:
+    - generic [ref=f5e4]:
+      - link "Merit." [ref=f5e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f5e6]:
+        - link "Catalog" [ref=f5e7] [cursor=pointer]:
+          - /url: /catalog
+        - link "COA" [ref=f5e8] [cursor=pointer]:
+          - /url: /coa
+        - link "Library" [ref=f5e9] [cursor=pointer]:
+          - /url: /library
+        - link "Practitioner Program" [ref=f5e10] [cursor=pointer]:
+          - /url: /practitioners
+        - link "About" [ref=f5e11] [cursor=pointer]:
+          - /url: /about
+      - generic [ref=f5e12]:
+        - link "Sign in" [ref=f5e13] [cursor=pointer]:
+          - /url: /practitioners/login
+        - button "Open cart" [ref=f5e14] [cursor=pointer]:
+          - generic [ref=f5e19]: Cart
+  - main [ref=f5e20]:
+    - main [ref=f5e21]:
+      - generic [ref=f5e22]:
+        - link "Home" [ref=f5e23] [cursor=pointer]:
+          - /url: /
+        - text: ·
+        - link "Catalog" [ref=f5e24] [cursor=pointer]:
+          - /url: /catalog
+        - text: ·
+        - link "Blends" [ref=f5e25] [cursor=pointer]:
+          - /url: /catalog?family=blends
+        - text: · Wolverine Blend
+      - generic [ref=f5e27]:
+        - generic [ref=f5e28]:
+          - img "A sealed Merit Wolverine Blend vial, 10+10 mg of lyophilized research compound" [ref=f5e31]
+          - generic [ref=f5e35]:
+            - paragraph [ref=f5e41]: Lot-Documented
+            - paragraph [ref=f5e46]: HPLC-Verified
+            - paragraph [ref=f5e51]: Independent Assay
+            - paragraph [ref=f5e58]: Same Reorder Price
+        - generic [ref=f5e59]:
+          - generic [ref=f5e60]: Independently assayed · HPLC ≥99%
+          - generic [ref=f5e65]:
+            - paragraph [ref=f5e66]: Blends · RECOVERY RESEARCH BLEND
+            - heading "Wolverine Blend 10+10 mg" [level=1] [ref=f5e67]
+            - paragraph [ref=f5e68]: Lyophilized vial
+          - generic [ref=f5e69]:
+            - generic [ref=f5e70]: Free shipping $300+
+            - generic [ref=f5e76]: 48hr dispatch
+            - generic [ref=f5e80]: Lot-documented
+          - paragraph [ref=f5e85]: Wolverine Blend — independently assayed, lot-tested, and shipped from our fulfillment facility in San Antonio. Released only after an independent laboratory returns its results for the lot.
+          - generic [ref=f5e86]:
+            - generic [ref=f5e87]: $74.99
+            - paragraph [ref=f5e89]: Per vial
+          - generic [ref=f5e90]:
+            - generic [ref=f5e91]:
+              - paragraph [ref=f5e92]: Select your pack size
+              - generic [ref=f5e93]: Single
+            - generic [ref=f5e94]:
+              - button [ref=f5e95] [cursor=pointer]:
+                - paragraph [ref=f5e96]: Single
+                - paragraph [ref=f5e97]: $74.99
+                - paragraph [ref=f5e98]: $74.99 / vial
+              - button [ref=f5e99] [cursor=pointer]:
+                - paragraph [ref=f5e100]: 3-Pack
+                - paragraph [ref=f5e101]: $213.72
+                - paragraph [ref=f5e102]: $71.24 / vial
+                - paragraph [ref=f5e103]: Save $11.25
+              - button "Best Deal 6-Pack $404.95 $67.49 / vial Save $44.99" [ref=f5e104] [cursor=pointer]:
+                - generic [ref=f5e105]: Best Deal
+                - paragraph [ref=f5e106]: 6-Pack
+                - paragraph [ref=f5e107]: $404.95
+                - paragraph [ref=f5e108]: $67.49 / vial
+                - paragraph [ref=f5e109]: Save $44.99
+          - generic [ref=f5e110]:
+            - button "One-time purchase Receive a single shipment $74.99" [ref=f5e111] [cursor=pointer]:
+              - generic [ref=f5e114]:
+                - generic [ref=f5e115]: One-time purchase
+                - generic [ref=f5e116]: Receive a single shipment
+              - generic [ref=f5e117]: $74.99
+            - button "Subscribe & save Save $7.50/shipment · $90.00/year $67.49 Save 10%" [ref=f5e119] [cursor=pointer]:
+              - generic [ref=f5e121]:
+                - generic [ref=f5e122]: Subscribe & save
+                - generic [ref=f5e123]: Save $7.50/shipment · $90.00/year
+              - generic [ref=f5e124]:
+                - generic [ref=f5e125]: $67.49
+                - generic [ref=f5e126]: Save 10%
+          - button "Add BAC Water 10mL bacteriostatic water — sterile, preservative-tested carrier + $19.99" [ref=f5e127] [cursor=pointer]:
+            - generic [ref=f5e129]:
+              - generic [ref=f5e130]: Add BAC Water
+              - generic [ref=f5e131]: 10mL bacteriostatic water — sterile, preservative-tested carrier
+            - generic [ref=f5e132]: + $19.99
+          - generic [ref=f5e139]:
+            - paragraph [ref=f5e140]: Ships Tue, Sep 15 · arrives by Fri, Sep 18
+            - paragraph [ref=f5e141]: From San Antonio · UPS Ground tracked + insured
+          - list [ref=f5e142]:
+            - listitem [ref=f5e143]:
+              - generic [ref=f5e147]: Purity Guarantee. If a lot fails our ≥99% HPLC standard, full refund + replacement.
+            - listitem [ref=f5e148]: Lot-specific COA on demand — anytime, free
+            - listitem [ref=f5e151]: Same reorder price — forever, no upcharge
+          - button "Add to cart · $74.99" [ref=f5e154] [cursor=pointer]
+          - generic [ref=f5e155]:
+            - generic [ref=f5e156]: Independently assayed
+            - generic [ref=f5e158]: ISO-certified
+            - generic [ref=f5e160]: San Antonio, TX
+      - generic [ref=f5e164]:
+        - generic [ref=f5e165]: Independently Assayed
+        - generic [ref=f5e167]: ≥99% Purity
+        - generic [ref=f5e169]: Independently Assayed · ISO-Certified
+        - generic [ref=f5e171]: 48hr Dispatch from San Antonio
+      - generic [ref=f5e175]:
+        - generic [ref=f5e176]:
+          - paragraph [ref=f5e177]: — About this compound
+          - heading "Wolverine Blend." [level=2] [ref=f5e178]
+          - paragraph [ref=f5e179]: Class · Pentadecapeptide (BPC-157) + Thymosin Beta-4 fragment (TB-500) co-formulation
+          - paragraph [ref=f5e180]: Origin. BPC-157 was first characterized at the University of Zagreb by the Sikiric laboratory in the early 1990s as a stable fragment of body protection compound, a polypeptide identified in gastric juice. Thymosin Beta-4 (the parent peptide of TB-500) was originally isolated from bovine thymus by Allan Goldstein in 1981.
+        - generic [ref=f5e181]:
+          - paragraph [ref=f5e182]: BPC-157 is a synthetic pentadecapeptide consisting of fifteen amino acids (Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val) derived from a fragment of body protection compound, a polypeptide originally identified in human gastric juice. It is notable in the peptide literature for unusually high stability in acidic environments — a property that has made it a frequent subject of preclinical investigation.
+          - paragraph [ref=f5e183]: TB-500 is a synthetic acetylated 17-amino-acid fragment of Thymosin Beta-4 (Tβ4), a 43-amino-acid peptide naturally expressed in most mammalian tissues. The fragment corresponds to the active actin-binding region of the parent peptide.
+          - paragraph [ref=f5e184]: The Wolverine co-formulation places both peptides in a single lyophilized vial at 10 mg each. Researchers requesting this blend most commonly cite combined-pathway repair studies as their rationale for the pairing.
+          - generic [ref=f5e185]:
+            - paragraph [ref=f5e186]: — Common research applications
+            - list [ref=f5e187]:
+              - listitem [ref=f5e188]: Tissue-repair pathway investigation
+              - listitem [ref=f5e189]: Tendon and ligament healing models
+              - listitem [ref=f5e190]: Vascular angiogenesis research
+              - listitem [ref=f5e191]: GI mucosal integrity studies
+              - listitem [ref=f5e192]: Actin cytoskeleton dynamics
+      - generic [ref=f5e195]:
+        - generic [ref=f5e196]:
+          - paragraph [ref=f5e197]: — Mechanism
+          - heading "How it's been studied." [level=2] [ref=f5e198]
+        - generic [ref=f5e199]:
+          - paragraph [ref=f5e200]: BPC-157 has been investigated in preclinical models for effects on angiogenesis (VEGF/VEGFR2 axis modulation), nitric oxide system regulation, growth hormone receptor expression, and dopaminergic / serotonergic system interactions. TB-500 functions primarily as an actin-sequestering protein involved in cell motility, organogenesis, and the regulation of actin polymerization in research models. Both peptides remain under active investigation; mechanisms described above reflect preclinical findings, not clinical conclusions.
+          - paragraph [ref=f5e201]: Mechanism descriptions reflect findings reported in the preclinical and basic-research literature. They are not clinical conclusions and not statements of therapeutic effect.
+      - generic [ref=f5e202]:
+        - generic [ref=f5e203]:
+          - paragraph [ref=f5e204]: — The Chemistry
+          - heading "The numbers, plainly." [level=2] [ref=f5e205]
+        - generic [ref=f5e206]:
+          - generic [ref=f5e207]:
+            - paragraph [ref=f5e208]: CAS
+            - paragraph [ref=f5e209]: —
+          - generic [ref=f5e210]:
+            - paragraph [ref=f5e211]: Molecular weight
+            - paragraph [ref=f5e212]: —
+          - generic [ref=f5e213]:
+            - paragraph [ref=f5e214]: Formula
+            - paragraph [ref=f5e215]: —
+          - generic [ref=f5e216]:
+            - paragraph [ref=f5e217]: Sequence
+            - paragraph [ref=f5e218]: BPC-157 + TB-500
+          - generic [ref=f5e219]:
+            - paragraph [ref=f5e220]: Format
+            - paragraph [ref=f5e221]: Lyophilized powder
+          - generic [ref=f5e222]:
+            - paragraph [ref=f5e223]: Vial dose
+            - paragraph [ref=f5e224]: 10+10 mg
+          - generic [ref=f5e225]:
+            - paragraph [ref=f5e226]: Purity (HPLC)
+            - paragraph [ref=f5e227]: ≥99%
+          - generic [ref=f5e228]:
+            - paragraph [ref=f5e229]: Amino acids
+            - paragraph [ref=f5e230]: —
+          - generic [ref=f5e231]:
+            - paragraph [ref=f5e232]: Half-life
+            - paragraph [ref=f5e233]: "BPC-157: ~4 hr (preclinical, rat). TB-500: not well-characterized in the public literature."
+          - generic [ref=f5e234]:
+            - paragraph [ref=f5e235]: Solubility
+            - paragraph [ref=f5e236]: Both peptides reconstitute readily in bacteriostatic water at 2–5 mg/mL.
+        - paragraph [ref=f5e237]:
+          - link "View lab results for Wolverine Blend →" [ref=f5e238] [cursor=pointer]:
+            - /url: /coa?q=Wolverine%20Blend
+          - text: — or search any lot number from your label.
+      - generic [ref=f5e241]:
+        - generic [ref=f5e242]:
+          - paragraph [ref=f5e243]: — Lab analysis
+          - heading "Proof of identity." [level=2] [ref=f5e244]
+          - paragraph [ref=f5e245]: Independent HPLC-UV verification on every batch. The chromatogram shown is the actual analysis for the lot currently shipping — ≥99%, released after an independent assay.
+          - paragraph [ref=f5e246]:
+            - text: Need the COA for a specific lot? Email
+            - link "rx@meritsciences.com" [ref=f5e247] [cursor=pointer]:
+              - /url: "mailto:rx@meritsciences.com?subject=COA request: lot TBD"
+            - text: with the lot number from your vial label.
+        - generic [ref=f5e248]:
+          - img "HPLC chromatogram for Wolverine Blend lot TBD" [ref=f5e250]
+          - paragraph [ref=f5e251]: HPLC chromatogram · lot TBD · ≥99%
+      - generic [ref=f5e253]:
+        - generic [ref=f5e254]:
+          - paragraph [ref=f5e255]: — Why Merit
+          - heading "The supplier difference." [level=2] [ref=f5e256]
+          - paragraph [ref=f5e257]: How Merit compares to the two alternatives most research buyers consider for Wolverine Blend.
+        - generic [ref=f5e258]:
+          - generic [ref=f5e259]: Criterion
+          - generic [ref=f5e260]:
+            - generic [ref=f5e261]: Merit
+            - text: ISO-certified
+          - generic [ref=f5e262]:
+            - generic [ref=f5e263]: Online Resellers
+            - text: RUO only
+          - generic [ref=f5e264]:
+            - generic [ref=f5e265]: Compounding Rx
+            - text: Rx required
+          - generic [ref=f5e266]: HPLC chromatogram per lot
+          - generic [ref=f5e270]: sometimes
+          - generic [ref=f5e272]: on request
+          - generic [ref=f5e274]: Independent assay before release
+          - generic [ref=f5e285]: Lot ID printed on the vial label
+          - generic [ref=f5e289]: rarely
+          - generic [ref=f5e294]: Ships from an ISO-certified US facility
+          - generic [ref=f5e302]: varies
+          - generic [ref=f5e304]: Same reorder price — no markup over time
+          - generic [ref=f5e308]: varies
+          - generic [ref=f5e314]: 48-hour dispatch
+        - paragraph [ref=f5e326]: Comparison reflects published facility status and standard industry practice. Compounding pharmacy availability of research peptides varies by jurisdiction.
+      - generic [ref=f5e328]:
+        - generic [ref=f5e329]:
+          - paragraph [ref=f5e330]: — How it's made
+          - heading "From compound to your shelf." [level=2] [ref=f5e331]
+          - paragraph [ref=f5e332]: Every Merit lot follows the same documented path. Five steps, every one verifiable.
+        - list [ref=f5e333]:
+          - listitem [ref=f5e335]:
+            - generic [ref=f5e336]: "01"
+            - generic [ref=f5e341]:
+              - paragraph [ref=f5e342]: Sourcing
+              - heading "Compound starts as a research-grade API." [level=3] [ref=f5e343]
+              - paragraph [ref=f5e344]: Active pharmaceutical ingredient sourced from FDA-registered manufacturers. Identity confirmed against reference standard before any compounding begins.
+              - list [ref=f5e345]:
+                - listitem [ref=f5e346]:
+                  - generic [ref=f5e349]: API from FDA-registered manufacturers
+                - listitem [ref=f5e350]:
+                  - generic [ref=f5e353]: Identity verified against reference standard
+                - listitem [ref=f5e354]:
+                  - generic [ref=f5e357]: Chain of custody documented
+          - listitem [ref=f5e358]:
+            - generic [ref=f5e359]: "02"
+            - generic [ref=f5e364]:
+              - paragraph [ref=f5e365]: Compounding
+              - heading "Sterile-filled in a US cleanroom." [level=3] [ref=f5e366]
+              - paragraph [ref=f5e367]: Lyophilized in a cleanroom at our US facility. The powder format gives ≥24 months sealed stability — no cold-chain shipping required.
+              - list [ref=f5e368]:
+                - listitem [ref=f5e369]:
+                  - generic [ref=f5e372]: ISO-certified US facility
+                - listitem [ref=f5e373]:
+                  - generic [ref=f5e376]: ISO-certified manufacturing process
+                - listitem [ref=f5e377]:
+                  - generic [ref=f5e380]: Lyophilized powder for transit stability
+          - listitem [ref=f5e381]:
+            - generic [ref=f5e382]: "03"
+            - generic [ref=f5e388]:
+              - paragraph [ref=f5e389]: Verification
+              - heading "Every batch HPLC-tested." [level=3] [ref=f5e390]
+              - paragraph [ref=f5e391]: Reverse-phase HPLC-UV (UV/MS for higher-MW peptides) confirms identity and purity for every lot before it leaves the lab. The chromatogram is archived.
+              - list [ref=f5e392]:
+                - listitem [ref=f5e393]:
+                  - generic [ref=f5e396]: Reverse-phase HPLC, per-lot
+                - listitem [ref=f5e397]:
+                  - generic [ref=f5e400]: ≥99% purity floor — every batch
+                - listitem [ref=f5e401]:
+                  - generic [ref=f5e404]: Chromatogram archived for every lot
+          - listitem [ref=f5e405]:
+            - generic [ref=f5e406]: "04"
+            - generic [ref=f5e413]:
+              - paragraph [ref=f5e414]: Release
+              - heading "The lot is released against an independent assay." [level=3] [ref=f5e415]
+              - paragraph [ref=f5e416]: No batch ships until an independent laboratory has returned its identity and purity results and the certificate is published against that lot number.
+              - list [ref=f5e417]:
+                - listitem [ref=f5e418]:
+                  - generic [ref=f5e421]: Independent laboratory on every lot
+                - listitem [ref=f5e422]:
+                  - generic [ref=f5e425]: Certificate published before sale
+                - listitem [ref=f5e426]:
+                  - generic [ref=f5e429]: Lot number resolves to its own report
+          - listitem [ref=f5e430]:
+            - generic [ref=f5e431]: "05"
+            - generic [ref=f5e439]:
+              - paragraph [ref=f5e440]: Dispatch
+              - heading "Ships from San Antonio in 48 hours." [level=3] [ref=f5e441]
+              - paragraph [ref=f5e442]: Vials labeled with lot ID, tested date, and CAS. Order before 2pm CT Monday–Thursday for same-day dispatch. UPS Ground, tracked + insured.
+              - list [ref=f5e443]:
+                - listitem [ref=f5e444]:
+                  - generic [ref=f5e447]: 48hr dispatch from San Antonio, TX
+                - listitem [ref=f5e448]:
+                  - generic [ref=f5e451]: Lot ID printed on every vial label
+                - listitem [ref=f5e452]:
+                  - generic [ref=f5e455]: UPS Ground, tracked + insured
+        - paragraph [ref=f5e456]:
+          - text: Every step above can be verified for any specific lot by emailing
+          - link "rx@meritsciences.com" [ref=f5e457] [cursor=pointer]:
+            - /url: mailto:rx@meritsciences.com
+          - text: with the lot number from your vial label.
+      - generic [ref=f5e458]:
+        - generic [ref=f5e459]:
+          - paragraph [ref=f5e460]: — Research references
+          - heading "The published record." [level=2] [ref=f5e461]
+          - paragraph [ref=f5e462]: Peer-reviewed work cited in the public scientific literature. Links resolve to PubMed or the publisher of record.
+        - list [ref=f5e463]:
+          - listitem [ref=f5e464]:
+            - generic [ref=f5e465]:
+              - generic [ref=f5e466]: "01"
+              - generic [ref=f5e467]:
+                - paragraph [ref=f5e468]: Stable Gastric Pentadecapeptide BPC 157-NO-system Relation
+                - paragraph [ref=f5e469]: Sikiric P, Seiwerth S, Rucman R, et al. · Current Pharmaceutical Design · 2014
+                - link "DOI →" [ref=f5e471] [cursor=pointer]:
+                  - /url: https://doi.org/10.2174/13816128113190990411
+          - listitem [ref=f5e472]:
+            - generic [ref=f5e473]:
+              - generic [ref=f5e474]: "02"
+              - generic [ref=f5e475]:
+                - paragraph [ref=f5e476]: "Brain-gut axis and pentadecapeptide BPC 157: Theoretical and practical implications"
+                - paragraph [ref=f5e477]: Sikiric P, Rucman R, Turkovic B, et al. · Current Neuropharmacology · 2016
+                - generic [ref=f5e478]:
+                  - link "PMID 27138887 →" [ref=f5e479] [cursor=pointer]:
+                    - /url: https://pubmed.ncbi.nlm.nih.gov/27138887/
+                  - link "DOI →" [ref=f5e480] [cursor=pointer]:
+                    - /url: https://doi.org/10.2174/1570159x13666160502153022
+          - listitem [ref=f5e481]:
+            - generic [ref=f5e482]:
+              - generic [ref=f5e483]: "03"
+              - generic [ref=f5e484]:
+                - paragraph [ref=f5e485]: "Thymosin β4: a multi-functional regenerative peptide. Basic properties and clinical applications"
+                - paragraph [ref=f5e486]: Goldstein AL, Hannappel E, Sosne G, Kleinman HK · Expert Opinion on Biological Therapy · 2012
+                - generic [ref=f5e487]:
+                  - link "PMID 22074294 →" [ref=f5e488] [cursor=pointer]:
+                    - /url: https://pubmed.ncbi.nlm.nih.gov/22074294/
+                  - link "DOI →" [ref=f5e489] [cursor=pointer]:
+                    - /url: https://doi.org/10.1517/14712598.2012.634793
+        - paragraph [ref=f5e490]: Inclusion of a reference does not constitute a clinical claim or recommendation.
+      - generic [ref=f5e491]:
+        - generic [ref=f5e492]:
+          - paragraph [ref=f5e493]: — Common Questions
+          - heading "Got questions." [level=2] [ref=f5e494]
+        - generic [ref=f5e495]:
+          - generic [ref=f5e496]:
+            - group [ref=f5e497]:
+              - generic "What is Wolverine Blend? +" [ref=f5e498] [cursor=pointer]:
+                - text: What is Wolverine Blend?
+                - generic [ref=f5e499]: +
+              - paragraph [ref=f5e500]: BPC-157 is a synthetic pentadecapeptide consisting of fifteen amino acids (Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val) derived from a fragment of body protection compound, a polypeptide originally identified in human gastric juice. It is notable in the peptide literature for unusually high stability in acidic environments — a property that has made it a frequent subject of preclinical investigation.
+            - group [ref=f5e501]:
+              - generic "How does Wolverine Blend work? +" [ref=f5e502] [cursor=pointer]:
+                - text: How does Wolverine Blend work?
+                - generic [ref=f5e503]: +
+            - group [ref=f5e504]:
+              - generic "What class of compound is Wolverine Blend? +" [ref=f5e505] [cursor=pointer]:
+                - text: What class of compound is Wolverine Blend?
+                - generic [ref=f5e506]: +
+            - group [ref=f5e507]:
+              - generic "What is the reported half-life of Wolverine Blend? +" [ref=f5e508] [cursor=pointer]:
+                - text: What is the reported half-life of Wolverine Blend?
+                - generic [ref=f5e509]: +
+            - group [ref=f5e510]:
+              - generic "Why does Merit ship lyophilized? +" [ref=f5e511] [cursor=pointer]:
+                - text: Why does Merit ship lyophilized?
+                - generic [ref=f5e512]: +
+            - group [ref=f5e513]:
+              - generic "How do I verify my lot's COA? +" [ref=f5e514] [cursor=pointer]:
+                - text: How do I verify my lot's COA?
+                - generic [ref=f5e515]: +
+            - group [ref=f5e516]:
+              - generic "What does \"independently assayed\" actually mean? +" [ref=f5e517] [cursor=pointer]:
+                - text: What does "independently assayed" actually mean?
+                - generic [ref=f5e518]: +
+            - group [ref=f5e519]:
+              - generic "Will my bank flag this purchase? +" [ref=f5e520] [cursor=pointer]:
+                - text: Will my bank flag this purchase?
+                - generic [ref=f5e521]: +
+            - group [ref=f5e522]:
+              - generic "How fast does it ship? +" [ref=f5e523] [cursor=pointer]:
+                - text: How fast does it ship?
+                - generic [ref=f5e524]: +
+          - generic [ref=f5e525]:
+            - paragraph [ref=f5e529]: — Talk to a Pharmacologist
+            - heading "Question we didn't answer?" [level=3] [ref=f5e530]
+            - paragraph [ref=f5e531]: Our team answers compound questions, lot questions, and protocol questions — same business day. No bots, no tickets.
+            - link "Email the team →" [ref=f5e532] [cursor=pointer]:
+              - /url: mailto:rx@meritsciences.com?subject=Question about Wolverine Blend
+  - contentinfo [ref=f5e533]:
+    - generic [ref=f5e534]:
+      - generic [ref=f5e535]:
+        - generic [ref=f5e536]: Merit.
+        - paragraph [ref=f5e537]: Research compounds from an ISO-certified US facility, shipped from San Antonio.
+        - link "rx@meritsciences.com" [ref=f5e538] [cursor=pointer]:
+          - /url: mailto:rx@meritsciences.com
+      - generic [ref=f5e539]:
+        - paragraph [ref=f5e540]: Shop
+        - list [ref=f5e541]:
+          - listitem [ref=f5e542]:
+            - link "Catalog" [ref=f5e543] [cursor=pointer]:
+              - /url: /catalog
+          - listitem [ref=f5e544]:
+            - link "Stacks" [ref=f5e545] [cursor=pointer]:
+              - /url: /catalog#stacks
+          - listitem [ref=f5e546]:
+            - link "Research Library" [ref=f5e547] [cursor=pointer]:
+              - /url: /library
+          - listitem [ref=f5e548]:
+            - link "Certificates of Analysis" [ref=f5e549] [cursor=pointer]:
+              - /url: /coa
+          - listitem [ref=f5e550]:
+            - link "About" [ref=f5e551] [cursor=pointer]:
+              - /url: /about
+          - listitem [ref=f5e552]:
+            - link "The Assay" [ref=f5e553] [cursor=pointer]:
+              - /url: https://theassay.co
+          - listitem [ref=f5e554]:
+            - link "Practitioner Program" [ref=f5e555] [cursor=pointer]:
+              - /url: /practitioners
+          - listitem [ref=f5e556]:
+            - link "Affiliate Program" [ref=f5e557] [cursor=pointer]:
+              - /url: /affiliate
+      - generic [ref=f5e558]:
+        - paragraph [ref=f5e559]: Policies
+        - list [ref=f5e560]:
+          - listitem [ref=f5e561]:
+            - link "Shipping" [ref=f5e562] [cursor=pointer]:
+              - /url: /shipping
+          - listitem [ref=f5e563]:
+            - link "Returns" [ref=f5e564] [cursor=pointer]:
+              - /url: /returns
+          - listitem [ref=f5e565]:
+            - link "Terms of Service" [ref=f5e566] [cursor=pointer]:
+              - /url: /terms
+          - listitem [ref=f5e567]:
+            - link "Privacy" [ref=f5e568] [cursor=pointer]:
+              - /url: /privacy
+      - generic [ref=f5e569]:
+        - paragraph [ref=f5e570]: Compliance
+        - list [ref=f5e571]:
+          - listitem [ref=f5e572]:
+            - link "Research Disclosure" [ref=f5e573] [cursor=pointer]:
+              - /url: /research-disclosure
+          - listitem [ref=f5e574]: For Research Use Only · Not for human or veterinary use
+    - navigation "Popular research" [ref=f5e575]:
+      - generic [ref=f5e576]: Research
+      - link "Tirzepatide" [ref=f5e577] [cursor=pointer]:
+        - /url: /library/tirzepatide
+      - link "Retatrutide" [ref=f5e578] [cursor=pointer]:
+        - /url: /library/retatrutide
+      - link "Semaglutide" [ref=f5e579] [cursor=pointer]:
+        - /url: /library/semaglutide
+      - link "Tesamorelin" [ref=f5e580] [cursor=pointer]:
+        - /url: /library/tesamorelin
+      - link "BPC-157 + TB-500" [ref=f5e581] [cursor=pointer]:
+        - /url: /library/bpc-157-tb-500
+      - link "GHK-Cu" [ref=f5e582] [cursor=pointer]:
+        - /url: /library/ghk-cu
+      - link "NAD+" [ref=f5e583] [cursor=pointer]:
+        - /url: /library/nad
+      - link "MOTS-c" [ref=f5e584] [cursor=pointer]:
+        - /url: /library/mots-c
+      - link "PT-141" [ref=f5e585] [cursor=pointer]:
+        - /url: /library/pt-141
+    - paragraph [ref=f5e586]: All Merit Sciences products are sold strictly for laboratory and scientific research use only. Products have not been evaluated by the FDA and are not intended to diagnose, treat, cure, or prevent any disease. By purchasing, you confirm that you are a qualified researcher 21+ purchasing for in-vitro research, laboratory analysis, or other lawful scientific use.
+    - paragraph [ref=f5e587]: © 2026 Merit Sciences LLC · Dallas, TX
+  - dialog "Shopping cart" [ref=f5e588]:
+    - banner [ref=f5e589]:
+      - generic [ref=f5e591]:
+        - generic [ref=f5e593]:
+          - paragraph [ref=f5e594]: Merit.
+          - heading "Your cart" [level=2] [ref=f5e595]
+        - button "Close cart" [ref=f5e596] [cursor=pointer]
+    - generic [ref=f5e601]:
+      - paragraph [ref=f5e607]: Cart is empty.
+      - paragraph [ref=f5e608]: Pick a research compound from the catalog. Every batch HPLC-verified, every shipment lot-documented.
+      - link "Browse catalog →" [ref=f5e609] [cursor=pointer]:
+        - /url: /catalog
+  - alert [ref=f5e610]

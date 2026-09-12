@@ -28,7 +28,7 @@ import { categoryForKey } from './compound-categories';
 import { listProducts } from './catalog';
 import { productImage } from './product-types';
 
-const DEFAULT_CODE = 'WELCOME20';
+import { WELCOME_CODE as DEFAULT_CODE } from './welcome-offer';
 const DAILY_CAP = () => Math.max(1, parseInt(process.env.SEQUENCE_DAILY_CAP || '120', 10) || 120);
 
 function addDays(d: Date, n: number): Date {
