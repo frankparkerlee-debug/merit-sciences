@@ -63,7 +63,7 @@ const GATE_HOSTS = (process.env.GATE_HOST || 'trymerit.co')
 // parked and "/" redirects too, so the DNS record can go live before the page
 // exists without exposing anything.
 const SHOP_HOSTS = ['shop.meritsciences.com'];
-const SHOP_LANDING_PATH: string | null = null;
+const SHOP_LANDING_PATH: string | null = '/lp/shop';
 
 function isShopHost(host: string): boolean {
   return SHOP_HOSTS.includes(host.toLowerCase().split(':')[0]);
