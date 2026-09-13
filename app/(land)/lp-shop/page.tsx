@@ -32,7 +32,7 @@ import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
 export const metadata = {
   title: 'Independently tested research compounds',
   description:
-    'Every batch tested by an independent laboratory before release, with the lab report published and tied to the batch number on the vial. Licensed US facility, ships in 48 hours.',
+    'Every batch tested by an independent laboratory before it is listed, with the certificate published in a public COA library. Licensed US facility, ships in 48 hours.',
   // The store is the page to rank; this one exists for paid traffic.
   robots: { index: false, follow: true },
 };
@@ -45,7 +45,7 @@ const TICKER = [
   'Lab report on every batch',
   'Licensed US facility',
   'Ships in 48 hours',
-  'Scan the label to verify',
+  'The QR on every vial opens the library',
 ];
 
 const CHECKS: [string, string][] = [
@@ -53,14 +53,14 @@ const CHECKS: [string, string][] = [
   ['Purity', 'HPLC main-peak percentage, published as measured'],
   ['Heavy metals', 'ICP-MS to trace thresholds'],
   ['Endotoxin', 'Bacterial endotoxin screened'],
-  ['Provenance', 'The batch number resolves to its own report'],
+  ['Provenance', 'Every certificate is published in the public COA library'],
 ];
 
 // A real sequence, so it's numbered.
 const STEPS: [string, string][] = [
-  ['The vial carries a batch number', 'Printed on every label, with a QR code beside it.'],
-  ['The report is published first', 'An outside laboratory tests the batch, and the certificate goes live before that batch is sold.'],
-  ['You read the same numbers we do', 'Scan the code or type the batch number. No account, no request form.'],
+  ['Each batch is tested before it is listed', 'An independent laboratory tests it. Nothing goes on sale until the results are in.'],
+  ['The certificate goes into the library', 'Every certificate we have released, searchable by compound. No account, no request form.'],
+  ['The QR code on the vial opens it', 'Scan the label and you are in the library, reading the same numbers we do.'],
 ];
 
 // Only what is already stated on the live store. No guarantee is claimed
@@ -68,7 +68,7 @@ const STEPS: [string, string][] = [
 // policies pages don't back.
 const PILLARS: [string, string][] = [
   ['Ships in 48 hours', 'Monday to Thursday, UPS Ground, tracked and insured'],
-  ['Lab report on every batch', 'Published before the batch is sold'],
+  ['Lab report on every batch', 'Published before the batch is listed'],
   ['Licensed US facility', 'Compounded in the United States'],
   [`${WELCOME_PCT}% off your first order`, `Code ${WELCOME_CODE}, applied at checkout`],
 ];
@@ -78,11 +78,11 @@ const PILLARS: [string, string][] = [
 // first-time visitor actually has. Nothing here describes what a compound does.
 const FAQ: [string, string][] = [
   ['What do I actually receive?',
-   'A sealed vial of lyophilized material with a batch number printed on the label. The certificate for that batch is published on our site before the batch ships.'],
+   'A sealed vial of lyophilized material. The batch it came from was tested by an independent laboratory before it was listed, and its certificate is in our COA library.'],
   ['Who does the testing?',
-   'A laboratory independent of the facility that made the batch. The certificate is published before the batch is sold, so the identity and purity figures you read are the same ones we read.'],
+   'A laboratory independent of the facility that made the batch. The certificate is published before the batch is listed, so the identity and purity figures you read are the same ones we read.'],
   ['How do I check a batch?',
-   'Scan the QR code on the label, or type the batch number into the lookup on our site. No account and no request form.'],
+   'The QR code on every vial opens our COA library. Search by compound to find the certificate for the batch currently shipping. No account and no request form.'],
   ['How fast does it ship?',
    'Orders dispatch within 48 hours, Monday through Thursday, by UPS Ground with tracking and insurance. Most US addresses receive within 3 to 5 business days.'],
   ['What does research use only mean?',
@@ -140,9 +140,9 @@ export default function ShopLanding() {
           </h1>
           <div className="mt-9 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
             <p className="max-w-[50ch] text-[15px] leading-[1.62] text-white/70">
-              Research compounds tested by an outside laboratory before they are released. The
-              certificate for every batch is published and tied to the number printed on the vial,
-              so you can read the results before you order.
+              Research compounds tested by an outside laboratory before they are listed. Every
+              certificate is published in our COA library, so you can read the results before you
+              order.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link href={`${STORE}/catalog?code=${WELCOME_CODE}`} className={primaryCta}>
@@ -246,7 +246,7 @@ export default function ShopLanding() {
             className="font-poster font-black uppercase leading-[0.92] tracking-[-0.04em] max-w-[18ch]"
             style={{ fontSize: 'clamp(28px, 4.2vw, 62px)' }}
           >
-            Three steps from label to lab report.
+            Three steps from batch to lab report.
           </h2>
           <ol className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10 border border-white/10">
             {STEPS.map(([t, b], i) => (
@@ -261,7 +261,7 @@ export default function ShopLanding() {
           </ol>
           <div className="mt-10">
             <Link href={`${STORE}/coa`} className={secondaryCta + ' inline-block'}>
-              Look up a batch
+              Open the COA library
             </Link>
           </div>
         </div>
