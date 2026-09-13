@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { WELCOME_PCT } from '@/lib/welcome-offer';
 
 /**
  * Email capture band — feeds the existing /api/newsletter route, which
- * grants the real WELCOME20 first-order code and starts the nurture drip.
- * The 20%-off offer is the hook; "get updates" doesn't convert.
+ * grants the real welcome first-order code (see lib/welcome-offer.ts) and
+ * starts the nurture drip. The %-off offer is the hook; "get updates" doesn't
+ * convert.
  */
 export function CaptureBand() {
   const [email, setEmail] = useState('');
@@ -35,7 +37,7 @@ export function CaptureBand() {
           className="font-display font-black text-ink tracking-[-0.03em]"
           style={{ fontSize: 'clamp(24px,3vw,36px)' }}
         >
-          20% off your first order.
+          {WELCOME_PCT}% off your first order.
         </h2>
         <p className="mt-2 text-[15px] text-ink-soft">
           Drop your email and we&rsquo;ll send the code — plus restock and new-compound alerts. No spam.

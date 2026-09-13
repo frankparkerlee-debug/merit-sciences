@@ -19,7 +19,7 @@ import { CaptureBand } from './CaptureBand';
  *     standard, dispatch SLA, live compound count) — no fabricated scale.
  *   - FAQ with FAQPage JSON-LD (objection handling + the AI-search channel
  *     that already converts).
- *   - Email capture feeding the real WELCOME20 code + nurture drip.
+ *   - Email capture feeding the real welcome code (lib/welcome-offer.ts) + nurture drip.
  *
  * Review route only — noindexed until it replaces `/`.
  */
@@ -314,7 +314,7 @@ export default async function HomeV2() {
         </div>
       </section>
 
-      {/* ══ CAPTURE — real WELCOME20 offer feeding the drip ══ */}
+      {/* ══ CAPTURE — real welcome offer feeding the drip ══ */}
       <CaptureBand />
 
       {/* ══ CLOSE — approved cinematic band ══ */}
