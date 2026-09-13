@@ -260,25 +260,28 @@ export default async function ShopLanding() {
             same catalog, from a source you can check before you pay.
           </p>
 
-          <div className="mt-12 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-[14.5px]">
-              <thead>
-                <tr className="text-left">
-                  <th className="pb-3 pr-6 font-mono text-[10.5px] tracking-[0.14em] uppercase text-white/35 font-medium w-[22%]"></th>
-                  <th className="pb-3 pr-6 font-mono text-[10.5px] tracking-[0.14em] uppercase text-white/35 font-medium">The gray market</th>
-                  <th className="pb-3 font-mono text-[10.5px] tracking-[0.14em] uppercase font-medium" style={{ color: LIME }}>Merit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CONTRAST.map(([k, them, us]) => (
-                  <tr key={k} className="border-t border-white/10">
-                    <th scope="row" className="py-4 pr-6 text-left font-display font-semibold text-white/80 align-top">{k}</th>
-                    <td className="py-4 pr-6 text-white/45 align-top">{them}</td>
-                    <td className="py-4 text-white align-top font-medium">{us}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Stacked on phones, three columns from md up. A table with a
+              min-width scrolled the Merit column off a 390px screen, and that
+              is the column the whole section exists for. */}
+          <div className="mt-12 border-t border-white/10">
+            <div className="hidden md:grid md:grid-cols-[22%_1fr_1fr] gap-x-6 py-3 font-mono text-[10.5px] tracking-[0.14em] uppercase font-medium">
+              <span aria-hidden="true"></span>
+              <span className="text-white/35">The gray market</span>
+              <span style={{ color: LIME }}>Merit</span>
+            </div>
+            {CONTRAST.map(([k, them, us]) => (
+              <div key={k} className="grid grid-cols-1 md:grid-cols-[22%_1fr_1fr] gap-x-6 gap-y-2 py-5 border-t border-white/10 text-[14.5px]">
+                <p className="m-0 font-display font-semibold text-white/85">{k}</p>
+                <p className="m-0 text-white/45">
+                  <span className="md:hidden font-mono text-[10px] tracking-[0.12em] uppercase text-white/30 mr-2">Gray market</span>
+                  {them}
+                </p>
+                <p className="m-0 text-white font-medium">
+                  <span className="md:hidden font-mono text-[10px] tracking-[0.12em] uppercase mr-2" style={{ color: LIME }}>Merit</span>
+                  {us}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
