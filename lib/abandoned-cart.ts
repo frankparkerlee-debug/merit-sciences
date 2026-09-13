@@ -148,7 +148,7 @@ function recoveryEmailHtml(cart: {
     : '';
   return (
     heading('You left something behind.') +
-    p('Your cart is saved — pick up exactly where you left off. Every lot is HPLC-tested to &ge;99% purity and ships with its Certificate of Analysis.') +
+    p('Your cart is saved — pick up exactly where you left off. Every batch is HPLC-tested to &ge;99% purity before it is listed, and its Certificate of Analysis is published in the COA library.') +
     `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #E5E1D6;margin:8px 0 2px;">
       ${rows}
       <tr>

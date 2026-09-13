@@ -232,7 +232,7 @@ export default async function PractitionerPortalPage() {
           <PortalCard
             tag="Records"
             title="Order history + COAs"
-            body="Your past orders, lots, and Certificates of Analysis in one place."
+            body="Your past orders, batches, and Certificates of Analysis in one place."
             href="/orders/lookup"
             cta="View orders →"
           />

@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'About',
   description:
-    'Why Merit Sciences exists: lab-verified compounds, tested and documented per lot, priced like the material they are. HPLC ≥99% purity, a COA with every shipment, shipped from San Antonio.',
+    'Why Merit Sciences exists: lab-verified compounds, tested and documented per batch, priced like the material they are. HPLC ≥99% purity, a COA with every shipment, shipped from San Antonio.',
 };
 
 export default function AboutPage() {
@@ -56,7 +56,7 @@ export default function AboutPage() {
           <p className="mt-7 max-w-xl text-[16px] lg:text-[19px] text-white/75 leading-relaxed">
             Research compounds force a choice no serious buyer should have to make: cheap and
             unverified, or legitimate and overpriced. Merit refuses it &mdash; the same stack the
-            legitimate channel sells, assayed and documented lot by lot, priced like the material
+            legitimate channel sells, assayed and documented batch by batch, priced like the material
             it actually is.
           </p>
         </div>
@@ -137,17 +137,17 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-10">
-            <Stat value="≥99%" label="HPLC purity, verified per lot" />
-            <Stat value="100%" label="of shipments include the lot COA" />
+            <Stat value="≥99%" label="HPLC purity, verified per batch" />
+            <Stat value="100%" label="of batches have a published certificate" />
             <Stat value="48hr" label="from order to dispatch, San Antonio" />
-            <Stat value="Lot #" label="on every single vial label" />
+            <Stat value="QR" label="on every vial label, opens the COA library" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4 max-w-3xl">
             <Check>Every batch released only after HPLC purity testing</Check>
             <Check>Sterility, endotoxin, and particulate tested to USP standards</Check>
             <Check>Acetate counterion — not the cheaper TFA salt</Check>
-            <Check>An independent laboratory assays every lot before release</Check>
+            <Check>An independent laboratory assays every batch before it is listed</Check>
             <Check>Certificate of Analysis ships with every order</Check>
             <Check>One purity floor — no good batches and bad batches</Check>
           </div>
@@ -165,7 +165,7 @@ export default function AboutPage() {
               className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
               style={{ fontSize: 'clamp(32px, 5vw, 64px)' }}
             >
-              How every lot reaches you<span className="text-cobalt">.</span>
+              How every batch reaches you<span className="text-cobalt">.</span>
             </h2>
             <p className="mt-5 text-[16px] text-ink-soft leading-relaxed">
               Five steps, none of them skipped. The same path every time &mdash; which is the point.
@@ -175,9 +175,9 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-5">
             <Step n="01" title="Synthesis" body="Manufactured under controlled conditions — the starting material is identified, not assumed." />
             <Step n="02" title="Characterization" body="HPLC purity plus the USP panel: sterility, endotoxin, particulate. Pass or it doesn't ship." />
-            <Step n="03" title="Independent release" body="A laboratory independent of the facility that made the lot returns its identity and purity results, and the lot is released against them." />
+            <Step n="03" title="Independent release" body="A laboratory independent of the facility that made the batch returns its identity and purity results, and the batch is released against them." />
             <Step n="04" title="Documented" body="A Certificate of Analysis is generated for the lot and a lot number is printed on every vial." />
-            <Step n="05" title="Shipped" body="Sealed, lot-stamped, and dispatched from San Antonio within 48 hours — COA in the box." />
+            <Step n="05" title="Shipped" body="Sealed and dispatched from San Antonio within 48 hours. The certificate is in the COA library, behind the QR on the label." />
           </div>
         </div>
       </section>
@@ -201,7 +201,7 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
             <Principle n="01" title="Documentation over claims" body="Anyone can say ‘high purity.’ We hand you the COA. If the proof can't travel with the product, it isn't proof." />
-            <Principle n="02" title="The same bar, every lot" body="Quality that varies batch-to-batch isn't quality — it's luck. One purity floor, held every single time." />
+            <Principle n="02" title="The same bar, every batch" body="Quality that varies batch-to-batch isn't quality — it's luck. One purity floor, held every single time." />
             <Principle n="03" title="A source you can name" body="A licensed US facility and a chain of custody you can point to — not an anonymous reseller and a leap of faith." />
             <Principle n="04" title="Price is not a quality signal" body="Verified shouldn't mean overpriced. We price the material like the commodity it is, and let the documentation carry the trust." />
           </div>
@@ -227,14 +227,14 @@ export default function AboutPage() {
             <Audience
               tag="Researchers"
               title="Buy direct"
-              body="Lot-documented research compounds at a fair price — a QR on every label pulls that lot's COA. Browse the full catalog and order direct — no account required."
+              body="Batch-tested research compounds at a fair price. The QR on every label opens the COA library. Browse the full catalog and order direct — no account required."
               cta="Browse the catalog"
               href="/catalog"
             />
             <Audience
               tag="Practitioners"
               title="Open an account"
-              body="A verified-account program for licensed practitioners — account pricing set per practice, the same lot documentation, no minimums and no contracts. License and NPI verified before access."
+              body="A verified-account program for licensed practitioners — account pricing set per practice, the same batch documentation, no minimums and no contracts. License and NPI verified before access."
               cta="Practitioner Program"
               href="/practitioners"
             />

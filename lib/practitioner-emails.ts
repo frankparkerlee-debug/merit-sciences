@@ -101,7 +101,7 @@ const PROSPECT: EmailDefinition[] = [
       <p>Thanks for the interest in Merit.</p>
       <p>Over the next few weeks we&rsquo;ll send a short, deliberate series — no marketing fluff. Topics:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
-        <li>How a Merit lot gets released</li>
+        <li>How a Merit batch gets released</li>
         <li>The acetate-vs-TFA chemistry most discount peptides skip</li>
         <li>How to read a peptide COA</li>
         <li>What the application + portal experience looks like</li>
@@ -115,15 +115,15 @@ const PROSPECT: EmailDefinition[] = [
     key: 'P1.02_inside_a_lot',
     phase: 'PROSPECT',
     dayOffset: 2,
-    subject: () => 'How a Merit lot gets released',
+    subject: () => 'How a Merit batch gets released',
     body: (ctx) => `
       <p>Most practitioners we talk to have never been walked through their supplier&rsquo;s release chain. Worth knowing what&rsquo;s in ours.</p>
       <ol style="padding-left:20px;margin:8px 0 16px;">
         <li><strong>API procurement</strong> — FDA-registered upstream suppliers, COA on receipt.</li>
         <li><strong>Compounding</strong> — in an ISO-certified facility. ISO Class 5 fill room.</li>
-        <li><strong>Characterization</strong> — HPLC &ge;99% purity per lot. Sterility (USP &lt;71&gt;), endotoxin (USP &lt;85&gt;), particulate (USP &lt;788&gt;).</li>
+        <li><strong>Characterization</strong> — HPLC &ge;99% purity per batch. Sterility (USP &lt;71&gt;), endotoxin (USP &lt;85&gt;), particulate (USP &lt;788&gt;).</li>
         <li><strong>Independent release</strong> — every batch is released against an independent laboratory assay.</li>
-        <li><strong>COA</strong> — accompanies every shipment. Lot # on the label.</li>
+        <li><strong>COA</strong> — published in the COA library for every batch. QR on the label.</li>
       </ol>
       <p>Every step is documented, dated, and traceable. That&rsquo;s the chain you can name.</p>
       ${btn('Apply for portal access →', `${ctx.siteUrl}/practitioners#apply`)}
@@ -155,7 +155,7 @@ const PROSPECT: EmailDefinition[] = [
         <li><strong>Sterility</strong> per USP &lt;71&gt; — pass/fail.</li>
         <li><strong>Endotoxin</strong> per USP &lt;85&gt; — EU/mL, should be well under threshold.</li>
         <li><strong>Particulate</strong> per USP &lt;788&gt;.</li>
-        <li><strong>Lot # + manufacture date + BUD</strong> — beyond-use date.</li>
+        <li><strong>Batch identifier + manufacture date + BUD</strong> — beyond-use date.</li>
         <li><strong>Counterion</strong> — should specify (acetate or TFA).</li>
       </ul>
       <p>If a COA is missing any of these, ask why. If the supplier can&rsquo;t produce one, that&rsquo;s an answer.</p>
@@ -169,7 +169,7 @@ const PROSPECT: EmailDefinition[] = [
     subject: () => 'The supplier story you can name',
     body: (ctx) => `
       <p>A lot of supplier stories are vapor — &ldquo;manufactured in a sterile lab, tested rigorously&rdquo; with no entity name, no facility address, no inspectable chain.</p>
-      <p>Ours: an <strong>ISO-certified US facility</strong>. Lot-documented, third-party assayed, and named on your COA.</p>
+      <p>Ours: an <strong>ISO-certified US facility</strong>. Batch-documented, third-party assayed, and named on your COA.</p>
       <p>That&rsquo;s what we mean when we say sourcing that holds up to scrutiny.</p>
       ${btn('Apply →', `${ctx.siteUrl}/practitioners#apply`)}
     `,
@@ -184,7 +184,7 @@ const PROSPECT: EmailDefinition[] = [
       <ul style="padding-left:18px;margin:8px 0 16px;">
         <li>Account-tier pricing (set at approval — never published)</li>
         <li>Order history with COA archive per order</li>
-        <li>Lot tracking per order</li>
+        <li>Batch tracking per order</li>
         <li>One-click reorder</li>
         <li>Practitioner-only compounds when applicable</li>
       </ul>
@@ -235,7 +235,7 @@ const PROSPECT: EmailDefinition[] = [
     subject: () => 'Still considering Merit?',
     body: (ctx) => `
       <p>Quick check-in. We don&rsquo;t want to add to your inbox without value.</p>
-      <p>If something specific would help you decide — sample COA, manufacturing walkthrough video, a walk through a lot record — reply to this email and we&rsquo;ll get it to you.</p>
+      <p>If something specific would help you decide — sample COA, manufacturing walkthrough video, a walk through a batch record — reply to this email and we&rsquo;ll get it to you.</p>
       <p>If now&rsquo;s not the right time, that&rsquo;s fine too. We&rsquo;re not going anywhere.</p>
       <p style="font-size:13px;color:${INK_SOFT};">&mdash; The Merit compounding team</p>
       ${btn('Apply →', `${ctx.siteUrl}/practitioners#apply`)}
@@ -248,7 +248,7 @@ const PROSPECT: EmailDefinition[] = [
     subject: () => 'Closing your file',
     body: (ctx) => `
       <p>We keep our list lean. If Merit&rsquo;s not a fit, no hard feelings.</p>
-      <p>If you&rsquo;d like to apply now, the link&rsquo;s below. If you&rsquo;d rather stay subscribed for occasional updates (new lot releases, research roundups), reply &ldquo;stay&rdquo; and we&rsquo;ll move you to a low-frequency list. Otherwise we&rsquo;ll close your file at the end of the week.</p>
+      <p>If you&rsquo;d like to apply now, the link&rsquo;s below. If you&rsquo;d rather stay subscribed for occasional updates (new batch releases, research roundups), reply &ldquo;stay&rdquo; and we&rsquo;ll move you to a low-frequency list. Otherwise we&rsquo;ll close your file at the end of the week.</p>
       ${btn('Apply now →', `${ctx.siteUrl}/practitioners#apply`)}
       <p style="font-size:12px;margin-top:18px;">${link('Stay subscribed', ctx.siteUrl + '/account/preferences')} &middot; ${link('Unsubscribe', ctx.unsubscribeUrl)}</p>
     `,
@@ -283,7 +283,7 @@ const ONBOARDING: EmailDefinition[] = [
     body: (ctx) => `
       <p>Every vial includes:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
-        <li>Lot # printed on the label, tied to the COA</li>
+        <li>QR on the label, opening the COA library</li>
         <li>Lyophilized peptide</li>
         <li>Tamper-evident closure</li>
         <li>Cold-pack shipping for temperature stability in transit</li>
@@ -291,7 +291,7 @@ const ONBOARDING: EmailDefinition[] = [
       <p>Every shipment includes:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
         <li>Itemized packing slip</li>
-        <li>Full COA for each lot in the order</li>
+        <li>Full COA for each batch in the order</li>
         <li>Cold-chain documentation</li>
       </ul>
       ${btn('Browse catalog →', `${ctx.siteUrl}/catalog`)}
@@ -346,7 +346,7 @@ const ONBOARDING: EmailDefinition[] = [
       <p>A quick recap of what your account gives you:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
         <li><strong>ISO-certified US facility</strong></li>
-        <li><strong>HPLC &ge;99% per lot</strong> with full USP &lt;71&gt;/&lt;85&gt;/&lt;788&gt; characterization</li>
+        <li><strong>HPLC &ge;99% per batch</strong> with full USP &lt;71&gt;/&lt;85&gt;/&lt;788&gt; characterization</li>
         <li><strong>Acetate counterion</strong> across the catalog</li>
         <li><strong>COA with every shipment</strong></li>
         <li><strong>48-hour dispatch</strong>, no MOQ</li>
@@ -367,13 +367,13 @@ const RETENTION: EmailDefinition[] = [
     key: 'P3.01_first_lot',
     phase: 'RETENTION',
     dayOffset: 3,
-    subject: () => 'Your first lot is documented',
+    subject: () => 'Your first batch is documented',
     body: (ctx) => `
-      <p>Quick note: your first order was delivered, and the COA + lot data is now archived in your portal under Order History. Pull it anytime.</p>
+      <p>Quick note: your first order was delivered, and the COA + batch data is now archived in your portal under Order History. Pull it anytime.</p>
       <p>If anything in the shipment was off — quality, packaging, documentation — reply to this email and you&rsquo;ll reach the compounding team directly.</p>
       <p>If everything was right, here&rsquo;s where most practitioners go next:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
-        <li><strong>Reorder same SKU</strong> — keeps lot continuity for your records</li>
+        <li><strong>Reorder same SKU</strong> — keeps batch continuity for your records</li>
         <li><strong>Expand to a second compound</strong> — your pricing applies across the catalog</li>
       </ul>
       ${btn('View order history →', `${ctx.siteUrl}/practitioners/portal`)}
@@ -396,12 +396,12 @@ const RETENTION: EmailDefinition[] = [
     phase: 'RETENTION',
     dayOffset: 30,
     subject: (ctx) =>
-      ctx.lotRelease ? `New lot released — ${ctx.lotRelease.compound}` : 'New lot released',
+      ctx.lotRelease ? `New batch released — ${ctx.lotRelease.compound}` : 'New batch released',
     body: (ctx) => `
       <p>${
         ctx.lotRelease
-          ? `Lot <strong>${ctx.lotRelease.lot}</strong> for <strong>${ctx.lotRelease.compound}</strong> released on <strong>${ctx.lotRelease.date}</strong>.`
-          : 'New lots have released across the catalog.'
+          ? `Batch <strong>${ctx.lotRelease.lot}</strong> for <strong>${ctx.lotRelease.compound}</strong> released on <strong>${ctx.lotRelease.date}</strong>.`
+          : 'New batches have released across the catalog.'
       }</p>
       ${
         ctx.lotRelease
@@ -410,8 +410,8 @@ const RETENTION: EmailDefinition[] = [
               <li>Sterility: pass</li>
               <li>Endotoxin: within USP &lt;85&gt; limit</li>
             </ul>
-            <p>If you&rsquo;ve been waiting for fresh lot stock to reorder, this is it.</p>`
-          : '<p>Check the portal for current lot inventory across your usual SKUs.</p>'
+            <p>If you&rsquo;ve been waiting for a fresh batch to reorder, this is it.</p>`
+          : '<p>Check the portal for current batch inventory across your usual SKUs.</p>'
       }
       ${btn('Reorder →', `${ctx.siteUrl}/catalog`)}
     `,
@@ -456,8 +456,8 @@ const RETENTION: EmailDefinition[] = [
     body: (ctx) => `
       <p>A few portal capabilities that don&rsquo;t get enough airtime:</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
-        <li><strong>COA archive</strong> — pull any historical COA by order or lot</li>
-        <li><strong>Lot history</strong> — every lot you&rsquo;ve received, sortable</li>
+        <li><strong>COA archive</strong> — pull any historical COA by order or batch</li>
+        <li><strong>Batch history</strong> — every batch you&rsquo;ve received, sortable</li>
         <li><strong>Auto-reorder</strong> — set cadence per SKU</li>
         <li><strong>Practice ordering</strong> — multiple providers, one account</li>
         <li><strong>Export</strong> — download order history as CSV</li>
@@ -492,12 +492,12 @@ const RETENTION: EmailDefinition[] = [
     key: 'P3.09_year_in_lots',
     phase: 'RETENTION',
     dayOffset: 120,
-    subject: () => 'Your year in lots',
+    subject: () => 'Your year in batches',
     body: (ctx) => `
       <p>Quick year-end recap of your Merit account (the numbers populate from your order history):</p>
       <ul style="padding-left:18px;margin:8px 0 16px;">
         <li>Orders placed</li>
-        <li>Distinct lots received</li>
+        <li>Distinct batches received</li>
         <li>Compounds in your formulary</li>
         <li>Average dispatch time</li>
       </ul>

@@ -39,7 +39,7 @@ export default function LibraryIndex() {
           <p className="text-base text-ink-soft leading-relaxed max-w-2xl">
             {entries.length} references for the research community — {MONOGRAPHS.length} compound monographs
             with mechanism and published research, summaries of the published trials, and how
-            we test every lot. For research use only.
+            we test every batch. For research use only.
           </p>
         </div>
       </section>

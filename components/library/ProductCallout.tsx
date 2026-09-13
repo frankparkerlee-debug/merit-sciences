@@ -10,7 +10,7 @@ import type { ProductRef } from '@/lib/monographs';
 export function ProductCallout({ title, product }: { title: string; product: ProductRef }) {
   const proof = [
     `${product.purity} HPLC purity`,
-    'Third-party COA on every lot',
+    'Third-party COA on every batch',
     'ISO-certified US facility',
     'Ships 48h from San Antonio',
   ];

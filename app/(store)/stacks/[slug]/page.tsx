@@ -182,7 +182,7 @@ export default async function StackPage({ params }: Props) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-cobalt flex-shrink-0">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                Each vial independently assayed, individually lot-documented
+                Every batch independently assayed, certificate published
               </li>
               <li className="flex items-center gap-2 text-[12px] text-ink-soft">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-cobalt flex-shrink-0">
@@ -268,7 +268,7 @@ export default async function StackPage({ params }: Props) {
                   </p>
                   {p.lot.id !== 'TBD' && (
                     <p className="text-[11px] text-ink-soft mt-auto">
-                      <span className="text-cobalt font-bold">Lot {p.lot.id}</span>
+                      <span className="text-cobalt font-bold">Batch {p.lot.id}</span>
                       {p.lot.purity && <> · {p.lot.purity}</>}
                     </p>
                   )}

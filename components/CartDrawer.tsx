@@ -221,7 +221,7 @@ export function CartDrawer({ freeShippingThresholdCents = 35_000 }: { freeShippi
             <div className="mt-4 pt-3 border-t border-cobalt/10 flex items-center justify-center gap-3 text-[10px] tracking-[0.14em] uppercase font-bold text-ink-muted">
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-cobalt" />
-                Lot-documented
+                Batch-documented
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-cobalt" />
@@ -264,7 +264,7 @@ function EmptyState({ onClose }: { onClose: () => void }) {
       </p>
       <p className="text-[13px] text-ink-soft mb-6 max-w-[280px] leading-relaxed">
         Pick a research compound from the catalog. Every batch HPLC-verified,
-        every shipment lot-documented.
+        every batch tested and published.
       </p>
       <Link
         href="/catalog"

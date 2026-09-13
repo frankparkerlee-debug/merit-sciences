@@ -169,7 +169,7 @@ export const MONOGRAPH_EXTRAS: Record<string, { keyFindings?: string[]; faqs?: F
       { q: 'What is tirzepatide?', a: 'Tirzepatide (research code LY3298176) is a synthetic dual agonist that activates both the GIP and GLP-1 receptors. It is the compound studied in the SURMOUNT (obesity) and SURPASS (type-2-diabetes) clinical-trial programs. Merit supplies it as a lyophilized research compound for research use only — not for human or veterinary use.' },
       { q: 'How does tirzepatide work?', a: 'It is a "dual incretin" — a single peptide engineered to activate two gut-hormone receptors at once (GIP and GLP-1). Published trials attribute its effect size relative to single-receptor GLP-1 agonists to this combined mechanism. Mechanistic descriptions here summarize published findings and are not clinical claims.' },
       { q: 'What did the tirzepatide trials show?', a: 'In SURMOUNT-1, the highest-dose arm showed a mean body-weight reduction of about 20.9% over 72 weeks versus ~3.1% on placebo. In SURPASS-2, it produced greater HbA1c and weight reductions than semaglutide 1 mg. See the linked SURMOUNT-1 and SURPASS-2 summaries for trial design and full outcomes.' },
-      { q: 'Is Merit tirzepatide for human use?', a: 'No. It is sold strictly for research use only — not for human or veterinary use, and not for diagnostic or therapeutic use. Every lot ships with a certificate of analysis documenting ≥99% HPLC purity.' },
+      { q: 'Is Merit tirzepatide for human use?', a: 'No. It is sold strictly for research use only — not for human or veterinary use, and not for diagnostic or therapeutic use. Every batch is tested before it is listed, and its certificate of analysis documenting ≥99% HPLC purity is published in the COA library.' },
     ],
   },
 };
@@ -204,7 +204,7 @@ function autoFaqs(m: CompoundMeta, r: ResearchData): Faq[] {
   // anything here is a public claim Google and AI engines read directly.
   faqs.push({
     q: `Is Merit ${m.title} for human use?`,
-    a: `No. It is sold strictly for research use only — not for human or veterinary use, and not for diagnostic or therapeutic use. Every lot ships with a certificate of analysis documenting ${m.product?.purity ?? '≥99%'} HPLC purity.`,
+    a: `No. It is sold strictly for research use only — not for human or veterinary use, and not for diagnostic or therapeutic use. Every batch is tested before it is listed, and its certificate of analysis documenting ${m.product?.purity ?? '≥99%'} HPLC purity is published in the COA library.`,
   });
   return faqs;
 }

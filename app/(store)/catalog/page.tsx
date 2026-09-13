@@ -15,7 +15,7 @@ import { CatalogClient } from './CatalogClient';
 export const metadata = {
   title: 'Catalog',
   description:
-    'The full Merit Sciences catalog — lab-verified research compounds, HPLC-tested ≥99% per lot with a scannable COA on every label. Browse by pathway family or build a stack. Ships 48hr from San Antonio.',
+    'The full Merit Sciences catalog — lab-verified research compounds, HPLC-tested ≥99% per batch, with a QR on every label that opens the COA library. Browse by pathway family or build a stack. Ships 48hr from San Antonio.',
 };
 // Force-dynamic — see app/page.tsx for rationale (Supabase pool cap).
 export const dynamic = 'force-dynamic';

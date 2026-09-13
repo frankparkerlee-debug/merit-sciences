@@ -9,9 +9,9 @@ const SITE = 'https://meritsciences.com';
 
 export const metadata = {
   // Root template appends "· Merit Sciences" — don't duplicate it here.
-  title: 'Lab results — per-lot certificates of analysis',
+  title: 'Lab results — per-batch certificates of analysis',
   description:
-    'Every Merit lot is independently HPLC-verified before release. Search by compound, lot number, or COA number to see purity, identity, and appearance — the same library the QR code on every label and box points to. Research use only.',
+    'Every Merit batch is independently HPLC-verified before it is listed. Search by compound or certificate number to see purity, identity, and appearance: the same library the QR code on every label and box opens. Research use only.',
   alternates: { canonical: `${SITE}/coa` },
 };
 
@@ -24,12 +24,12 @@ export const metadata = {
  */
 const FAQ = [
   {
-    q: 'Does Merit Sciences third-party test every lot?',
-    a: 'Yes. Every lot is assayed by an independent laboratory before it is released for sale — not sampled, not periodically, every lot. Purity is measured by HPLC and identity is confirmed against a reference standard. The resulting certificate is published on this page before the lot ships.',
+    q: 'Does Merit Sciences third-party test every batch?',
+    a: 'Yes. Every batch is assayed by an independent laboratory before it is listed for sale, not sampled, not periodically, every batch. Purity is measured by HPLC and identity is confirmed against a reference standard. The resulting certificate is published on this page before the batch is listed.',
   },
   {
-    q: 'How do I find the certificate of analysis for my lot?',
-    a: 'Scan the QR code printed on your vial label or on the box, which opens this library directly. You can also type the lot number or COA number into the search field on this page. Every lot has a permanent page at meritsciences.com/coa/[lot number] that requires no account and no request form.',
+    q: 'How do I find the certificate of analysis for my batch?',
+    a: 'Scan the QR code printed on your vial label or on the box, which opens this library directly. Search by compound to find the certificate for the batch currently shipping, or by certificate number if you have one. Every certificate has a permanent page that requires no account and no request form.',
   },
   {
     q: 'What does the purity percentage on a Merit COA mean?',
@@ -37,7 +37,7 @@ const FAQ = [
   },
   {
     q: 'Why are some Merit certificates redacted?',
-    a: 'Lots released on the current panel carry the complete signed PDF with the accredited laboratory named. On older lots, manufacturer and laboratory identifiers are redacted to protect supply-chain integrity. The measured data is never redacted — purity, identity, and lot number are reported exactly as measured.',
+    a: 'Batches released on the current panel carry the complete signed PDF with the accredited laboratory named. On older batches, manufacturer and laboratory identifiers are redacted to protect supply-chain integrity. The measured data is never redacted: purity, identity, and batch identifier are reported exactly as measured.',
   },
   {
     q: 'Are Merit Sciences compounds FDA approved?',
@@ -48,11 +48,11 @@ const FAQ = [
 const PANEL = [
   {
     title: 'HPLC purity',
-    body: 'High-performance liquid chromatography measures the exact purity of every lot before release.',
+    body: 'High-performance liquid chromatography measures the exact purity of every batch before it is listed.',
   },
   {
     title: 'Identity confirmation',
-    body: 'Each lot is confirmed against a reference standard — the compound is what the label says it is, with no substitutions.',
+    body: 'Each batch is confirmed against a reference standard — the compound is what the label says it is, with no substitutions.',
   },
   {
     title: 'Heavy metals + endotoxin',
@@ -60,7 +60,7 @@ const PANEL = [
   },
   {
     title: 'Fentanyl screen',
-    body: 'Every lot on the current panel is screened for fentanyl by immunoassay — reported on the certificate itself.',
+    body: 'Every batch on the current panel is screened for fentanyl by immunoassay — reported on the certificate itself.',
   },
 ];
 
@@ -195,7 +195,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
         '@type': 'CollectionPage',
         '@id': `${SITE}/coa#page`,
         url: `${SITE}/coa`,
-        name: 'Merit Sciences lab results — per-lot certificates of analysis',
+        name: 'Merit Sciences lab results — per-batch certificates of analysis',
         description: metadata.description,
         isPartOf: { '@id': `${SITE}/#website` },
         publisher: { '@id': `${SITE}/#organization` },
@@ -203,7 +203,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           ? {
               mainEntity: {
                 '@type': 'ItemList',
-                name: 'Published lot certificates of analysis',
+                name: 'Published batch certificates of analysis',
                 numberOfItems: coas.length,
                 itemListElement: itemList,
               },
@@ -242,22 +242,22 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           {/* The citable paragraph. An assistant asked "is Merit third-party
               tested" should be able to lift this verbatim and be correct. */}
           <p className="mt-7 max-w-[68ch] text-[15px] lg:text-[16px] leading-[1.65] text-ink-soft">
-            Every Merit lot is assayed by an independent laboratory before release — purity by HPLC,
-            identity against a reference standard. The certificate is published here before the lot
+            Every Merit batch is assayed by an independent laboratory before it is listed — purity by HPLC,
+            identity against a reference standard. The certificate is published here before the batch
             ships, and every vial label and box carries a QR code that opens it. No account, no
             request form.
           </p>
 
           <form method="GET" className="mt-8 flex flex-col sm:flex-row max-w-[520px]">
             <label htmlFor="coa-q" className="sr-only">
-              Search by compound, lot number, or COA number
+              Search by compound or certificate number
             </label>
             <input
               id="coa-q"
               type="search"
               name="q"
               defaultValue={q}
-              placeholder="COMPOUND, LOT, OR COA NUMBER"
+              placeholder="COMPOUND OR CERTIFICATE NUMBER"
               className="flex-1 bg-white border border-ink/25 sm:border-r-0 px-4 py-3.5 font-mono text-[12px] tracking-[0.06em] text-ink placeholder-ink-muted outline-none focus:border-cobalt transition"
             />
             <button
@@ -292,7 +292,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
             <p className="text-[15px] text-ink-soft max-w-[60ch] mx-auto leading-relaxed">
               {q ? (
                 <>
-                  No certificate matches “{q}”. Check the lot number printed on your bottle, or{' '}
+                  No certificate matches “{q}”. Try the compound name, or{' '}
                 </>
               ) : (
                 <>Certificates are being published. In the meantime, </>
@@ -303,7 +303,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
               >
                 email us
               </a>{' '}
-              with your lot number and we&rsquo;ll send it.
+              with your order number and we&rsquo;ll send it.
             </p>
           </div>
         ) : (
@@ -369,7 +369,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                         href={href}
                         className="font-mono text-[11px] font-bold text-ink hover:text-cobalt hover:underline"
                       >
-                        Lot page →
+                        Certificate →
                       </Link>
                     </div>
                   </div>
@@ -403,11 +403,11 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
             ))}
           </div>
           <p className="mt-8 max-w-[76ch] text-[14px] leading-[1.7] text-ink-soft">
-            <strong className="text-white font-semibold">A note on what&rsquo;s shown.</strong> Lots
+            <strong className="text-white font-semibold">A note on what&rsquo;s shown.</strong> Batches
             released with a full certificate carry the complete PDF — accredited lab named, signed by
             the lab director, with an access code you can verify at the lab&rsquo;s own portal. On
-            older lots, manufacturer and laboratory identifiers are redacted to protect supply-chain
-            integrity; the data never is. Purity, identity, and lot are reported exactly as measured.
+            older batches, manufacturer and laboratory identifiers are redacted to protect supply-chain
+            integrity; the data never is. Purity, identity, and batch are reported exactly as measured.
           </p>
         </div>
       </section>

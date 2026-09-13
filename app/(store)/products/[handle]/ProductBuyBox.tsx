@@ -159,7 +159,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
         </svg>
         <span className="tracking-[0.05em]">
           Independently assayed · HPLC {product.lot.purity || '≥99%'}
-          {product.lot.id !== 'TBD' && <> · Lot {product.lot.id}</>}
+          {product.lot.id !== 'TBD' && <> · Batch {product.lot.id}</>}
         </span>
       </div>
 
@@ -235,7 +235,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
         {[
           { label: 'Free shipping $300+', icon: 'truck' },
           { label: '48hr dispatch', icon: 'clock' },
-          { label: 'Lot-documented', icon: 'doc' },
+          { label: 'Batch-documented', icon: 'doc' },
         ].map((b) => (
           <span
             key={b.label}
@@ -271,7 +271,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       <div className="hidden sm:block bg-cobalt/5 border border-cobalt/10 rounded-xl p-4">
         <p className="text-sm text-ink leading-relaxed">
           {product.oneLiner ||
-            `${product.title} — independently assayed, lot-tested, and shipped from our fulfillment facility in San Antonio. Released only after an independent laboratory returns its results for the lot.`}
+            `${product.title} — independently assayed, batch-tested, and shipped from our fulfillment facility in San Antonio. Released only after an independent laboratory returns its results for the batch.`}
         </p>
       </div>
 
@@ -281,17 +281,17 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           {/* Mobile: compact inline strip */}
           <div className="sm:hidden flex items-center gap-2 text-[12px] text-ink-soft">
             <span className="w-1.5 h-1.5 rounded-full bg-cobalt flex-shrink-0" />
-            <span className="text-cobalt font-bold">Lot {product.lot.id}</span>
+            <span className="text-cobalt font-bold">Batch {product.lot.id}</span>
             {product.lot.purity && <> · <span>{product.lot.purity}</span></>}
             {product.lot.testedDate && <> · <span>Tested {product.lot.testedDate.slice(0, 10)}</span></>}
           </div>
           {/* Tablet+: full card */}
           <div className="hidden sm:block bg-white border-l-4 border-cobalt rounded-r-xl p-4">
             <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
-              — Current Shipping Lot
+              — Current Shipping Batch
             </p>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="font-display text-xl font-bold text-ink">Lot {product.lot.id}</span>
+              <span className="font-display text-xl font-bold text-ink">Batch {product.lot.id}</span>
               {product.lot.purity && (
                 <span className="text-sm text-ink-soft">{product.lot.purity}</span>
               )}
@@ -530,14 +530,14 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           </svg>
           <span>
             <span className="font-bold text-ink">Purity Guarantee.</span>{' '}
-            If a lot fails our ≥99% HPLC standard, full refund + replacement.
+            If a batch fails our ≥99% HPLC standard, full refund + replacement.
           </span>
         </li>
         <li className="flex items-center gap-2 text-[12px] text-ink-soft">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-cobalt flex-shrink-0">
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          Lot-specific COA on demand — anytime, free
+          Batch certificate in the COA library, anytime, free
         </li>
         <li className="flex items-center gap-2 text-[12px] text-ink-soft">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-cobalt flex-shrink-0">

@@ -9,19 +9,19 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: { absolute: 'Practitioner Program — Merit Sciences' },
   description:
-    'Account pricing for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate published on every lot. No minimums.',
+    'Account pricing for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate published on every batch. No minimums.',
   alternates: { canonical: '/practitioners' },
   openGraph: {
     title: 'Merit Sciences Practitioner Program — sourcing your practice can stand behind',
     description:
-      'Verified-account access for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate published on every lot. No minimums, no contracts.',
+      'Verified-account access for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate published on every batch. No minimums, no contracts.',
     url: 'https://meritsciences.com/practitioners',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences Practitioner Program — research compounds compounded in a licensed US facility, every lot independently assayed with a published certificate of analysis.',
+        alt: 'Merit Sciences Practitioner Program — research compounds compounded in a licensed US facility, every batch independently assayed with a published certificate of analysis.',
       },
     ],
   },
@@ -29,7 +29,7 @@ export const metadata = {
     card: 'summary_large_image' as const,
     title: 'Merit Sciences Practitioner Program',
     description:
-      'Verified-account access for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate on every lot.',
+      'Verified-account access for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate on every batch.',
     images: ['/og-image.jpg'],
   },
 };
@@ -122,7 +122,7 @@ export default async function PractitionersPage() {
         <div className="hidden lg:block absolute inset-y-0 right-0 w-[46%]">
           <Image
             src="/brand/pattern-vials-dof.webp"
-            alt="Merit compound vials, sealed and lot-numbered"
+            alt="Merit compound vials, sealed and QR-labeled"
             fill
             priority
             sizes="46vw"
@@ -137,7 +137,7 @@ export default async function PractitionersPage() {
           />
           <div className="absolute bottom-6 right-6 bg-white/95 backdrop-blur-sm px-4 py-3 ring-1 ring-ink/10">
             <p className="font-mono text-[9.5px] tracking-[0.14em] uppercase text-ink-muted">
-              Lot LOT2026-06-0001 · ILS Laboratories
+              Batch LOT2026-06-0001 · ILS Laboratories
             </p>
             <p className="font-poster font-black text-[20px] tracking-[-0.02em] text-ink mt-0.5">
               99.13% <span className="text-[11px] font-mono font-bold text-cobalt align-middle">HPLC</span>
@@ -163,7 +163,7 @@ export default async function PractitionersPage() {
             <p className="mt-7 max-w-[52ch] text-[15px] lg:text-[16px] leading-[1.62] text-ink-soft">
               Account pricing for licensed practitioners — on compounds compounded in a
               licensed US facility, assayed by an independent laboratory, with the
-              certificate for every lot published before you buy. No minimums, no contracts.
+              certificate for every batch published before you buy. No minimums, no contracts.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
@@ -176,7 +176,7 @@ export default async function PractitionersPage() {
                 href="#testing"
                 className="border-2 border-ink text-ink px-8 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-ink hover:text-white transition"
               >
-                How every lot is tested
+                How every batch is tested
               </Link>
             </div>
           </div>
@@ -186,7 +186,7 @@ export default async function PractitionersPage() {
           <div className="lg:hidden relative mt-9 -mx-6 h-[240px] sm:h-[300px]">
             <Image
               src="/brand/pattern-vials-dof.webp"
-              alt="Merit compound vials, sealed and lot-numbered"
+              alt="Merit compound vials, sealed and QR-labeled"
               fill
               priority
               sizes="100vw"
@@ -194,7 +194,7 @@ export default async function PractitionersPage() {
             />
             <div className="absolute bottom-4 left-6 bg-white/95 backdrop-blur-sm px-3.5 py-2.5 ring-1 ring-ink/10">
               <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-ink-muted">
-                Lot LOT2026-06-0001 · ILS Laboratories
+                Batch LOT2026-06-0001 · ILS Laboratories
               </p>
               <p className="font-poster font-black text-[17px] tracking-[-0.02em] text-ink">
                 99.13% <span className="text-[10px] font-mono font-bold text-cobalt align-middle">HPLC</span>
@@ -209,8 +209,8 @@ export default async function PractitionersPage() {
         <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4">
           {[
             ['Licensed', 'US compounding facility'],
-            ['≥99%', 'HPLC purity, assayed per lot'],
-            ['Every lot', 'COA published before purchase'],
+            ['≥99%', 'HPLC purity, assayed per batch'],
+            ['Every batch', 'COA published before purchase'],
             ['48 hrs', 'dispatch from San Antonio · no minimums'],
           ].map(([big, small], i) => (
             <div
@@ -239,7 +239,7 @@ export default async function PractitionersPage() {
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
             <div>
               <p className="font-mono text-[11px] tracking-[0.16em] uppercase text-cobalt font-bold mb-4">
-                Release testing · every lot, no exceptions
+                Release testing · every batch, no exceptions
               </p>
               <h2
                 className="font-poster font-black uppercase leading-[0.94] tracking-[-0.04em] max-w-[16ch] text-ink"
@@ -250,7 +250,7 @@ export default async function PractitionersPage() {
             </div>
             <p className="max-w-[42ch] text-[14.5px] leading-[1.6] text-ink-soft lg:pb-3">
               Assayed by <b className="text-ink">ILS Laboratories</b>, an ISO/IEC 17025 accredited
-              lab — independent of us. Every lot clears the full panel below before it is released,
+              lab — independent of us. Every batch clears the full panel below before it is listed,
               and the signed certificate publishes before you can buy it.
             </p>
           </div>
@@ -268,7 +268,7 @@ export default async function PractitionersPage() {
                 {[
                   ['Identity', 'HPLC-RTM vs. reference standard', 'Must confirm the labelled compound'],
                   ['Peptide purity', 'HPLC, main-peak area', '≥ 95.0% (published figure is the measured one)'],
-                  ['Net peptide content', 'Quantitative assay', 'Reported per lot'],
+                  ['Net peptide content', 'Quantitative assay', 'Reported per batch'],
                   ['Heavy metals', 'ICP-MS', 'As ≤1.5 · Cd ≤0.5 · Pb ≤1.0 · Hg ≤1.5 · Cr ≤10.0 ppm'],
                   ['Sterility', 'USP <71>', 'Screened before release'],
                   ['Bacterial endotoxin', 'USP <85>', 'Screened before release'],
@@ -303,7 +303,7 @@ export default async function PractitionersPage() {
                 ) : (
                   <>
                     Every published certificate — chromatogram, heavy-metals panel and fentanyl
-                    screen included — is public and searchable by lot number.
+                    screen included — is public in the COA library, searchable by compound.
                   </>
                 )}
               </p>
@@ -340,7 +340,7 @@ export default async function PractitionersPage() {
               {[
                 ['Compounded, not imported blind', 'Compounded in a licensed US facility — not drop-shipped from an overseas broker.'],
                 ['Assayed by an outside laboratory', 'Identity, purity, heavy metals and a fentanyl screen — run by ILS Laboratories, not by us.'],
-                ['Published before you buy', 'Scan the QR on any vial and that exact lot’s certificate opens. No account needed, no request form.'],
+                ['Published before you buy', 'Scan the QR on any vial and the COA library opens. Find your compound and read the batch certificate. No account needed, no request form.'],
                 ['Acetate, not TFA', 'We pay for the acetate exchange most discount sources skip. It shows up in the assay, not the invoice.'],
               ].map(([t, b]) => (
                 <div key={t} className="flex gap-4">
@@ -361,9 +361,9 @@ export default async function PractitionersPage() {
               ['Account pricing', 'Applied automatically at catalog and checkout'],
               ['No minimums', 'Order one vial or fifty — same price per unit'],
               ['No contracts', 'No commitment, no monthly spend requirement'],
-              ['COA on every lot', 'Certificate ships with the order and lives at /coa'],
-              ['48-hour dispatch', 'Sealed, lot-numbered, from San Antonio'],
-              ['Order history + reorder', 'Past orders, lots and certificates in your portal'],
+              ['COA on every batch', 'Published in the COA library before the batch is listed'],
+              ['48-hour dispatch', 'Sealed, QR-labeled, from San Antonio'],
+              ['Order history + reorder', 'Past orders, batches and certificates in your portal'],
             ].map(([k, v]) => (
               <div key={k} className="px-6 py-3.5 border-b border-ink/8 last:border-b-0">
                 <p className="font-poster font-extrabold text-[14px] tracking-[-0.02em] text-ink">{k}</p>
@@ -453,10 +453,10 @@ export default async function PractitionersPage() {
               className="font-poster font-black uppercase leading-[0.94] tracking-[-0.04em]"
               style={{ fontSize: 'clamp(26px, 4vw, 56px)' }}
             >
-              Every lot, documented.
+              Every batch, documented.
             </h2>
             <p className="mt-3 max-w-[52ch] text-[14.5px] leading-[1.6] text-white/65">
-              Read a certificate before you ever open an account — every published lot is publicly
+              Read a certificate before you ever open an account — every published batch is publicly
               verifiable, no sign-in required.
             </p>
           </div>

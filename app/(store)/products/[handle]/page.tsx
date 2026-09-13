@@ -34,12 +34,12 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
     a: 'Lyophilized format gives ≥24 months sealed stability at -20°C — significantly longer than pre-reconstituted, which has a 30-day shelf life once in solution. You reconstitute at the moment of use, when potency is at its peak.',
   },
   {
-    q: "How do I verify my lot's COA?",
-    a: 'Your vial label carries the lot number. Use that number to pull the COA on our site at any time — the COA for your specific batch lives at /coa/[lot-id] and stays accessible for the life of the product.',
+    q: 'How do I check the certificate for my batch?',
+    a: 'The QR code on every vial opens our COA library. Search by compound to find the certificate for the batch currently shipping. No account and no request form, and the library keeps every certificate we have released.',
   },
   {
     q: 'What does "independently assayed" actually mean?',
-    a: "Every lot is tested by a laboratory independent of the facility that made it, and the certificate is published before the lot is sold. You read the same identity and purity figures we do — that's what separates Merit from a reseller catalog.",
+    a: "Every batch is tested by a laboratory independent of the facility that made it, and the certificate is published before the batch is listed. You read the same identity and purity figures we do — that's what separates Merit from a reseller catalog.",
   },
   {
     q: 'Will my bank flag this purchase?',
@@ -160,7 +160,7 @@ export default async function ProductPage({ params }: Props) {
   const seoDescription =
     research?.description?.[0]
     || raw.oneLiner
-    || `${raw.title} ${raw.vialSize} — research compound, HPLC-tested to ≥99% purity, lot-documented with a COA in every shipment.`;
+    || `${raw.title} ${raw.vialSize} — research compound, HPLC-tested to ≥99% purity, batch-tested, with the certificate published in the COA library.`;
   const productSchema = productJsonLd({
     product: raw,
     retailCents: raw.priceCents,
@@ -499,7 +499,7 @@ export default async function ProductPage({ params }: Props) {
             View lab results for {product.title} →
           </Link>{' '}
           <span className="text-ink-muted">
-            — or search any lot number from your label.
+            or search by compound.
           </span>
         </p>
       </section>
@@ -526,20 +526,20 @@ export default async function ProductPage({ params }: Props) {
                 <p className="text-sm text-ink-soft leading-relaxed mb-5">
                   Independent HPLC-UV{product.spec.mw ? '/MS' : ''} verification
                   on every batch. The chromatogram shown is the actual analysis
-                  for the lot currently shipping —
-                  {product.lot.id !== 'TBD' && <> lot <span className="font-bold text-ink">{product.lot.id}</span>,</>}
+                  for the batch currently shipping —
+                  {product.lot.id !== 'TBD' && <> batch <span className="font-bold text-ink">{product.lot.id}</span>,</>}
                   {' '}{product.lot.purity || '≥99% purity'}, released after
                   an independent assay.
                 </p>
                 <p className="text-[12px] text-ink-muted">
-                  Need the COA for a specific lot? Email{' '}
+                  Need the COA for a specific batch? Email{' '}
                   <a
-                    href={`mailto:rx@meritsciences.com?subject=COA request: lot ${product.lot.id}`}
+                    href={`mailto:rx@meritsciences.com?subject=COA request: batch ${product.lot.id}`}
                     className="text-cobalt font-bold underline-offset-2 hover:underline"
                   >
                     rx@meritsciences.com
                   </a>{' '}
-                  with the lot number from your vial label.
+                  with your order number.
                 </p>
               </div>
 
@@ -548,7 +548,7 @@ export default async function ProductPage({ params }: Props) {
                 <div className="relative w-full aspect-[4/3] bg-white border border-cobalt/10 rounded-2xl overflow-hidden">
                   <Image
                     src={chromatogramImage}
-                    alt={`HPLC chromatogram for ${product.title} lot ${product.lot.id}`}
+                    alt={`HPLC chromatogram for ${product.title} batch ${product.lot.id}`}
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-contain p-4"
@@ -609,7 +609,7 @@ export default async function ProductPage({ params }: Props) {
             {/* Rows */}
             {[
               {
-                criterion: 'HPLC chromatogram per lot',
+                criterion: 'HPLC chromatogram per batch',
                 merit: 'yes',
                 resellers: 'sometimes',
                 compounding: 'on request',
@@ -621,7 +621,7 @@ export default async function ProductPage({ params }: Props) {
                 compounding: 'yes',
               },
               {
-                criterion: 'Lot ID printed on the vial label',
+                criterion: 'QR code on the vial label opens the COA library',
                 merit: 'yes',
                 resellers: 'rarely',
                 compounding: 'yes',
@@ -684,7 +684,7 @@ export default async function ProductPage({ params }: Props) {
               From compound to your shelf<span className="text-cobalt">.</span>
             </h2>
             <p className="mt-3 text-sm text-ink-soft leading-relaxed max-w-xl">
-              Every Merit lot follows the same documented path. Five steps,
+              Every Merit batch follows the same documented path. Five steps,
               every one verifiable.
             </p>
           </div>
@@ -741,11 +741,11 @@ export default async function ProductPage({ params }: Props) {
                 eyebrow: 'Verification',
                 headline: 'Every batch HPLC-tested.',
                 description:
-                  'Reverse-phase HPLC-UV (UV/MS for higher-MW peptides) confirms identity and purity for every lot before it leaves the lab. The chromatogram is archived.',
+                  'Reverse-phase HPLC-UV (UV/MS for higher-MW peptides) confirms identity and purity for every batch before it leaves the lab. The chromatogram is archived.',
                 facts: [
-                  'Reverse-phase HPLC, per-lot',
+                  'Reverse-phase HPLC, per-batch',
                   '≥99% purity floor — every batch',
-                  'Chromatogram archived for every lot',
+                  'Chromatogram archived for every batch',
                 ],
                 icon: (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -757,13 +757,13 @@ export default async function ProductPage({ params }: Props) {
               {
                 num: '04',
                 eyebrow: 'Release',
-                headline: 'The lot is released against an independent assay.',
+                headline: 'The batch is released against an independent assay.',
                 description:
-                  'No batch ships until an independent laboratory has returned its identity and purity results and the certificate is published against that lot number.',
+                  'No batch ships until an independent laboratory has returned its identity and purity results and the certificate is published in the COA library.',
                 facts: [
-                  'Independent laboratory on every lot',
+                  'Independent laboratory on every batch',
                   'Certificate published before sale',
-                  'Lot number resolves to its own report',
+                  'Every certificate is in the public COA library',
                 ],
                 icon: (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -778,10 +778,10 @@ export default async function ProductPage({ params }: Props) {
                 eyebrow: 'Dispatch',
                 headline: 'Ships from San Antonio in 48 hours.',
                 description:
-                  'Vials labeled with lot ID, tested date, and CAS. Order before 2pm CT Monday–Thursday for same-day dispatch. UPS Ground, tracked + insured.',
+                  'Sealed vials with a QR code on the label that opens the COA library. Order before 2pm CT Monday–Thursday for same-day dispatch. UPS Ground, tracked + insured.',
                 facts: [
                   '48hr dispatch from San Antonio, TX',
-                  'Lot ID printed on every vial label',
+                  'QR code on every vial label',
                   'UPS Ground, tracked + insured',
                 ],
                 icon: (
@@ -846,14 +846,14 @@ export default async function ProductPage({ params }: Props) {
 
           {/* Footnote */}
           <p className="text-[11px] text-ink-muted italic mt-10 lg:mt-12 max-w-2xl">
-            Every step above can be verified for any specific lot by emailing{' '}
+            Every step above can be verified for any specific batch by emailing{' '}
             <a
               href="mailto:rx@meritsciences.com"
               className="text-cobalt font-bold not-italic underline-offset-2 hover:underline"
             >
               rx@meritsciences.com
             </a>{' '}
-            with the lot number from your vial label.
+            with your order number.
           </p>
         </div>
       </section>
@@ -956,7 +956,7 @@ export default async function ProductPage({ params }: Props) {
 
                 {/* Eyebrow */}
                 <p className="relative text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-4">
-                  — The Lot Note
+                  — The Batch Note
                 </p>
 
                 {/* The note itself */}
@@ -993,7 +993,7 @@ export default async function ProductPage({ params }: Props) {
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    Lot signed
+                    Batch signed
                   </div>
                 </div>
               </div>
@@ -1109,7 +1109,7 @@ export default async function ProductPage({ params }: Props) {
               Question we didn&apos;t answer?
             </h3>
             <p className="text-[13px] text-white/80 mb-5 leading-relaxed flex-1">
-              Our team answers compound questions, lot questions, and
+              Our team answers compound questions, batch questions, and
               protocol questions — same business day. No bots, no tickets.
             </p>
             <a
@@ -1282,7 +1282,7 @@ function ProductGallery({
           trust strip below + the trust pills in the buybox). Tablet+ shows. */}
       <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 mt-3 lg:mt-4">
         {[
-          { label: 'Lot-Documented', icon: 'doc' },
+          { label: 'Batch-Documented', icon: 'doc' },
           { label: 'HPLC-Verified', icon: 'flask' },
           { label: 'Independent Assay', icon: 'check' },
           { label: 'Same Reorder Price', icon: 'refresh' },

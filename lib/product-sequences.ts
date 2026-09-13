@@ -65,14 +65,14 @@ function beatIdentity(c: Counterpart, ctx: SequenceCtx): Rendered {
       seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h(`You&rsquo;ve heard of ${brandPhrase(c)}. Meet the molecule inside it.`) +
       p(`<strong>${c.compound}</strong>${c.aka ? ` (${c.aka})` : ''} is the active compound behind ${brandPhrase(c)}. ${c.approvalNote}`) +
-      p('The name on the box is marketing. The molecule is chemistry — and chemistry is what Merit sells, pharmacy-grade and verified per lot.') +
+      p('The name on the box is marketing. The molecule is chemistry — and chemistry is what Merit sells, pharmacy-grade and verified per batch.') +
       cta(`See Merit&rsquo;s ${c.compound} →`, shopUrl(c.handle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
   const text = `You've heard of ${brandPhrase(c)}. ${c.compound}${c.aka ? ` (${c.aka})` : ''} is the molecule inside it. ${c.approvalNote}
 
-Merit sells that molecule pharmacy-grade, verified per lot: ${shopUrl(c.handle, ctx.code)}
+Merit sells that molecule pharmacy-grade, verified per batch: ${shopUrl(c.handle, ctx.code)}
 
 ${RUO}
 — Merit Sciences`;
@@ -92,14 +92,14 @@ function beatData(c: Counterpart, ctx: SequenceCtx): Rendered {
         h(`The number everyone quotes — and where it actually comes from.`) +
         p(`In <strong>${t.name}</strong> (${t.source}), ${t.sponsorDrug} produced a <strong>${t.stat}</strong> — ${t.detail}.`) +
         proof(`<strong>${t.name}</strong><br>${t.sponsorDrug}<br>${t.stat} · ${t.detail}<br><span style="opacity:0.7">${t.source}</span>`) +
-        p(`That result belongs to the approved drug in a controlled trial. Merit sells the same molecule as a <strong>research compound</strong> — the chemistry, documented per lot, for the lab.`) +
+        p(`That result belongs to the approved drug in a controlled trial. Merit sells the same molecule as a <strong>research compound</strong> — the chemistry, documented per batch, for the lab.`) +
         cta('See the compound + its COA →', shopUrl(c.handle, ctx.code)) +
         quiet(RUO),
       unsubscribeUrl: ctx.unsubscribeUrl,
     });
     const text = `In ${t.name} (${t.source}), ${t.sponsorDrug} produced a ${t.stat} — ${t.detail}.
 
-That result belongs to the approved drug in a controlled trial. Merit sells the same molecule as a research compound, documented per lot: ${shopUrl(c.handle, ctx.code)}
+That result belongs to the approved drug in a controlled trial. Merit sells the same molecule as a research compound, documented per batch: ${shopUrl(c.handle, ctx.code)}
 
 ${RUO}
 — Merit Sciences`;
@@ -114,14 +114,14 @@ ${RUO}
       seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h('An approval history most research compounds can’t claim.') +
       p(c.approvalNote) +
-      p(`Regulatory history like that is rare in this space. Merit sells the same molecule as a research compound — pharmacy-grade, HPLC-verified, with the COA public per lot.`) +
+      p(`Regulatory history like that is rare in this space. Merit sells the same molecule as a research compound — pharmacy-grade, HPLC-verified, with the COA public per batch.`) +
       cta(`See Merit&rsquo;s ${c.compound} →`, shopUrl(c.handle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
   const text = `${c.approvalNote}
 
-Merit sells the same molecule as a research compound, pharmacy-grade and lot-verified: ${shopUrl(c.handle, ctx.code)}
+Merit sells the same molecule as a research compound, pharmacy-grade and batch-verified: ${shopUrl(c.handle, ctx.code)}
 
 ${RUO}
 — Merit Sciences`;
@@ -138,14 +138,14 @@ function beatAngle(c: Counterpart, ctx: SequenceCtx): Rendered {
       seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h('Same molecule. The part the brand name hides.') +
       p(c.meritAngle) +
-      proof('Every Merit lot:<br>• HPLC-verified ≥99% before release<br>• Identity confirmed — or it doesn’t ship<br>• A per-lot COA behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from San Antonio') +
+      proof('Every Merit batch:<br>• HPLC-verified ≥99% before it is listed<br>• Identity confirmed, or it doesn’t ship<br>• The certificate published in the COA library, behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from San Antonio') +
       cta(`See ${c.compound} at Merit →`, shopUrl(c.handle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
   const text = `${c.meritAngle}
 
-Every Merit lot: HPLC-verified >=99%, identity confirmed or it doesn't ship, per-lot COA behind the QR, sealed sterile vial, 48-hour dispatch from San Antonio.
+Every Merit batch: HPLC-verified >=99%, identity confirmed or it doesn't ship, certificate in the library behind the QR, sealed sterile vial, 48-hour dispatch from San Antonio.
 
 See it: ${shopUrl(c.handle, ctx.code)}
 
@@ -156,21 +156,21 @@ ${RUO}
 
 /* ── Beat 3 · the receipt → shop ─────────────────────────────────────────── */
 function beatReceipt(c: Counterpart, ctx: SequenceCtx): Rendered {
-  const subject = `Don’t trust us on ${c.compound} — check the lot`;
+  const subject = `Don’t trust us on ${c.compound} — check the batch`;
   const html = wrapMarketingEmail({
     subject,
     eyebrow: `The proof · ${c.compound}`,
     bodyHtml:
       seqHero(ctx, `${c.compound} research vial — Merit Sciences`) +
       h('Don’t take our word for it. Take the lab’s.') +
-      p(`Every ${c.compound} lot we ship is in the public library — scan the label or search the lot number and read the HPLC result yourself. That&rsquo;s the whole point of Merit.`) +
+      p(`Every ${c.compound} batch we ship is in the public library. Scan the label or search by compound and read the HPLC result yourself. That&rsquo;s the whole point of Merit.`) +
       cta('Browse the lab results →', coaUrl(ctx.code)) +
       p(`When you&rsquo;re ready, the compound&rsquo;s a tap away${ctx.code ? ' — your code applies itself at checkout' : ''}.`) +
       cta(`Shop ${c.compound} →`, shopUrl(c.handle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
-  const text = `Every ${c.compound} lot is in the public library — scan the label or search the lot number and read the HPLC result yourself.
+  const text = `Every ${c.compound} batch is in the public library. Scan the label or search by compound and read the HPLC result yourself.
 
 Lab results: ${coaUrl(ctx.code)}
 Shop ${c.compound}: ${shopUrl(c.handle, ctx.code)}${ctx.code ? ` (code applies automatically)` : ''}

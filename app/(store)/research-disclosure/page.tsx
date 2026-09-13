@@ -86,7 +86,7 @@ export default function ResearchDisclosurePage() {
         Merit Sciences makes <strong>no representations, warranties, or
         guarantees</strong> regarding the safety, efficacy, or suitability
         of any compound for any specific research application or biological
-        endpoint. Lot information, certificates of analysis, mechanism
+        endpoint. Batch information, certificates of analysis, mechanism
         summaries, half-life and solubility figures, citation references,
         and other technical material on this site are provided strictly
         to support quality verification in research contexts and do not
@@ -115,10 +115,10 @@ export default function ResearchDisclosurePage() {
 
       <h2>Quality commitment</h2>
       <p>
-        Every Merit Sciences lot is independently HPLC-tested to a
+        Every Merit Sciences batch is independently HPLC-tested to a
         ≥99% purity floor before release by a laboratory independent of
         the facility that made it. A certificate of analysis (COA) is available for
-        any specific lot upon request. These quality measures support
+        any specific batch upon request. These quality measures support
         research integrity; they are not, and should not be construed
         as, clinical safety endorsements.
       </p>
@@ -126,7 +126,7 @@ export default function ResearchDisclosurePage() {
       <h2>Questions</h2>
       <p>
         For questions regarding this disclosure, the regulatory status
-        of a specific compound, or COA access for any lot, contact our
+        of a specific compound, or COA access for any batch, contact our
         team at{' '}
         <a href="mailto:rx@meritsciences.com">rx@meritsciences.com</a>.
       </p>

@@ -62,14 +62,14 @@ function beatPathway(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
       seqHero(ctx, `${cat.name} — Merit Sciences research compounds`) +
       h(cat.name + '.') +
       p(cat.tagline + (cat.classContext ? ` ${cat.classContext}` : '')) +
-      p('There are several compounds in this class in the research literature. Merit stocks them pharmacy-grade, each with a per-lot COA — so you can study the pathway without gambling on the source.') +
+      p('There are several compounds in this class in the research literature. Merit stocks them pharmacy-grade, each with a per-batch COA — so you can study the pathway without gambling on the source.') +
       cta(`Browse the ${cat.name} compounds →`, shopUrl(cat.heroHandle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
   const text = `${cat.name}. ${cat.tagline}${cat.classContext ? ` ${cat.classContext}` : ''}
 
-Several compounds in this class are in the research literature. Merit stocks them pharmacy-grade, per-lot COA on each: ${shopUrl(cat.heroHandle, ctx.code)}
+Several compounds in this class are in the research literature. Merit stocks them pharmacy-grade, per-batch COA on each: ${shopUrl(cat.heroHandle, ctx.code)}
 
 ${RUO}
 — Merit Sciences`;
@@ -90,7 +90,7 @@ function beatRoster(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
       h('The compounds researchers actually reach for here.') +
       p(`A quick map of the ${cat.name.toLowerCase()} class and what the published research explores for each:`) +
       proof(rosterRows(cat)) +
-      p('Merit sells each as a research compound — the molecule, documented per lot, for the lab.') +
+      p('Merit sells each as a research compound — the molecule, documented per batch, for the lab.') +
       cta('See them at Merit →', catalogUrl(ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
@@ -98,7 +98,7 @@ function beatRoster(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
   const text = `The ${cat.name} class and what published research explores for each:
 ${cat.members.map((m) => `  · ${m.name}${memberBlurb(m.handle) ? ` — ${memberBlurb(m.handle)}` : ''}`).join('\n')}
 
-Merit sells each as a research compound, documented per lot: ${catalogUrl(ctx.code)}
+Merit sells each as a research compound, documented per batch: ${catalogUrl(ctx.code)}
 
 ${RUO}
 — Merit Sciences`;
@@ -114,13 +114,13 @@ function beatAngle(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
     bodyHtml:
       seqHero(ctx, `${cat.name} — Merit Sciences research compounds`) +
       h('The part a product photo can’t show you.') +
-      p(`Anyone can list ${cat.name.toLowerCase()} compounds. The question is whether what’s in the vial is what the label says — and whether they’ll show you. Merit does, per lot.`) +
-      proof('Every Merit lot:<br>• HPLC-verified ≥99% before release<br>• Identity confirmed — or it doesn’t ship<br>• A per-lot COA behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from San Antonio') +
+      p(`Anyone can list ${cat.name.toLowerCase()} compounds. The question is whether what’s in the vial is what the label says — and whether they’ll show you. Merit does, per batch.`) +
+      proof('Every Merit batch:<br>• HPLC-verified ≥99% before it is listed<br>• Identity confirmed, or it doesn’t ship<br>• The certificate published in the COA library, behind the QR on the label<br>• Sealed sterile vial, 48-hour dispatch from San Antonio') +
       cta(`Browse the ${cat.name} class →`, shopUrl(cat.heroHandle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
-  const text = `Anyone can list ${cat.name.toLowerCase()} compounds. Merit shows you what's in the vial — per lot: HPLC-verified >=99%, identity confirmed or it doesn't ship, COA behind the QR, sealed sterile, 48-hour dispatch from San Antonio.
+  const text = `Anyone can list ${cat.name.toLowerCase()} compounds. Merit shows you what's in the vial, per batch: HPLC-verified >=99%, identity confirmed or it doesn't ship, certificate in the library behind the QR, sealed sterile, 48-hour dispatch from San Antonio.
 
 ${shopUrl(cat.heroHandle, ctx.code)}
 
@@ -131,21 +131,21 @@ ${RUO}
 
 /* ── Beat 3 · the receipt → shop ─────────────────────────────────────────── */
 function beatReceipt(cat: CompoundCategory, ctx: SequenceCtx): Rendered {
-  const subject = `Check the lot before you buy anything in this class`;
+  const subject = `Check the batch before you buy anything in this class`;
   const html = wrapMarketingEmail({
     subject,
     eyebrow: `The proof · ${cat.name}`,
     bodyHtml:
       seqHero(ctx, `${cat.name} — Merit Sciences research compounds`) +
       h('Don’t take our word for it. Take the lab’s.') +
-      p(`Every lot we ship — across the whole ${cat.name.toLowerCase()} class — is in the public library. Scan a label or search the lot number and read the HPLC result yourself.`) +
+      p(`Every batch we ship, across the whole ${cat.name.toLowerCase()} class, is in the public library. Scan a label or search by compound and read the HPLC result yourself.`) +
       cta('Browse the lab results →', coaUrl(ctx.code)) +
       p(`When you’re ready, the class is a tap away${ctx.code ? ' — your code applies itself at checkout' : ''}.`) +
       cta(`Shop ${cat.name} →`, shopUrl(cat.heroHandle, ctx.code)) +
       quiet(RUO),
     unsubscribeUrl: ctx.unsubscribeUrl,
   });
-  const text = `Every lot across the ${cat.name} class is in the public library — scan a label or search the lot number and read the HPLC result yourself.
+  const text = `Every batch across the ${cat.name} class is in the public library. Scan a label or search by compound and read the HPLC result yourself.
 
 Lab results: ${coaUrl(ctx.code)}
 Shop the class: ${shopUrl(cat.heroHandle, ctx.code)}${ctx.code ? ' (code applies automatically)' : ''}

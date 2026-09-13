@@ -39,16 +39,16 @@ export function renderReplenishment(d: CustomerEmailData): Rendered {
     eyebrow: 'Resupply',
     bodyHtml:
       hero(d) +
-      h('About that lot from a few weeks back.') +
+      h('About that batch from a few weeks back.') +
       p(
         `${d.firstName}, quick math on our side says your <strong>${d.primaryProductTitle}</strong> supply from that order is probably getting thin right about now.`,
       ) +
       p(
-        'One tap below rebuilds that exact order — same lineup, the current lot, today&rsquo;s COA behind the QR — and drops you straight at checkout. Nothing to re-pick.',
+        'One tap below rebuilds that exact order — same lineup, the current batch, today&rsquo;s certificate in the library behind the QR — and drops you straight at checkout. Nothing to re-pick.',
       ) +
       cta('Reorder in one click →', d.reorderUrl) +
       quiet(
-        'Every restock ships the same way: sealed sterile vial, lot number on the label, HPLC-verified ≥99% before release, 48-hour dispatch from San Antonio.',
+        'Every restock ships the same way: sealed sterile vial, QR on the label that opens the COA library, HPLC-verified ≥99% before it is listed, 48-hour dispatch from San Antonio.',
       ),
     unsubscribeUrl: d.unsubscribeUrl,
   });
@@ -57,7 +57,7 @@ export function renderReplenishment(d: CustomerEmailData): Rendered {
 One tap rebuilds the exact order (same lineup, current lot) and drops you at checkout:
 ${d.reorderUrl}
 
-Sealed sterile vials, lot number on the label, HPLC-verified >=99%, 48-hour dispatch from San Antonio.
+Sealed sterile vials, QR on the label that opens the COA library, HPLC-verified >=99%, 48-hour dispatch from San Antonio.
 
 — Merit Sciences`;
   return { subject, html, text };
@@ -65,7 +65,7 @@ Sealed sterile vials, lot number on the label, HPLC-verified >=99%, 48-hour disp
 
 /* ── Win-back · ~75 days since last order ────────────────────────────────── */
 export function renderWinBack(d: CustomerEmailData): Rendered {
-  const subject = "New lots just posted — and your reorder is one tap away";
+  const subject = "New batches just posted — and your reorder is one tap away";
   const catalog = `${SITE}/catalog`;
   const coa = `${SITE}/coa`;
   const html = wrapMarketingEmail({
@@ -75,21 +75,21 @@ export function renderWinBack(d: CustomerEmailData): Rendered {
       hero(d) +
       h('The catalog kept moving.') +
       p(
-        `${d.firstName}, it&rsquo;s been a while since your last Merit order. Since then: fresh lots posted to the public COA library, same ≥99% HPLC bar, same 48-hour San Antonio dispatch.`,
+        `${d.firstName}, it&rsquo;s been a while since your last Merit order. Since then: fresh batches posted to the public COA library, same ≥99% HPLC bar, same 48-hour San Antonio dispatch.`,
       ) +
       proof(
-        `Everything still works the way you vetted it:<br>• Per-lot COA behind the QR on every label<br>• Identity confirmed before anything ships<br>• The full lab library, public at ${coa.replace('https://', '')}`,
+        `Everything still works the way you vetted it:<br>• Per-batch certificate in the COA library, behind the QR on every label<br>• Identity confirmed before anything ships<br>• The full lab library, public at ${coa.replace('https://', '')}`,
       ) +
       p(
-        `Your last order is saved. One tap rebuilds it — <strong>${d.primaryProductTitle}</strong> and all — at the current lot.`,
+        `Your last order is saved. One tap rebuilds it — <strong>${d.primaryProductTitle}</strong> and all — at the current batch.`,
       ) +
       cta('Rebuild my last order →', d.reorderUrl) +
       quiet(`Or start fresh in the <a href="${catalog}" style="color:inherit;">catalog</a>. Either way: tested, traceable, fast.`),
     unsubscribeUrl: d.unsubscribeUrl,
   });
-  const text = `It's been a while since your last Merit order. Since then: fresh lots in the public COA library (${coa}), same >=99% HPLC bar, same 48-hour San Antonio dispatch.
+  const text = `It's been a while since your last Merit order. Since then: fresh batches in the public COA library (${coa}), same >=99% HPLC bar, same 48-hour San Antonio dispatch.
 
-Your last order is saved — one tap rebuilds it (${d.primaryProductTitle} and all) at the current lot:
+Your last order is saved — one tap rebuilds it (${d.primaryProductTitle} and all) at the current batch:
 ${d.reorderUrl}
 
 Or start fresh: ${catalog}

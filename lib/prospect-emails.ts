@@ -52,11 +52,11 @@ export function renderProspectWelcome(d: ProspectEmailData): Rendered {
     heroImg('/brand/hero-A-cluster.webp', 'The Merit Sciences research compound lineup') +
       h('You found the good stuff.') +
       p("You joined the Merit list, which tells me one thing: you actually care where your compounds come from. That instinct is rare. Keep it.") +
-      p('One line: every Merit lot is HPLC-tested to <strong>≥99% purity</strong>, made in the USA, and on your porch in 48 hours.') +
+      p('One line: every Merit batch is HPLC-tested to <strong>≥99% purity</strong>, made in the USA, and on your porch in 48 hours.') +
       codeChip(d.code) +
       cta("See what's inside →", shop) +
       quiet('Tap the button and the code applies itself at checkout — nothing to type. No spam, just the occasional note actually worth opening.'),
-    `You're on the Merit list. Every lot is HPLC-tested to ≥99% purity, US-made, shipped in 48 hours.\nYour code ${d.code} (${WELCOME_PCT}% off your first order) applies automatically through this link:\n${shop}`,
+    `You're on the Merit list. Every batch is HPLC-tested to ≥99% purity, US-made, shipped in 48 hours.\nYour code ${d.code} (${WELCOME_PCT}% off your first order) applies automatically through this link:\n${shop}`,
     d,
   );
 }
@@ -69,14 +69,14 @@ export function renderProspectProof(d: ProspectEmailData): Rendered {
     'Proof, not promises',
     heroImg('/brand/scene-lab.webp', 'Inside the lab — HPLC verification at Merit Sciences') +
       h('Anyone can say 99%. We hand you the receipt.') +
-      p('Every Merit lot ships with its Certificate of Analysis — the HPLC trace, the measured purity, the lot number. Because <em>“trust us”</em> is not a standard.') +
+      p('Every Merit batch is tested before it is listed, and its Certificate of Analysis is published: the HPLC trace, the measured purity, the identity check. Because <em>“trust us”</em> is not a standard.') +
       proof(
-        '<strong>Lot MRT-2603-03 · Tirzepatide 30mg</strong><br>HPLC purity: <strong>99.827%</strong> &nbsp;·&nbsp; Identity: conforms<br>Independently tested — verifiable by lot number',
+        '<strong>Batch MRT-2603-03 · Tirzepatide 30mg</strong><br>HPLC purity: <strong>99.827%</strong> &nbsp;·&nbsp; Identity: conforms<br>Independently tested, published in the COA library',
       ) +
-      p(`We even put the whole library online — ${a('every lot we’ve shipped', COA)}, searchable by the number on your bottle.`) +
+      p(`We even put the whole library online — ${a('every batch we’ve shipped', COA)}, searchable by compound.`) +
       cta('Browse the lab results →', results) +
-      quiet(`Your 20% (<strong>${d.code}</strong>) rides along on that button and applies itself at checkout.`),
-    `Anyone can say 99%. Merit hands you the receipt — every lot ships with its COA (HPLC trace, purity, lot #). The whole library is searchable online.\nSee it (your ${d.code} applies automatically): ${results}`,
+      quiet(`Your ${WELCOME_PCT}% (<strong>${d.code}</strong>) rides along on that button and applies itself at checkout.`),
+    `Anyone can say 99%. Merit hands you the receipt — every batch is tested before it's listed and its COA is published (HPLC trace, purity, identity). The whole library is searchable online.\nSee it (your ${d.code} applies automatically): ${results}`,
     d,
   );
 }
@@ -89,17 +89,17 @@ export function renderProspectTelegram(d: ProspectEmailData): Rendered {
     'A public service announcement',
     h('That guy in the group chat is not a lab.') +
       p('We need to talk about your “source.” You know the one — unbeatable prices, blurry vial photos, pays in crypto, disappears every few weeks and returns with a new username.') +
-      p('Here’s what nobody in the chat mentions: no COA, no lot number, no real idea what’s in the vial. That’s not a purchase. That’s a vibe with shipping.') +
+      p('Here’s what nobody in the chat mentions: no COA, no batch record, no real idea what’s in the vial. That’s not a purchase. That’s a vibe with shipping.') +
       versus('Telegram plug', 'Merit', [
-        ['Testing', "“trust me bro”", 'HPLC COA, every lot'],
+        ['Testing', "“trust me bro”", 'HPLC COA, every batch'],
         ['Identity', 'who knows', "confirmed or it doesn't ship"],
         ['If it’s wrong', 'you find out', 'we find out first'],
         ['Ships from', 'a crypto wallet', 'an ISO-certified US facility'],
       ]) +
-      p('Not hypothetical: last month we held back a whole Semax lot because it came back as the <em>wrong molecule</em>. The group chat would’ve shipped it to you with a fire emoji.') +
+      p('Not hypothetical: last month we held back a whole Semax batch because it came back as the <em>wrong molecule</em>. The group chat would’ve shipped it to you with a fire emoji.') +
       cta('Buy like a grown-up →', shop) +
       quiet(`${WELCOME_PCT}% off your first tested, traceable order — <strong>${d.code}</strong> is baked into the button.`),
-    `That guy in the group chat is not a lab. No COA, no lot number, no idea what's in the vial. Merit: HPLC COA on every lot, identity confirmed or it doesn't ship, from an ISO-certified US facility.\nBuy like a grown-up (${d.code} applies automatically): ${shop}`,
+    `That guy in the group chat is not a lab. No COA, no batch record, no idea what's in the vial. Merit: HPLC COA on every batch, identity confirmed or it doesn't ship, from an ISO-certified US facility.\nBuy like a grown-up (${d.code} applies automatically): ${shop}`,
     d,
   );
 }
@@ -112,10 +112,10 @@ export function renderProspectSourcing(d: ProspectEmailData): Rendered {
     'Where it comes from',
     h('Where your compounds actually come from.') +
       p('Most of what’s sold online is bulk-imported, repackaged in someone’s spare room, and sold on a guess.') +
-      p('Merit is compounded in an ISO-certified US facility and released against an independent laboratory assay, with a COA on every lot. The difference is the part you can’t see in a product photo — so we document it instead of asking you to assume it.') +
+      p('Merit is compounded in an ISO-certified US facility and released against an independent laboratory assay, with a COA on every batch. The difference is the part you can’t see in a product photo — so we document it instead of asking you to assume it.') +
       stat('48 hrs', 'sealed, tested, and shipped from San Antonio') +
-      cta('See how a Merit lot is made →', shop),
-    `Most online compounds are bulk-imported and sold on a guess. Merit is compounded in an ISO-certified US facility, independently assayed, COA on every lot, shipped from San Antonio in 48 hours.\n${shop}`,
+      cta('See how a Merit batch is made →', shop),
+    `Most online compounds are bulk-imported and sold on a guess. Merit is compounded in an ISO-certified US facility, independently assayed, COA on every batch, shipped from San Antonio in 48 hours.\n${shop}`,
     d,
   );
 }
@@ -129,11 +129,11 @@ export function renderProspectVetting(d: ProspectEmailData): Rendered {
     h('Four questions that separate the real from the risky.') +
       p('Before you buy from anyone in this space, four questions do the vetting for you:') +
       proof(
-        '✓ Is <strong>every</strong> lot third-party tested?<br>✓ Is the COA <strong>published</strong>, not just promised?<br>✓ Is it made in the USA?<br>✓ Is it sold for research, clearly and honestly?',
+        '✓ Is <strong>every</strong> batch third-party tested?<br>✓ Is the COA <strong>published</strong>, not just promised?<br>✓ Is it made in the USA?<br>✓ Is it sold for research, clearly and honestly?',
       ) +
       p('Merit is a yes on all four. If a supplier dodges even one of them — that’s your answer.') +
       cta('Browse with confidence →', shop),
-    `Four questions separate the real from the risky: every lot tested? COA published? made in USA? sold for research, honestly? Merit is yes on all four.\nBrowse: ${shop}`,
+    `Four questions separate the real from the risky: every batch tested? COA published? made in USA? sold for research, honestly? Merit is yes on all four.\nBrowse: ${shop}`,
     d,
   );
 }
@@ -144,14 +144,14 @@ export function renderProspectShipping(d: ProspectEmailData): Rendered {
   return build(
     'What actually shows up at your door',
     'The unboxing',
-    heroImg('/brand/merit-vial-hero.webp', 'A sealed, lot-labeled Merit Sciences research vial') +
+    heroImg('/brand/merit-vial-hero.webp', 'A sealed Merit Sciences research vial') +
       h('Sealed, labeled, and boring — on purpose.') +
       p('No mystery baggies. No hand-written Sharpie labels. No “should arrive in 3–5 weeks (maybe).”') +
-      p('A Merit order arrives as a sealed, lot-labeled vial with a scannable QR that pulls up its exact COA — shipped from San Antonio, usually on your porch in 48 hours.') +
-      proof('On every vial:<br>• The compound + dose<br>• The lot number<br>• A QR → the exact HPLC result') +
+      p('A Merit order arrives as a sealed vial with a QR code that opens the COA library, shipped from San Antonio, usually on your porch in 48 hours.') +
+      proof('On every vial:<br>• The compound and vial size<br>• A QR code that opens the COA library<br>• The batch certificate, published before it was listed') +
       cta('See what ships →', shop) +
-      quiet(`Still holding your 20%: <strong>${d.code}</strong> — it applies itself when you use the button.`),
-    `A Merit order shows up sealed and lot-labeled, with a QR to its exact COA, shipped from San Antonio in ~48 hours. No mystery baggies.\nSee what ships (${d.code} applies automatically): ${shop}`,
+      quiet(`Still holding your ${WELCOME_PCT}%: <strong>${d.code}</strong> — it applies itself when you use the button.`),
+    `A Merit order shows up sealed, with a QR code that opens the COA library, shipped from San Antonio in ~48 hours. No mystery baggies.\nSee what ships (${d.code} applies automatically): ${shop}`,
     d,
   );
 }
@@ -197,10 +197,10 @@ export function renderProspectLastCall(d: ProspectEmailData): Rendered {
     'Before it slips your mind',
     h('Your 20% is getting lonely.') +
       p('No pressure — but your first-order 20% has been sitting in your inbox for a few weeks, and it won’t wait forever.') +
-      p('Whenever you’re ready, every lot comes with the same things: a published COA, ≥99% purity, and a 48-hour ship from San Antonio. The hard part is on us. The first step — one tap, code included — is on you.') +
+      p('Whenever you’re ready, every batch comes with the same things: a published COA, ≥99% purity, and a 48-hour ship from San Antonio. The hard part is on us. The first step — one tap, code included — is on you.') +
       codeChip(d.code) +
       cta("Use it before it's gone →", shop),
-    `Your first-order 20% won't wait forever. Every lot: published COA, ≥99% purity, 48-hour ship from San Antonio.\nOne tap, ${d.code} applies automatically: ${shop}`,
+    `Your first-order ${WELCOME_PCT}% won't wait forever. Every batch: published COA, ≥99% purity, 48-hour ship from San Antonio.\nOne tap, ${d.code} applies automatically: ${shop}`,
     d,
   );
 }

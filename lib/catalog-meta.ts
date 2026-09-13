@@ -194,9 +194,9 @@ export type RestockSignal = {
 };
 
 export const RESTOCK_SIGNALS: Record<string, RestockSignal> = {
-  'ly3437943':       { status: 'low',        message: 'Current lot ships through July 2026' },
-  'mots-c':          { status: 'fresh',      message: 'New lot — released this week' },
-  'sermorelin':      { status: 'restocking', message: 'Next lot releases July 12, 2026' },
+  'ly3437943':       { status: 'low',        message: 'Current batch ships through July 2026' },
+  'mots-c':          { status: 'fresh',      message: 'New batch — released this week' },
+  'sermorelin':      { status: 'restocking', message: 'Next batch releases July 12, 2026' },
 };
 
 // ── Stack helpers ─────────────────────────────────────────────────────

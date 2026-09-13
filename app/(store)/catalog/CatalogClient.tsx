@@ -348,7 +348,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
         {/* Tagline: hidden on mobile to reclaim ~80px. */}
         <p className="hidden sm:block mt-5 text-base lg:text-lg text-ink-soft max-w-xl leading-relaxed">
           Organized by chemistry, not promise. Every batch independently assayed,
-          every shipment lot-documented. Pick a family to narrow it down.
+          every batch tested and its certificate published. Pick a family to narrow it down.
         </p>
       </div>
 
@@ -815,7 +815,7 @@ function ProductCard({
               restock.status === 'fresh' ? 'bg-green-600' : 'bg-cobalt'
             }`}
           />
-          {restock.status === 'fresh' ? 'New lot' : 'Restocking'}
+          {restock.status === 'fresh' ? 'New batch' : 'Restocking'}
         </span>
       )}
 
@@ -892,7 +892,7 @@ function ProductCard({
         {/* Lot data */}
         {p.lot.id !== 'TBD' && (
           <p className="text-[10.5px] sm:text-[11px] text-ink-soft mb-3 sm:mb-4 leading-snug">
-            <span className="text-cobalt font-bold">Lot {p.lot.id}</span>
+            <span className="text-cobalt font-bold">Batch {p.lot.id}</span>
             {p.lot.purity && <> · <span className="hidden sm:inline">{p.lot.purity}</span></>}
             {p.lot.testedDate && (
               <span className="hidden sm:inline"> · Tested {p.lot.testedDate.slice(0, 10)}</span>
@@ -1040,7 +1040,7 @@ function SupportBreak() {
             Talk to a Pharmacologist.
           </h3>
           <p className="text-[13px] text-white/85 leading-relaxed">
-            Our team answers compound questions, lot questions, and
+            Our team answers compound questions, batch questions, and
             research-protocol questions — same business day. No bots, no
             tickets, no script.
           </p>
@@ -1128,7 +1128,7 @@ function QuickViewModal({
             {product.lot.id !== 'TBD' && (
               <div className="bg-white/60 border-l-2 border-cobalt rounded-r-md p-3 mb-5">
                 <p className="text-[10px] tracking-[0.18em] uppercase text-cobalt font-bold mb-1">
-                  Current shipping lot
+                  Current shipping batch
                 </p>
                 <p className="text-sm text-ink font-semibold">
                   Lot {product.lot.id} · {product.lot.purity}

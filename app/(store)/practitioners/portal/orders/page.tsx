@@ -108,7 +108,7 @@ export default async function PractitionerOrdersPage() {
               — No orders yet
             </p>
             <p className="text-sm text-ink-soft mb-6 max-w-md mx-auto leading-relaxed">
-              Your first order will land here with the COA, lot data, and tracking link. Browse the
+              Your first order will land here with the COA, batch data, and tracking link. Browse the
               catalog whenever you&rsquo;re ready &mdash; practitioner pricing already applied.
             </p>
             <Link

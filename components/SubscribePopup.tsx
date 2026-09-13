@@ -244,8 +244,8 @@ export function SubscribePopup() {
                 </span>
               </h2>
               <p className="text-[15px] sm:text-base text-white/70 mb-8 leading-[1.62] max-w-[52ch] mx-auto">
-                Every Merit lot is assayed by an independent laboratory before release, and the
-                certificate is published before it ships. Join the list and we&rsquo;ll send new lot
+                Every Merit batch is assayed by an independent laboratory before it is listed, and the
+                certificate is published in the COA library. Join the list and we&rsquo;ll send new batch
                 reports as they post — plus <b className="text-white font-semibold">{WELCOME_PCT}% off your first order</b>.
               </p>
               <form onSubmit={handleSubmit} className="max-w-md mx-auto">
@@ -265,7 +265,7 @@ export function SubscribePopup() {
                     disabled={status === 'submitting'}
                     className="shrink-0 bg-white text-black px-8 py-4 text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-[#B9FF66] transition disabled:opacity-60"
                   >
-                    {status === 'submitting' ? 'Sending…' : 'Send lot reports'}
+                    {status === 'submitting' ? 'Sending…' : 'Send batch reports'}
                   </button>
                 </div>
                 {status === 'error' && errorMsg && <p className="text-sm text-rose-300 mt-3">{errorMsg}</p>}

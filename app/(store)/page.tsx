@@ -18,19 +18,19 @@ export const metadata = {
   // 141 chars. Page metadata OVERRIDES the layout, so this is the one Bing
   // actually reads — the earlier 167-char string here is what it flagged.
   description:
-    'Research compounds compounded in a licensed US facility, independently assayed, certificate published for every lot. Ships 48hr from San Antonio.',
+    'Research compounds compounded in a licensed US facility, independently assayed, certificate published for every batch. Ships 48hr from San Antonio.',
   alternates: { canonical: '/' },
   openGraph: {
     title: 'Merit Sciences — Same Stack. Better Source.',
     description:
-      'Compounded in a licensed US facility, assayed by an independent laboratory, certificate published on every lot. Ships 48 hours from San Antonio.',
+      'Compounded in a licensed US facility, assayed by an independent laboratory, certificate published on every batch. Ships 48 hours from San Antonio.',
     url: 'https://meritsciences.com',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, compounded in a licensed US facility, every lot assayed, 48-hour dispatch from San Antonio.',
+        alt: 'Merit Sciences — Same Stack. Better Source. Research compounds, ≥99% HPLC purity, compounded in a licensed US facility, every batch assayed, 48-hour dispatch from San Antonio.',
       },
     ],
   },
@@ -38,7 +38,7 @@ export const metadata = {
     card: 'summary_large_image' as const,
     title: 'Merit Sciences — Same Stack. Better Source.',
     description:
-      'Compounded in a licensed US facility, independently assayed, certificate published on every lot. Ships 48hr from San Antonio.',
+      'Compounded in a licensed US facility, independently assayed, certificate published on every batch. Ships 48hr from San Antonio.',
     images: ['/og-image.jpg'],
   },
 };
@@ -87,7 +87,7 @@ const CHECKS = [
   ['03', 'Heavy metals', 'ICP-MS to trace thresholds'],
   ['04', 'Sterility', 'Endotoxin + sterility screened'],
   ['05', 'Fentanyl', 'Immunoassay, result on the certificate'],
-  ['06', 'Provenance', 'Lot number resolves to its report'],
+  ['06', 'Provenance', 'Every certificate is in the public COA library'],
 ];
 
 /** $/mg from the vial-size string — the honest comparison axis. Null for
@@ -147,7 +147,7 @@ export default async function HomePage() {
     'FREE SHIPPING OVER $300',
     'SHIPS IN 48 HOURS FROM SAN ANTONIO',
     '≥99% HPLC PURITY',
-    'FENTANYL-SCREENED EVERY LOT',
+    'FENTANYL-SCREENED EVERY BATCH',
     ...featured.slice(0, 2).map((p) => `${p.title.toUpperCase()} FROM ${money(p.priceCents)}`),
     'THIRD-PARTY TESTED · ILS LABORATORIES',
     ...(lotCount > 0 ? [`${lotCount} CERTIFICATES PUBLISHED`] : []),
@@ -193,7 +193,7 @@ export default async function HomePage() {
           <div className="mt-9 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
             <p className="max-w-[48ch] text-[15px] leading-[1.62] text-white/70">
               The compounds you already source — compounded in a licensed US
-              facility, tested by an outside laboratory on every lot, certificate published before
+              facility, tested by an outside laboratory on every batch, certificate published before
               you pay. From <b className="text-white font-semibold">$0.17 per mg</b>.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
@@ -316,7 +316,7 @@ export default async function HomePage() {
 
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-white/12 px-6 py-4">
               <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-white/50">
-                Every order ships with its lot certificate · 48hr dispatch
+                Every batch has a published certificate · 48hr dispatch
               </p>
               <Link
                 href="/catalog"
@@ -350,7 +350,7 @@ export default async function HomePage() {
               {[
                 ['Compounded, not imported blind', 'Compounded in a licensed US facility — not drop-shipped from an overseas broker.'],
                 ['Tested by an outside lab', 'Identity, purity, heavy metals, fentanyl screen — run by ILS Laboratories, not by us.'],
-                ['Published before you pay', 'Scan the QR on any vial and that exact lot’s certificate opens. No account, no email chain.'],
+                ['Published before you pay', 'Scan the QR on any vial and the COA library opens. Find your compound and read the batch certificate. No account, no email chain.'],
               ].map(([t, b]) => (
                 <div key={t} className="flex gap-4">
                   <span aria-hidden="true" className="mt-[7px] h-2 w-2 shrink-0" style={{ background: LIME }} />
@@ -394,18 +394,18 @@ export default async function HomePage() {
               </>
             ) : (
               <p className="px-6 py-4 border-b border-white/10 font-mono text-[11.5px] text-white/50">
-                {lotCount > 0 ? `${lotCount} certificates published.` : 'Certificates publish per lot.'}{' '}
+                {lotCount > 0 ? `${lotCount} certificates published.` : 'Certificates publish per batch.'}{' '}
                 Look yours up below.
               </p>
             )}
             <form action="/coa" method="get" className="flex p-4">
               <label htmlFor="home-lot" className="sr-only">
-                Lot number
+                Search the COA library
               </label>
               <input
                 id="home-lot"
                 name="q"
-                placeholder="VERIFY A LOT NUMBER"
+                placeholder="SEARCH BY COMPOUND"
                 className="flex-1 min-h-[44px] bg-white/[0.06] border border-white/25 border-r-0 px-4 font-mono text-[11.5px] tracking-[0.06em] text-white placeholder-white/35 focus:outline-none transition focus:border-[#B9FF66]"
               />
               <button
@@ -442,8 +442,8 @@ export default async function HomePage() {
               Milligrams, not promises.
             </h2>
             <p className="mt-6 max-w-[50ch] text-[14.5px] leading-[1.65] text-white/60">
-              What arrives is a sealed vial of lyophilized material with a lot number printed on
-              the label. Six checks stand between compounding and release:
+              What arrives is a sealed vial of lyophilized material with a QR code on the label
+              that opens the COA library. Six checks stand between compounding and release:
             </p>
             <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3.5 max-w-[560px]">
               {CHECKS.map(([n, t, b]) => (
@@ -500,7 +500,7 @@ export default async function HomePage() {
               href="/coa"
               className="border border-white/40 px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-white hover:text-black transition"
             >
-              Lot library
+              COA library
             </Link>
           </div>
         </div>

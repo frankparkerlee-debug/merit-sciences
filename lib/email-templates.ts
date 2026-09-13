@@ -371,11 +371,11 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
     ['When will it ship?',
      `Within 48 hours from our San Antonio fulfillment facility &mdash; usually the same or next business day. Your tracking link lands in this inbox the moment the label prints.`],
     ['Where&rsquo;s my certificate of analysis?',
-     `On the vial. Each label carries a QR code that resolves to that lot&rsquo;s published report &mdash; identity and purity, tested by an independent laboratory. The full library lives at <a href="${SITE_URL}/coa" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">meritsciences.com/coa</a>.`],
+     `On the vial. Each label carries a QR code that opens the COA library, where every batch&rsquo;s report is published &mdash; identity and purity, tested by an independent laboratory. The full library lives at <a href="${SITE_URL}/coa" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">meritsciences.com/coa</a>.`],
     ['What will my bank statement show?',
      `<span style="font-family:${MONO};">MERIT</span> &mdash; a plain merchant descriptor. No product names appear on your statement.`],
     ['Something not right?',
-     `Reply to this email &mdash; it reaches the team that packed your order. And the purity guarantee is simple: if a lot fails our &ge;99% HPLC floor, full refund and replacement.`],
+     `Reply to this email &mdash; it reaches the team that packed your order. And the purity guarantee is simple: if a batch fails our &ge;99% HPLC floor, full refund and replacement.`],
   ];
   const faqBlock = faqs.map(([q, a]) => `
     <tr>
@@ -388,7 +388,7 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
   const resources: Array<[string, string, string]> = [
     ['Research library', 'Monographs with mechanisms, published findings and references', `${SITE_URL}/library`],
     ['How to verify a certificate of analysis', 'What a real COA states, and the red flags — for any supplier', `${SITE_URL}/library/how-to-verify-a-certificate-of-analysis`],
-    ['Published lab results', 'Every lot’s identity and purity report, before you buy', `${SITE_URL}/coa`],
+    ['Published lab results', 'Every batch’s identity and purity report, before you buy', `${SITE_URL}/coa`],
   ];
   const resourceRows = resources.map(([title, sub, url]) => `
     <tr>
@@ -404,7 +404,7 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
     ${headline(`Thank you, ${firstName}`)}
     <p style="margin:0 0 18px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
       Your order is confirmed. We spend on the lab, not the logo &mdash; orders like
-      yours are what keep every lot independently assayed and published. Genuinely: thank you.
+      yours are what keep every batch independently assayed and published. Genuinely: thank you.
     </p>
 
     <!-- Receipt card: ref + total + status in one glance -->
@@ -459,9 +459,9 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
       <tr>
         <td style="padding:24px 26px;">
           <p style="margin:0 0 6px 0;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;font-weight:800;color:${COLOR_COBALT_SOFT};font-family:${SANS};">&mdash; Your evidence</p>
-          <p style="margin:0 0 8px 0;font-size:18px;line-height:24px;font-weight:900;letter-spacing:-0.02em;color:#ffffff;font-family:${SANS};">Every vial ships with its certificate<span style="color:${COLOR_COBALT_SOFT};">.</span></p>
+          <p style="margin:0 0 8px 0;font-size:18px;line-height:24px;font-weight:900;letter-spacing:-0.02em;color:#ffffff;font-family:${SANS};">Every batch has a published certificate<span style="color:${COLOR_COBALT_SOFT};">.</span></p>
           <p style="margin:0 0 14px 0;font-size:13px;line-height:20px;color:#B9C0D4;font-family:${SANS};">
-            Scan the QR on any label and it resolves to that lot&rsquo;s published report &mdash;
+            Scan the QR on any label and the COA library opens, with the published report for every batch:
             identity and purity, from a laboratory independent of the facility that made it.
           </p>
           <a href="${SITE_URL}/coa" style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;font-weight:800;color:#ffffff;text-decoration:none;border-bottom:2px solid ${COLOR_COBALT};padding-bottom:2px;">See the lab results library &rarr;</a>
@@ -486,7 +486,7 @@ export function renderOrderConfirmation(d: OrderConfirmationData): { subject: st
 
   const text = `Thank you, ${firstName} — order confirmed
 
-We spend on the lab, not the logo. Orders like yours keep every lot independently assayed and published.
+We spend on the lab, not the logo. Orders like yours keep every batch independently assayed and published.
 
 Order reference: ${d.paypalOrderId}
 Status: Confirmed → Packed → Shipped → Delivered (you are at: Confirmed)
@@ -501,13 +501,13 @@ ${d.lines.map((l) => `  ${l.title} (${l.bundleLabel}) x${l.qty} — ${fmtMoney(N
 Ships to: ${d.shippingFullName}, ${d.shippingLine1}, ${d.shippingCity}, ${d.shippingState} ${d.shippingZip}
 
 YOUR EVIDENCE
-Scan the QR on any vial label — it resolves to that lot's published identity + purity report. Library: ${SITE_URL}/coa
+Scan the QR on any vial label and the COA library opens: the published identity and purity report for every batch. Library: ${SITE_URL}/coa
 
 QUICK ANSWERS
 · Ships within 48 hours from San Antonio; tracking lands in this inbox when the label prints.
 · Certificate of analysis: QR on the vial label, or ${SITE_URL}/coa
 · Bank statement shows: MERIT (no product names)
-· Something not right? Reply to this email. If a lot fails our ≥99% HPLC floor: full refund + replacement.
+· Something not right? Reply to this email. If a batch fails our ≥99% HPLC floor: full refund + replacement.
 
 WHILE YOU WAIT
 · Research library: ${SITE_URL}/library
@@ -844,7 +844,7 @@ export function renderAbandonedCart(d: AbandonedCartData): { subject: string; ht
   const body = `
     ${headline('Still thinking?', false)}
     <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      ${firstName}, your selections are waiting at Merit. We held them for you &mdash; same lots, same purity, same price${d.discountCode ? '&hellip; plus a small thank-you below' : ''}.
+      ${firstName}, your selections are waiting at Merit. We held them for you &mdash; same batches, same purity, same price${d.discountCode ? '&hellip; plus a small thank-you below' : ''}.
     </p>
 
     <h3 style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};font-family:${SANS};">— Your cart</h3>
@@ -867,7 +867,7 @@ export function renderAbandonedCart(d: AbandonedCartData): { subject: string; ht
       <tr>
         <td style="padding:18px;font-size:12px;line-height:18px;color:${COLOR_TEXT_SOFT};">
           <p style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:${COLOR_INK};">— Why Merit</p>
-          &ge;99% HPLC-verified purity &middot; ISO-certified US facility &middot; Lot-documented &middot; Ships 48hr from San Antonio
+          &ge;99% HPLC-verified purity &middot; ISO-certified US facility &middot; Batch-documented &middot; Ships 48hr from San Antonio
         </td>
       </tr>
     </table>
@@ -879,7 +879,7 @@ export function renderAbandonedCart(d: AbandonedCartData): { subject: string; ht
 
 Hi ${firstName},
 
-We held your selections — same lots, same purity, same price.
+We held your selections — same batches, same purity, same price.
 
 ${d.lines.map((l) => `  · ${l.title} · ${l.bundleLabel} · Qty ${l.qty} · ${fmtMoney(Number(l.unitCents) * l.qty)}`).join('\n')}
 
@@ -895,7 +895,7 @@ Complete your order: ${d.recoveryUrl}
       ? `Still thinking? ${d.discountPercent}% off today.`
       : 'Your selections are still at Merit',
     html: shell({
-      preheader: `Your cart is waiting. ${d.discountCode ? `${d.discountPercent}% off today with ${d.discountCode.toUpperCase()}.` : 'Same lots, same purity, same price.'}`,
+      preheader: `Your cart is waiting. ${d.discountCode ? `${d.discountPercent}% off today with ${d.discountCode.toUpperCase()}.` : 'Same batches, same purity, same price.'}`,
       eyebrow: 'Cart reminder',
       body,
     }),
@@ -932,7 +932,7 @@ export function renderWelcome(d: WelcomeData): { subject: string; html: string; 
   const body = `
     ${headline(`Welcome, ${name}`)}
     <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      You&rsquo;re in. Merit is built on a simple premise: lab-verified research compounds shouldn&rsquo;t cost pharmacy prices. Every lot we ship is HPLC-verified to &ge;99% purity, compounded in an ISO-certified US facility, and released against an independent laboratory assay.
+      You&rsquo;re in. Merit is built on a simple premise: lab-verified research compounds shouldn&rsquo;t cost pharmacy prices. Every batch we ship is HPLC-verified to &ge;99% purity, compounded in an ISO-certified US facility, and released against an independent laboratory assay.
     </p>
 
     ${incentive}
@@ -964,7 +964,7 @@ Hi ${name},
 
 You're in. Merit is built on a simple premise: lab-verified research compounds shouldn't cost pharmacy prices.
 
-Every lot we ship:
+Every batch we ship:
   · HPLC-verified ≥99% purity
   · Compounded in an ISO-certified US facility
   · Released against an independent laboratory assay
@@ -1021,7 +1021,7 @@ export function renderPostDeliveryFollowUp(d: PostDeliveryData): { subject: stri
         <td style="padding:20px;font-size:14px;line-height:21px;color:${COLOR_INK};">
           <p style="margin:0 0 12px 0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;color:${COLOR_TEXT_SOFT};">— A few things we&rsquo;ll do for you</p>
           <p style="margin:0 0 8px 0;">
-            &middot; Re-share the <strong>Certificate of Analysis</strong> for this lot &mdash; reply with "CoA" and we&rsquo;ll send the PDF.
+            &middot; Re-share the <strong>Certificate of Analysis</strong> for this batch &mdash; reply with "CoA" and we&rsquo;ll send the PDF.
           </p>
           <p style="margin:0 0 8px 0;">
             &middot; Help with <strong>reconstitution math</strong> if you&rsquo;re working through it &mdash; reply with your vial size + target.
@@ -1038,7 +1038,7 @@ export function renderPostDeliveryFollowUp(d: PostDeliveryData): { subject: stri
     </p>
 
     ${d.reorderUrl ? ctaButton('Reorder in one click', d.reorderUrl) : ctaButton('Browse related compounds', d.catalogUrl)}
-    ${d.reorderUrl ? `<p style="margin:-12px 0 24px 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};text-align:center;">Same lineup, current lot — cart rebuilds itself, you just confirm. Or <a href="${escapeHtml(d.catalogUrl)}" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">browse the catalog</a>.</p>` : ''}
+    ${d.reorderUrl ? `<p style="margin:-12px 0 24px 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};text-align:center;">Same lineup, current batch — cart rebuilds itself, you just confirm. Or <a href="${escapeHtml(d.catalogUrl)}" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">browse the catalog</a>.</p>` : ''}
 
     ${renderCrossSell('Pair with', d.crossSell ?? [])}
 
@@ -1049,7 +1049,7 @@ export function renderPostDeliveryFollowUp(d: PostDeliveryData): { subject: stri
     </p>
   `;
 
-  const text = `How's your Merit lot? — Merit Sciences
+  const text = `How's your Merit batch? — Merit Sciences
 
 Hi ${firstName},
 
@@ -1060,7 +1060,7 @@ If you need:
   · Help with reconstitution math — reply with vial size + target
   · Anything looking off — reply and we'll make it right
 
-We don't do dosing advice or human-outcome claims. We just ship clean lots.
+We don't do dosing advice or human-outcome claims. We just ship clean batches.
 
 Order: ${d.paypalOrderId}
 Details: ${d.lookupUrl}
@@ -1070,7 +1070,7 @@ Browse related: ${d.catalogUrl}
 — Merit Sciences`;
 
   return {
-    subject: `How's your ${d.primaryProductTitle} lot?`,
+    subject: `How's your ${d.primaryProductTitle} batch?`,
     html: shell({
       preheader: `Quick check-in on your ${d.primaryProductTitle} order. Reply if you need CoA, reconstitution help, or anything else.`,
       eyebrow: 'Follow-up',

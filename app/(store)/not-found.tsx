@@ -60,7 +60,7 @@ export default function NotFound() {
         <div className="mt-9 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
           <p className="max-w-[46ch] text-[15px] leading-[1.62] text-white/70">
             This page has moved or never existed. Everything we carry is in the catalog, and every
-            lot we have released has its lab report on file.
+            batch we have released has its lab report on file.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
             <Link
@@ -73,7 +73,7 @@ export default function NotFound() {
               href="/coa"
               className="border border-white/40 px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-white hover:text-black transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              Look up a lot
+              Open the COA library
             </Link>
           </div>
         </div>

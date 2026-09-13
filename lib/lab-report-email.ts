@@ -51,7 +51,7 @@ export function renderLabReport(d: LabReportData): { subject: string; html: stri
 
   const subject =
     d.lots.length > 0
-      ? `The Lab Report — ${d.lots.length} new lot${d.lots.length === 1 ? '' : 's'} posted (${d.issueLabel})`
+      ? `The Lab Report — ${d.lots.length} new ${d.lots.length === 1 ? 'batch' : 'batches'} posted (${d.issueLabel})`
       : `The Lab Report — ${d.issueLabel}`;
 
   const voteBlock =
@@ -71,15 +71,15 @@ export function renderLabReport(d: LabReportData): { subject: string; html: stri
       ? p('Fresh out of the lab and into the public library — you&rsquo;re seeing these before we promote them anywhere:') +
         proof(lotRows(d.lots))
       : p(
-          'No new lots posted this cycle — which is its own kind of receipt: nothing ships until it clears HPLC, and nothing cleared early.',
+          'No new batches posted this cycle — which is its own kind of receipt: nothing ships until it clears HPLC, and nothing cleared early.',
         );
 
   const statsLine =
     d.meanPurity !== null
       ? quiet(
-          `The running ledger: <strong>${d.totalPublished} lots published</strong> · mean purity <strong>${d.meanPurity}</strong> · and the ones that failed identity never shipped at all. Every number is checkable at ${coaUrl.replace('https://', '').split('?')[0]}.`,
+          `The running ledger: <strong>${d.totalPublished} batches published</strong> · mean purity <strong>${d.meanPurity}</strong> · and the ones that failed identity never shipped at all. Every number is checkable at ${coaUrl.replace('https://', '').split('?')[0]}.`,
         )
-      : quiet(`The full library — every lot we&rsquo;ve ever shipped — is public at ${coaUrl.replace('https://', '').split('?')[0]}.`);
+      : quiet(`The full library — every batch we&rsquo;ve ever shipped — is public at ${coaUrl.replace('https://', '').split('?')[0]}.`);
 
   const html = wrapMarketingEmail({
     subject,
@@ -102,16 +102,16 @@ export function renderLabReport(d: LabReportData): { subject: string; html: stri
 
 ${
   d.lots.length > 0
-    ? `New lots posted (you're seeing these first):\n${d.lots
+    ? `New batches posted (you're seeing these first):\n${d.lots
         .slice(0, 8)
         .map((l) => `  · ${l.compound} — lot ${l.lotId} — ${l.purity} HPLC${l.testedDate ? ` — tested ${l.testedDate}` : ''}`)
         .join('\n')}`
-    : 'No new lots this cycle — nothing ships until it clears HPLC, and nothing cleared early.'
+    : 'No new batches this cycle — nothing ships until it clears HPLC, and nothing cleared early.'
 }
 
 Browse the lab results: ${coaUrl}
 ${d.voteOptions.length > 0 ? `\nVote on what we stock next — reply with one word: ${d.voteOptions.join(' / ')}\n` : ''}
-${d.meanPurity !== null ? `The running ledger: ${d.totalPublished} lots published · mean purity ${d.meanPurity}.` : ''}
+${d.meanPurity !== null ? `The running ledger: ${d.totalPublished} batches published · mean purity ${d.meanPurity}.` : ''}
 
 Restock: ${catalogUrl}${d.code ? ` (code ${d.code} applies automatically)` : ''}
 

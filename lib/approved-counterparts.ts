@@ -57,7 +57,7 @@ export const COUNTERPARTS: Record<string, Counterpart> = {
       source: 'New England Journal of Medicine, 2022',
     },
     meritAngle:
-      'The same molecule the branded pens are built on — pharmacy-grade, HPLC-verified per lot, with the COA public, at a fraction of the brand-name cost.',
+      'The same molecule the branded pens are built on — pharmacy-grade, HPLC-verified per batch, with the COA public, at a fraction of the brand-name cost.',
   },
   'semaglutide': {
     handle: 'semaglutide',
@@ -76,7 +76,7 @@ export const COUNTERPARTS: Record<string, Counterpart> = {
       source: 'New England Journal of Medicine, 2021',
     },
     meritAngle:
-      'The most recognized molecule in the category — the same one, pharmacy-grade and lot-verified, with the receipt on every label.',
+      'The most recognized molecule in the category — the same one, pharmacy-grade and batch-verified, with the receipt on every label.',
   },
   'ly3437943': {
     handle: 'ly3437943',
@@ -96,7 +96,7 @@ export const COUNTERPARTS: Record<string, Counterpart> = {
       source: 'New England Journal of Medicine, 2023',
     },
     meritAngle:
-      'The compound the whole field is watching, available for research now — pharmacy-grade, HPLC-verified, COA public per lot.',
+      'The compound the whole field is watching, available for research now — pharmacy-grade, HPLC-verified, COA public per batch.',
   },
   'th9507': {
     handle: 'th9507',
@@ -115,7 +115,7 @@ export const COUNTERPARTS: Record<string, Counterpart> = {
       source: 'pivotal trials supporting the FDA label',
     },
     meritAngle:
-      'The molecule inside an actual FDA-approved product — available as a research compound, pharmacy-grade, lot-verified.',
+      'The molecule inside an actual FDA-approved product — available as a research compound, pharmacy-grade, batch-verified.',
   },
   'pt-141': {
     handle: 'pt-141',
@@ -128,7 +128,7 @@ export const COUNTERPARTS: Record<string, Counterpart> = {
     approvalNote: 'PT-141 (bremelanotide) is FDA-approved as Vyleesi.',
     trial: null,
     meritAngle:
-      'The same molecule as the approved product — pharmacy-grade, HPLC-verified per lot, COA public.',
+      'The same molecule as the approved product — pharmacy-grade, HPLC-verified per batch, COA public.',
   },
   'sermorelin': {
     handle: 'sermorelin',
@@ -142,7 +142,7 @@ export const COUNTERPARTS: Record<string, Counterpart> = {
       'Sermorelin was FDA-approved as Geref and later discontinued commercially — a business decision, not a safety withdrawal.',
     trial: null,
     meritAngle:
-      'A molecule with an FDA-approval history, available again as a research compound — pharmacy-grade and lot-verified.',
+      'A molecule with an FDA-approval history, available again as a research compound — pharmacy-grade and batch-verified.',
   },
   'thymosin-alpha-1': {
     handle: 'thymosin-alpha-1',
@@ -156,7 +156,7 @@ export const COUNTERPARTS: Record<string, Counterpart> = {
       'Thymosin Alpha-1 is approved and marketed as Zadaxin in more than 30 countries (not the US).',
     trial: null,
     meritAngle:
-      'The molecule behind a drug approved across 30-plus countries — available for research, pharmacy-grade, COA per lot.',
+      'The molecule behind a drug approved across 30-plus countries — available for research, pharmacy-grade, COA per batch.',
   },
 };
 

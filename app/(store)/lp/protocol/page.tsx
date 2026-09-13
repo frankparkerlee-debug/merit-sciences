@@ -68,7 +68,7 @@ export default function ProtocolPage() {
               Now you can.
             </h1>
             <p className="text-cream/60 text-base leading-relaxed mb-1.5 max-w-md">
-              ISO-certified US facility. Third-party verified, every lot.
+              ISO-certified US facility. Third-party verified, every batch.
             </p>
             <p className="text-cream/35 text-sm leading-relaxed max-w-md">
               No appointment. Ships from San Antonio in 48 hours.
