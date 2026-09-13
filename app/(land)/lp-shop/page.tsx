@@ -32,7 +32,7 @@ import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
 export const metadata = {
   title: 'Independently tested research compounds',
   description:
-    'Every lot tested by an independent laboratory before release, with the lab report published and tied to the lot number on the vial. Licensed US facility, ships in 48 hours.',
+    'Every batch tested by an independent laboratory before release, with the lab report published and tied to the batch number on the vial. Licensed US facility, ships in 48 hours.',
   // The store is the page to rank; this one exists for paid traffic.
   robots: { index: false, follow: true },
 };
@@ -42,7 +42,7 @@ const STORE = 'https://meritsciences.com';
 
 const TICKER = [
   'Independently tested',
-  'Lab report on every lot',
+  'Lab report on every batch',
   'Licensed US facility',
   'Ships in 48 hours',
   'Scan the label to verify',
@@ -53,14 +53,14 @@ const CHECKS: [string, string][] = [
   ['Purity', 'HPLC main-peak percentage, published as measured'],
   ['Heavy metals', 'ICP-MS to trace thresholds'],
   ['Endotoxin', 'Bacterial endotoxin screened'],
-  ['Provenance', 'The lot number resolves to its own report'],
+  ['Provenance', 'The batch number resolves to its own report'],
 ];
 
 // A real sequence, so it's numbered.
 const STEPS: [string, string][] = [
-  ['The vial carries a lot number', 'Printed on every label, with a QR code beside it.'],
-  ['The report is published first', 'An outside laboratory tests the lot, and the certificate goes live before that lot is sold.'],
-  ['You read the same numbers we do', 'Scan the code or type the lot number. No account, no request form.'],
+  ['The vial carries a batch number', 'Printed on every label, with a QR code beside it.'],
+  ['The report is published first', 'An outside laboratory tests the batch, and the certificate goes live before that batch is sold.'],
+  ['You read the same numbers we do', 'Scan the code or type the batch number. No account, no request form.'],
 ];
 
 // Only what is already stated on the live store. No guarantee is claimed
@@ -68,7 +68,7 @@ const STEPS: [string, string][] = [
 // policies pages don't back.
 const PILLARS: [string, string][] = [
   ['Ships in 48 hours', 'Monday to Thursday, UPS Ground, tracked and insured'],
-  ['Lab report on every lot', 'Published before the lot is sold'],
+  ['Lab report on every batch', 'Published before the batch is sold'],
   ['Licensed US facility', 'Compounded in the United States'],
   [`${WELCOME_PCT}% off your first order`, `Code ${WELCOME_CODE}, applied at checkout`],
 ];
@@ -78,11 +78,11 @@ const PILLARS: [string, string][] = [
 // first-time visitor actually has. Nothing here describes what a compound does.
 const FAQ: [string, string][] = [
   ['What do I actually receive?',
-   'A sealed vial of lyophilized material with a lot number printed on the label. The certificate for that lot is published on our site before the lot ships.'],
+   'A sealed vial of lyophilized material with a batch number printed on the label. The certificate for that batch is published on our site before the batch ships.'],
   ['Who does the testing?',
-   'A laboratory independent of the facility that made the lot. The certificate is published before the lot is sold, so the identity and purity figures you read are the same ones we read.'],
-  ['How do I check a lot?',
-   'Scan the QR code on the label, or type the lot number into the lookup on our site. No account and no request form.'],
+   'A laboratory independent of the facility that made the batch. The certificate is published before the batch is sold, so the identity and purity figures you read are the same ones we read.'],
+  ['How do I check a batch?',
+   'Scan the QR code on the label, or type the batch number into the lookup on our site. No account and no request form.'],
   ['How fast does it ship?',
    'Orders dispatch within 48 hours, Monday through Thursday, by UPS Ground with tracking and insurance. Most US addresses receive within 3 to 5 business days.'],
   ['What does research use only mean?',
@@ -132,7 +132,7 @@ export default function ShopLanding() {
             className="font-poster font-black uppercase leading-[0.86] tracking-[-0.05em]"
             style={{ fontSize: 'clamp(40px, 7vw, 116px)' }}
           >
-            Every lot tested.
+            Every batch tested.
             <br />
             <span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}>
               Every result published.
@@ -141,7 +141,7 @@ export default function ShopLanding() {
           <div className="mt-9 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
             <p className="max-w-[50ch] text-[15px] leading-[1.62] text-white/70">
               Research compounds tested by an outside laboratory before they are released. The
-              certificate for every lot is published and tied to the number printed on the vial,
+              certificate for every batch is published and tied to the number printed on the vial,
               so you can read the results before you order.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
@@ -206,7 +206,7 @@ export default function ShopLanding() {
           </div>
           <div>
             <p className="font-mono text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
-              Before a lot is released
+              Before a batch is released
             </p>
             <h2
               className="font-poster font-black uppercase leading-[0.92] tracking-[-0.04em] max-w-[15ch]"
@@ -215,7 +215,7 @@ export default function ShopLanding() {
               Measured, not promised.
             </h2>
             <p className="mt-6 max-w-[50ch] text-[14.5px] leading-[1.65] text-white/60">
-              Each lot goes to an independent laboratory, not ours, and every result below is printed
+              Each batch goes to an independent laboratory, not ours, and every result below is printed
               on its certificate.
             </p>
             <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3.5 max-w-[560px]">
@@ -261,7 +261,7 @@ export default function ShopLanding() {
           </ol>
           <div className="mt-10">
             <Link href={`${STORE}/coa`} className={secondaryCta + ' inline-block'}>
-              Look up a lot
+              Look up a batch
             </Link>
           </div>
         </div>
