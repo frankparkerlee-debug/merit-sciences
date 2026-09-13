@@ -4,8 +4,7 @@ import {
   normalizeIdentifier,
   validateEmail,
   validateIdentifier,
-  validateName,
-} from '@/lib/affiliate';
+  validateName, isReservedDiscountCode } from '@/lib/affiliate';
 
 export const runtime = 'nodejs';
 
@@ -105,6 +104,17 @@ export async function POST(req: Request) {
   if (slug === discountCode) {
     return NextResponse.json(
       { error: 'Referral handle and discount code must be different', field: 'discountCode' },
+      { status: 400 },
+    );
+  }
+
+  // A code that reads as a Merit promotion, or that an operator has already
+  // created, is not available: typed at checkout it would credit this
+  // affiliate for a sale Merit's own marketing produced.
+  const houseCode = await prisma.discount.findUnique({ where: { code: discountCode }, select: { code: true } });
+  if (houseCode || isReservedDiscountCode(discountCode)) {
+    return NextResponse.json(
+      { error: `Discount code "${discountCode}" is reserved for Merit promotions — try another.`, field: 'discountCode' },
       { status: 400 },
     );
   }

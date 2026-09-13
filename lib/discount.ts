@@ -69,11 +69,25 @@ export async function validateDiscountCode(
   if (!code) return { ok: false, error: 'Enter a code' };
   if (ctx.subtotalCents < 100) return { ok: false, error: 'Cart subtotal too small for a discount' };
 
-  // ── 1) Try affiliate codes first ──────────────────────────────
-  const affiliate = await prisma.affiliate.findUnique({
-    where: { discountCode: code },
-    select: { id: true, slug: true, status: true, discountCode: true },
-  });
+  // ── Precedence: a code Merit created owns that string ──────────
+  // Affiliate codes are self-chosen by strangers at signup; manual codes are
+  // created by an operator. When both exist for the same string, operator
+  // intent wins. This used to be the other way round, and three affiliates
+  // with zero sales had registered "welcome", "welcome10" and "welcome15":
+  // every buyer typing Merit's own welcome code would have received the
+  // affiliate's 10% instead of the promised offer, and the affiliate would
+  // have been paid commission on Merit's own ad traffic. Signup now refuses
+  // such codes (isReservedDiscountCode), and this ordering makes any that
+  // already exist harmless.
+  const manual = await prisma.discount.findUnique({ where: { code } });
+
+  // ── 1) Affiliate codes, only when no house code claims the string ──
+  const affiliate = manual
+    ? null
+    : await prisma.affiliate.findUnique({
+        where: { discountCode: code },
+        select: { id: true, slug: true, status: true, discountCode: true },
+      });
   if (affiliate) {
     // Never leak that the code exists if the affiliate is suspended.
     if (affiliate.status !== 'ACTIVE') return { ok: false, error: 'Invalid code' };
@@ -91,8 +105,7 @@ export async function validateDiscountCode(
     };
   }
 
-  // ── 2) Try manual / operator-created codes ────────────────────
-  const manual = await prisma.discount.findUnique({ where: { code } });
+  // ── 2) Manual / operator-created codes ────────────────────────
   if (!manual) return { ok: false, error: 'Invalid code' };
 
   // Status / schedule

@@ -25,6 +25,18 @@ export function normalizeIdentifier(raw: string): string {
 
 export type ValidationResult = { ok: true } | { ok: false; reason: string };
 
+/**
+ * Discount codes an affiliate may not claim: anything that reads as a Merit
+ * promotion. "welcome*" is the house first-order offer, whatever the number
+ * after it happens to be this quarter. Callers also check the Discount table
+ * so a code an operator created can never be taken either.
+ */
+const RESERVED_CODE_PREFIXES = ['welcome', 'merit', 'first', 'newcustomer', 'new-customer'];
+export function isReservedDiscountCode(code: string): boolean {
+  const c = normalizeIdentifier(code);
+  return RESERVED_CODE_PREFIXES.some((p) => c === p || c.startsWith(p));
+}
+
 export function validateIdentifier(raw: string, fieldName: string): ValidationResult {
   const v = normalizeIdentifier(raw);
   if (v.length < 3) return { ok: false, reason: `${fieldName} must be at least 3 characters` };
