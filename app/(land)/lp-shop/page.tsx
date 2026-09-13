@@ -1,6 +1,36 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
+import { prisma } from '@/lib/db';
+import { FREE_SHIPPING_CENTS_THRESHOLD } from '@/lib/checkout-pricing';
+
+/* The pricing band quotes live figures rather than copy that goes stale.
+   Fallbacks are the values on the day this shipped, so a database hiccup
+   still renders something true. */
+export const dynamic = 'force-dynamic';
+
+async function liveNumbers() {
+  const fallback = { compounds: 31, fromCents: 3999, certificates: 82 };
+  try {
+    const [agg, certs] = await Promise.all([
+      prisma.product.aggregate({
+        where: { status: 'ACTIVE', handle: { not: 'bacteriostatic-water' } },
+        _count: { _all: true },
+        _min: { priceCents: true },
+      }),
+      prisma.coa.count({ where: { retiredAt: null } }),
+    ]);
+    return {
+      compounds: agg._count._all || fallback.compounds,
+      fromCents: agg._min.priceCents || fallback.fromCents,
+      certificates: certs || fallback.certificates,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+const money = (c: number) => `$${(c / 100).toFixed(2)}`;
 
 /**
  * Google Ads landing page, served at shop.meritsciences.com/ (middleware
@@ -85,8 +115,23 @@ const FAQ: [string, string][] = [
    'The QR code on every vial opens our COA library. Search by compound to find the certificate for the batch currently shipping. No account and no request form.'],
   ['How fast does it ship?',
    'Orders dispatch within 48 hours, Monday through Thursday, by UPS Ground with tracking and insurance. Most US addresses receive within 3 to 5 business days.'],
+  ['Who can order?',
+   'Qualified researchers and licensed practitioners. Practitioners can apply for account pricing through the Practitioner Program; retail buyers order directly.'],
+  ['Is there a minimum order?',
+   'No. One vial ships the same way a case does: within 48 hours, tracked and insured. Orders over $300 ship free.'],
   ['What does research use only mean?',
    'Everything we supply is for laboratory and scientific research. It is not for human or veterinary use and has not been evaluated or approved by the FDA.'],
+];
+
+// Left column is the category Merit sells against; right is what Merit does.
+// Nothing here names a compound, a competitor, or an effect.
+const CONTRAST: [string, string, string][] = [
+  ['Where it is made', 'Unknown. Often imported and relabeled.', 'A licensed US facility'],
+  ['Testing', 'Promised. Sometimes.', 'An independent laboratory, every batch'],
+  ['The certificate', 'On request, if you ask twice', 'Published before the batch is listed'],
+  ['The label', 'A marker and a hope', 'A QR code that opens the COA library'],
+  ['Shipping', 'Weeks, untracked', '48 hours, tracked and insured'],
+  ['Paying', 'Apps and DMs', 'Major cards on a secure checkout'],
 ];
 
 const POLICIES: [string, string][] = [
@@ -103,7 +148,8 @@ const primaryCta =
 const secondaryCta =
   'border border-white/40 px-9 py-4 text-center text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-white hover:text-black transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
 
-export default function ShopLanding() {
+export default async function ShopLanding() {
+  const n = await liveNumbers();
   return (
     <>
       {/* §01 HERO: the homepage's scene, so the ad lands somewhere recognisably Merit. */}
@@ -192,7 +238,52 @@ export default function ShopLanding() {
         </div>
       </section>
 
-      {/* §04 WHAT EACH LOT IS TESTED FOR */}
+      {/* §04 SAME STACK, BETTER SOURCE. The brand line, earned by a contrast
+          rather than asserted. This is the page's one emotional beat. */}
+      <section className="bg-[#08090A] text-white">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+          <p className="font-mono text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
+            Why Merit exists
+          </p>
+          <h2
+            className="font-poster font-black uppercase leading-[0.86] tracking-[-0.05em]"
+            style={{ fontSize: 'clamp(38px, 6.4vw, 104px)' }}
+          >
+            Same stack.
+            <br />
+            <span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}>
+              Better source.
+            </span>
+          </h2>
+          <p className="mt-7 max-w-[52ch] text-[15px] leading-[1.62] text-white/65">
+            Most research compounds are sold on a photo and a promise. Merit sells the receipt: the
+            same catalog, from a source you can check before you pay.
+          </p>
+
+          <div className="mt-12 overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-[14.5px]">
+              <thead>
+                <tr className="text-left">
+                  <th className="pb-3 pr-6 font-mono text-[10.5px] tracking-[0.14em] uppercase text-white/35 font-medium w-[22%]"></th>
+                  <th className="pb-3 pr-6 font-mono text-[10.5px] tracking-[0.14em] uppercase text-white/35 font-medium">The gray market</th>
+                  <th className="pb-3 font-mono text-[10.5px] tracking-[0.14em] uppercase font-medium" style={{ color: LIME }}>Merit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CONTRAST.map(([k, them, us]) => (
+                  <tr key={k} className="border-t border-white/10">
+                    <th scope="row" className="py-4 pr-6 text-left font-display font-semibold text-white/80 align-top">{k}</th>
+                    <td className="py-4 pr-6 text-white/45 align-top">{them}</td>
+                    <td className="py-4 text-white align-top font-medium">{us}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* §05 WHAT EACH BATCH IS TESTED FOR */}
       <section className="bg-[#08090A] text-white">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div className="relative aspect-[3/2] overflow-hidden border border-white/10">
@@ -236,7 +327,53 @@ export default function ShopLanding() {
         </div>
       </section>
 
-      {/* §05 HOW TO CHECK A LOT */}
+      {/* §06 PRICING. Real figures, live from the catalog. A price is not a
+          health claim, and it is the one thing on this page a searcher can
+          compare in ten seconds. */}
+      <section className="bg-[#0E1013] text-white border-t border-white/5">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+          <p className="font-mono text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
+            Pricing
+          </p>
+          <h2
+            className="font-poster font-black uppercase leading-[0.92] tracking-[-0.04em] max-w-[16ch]"
+            style={{ fontSize: 'clamp(28px, 4.2vw, 62px)' }}
+          >
+            Priced like the material it is.
+          </h2>
+          <p className="mt-6 max-w-[52ch] text-[14.5px] leading-[1.65] text-white/60">
+            We spend on the laboratory, not the logo. Every price on the catalog is public, and it is
+            the same price whether you buy one vial or a case.
+          </p>
+          <dl className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10">
+            {([
+              [money(n.fromCents), 'per vial, and up'],
+              [String(n.compounds), 'compounds in stock'],
+              [String(n.certificates), 'certificates published'],
+              [money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', ''), 'and over ships free'],
+            ] as [string, string][]).map(([v, l]) => (
+              <div key={l} className="bg-[#0E1013] p-6 lg:p-8">
+                <dt className="sr-only">{l}</dt>
+                <dd className="m-0">
+                  <span className="block font-poster font-black text-[34px] lg:text-[44px] leading-none tracking-[-0.04em]" style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</span>
+                  <span className="mt-2 block text-[13px] text-white/50">{l}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-6 max-w-[60ch] text-[13.5px] leading-[1.65] text-white/50">
+            Three-packs save 5%, six-packs and subscriptions save 10%, and there is no minimum order.
+            First order: {WELCOME_PCT}% off with code <span className="font-mono text-white">{WELCOME_CODE}</span>.
+          </p>
+          <div className="mt-8">
+            <Link href={`${STORE}/catalog?code=${WELCOME_CODE}`} className={primaryCta + ' inline-block'}>
+              See every price
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* §07 HOW TO CHECK A BATCH */}
       <section className="bg-[#0E1013] text-white border-t border-white/5">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
           <p className="font-mono text-[11px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
@@ -267,7 +404,7 @@ export default function ShopLanding() {
         </div>
       </section>
 
-      {/* §06 FAQ */}
+      {/* §08 FAQ */}
       <section className="bg-[#08090A] text-white border-t border-white/5">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16">
           <div>
@@ -292,7 +429,7 @@ export default function ShopLanding() {
         </div>
       </section>
 
-      {/* §07 CLOSE */}
+      {/* §09 CLOSE */}
       <section className="relative isolate flex h-[64svh] min-h-[440px] max-h-[700px] items-end overflow-hidden bg-black text-white">
         <Image
           src="/brand/hero-monolith.webp"
