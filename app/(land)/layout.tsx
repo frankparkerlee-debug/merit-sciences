@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 export default function LandingRootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable} ${archivo.variable}`}>
-      <body className="font-sans">
+      <body className="font-sans bg-paper text-ink">
         <GoogleTagManager />
         <MarketingPixels />
         <PostHogProvider>

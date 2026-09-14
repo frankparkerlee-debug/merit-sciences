@@ -7,6 +7,27 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Keyframes for the vendored magic-ui components in components/ui.
+      keyframes: {
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(calc(-100% - var(--gap)))' },
+        },
+        'marquee-vertical': {
+          from: { transform: 'translateY(0)' },
+          to: { transform: 'translateY(calc(-100% - var(--gap)))' },
+        },
+        shine: {
+          '0%': { backgroundPosition: '0% 0%' },
+          '50%': { backgroundPosition: '100% 100%' },
+          to: { backgroundPosition: '0% 0%' },
+        },
+      },
+      animation: {
+        marquee: 'marquee var(--duration) infinite linear',
+        'marquee-vertical': 'marquee-vertical var(--duration) linear infinite',
+        shine: 'shine var(--duration) infinite linear',
+      },
       colors: {
         // Merit brand tokens (matching the existing Shopify theme)
         ink:        '#0B0F19',
