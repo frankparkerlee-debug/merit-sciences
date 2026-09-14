@@ -338,17 +338,36 @@ export default async function ShopLanding() {
       {/* §05 NUMBERS, live from the catalog */}
       <section className="bg-white border-t border-border-soft">
         <div className="max-w-[1240px] mx-auto px-6 lg:px-10 py-16 lg:py-24">
-          <Eyebrow>Pricing</Eyebrow>
-          <h2
-            className="font-display font-black text-ink tracking-[-0.03em] leading-[1.02] max-w-[16ch]"
-            style={{ fontSize: 'clamp(30px, 4vw, 52px)', textWrap: 'balance' }}
-          >
-            Priced like the material it is.
-          </h2>
-          <p className="mt-5 max-w-[52ch] text-[15.5px] leading-[1.62] text-ink-soft">
-            We spend on the laboratory, not the logo. Every price is public, and it is the same
-            price whether you buy one vial or a case.
-          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-8 lg:gap-14 items-center">
+            <div>
+              <Eyebrow>Pricing</Eyebrow>
+              <h2
+                className="font-display font-black text-ink tracking-[-0.03em] leading-[1.02] max-w-[16ch]"
+                style={{ fontSize: 'clamp(30px, 4vw, 52px)', textWrap: 'balance' }}
+              >
+                Priced like the material it is.
+              </h2>
+              <p className="mt-5 max-w-[52ch] text-[15.5px] leading-[1.62] text-ink-soft">
+                We spend on the laboratory, not the logo. Every price is public, and it is the same
+                price whether you buy one vial or a case.
+              </p>
+            </div>
+            {/* The laboratory the money goes to: an HPLC autosampler, the
+                instrument behind the purity figure on every certificate.
+                Photograph by Yura Shkoda on Pexels, free for commercial use. */}
+            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden ring-1 ring-border-soft bg-paper">
+              <Image
+                src="/brand/lab-hplc-autosampler.webp"
+                alt="Sample vials loaded in the autosampler of an HPLC instrument"
+                fill
+                sizes="(max-width: 1024px) 100vw, 55vw"
+                className="object-cover"
+              />
+              <div className="absolute left-4 bottom-4 rounded-full bg-white/92 backdrop-blur px-3.5 py-2 text-[12px] font-semibold text-ink ring-1 ring-ink/10">
+                HPLC. Where the purity number comes from.
+              </div>
+            </div>
+          </div>
           <dl className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
             {([
               [<>{money(n.fromCents)}</>, 'per vial, and up'],
