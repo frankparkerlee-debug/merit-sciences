@@ -7,6 +7,7 @@ import { NumberTicker } from '@/components/ui/number-ticker';
 import { ShineBorder } from '@/components/ui/shine-border';
 import { Marquee } from '@/components/ui/marquee';
 import { LpEmailCapture } from '@/components/lp/LpEmailCapture';
+import { StickyCta } from './StickyCta';
 
 /**
  * Google Ads landing page, served at shop.meritsciences.com/ by middleware
@@ -120,9 +121,10 @@ const POLICIES: [string, string][] = [
 const money = (c: number) => `$${(c / 100).toFixed(2)}`;
 
 /* The one button. Same words, same colour, everywhere it appears. */
-function Cta({ light = false, className = '' }: { light?: boolean; className?: string }) {
+function Cta({ light = false, className = '', id }: { light?: boolean; className?: string; id?: string }) {
   return (
     <Link
+      id={id}
       href={CTA_HREF}
       className={
         (light
@@ -198,7 +200,7 @@ export default async function ShopLanding() {
                   Code <span className="font-mono font-semibold text-ink">{WELCOME_CODE}</span> is applied for you at checkout.
                 </p>
                 <div className="mt-5">
-                  <Cta className="w-full sm:w-auto" />
+                  <Cta id="hero-cta" className="w-full sm:w-auto" />
                 </div>
                 <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[12.5px] text-ink-soft">
                   {['Ships in 48 hours', 'Tracked and insured', 'No minimum order'].map((t) => (
@@ -209,10 +211,13 @@ export default async function ShopLanding() {
             </div>
           </div>
 
-          <div className="relative aspect-[4/3] lg:aspect-[5/4] rounded-3xl overflow-hidden ring-1 ring-border-soft bg-white">
+          {/* The product itself, on the page's own palette. A staged lab
+              scene was tried and read as fake; a packshot of what arrives
+              reads as true. */}
+          <div className="relative aspect-square lg:aspect-[5/4] rounded-3xl overflow-hidden ring-1 ring-border-soft bg-cream">
             <Image
-              src="/brand/scene-lab.webp"
-              alt="Three sealed Merit research vials on a laboratory bench"
+              src="/brand/merit-vial-hero.webp"
+              alt="A sealed Merit research vial, labeled research use only"
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -346,7 +351,7 @@ export default async function ShopLanding() {
           </p>
           <dl className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
             {([
-              [<>$<NumberTicker value={n.fromCents / 100} decimalPlaces={2} /></>, 'per vial, and up'],
+              [<>{money(n.fromCents)}</>, 'per vial, and up'],
               [<NumberTicker value={n.compounds} />, 'compounds in stock'],
               [<NumberTicker value={n.certificates} />, 'certificates published'],
               [<>{money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', '')}</>, 'and over ships free'],
@@ -420,7 +425,7 @@ export default async function ShopLanding() {
             <p className="text-[14px] font-semibold text-white">Not ready today?</p>
             <p className="mt-1 text-[13.5px] text-white/75">We will email you the code so it is there when you are.</p>
             <div className="mt-4">
-              <LpEmailCapture source="google-lander" theme="dark" label="Email me the code" />
+              <LpEmailCapture source="google-lander" theme="dark" label="Email me the code" buttonLabel="Email me the code →" />
             </div>
           </div>
         </div>
@@ -452,10 +457,11 @@ export default async function ShopLanding() {
         </p>
       </footer>
 
-      {/* STICKY MOBILE CTA: the one action stays reachable the whole scroll. */}
-      <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden bg-white/95 backdrop-blur border-t border-border-soft p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+      {/* STICKY MOBILE CTA: the one action stays reachable the whole scroll,
+          appearing only after the hero's own button has left the screen. */}
+      <StickyCta sentinelId="hero-cta">
         <Cta className="w-full" />
-      </div>
+      </StickyCta>
     </>
   );
 }

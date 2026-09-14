@@ -8,10 +8,12 @@ export function LpEmailCapture({
   source,
   label = `Get access + ${WELCOME_PCT}% off your first order`,
   theme = 'dark',
+  buttonLabel = 'Get access →',
 }: {
   source: string;
   label?: string;
   theme?: 'dark' | 'light';
+  buttonLabel?: string;
 }) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
@@ -94,7 +96,7 @@ export function LpEmailCapture({
             className="shrink-0 px-7 py-4 rounded-xl text-white font-bold text-base transition hover:opacity-90 disabled:opacity-60 shadow-lg"
             style={{ background: 'linear-gradient(135deg, #2E4DDB 0%, #6B8AFF 100%)' }}
           >
-            {status === 'submitting' ? 'Sending…' : 'Get access →'}
+            {status === 'submitting' ? 'Sending…' : buttonLabel}
           </button>
         </div>
         {status === 'error' && err && (
