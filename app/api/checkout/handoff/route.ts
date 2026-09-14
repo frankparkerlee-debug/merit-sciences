@@ -17,6 +17,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createHandoff, type HandoffLine } from '@/lib/checkout-handoff';
 import { ATTR_COOKIE } from '@/lib/attribution';
+import { WELCOME_COOKIE } from '@/lib/welcome-offer';
 import { getPractitionerSession } from '@/lib/practitioner-session';
 
 export const runtime = 'nodejs';
@@ -66,10 +67,13 @@ export async function POST(req: Request) {
   const refSlug = jar.get(REF_COOKIE)?.value ?? null;
   const attr = jar.get(ATTR_COOKIE)?.value ?? null;
 
+  // The client sends the code it stashed in localStorage. If it has none (a
+  // visitor who arrived via the ad host and never hit a ?code= link), the
+  // domain-wide welcome cookie set on landing carries it instead.
   const welcomeCode =
     typeof body?.welcomeCode === 'string' && body.welcomeCode.trim()
       ? body.welcomeCode.trim().slice(0, 40)
-      : null;
+      : (jar.get(WELCOME_COOKIE)?.value ?? '').trim().slice(0, 40) || null;
 
   // Resolved from the signed-in session on THIS origin, never from the body —
   // the checkout domain cannot see the storefront's auth cookie, so this is

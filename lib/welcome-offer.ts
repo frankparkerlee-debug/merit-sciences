@@ -16,6 +16,15 @@ export const WELCOME_CODE = 'WELCOME15';
 export const WELCOME_PCT = 15;
 
 /**
+ * Cookie that carries the offer from the ad host (shop.meritsciences.com) to
+ * the store. Set on the parent domain by middleware; DiscountCodeCapture on
+ * the store copies it into localStorage, and the checkout handoff reads it as
+ * a fallback, so the buyer never types the code.
+ */
+export const WELCOME_COOKIE = 'merit_welcome';
+export const WELCOME_COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
+
+/**
  * Codes that mark a sale as OUR paid acquisition. A sale on one of these
  * overrides any ?ref= affiliate cookie: we don't pay commission on traffic we
  * already bought. Lowercase, since codes are stored and compared lowercase.

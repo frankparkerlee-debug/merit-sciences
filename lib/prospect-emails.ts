@@ -1,7 +1,7 @@
 /**
  * Prospect nurture track — for subscribers who gave us their email but haven't
  * purchased. An 8-email funnel: earn trust through craft (and a little humor),
- * with the 20% as a quiet throughline. Voice = confident, a bit funny, never
+ * with the welcome offer as a quiet throughline. Voice = confident, a bit funny, never
  * coupon-desperate.
  *
  * Every CTA carries `?code=` — DiscountCodeCapture stashes it on landing and
@@ -47,7 +47,7 @@ function build(subject: string, eyebrow: string, body: string, text: string, d: 
 export function renderProspectWelcome(d: ProspectEmailData): Rendered {
   const shop = withCode(CATALOG, d.code);
   return build(
-    "You're in — and your 20% is ready",
+    `You're in — and your ${WELCOME_PCT}% is ready`,
     'Welcome',
     heroImg('/brand/hero-A-cluster.webp', 'The Merit Sciences research compound lineup') +
       h('You found the good stuff.') +
@@ -183,7 +183,7 @@ export function renderProspectSocialProof(d: ProspectEmailData): Rendered {
       p('Merit’s people tend to be the ones who read the label, check the source, and refuse to gamble on quality — researchers, the detail-obsessed, and the ones who got burned by a sketchy vendor once and swore never again.') +
       p('If that sounds like you, you’ll feel right at home.') +
       cta('See the lineup →', shop) +
-      quiet(`Your 20% is still on — <strong>${d.code}</strong>, baked into the button.`),
+      quiet(`Your ${WELCOME_PCT}% is still on — <strong>${d.code}</strong>, baked into the button.`),
     `Merit's customers read the label, check the source, and won't gamble on quality. If that's you, you'll feel at home.\nSee the lineup (${d.code} applies automatically): ${shop}`,
     d,
   );
@@ -193,10 +193,10 @@ export function renderProspectSocialProof(d: ProspectEmailData): Rendered {
 export function renderProspectLastCall(d: ProspectEmailData): Rendered {
   const shop = withCode(CATALOG, d.code);
   return build(
-    'Your 20% is about to expire (last call)',
+    `Your ${WELCOME_PCT}% is about to expire (last call)`,
     'Before it slips your mind',
-    h('Your 20% is getting lonely.') +
-      p('No pressure — but your first-order 20% has been sitting in your inbox for a few weeks, and it won’t wait forever.') +
+    h(`Your ${WELCOME_PCT}% is getting lonely.`) +
+      p(`No pressure — but your first-order ${WELCOME_PCT}% has been sitting in your inbox for a few weeks, and it won’t wait forever.`) +
       p('Whenever you’re ready, every batch comes with the same things: a published COA, ≥99% purity, and a 48-hour ship from San Antonio. The hard part is on us. The first step — one tap, code included — is on you.') +
       codeChip(d.code) +
       cta("Use it before it's gone →", shop),

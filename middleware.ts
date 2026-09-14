@@ -15,6 +15,7 @@ import {
   checkoutOrigin,
 } from '@/lib/checkout-domain';
 import { legacyPathTarget } from '@/lib/legacy-domain';
+import { WELCOME_CODE, WELCOME_COOKIE, WELCOME_COOKIE_MAX_AGE } from '@/lib/welcome-offer';
 
 /**
  * Affiliate click tracking.
@@ -285,6 +286,24 @@ export async function middleware(req: NextRequest) {
   // the /access gate here exactly as they do on the store. Whether a given
   // landing page should be shown to them is decided when that page exists.
   if (isShopHost(reqHost)) {
+    // Landing on the ad host IS the offer. Stamp the welcome code as a cookie
+    // on the parent domain so it follows the visitor to the store whatever
+    // they click, and the store applies it without them typing anything.
+    // Readable by JS on purpose: it is a promo code, not a secret, and the
+    // store's client-side capture copies it into the slot checkout reads.
+    const withWelcome = (res: NextResponse): NextResponse => {
+      if (!req.cookies.get(WELCOME_COOKIE)) {
+        res.cookies.set(WELCOME_COOKIE, WELCOME_CODE, {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: WELCOME_COOKIE_MAX_AGE,
+          domain: sharedCookieDomain(reqHost),
+        });
+      }
+      return withAttr(res);
+    };
     // An affiliate link can land here too. Let the ?ref= handler below stamp
     // the cookie and bounce to the clean URL; that request comes back through.
     const refSlug = (searchParams.get('ref') || '').trim().toLowerCase();
@@ -295,16 +314,16 @@ export async function middleware(req: NextRequest) {
         const res = NextResponse.rewrite(landing);
         // The landing duplicates store content; the store is the page to rank.
         res.headers.set('X-Robots-Tag', 'noindex, follow');
-        return withAttr(res);
+        return withWelcome(res);
       }
       // Everything else, and "/" while parked, lives on the store. Path and
       // query survive, so a gclid or UTM on a shop link still arrives; the
-      // cookie is stamped on this response as well, domain-wide.
+      // cookies are stamped on this response as well, domain-wide.
       const store = req.nextUrl.clone();
       store.protocol = 'https:';
       store.host = 'meritsciences.com';
       store.port = '';
-      return withAttr(NextResponse.redirect(store, 308));
+      return withWelcome(NextResponse.redirect(store, 308));
     }
   }
 

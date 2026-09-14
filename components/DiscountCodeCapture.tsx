@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { WELCOME_COOKIE } from '@/lib/welcome-offer';
 
 /**
  * Site-wide `?code=` capture — the low-friction bridge from email links to
@@ -23,12 +24,22 @@ export function DiscountCodeCapture() {
     try {
       const url = new URL(window.location.href);
       const raw = url.searchParams.get('code');
-      if (!raw) return;
-      const code = raw.trim().toUpperCase();
-      if (!CODE_RE.test(code)) return;
-      localStorage.setItem('merit_welcome_code', code);
-      url.searchParams.delete('code');
-      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      if (raw) {
+        const code = raw.trim().toUpperCase();
+        if (!CODE_RE.test(code)) return;
+        localStorage.setItem('merit_welcome_code', code);
+        url.searchParams.delete('code');
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+        return;
+      }
+      // No ?code= on this URL. If the visitor came through the ad host,
+      // middleware left the welcome code in a domain-wide cookie; adopt it so
+      // the offer applies whatever link they took from the lander. Never
+      // overwrite a code already stored: the most recent explicit promise wins.
+      if (localStorage.getItem('merit_welcome_code')) return;
+      const m = document.cookie.match(new RegExp('(?:^|; )' + WELCOME_COOKIE + '=([^;]*)'));
+      const fromCookie = m ? decodeURIComponent(m[1]).trim().toUpperCase() : '';
+      if (fromCookie && CODE_RE.test(fromCookie)) localStorage.setItem('merit_welcome_code', fromCookie);
     } catch {
       /* private mode / malformed URL — nothing to do */
     }
