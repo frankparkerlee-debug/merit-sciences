@@ -16,6 +16,7 @@ import {
 } from '@paypal/react-paypal-js';
 import { useCart, type CartLine } from '@/lib/cart';
 import { track, identify, trackPurchase, trackInitiateCheckout } from '@/lib/analytics';
+import { currentWelcomeCode } from '@/lib/welcome-offer';
 import { US_STATES } from './us-states';
 import { StripeCheckout } from './StripeCheckout';
 
@@ -292,7 +293,7 @@ export function CheckoutClient({
     if (autoAppliedRef.current || claimPending) return;
     if (!hydrated || lines.length === 0 || appliedCode) return;
     let welcome: string | null = null;
-    try { welcome = localStorage.getItem('merit_welcome_code'); } catch { /* private mode */ }
+    try { welcome = currentWelcomeCode(localStorage.getItem('merit_welcome_code')); } catch { /* private mode */ }
     if (!welcome) return;
     autoAppliedRef.current = true;
     applyCode(welcome, { silent: true });

@@ -214,23 +214,23 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
     case 'prospect_reengage':
     case 'prospect_social_proof':
     case 'prospect_last_call':
-      return { code: 'WELCOME20', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample' };
+      return { code: 'WELCOME15', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample' };
     // Compound sequence beats — ctx + the compound's hero vial (in prod the
     // image is resolved per-enrollment from the live catalog).
     case 'seq_tirzepatide_1':
     case 'seq_tirzepatide_2':
     case 'seq_tirzepatide_3':
     case 'seq_tirzepatide_4':
-      return { code: 'WELCOME20', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample', heroImageUrl: '/products/sku-tirzepatide-30mg.webp' };
+      return { code: 'WELCOME15', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample', heroImageUrl: '/products/sku-tirzepatide-30mg.webp' };
     case 'seq_sermorelin_2':
-      return { code: 'WELCOME20', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample', heroImageUrl: '/products/sku-sermorelin-acetate-10mg.webp' };
+      return { code: 'WELCOME15', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample', heroImageUrl: '/products/sku-sermorelin-acetate-10mg.webp' };
     // Category sequence beats — hero + the roster thumbnails (the "lineup" shot).
     case 'cat_cellular_1':
     case 'cat_cellular_2':
     case 'cat_cellular_3':
     case 'cat_cellular_4':
       return {
-        code: 'WELCOME20',
+        code: 'WELCOME15',
         unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample',
         heroImageUrl: '/products/sku-nad-500mg.webp',
         memberImages: [
@@ -260,7 +260,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
         totalPublished: 77,
         meanPurity: '99.43%',
         voteOptions: ['Cagrilintide', 'KPV', 'SS-31'],
-        code: 'WELCOME20',
+        code: 'WELCOME15',
         unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample',
       };
     case 'interest_picker':

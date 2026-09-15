@@ -259,7 +259,7 @@ const SNAPSHOT = [
     "compound": "PT-141",
     "vialSize": "10 mg",
     "format": "lyophilized",
-    "priceCents": 31668,
+    "priceCents": 6499,
     "imageUrl": null
   },
   {

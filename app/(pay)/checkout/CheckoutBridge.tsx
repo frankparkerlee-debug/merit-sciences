@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCart } from '@/lib/cart';
 import { trackBeginCheckoutAds } from '@/lib/analytics';
+import { currentWelcomeCode } from '@/lib/welcome-offer';
 
 /**
  * Storefront-side bridge to the split checkout domain.
@@ -31,7 +32,7 @@ export function CheckoutBridge() {
 
     let welcomeCode: string | null = null;
     try {
-      welcomeCode = localStorage.getItem('merit_welcome_code');
+      welcomeCode = currentWelcomeCode(localStorage.getItem('merit_welcome_code'));
     } catch {
       /* private mode */
     }

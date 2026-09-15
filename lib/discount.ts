@@ -17,6 +17,7 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
 import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
+import { WELCOME_CODE, RETIRED_WELCOME_CODES } from '@/lib/welcome-offer';
 
 export type DiscountValidationResult =
   | {
@@ -65,9 +66,13 @@ export async function validateDiscountCode(
       ? { subtotalCents: contextOrSubtotal }
       : contextOrSubtotal;
 
-  const code = rawCode.trim().toLowerCase();
-  if (!code) return { ok: false, error: 'Enter a code' };
+  const typed = rawCode.trim().toLowerCase();
+  if (!typed) return { ok: false, error: 'Enter a code' };
   if (ctx.subtotalCents < 100) return { ok: false, error: 'Cart subtotal too small for a discount' };
+
+  // A retired welcome code (an old email, a stale localStorage copy) resolves
+  // to the live offer instead of an error: the promise was Merit's to keep.
+  const code = RETIRED_WELCOME_CODES.has(typed) ? WELCOME_CODE.toLowerCase() : typed;
 
   // ── Precedence: a code Merit created owns that string ──────────
   // Affiliate codes are self-chosen by strangers at signup; manual codes are

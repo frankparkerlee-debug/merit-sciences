@@ -1,5 +1,5 @@
 'use client';
-import { WELCOME_PCT } from '@/lib/welcome-offer';
+import { WELCOME_PCT, currentWelcomeCode } from '@/lib/welcome-offer';
 
 import { useEffect, useState } from 'react';
 
@@ -23,8 +23,8 @@ export function WelcomeOfferBar() {
       if (localStorage.getItem(DISMISS_KEY)) return;
       // First-order offer only — once the buyer has checked out, retire it.
       if (localStorage.getItem('merit_welcome_used')) return;
-      const c = localStorage.getItem('merit_welcome_code');
-      if (c) setCode(c.toUpperCase());
+      const c = currentWelcomeCode(localStorage.getItem('merit_welcome_code'));
+      if (c) setCode(c);
     } catch {
       /* private mode — just don't show it */
     }

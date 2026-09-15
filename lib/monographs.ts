@@ -126,7 +126,7 @@ export const COMPOUND_META: CompoundMeta[] = [
     key: 'pt-141', slug: 'pt-141', title: 'PT-141',
     aka: ['Bremelanotide', 'melanocortin agonist'],
     tagline: 'A cyclic heptapeptide melanocortin-receptor agonist (bremelanotide).',
-    product: { handle: 'pt-141', fromPrice: 317, purity: '≥99%', vialSize: '10 mg' },
+    product: { handle: 'pt-141', fromPrice: 65, purity: '≥99%', vialSize: '10 mg' },
   },
   {
     key: 'melanotan-ii', slug: 'melanotan-ii', title: 'Melanotan II',
