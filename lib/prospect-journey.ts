@@ -180,7 +180,7 @@ export async function tickProspects(now: Date = new Date()): Promise<{
 
     try {
       const { subject, html, text } = step.render({ code: CODE, unsubscribeUrl: unsubUrl(s.email) });
-      await sendEmail({ to: s.email, subject, html, text });
+      await sendEmail({ to: s.email, subject, html, text, stream: 'marketing', unsubscribeUrl: unsubUrl(s.email) });
       sent++;
     } catch (err) {
       console.error(`[prospect-tick] send failed for ${s.email} key=${step.key}`, err);

@@ -192,6 +192,8 @@ export async function tick(now: Date = new Date()): Promise<{
         to: j.email,
         subject: def.subject(ctx),
         html: renderEmail(def, ctx),
+        stream: 'marketing',
+        unsubscribeUrl: `${SITE_URL}/practitioners/unsubscribe?token=${j.unsubToken}`,
       });
       sent++;
     } catch (err) {

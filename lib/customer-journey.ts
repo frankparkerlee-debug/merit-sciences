@@ -111,7 +111,10 @@ async function tickPostDelivery(now: Date): Promise<BeatResult> {
         reorderUrl: reorderUrlFor(o.id),
         crossSell,
       });
-      const res = await sendEmail({ to: o.customerEmail, subject, html, text });
+      const res = await sendEmail({
+        to: o.customerEmail, subject, html, text,
+        stream: 'marketing', unsubscribeUrl: unsubUrl(o.customerEmail),
+      });
       if (!res.ok) throw new Error(res.error);
       await markSent(o.id, 'post_delivery', res.id, o.customerEmail);
       r.sent++;
@@ -150,7 +153,10 @@ async function tickReplenishment(now: Date): Promise<BeatResult> {
         unsubscribeUrl: unsubUrl(o.customerEmail),
         productImageUrl: o.lines[0]?.imageUrl ?? undefined,
       });
-      const res = await sendEmail({ to: o.customerEmail, subject, html, text });
+      const res = await sendEmail({
+        to: o.customerEmail, subject, html, text,
+        stream: 'marketing', unsubscribeUrl: unsubUrl(o.customerEmail),
+      });
       if (!res.ok) throw new Error(res.error);
       await markSent(o.id, 'replenishment', res.id, o.customerEmail);
       r.sent++;
@@ -189,7 +195,10 @@ async function tickWinback(now: Date): Promise<BeatResult> {
         unsubscribeUrl: unsubUrl(o.customerEmail),
         productImageUrl: o.lines[0]?.imageUrl ?? undefined,
       });
-      const res = await sendEmail({ to: o.customerEmail, subject, html, text });
+      const res = await sendEmail({
+        to: o.customerEmail, subject, html, text,
+        stream: 'marketing', unsubscribeUrl: unsubUrl(o.customerEmail),
+      });
       if (!res.ok) throw new Error(res.error);
       await markSent(o.id, 'winback', res.id, o.customerEmail);
       r.sent++;

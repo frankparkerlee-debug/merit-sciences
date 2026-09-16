@@ -100,7 +100,7 @@ export async function GET(request: Request) {
     // ── TEST MODE: one address, no tagging ───────────────────────────────
     if (testTo) {
       const { subject, html, text } = renderFor(testTo);
-      const res = await sendEmail({ to: testTo, subject, html, text });
+      const res = await sendEmail({ to: testTo, subject, html, text, stream: 'marketing', unsubscribeUrl: unsubUrl(testTo) });
       return NextResponse.json({
         ok: res.ok,
         mode: 'test',
@@ -142,7 +142,7 @@ export async function GET(request: Request) {
     for (const r of recipients) {
       try {
         const { subject, html, text } = renderFor(r.email);
-        const res = await sendEmail({ to: r.email, subject, html, text });
+        const res = await sendEmail({ to: r.email, subject, html, text, stream: 'marketing', unsubscribeUrl: unsubUrl(r.email) });
         if (!res.ok) throw new Error(res.error);
         sent++;
       } catch (err) {

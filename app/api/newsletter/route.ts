@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { unsubUrl } from '@/lib/prospect-journey';
 import { wrapPractitionerEmail, heading, p, btn, note } from '@/lib/practitioner-email-shell';
 
 export const runtime = 'nodejs';
@@ -215,6 +216,8 @@ export async function POST(req: Request) {
         bodyHtml,
         footerNote: 'Merit Sciences &middot; Dallas, TX',
       }),
+      stream: 'marketing',
+      unsubscribeUrl: unsubUrl(email),
     }).catch((err) => console.error('[newsletter] welcome email failed', err));
   }
 

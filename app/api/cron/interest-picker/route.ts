@@ -74,7 +74,7 @@ export async function GET(request: Request) {
         lanes: laneLinksFor(testTo),
         unsubscribeUrl: unsubUrl(testTo),
       });
-      const res = await sendEmail({ to: testTo, subject, html, text });
+      const res = await sendEmail({ to: testTo, subject, html, text, stream: 'marketing', unsubscribeUrl: unsubUrl(testTo) });
       return NextResponse.json({ ok: res.ok, mode: 'test', to: testTo, subject, ...(res.ok ? { id: res.id } : { error: res.error }) });
     }
 
@@ -100,7 +100,7 @@ export async function GET(request: Request) {
           lanes: laneLinksFor(r.email),
           unsubscribeUrl: unsubUrl(r.email),
         });
-        const res = await sendEmail({ to: r.email, subject, html, text });
+        const res = await sendEmail({ to: r.email, subject, html, text, stream: 'marketing', unsubscribeUrl: unsubUrl(r.email) });
         if (!res.ok) throw new Error(res.error);
         sent++;
       } catch (err) {

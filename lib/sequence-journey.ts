@@ -166,6 +166,8 @@ export async function tickSequences(now: Date = new Date()): Promise<SequenceTic
         subject: beat.subject,
         html: beat.html,
         text: beat.text,
+        stream: 'marketing',
+        unsubscribeUrl: unsubUrl(e.email),
         tags: [
           { name: 'type', value: 'compound_sequence' },
           { name: 'sequence', value: e.sequenceKey },

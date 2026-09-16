@@ -1,6 +1,7 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { unsubUrl } from './prospect-journey';
 import { wrapPractitionerEmail, heading, p, btn, note } from '@/lib/practitioner-email-shell';
 
 /**
@@ -248,6 +249,8 @@ export async function sweepAbandonedCarts(): Promise<{
         bodyHtml: recoveryEmailHtml(cart),
         footerNote: 'Merit Sciences &middot; Dallas, TX',
       }),
+      stream: 'marketing',
+      unsubscribeUrl: unsubUrl(cart.email),
       tags: [{ name: 'type', value: 'abandoned-cart' }],
     });
 
