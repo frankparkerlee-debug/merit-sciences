@@ -26,6 +26,11 @@ import { onUnsubscribe as unsubscribePractitioner } from '@/lib/practitioner-jou
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/** Render terminates TLS at its proxy and forwards to the app on localhost, so
+ *  `new URL(req.url).origin` is `https://localhost:10000` here, not the public
+ *  host. Redirect targets have to come from config. */
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').replace(/\/$/, '');
+
 async function unsubscribe(params: URLSearchParams): Promise<boolean> {
   const token = params.get('token')?.trim();
   if (token) return unsubscribePractitioner(token);
@@ -54,5 +59,5 @@ export async function GET(req: Request) {
   const page = url.searchParams.get('token')
     ? '/practitioners/unsubscribe'
     : '/unsubscribe';
-  return NextResponse.redirect(new URL(page + url.search, url.origin), 302);
+  return NextResponse.redirect(`${SITE_URL}${page}${url.search}`, 302);
 }
