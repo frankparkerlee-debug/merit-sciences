@@ -70,7 +70,18 @@ export function trackViewContent(props: { value: number; currency?: string; [k: 
 }
 
 /** Google Ads "Begin Checkout (Merit)" label — see the add-to-cart note. */
-const GADS_BEGIN_CHECKOUT_SEND_TO = process.env.NEXT_PUBLIC_GADS_BEGIN_CHECKOUT_SEND_TO || '';
+/*
+ * Google Ads conversion labels.
+ *
+ * These pointed at AW-18210986525 until Sep 2026. That account was created by
+ * Shopify's Google channel, still holds a set of "Google Shopping App" actions,
+ * and runs no campaigns: every purchase and practitioner application recorded
+ * against it went into an account that spends nothing, while the live PMax
+ * campaign in 618-453-1815 had no conversion to optimise toward but Add to
+ * cart. The labels below belong to that live account.
+ */
+const GADS_BEGIN_CHECKOUT_SEND_TO =
+  process.env.NEXT_PUBLIC_GADS_BEGIN_CHECKOUT_SEND_TO || 'AW-18408760902/_UpACIb5__wcEMbM_clE';
 
 /**
  * Google Ads begin-checkout, fired from the STOREFRONT only.
@@ -104,7 +115,8 @@ export function trackBeginCheckoutAds(props: { value: number; currency?: string 
 /** Google Ads "Add to Cart (Merit)" label. Env-driven: paste the label from
  *  the conversion action once it exists; unset means the gtag call is skipped
  *  rather than firing at a nonexistent action. */
-const GADS_ADD_TO_CART_SEND_TO = process.env.NEXT_PUBLIC_GADS_ADD_TO_CART_SEND_TO || '';
+const GADS_ADD_TO_CART_SEND_TO =
+  process.env.NEXT_PUBLIC_GADS_ADD_TO_CART_SEND_TO || 'AW-18408760902/51jnCMGos_wcEMbM_clE';
 
 export function trackAddToCart(props: { value: number; currency?: string; [k: string]: unknown }): void {
   const { value, currency = 'USD', ...rest } = props;
@@ -161,7 +173,7 @@ export function trackInitiateCheckout(props: { value: number; currency?: string;
 // Google Ads purchase conversion label (overridable via env). transaction_id
 // is set to the order id so Google de-duplicates repeat page loads.
 const GADS_PURCHASE_SEND_TO =
-  process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO || 'AW-18210986525/9hB9CO2D28kcEJ201utD';
+  process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO || 'AW-18408760902/FqhjCID5__wcEMbM_clE';
 
 export function trackPurchase(props: {
   value: number;
@@ -202,7 +214,7 @@ export function trackPurchase(props: {
  */
 const GADS_PRACTITIONER_SEND_TO =
   process.env.NEXT_PUBLIC_GADS_PRACTITIONER_SEND_TO ||
-  'AW-18210986525/C0WQCJj68ckcEJ201utD';
+  'AW-18408760902/lEYrCIP5__wcEMbM_clE';
 
 export function trackPractitionerLead(props?: Record<string, unknown>): void {
   track('practitioner_lead', props);

@@ -18,9 +18,11 @@ import Script from 'next/script';
 // Override via NEXT_PUBLIC_META_PIXEL_ID in Render if it ever changes.
 const META = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1012608588376068';
 const TIKTOK = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
-// Google Ads global site tag — needed for practitioner-lead conversion
-// attribution (sets the _gcl click cookie). Defaults to the live account.
-const GOOGLE_ADS = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || 'AW-18210986525';
+// Google Ads global site tag, needed for conversion attribution (it sets the
+// _gcl click cookie). This said AW-18210986525, which is the account Shopify's
+// Google channel created and which runs no campaigns. The live account, and the
+// one the labels in lib/analytics now belong to, is AW-18408760902.
+const GOOGLE_ADS = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || 'AW-18408760902';
 
 export function MarketingPixels() {
   return (
