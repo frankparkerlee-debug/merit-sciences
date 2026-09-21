@@ -144,10 +144,12 @@ export async function validateDiscountCode(
   if (manual.maxUses !== null) {
     const usedCount = await prisma.order.count({
       where: {
-        // Orders persist discountCode uppercased (see create-order /
-        // webhook), so match that case or the count is always 0 and the
-        // limit never enforces.
-        discountCode: code.toUpperCase(),
+        // Case-insensitive on purpose: orders hold BOTH cases. The retired
+        // PayPal path wrote `discountCode.toUpperCase()`; the Stripe path that
+        // replaced it writes whatever priceCart returned, which is lowercase.
+        // 84 rows uppercase against 147 lowercase, so an exact match on either
+        // case silently under-counts and the limit stops enforcing.
+        discountCode: { equals: code, mode: 'insensitive' },
         status: { not: 'PENDING_PAYMENT' }, // only count completed
       },
     });
@@ -178,7 +180,11 @@ export async function validateDiscountCode(
     }
     const priorUse = await prisma.order.findFirst({
       where: {
-        discountCode: code.toUpperCase(), // orders store the code uppercased
+        // See the note on the maxUses count: order rows hold both cases, and
+        // an exact `.toUpperCase()` match here meant this gate found nothing
+        // for any code written by the Stripe path. WELCOME15's five orders are
+        // all lowercase, so once-per-customer was not enforcing on it at all.
+        discountCode: { equals: code, mode: 'insensitive' },
         status: { not: 'PENDING_PAYMENT' },
         OR: identity,
       },

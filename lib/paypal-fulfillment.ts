@@ -45,7 +45,10 @@ export async function fulfillCapturedOrder(
   try {
     const result = await createOrderFromPayPal(paypalOrder, {
       affiliateId,
-      discountCode: discountCode?.toUpperCase() ?? null,
+      // Lowercase to match the Discount table and the Stripe path. This
+      // uppercased, which is why order rows hold both cases and why the
+      // once-per-customer gate (an exact match) stopped enforcing.
+      discountCode: discountCode?.toLowerCase() ?? null,
     });
     if (result) {
       persisted = result;
