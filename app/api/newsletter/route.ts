@@ -185,7 +185,7 @@ export async function POST(req: Request) {
       create: {
         email,
         source,
-        tags: [`${source}-signup`, 'discount-20'],
+        tags: [`${source}-signup`, `discount-${WELCOME_PCT}`],
         isSubscribed: true,
         dripStartedAt: new Date(), // start the nurture clock at signup
       },

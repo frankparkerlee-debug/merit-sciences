@@ -25,10 +25,14 @@ const LIME = '#B9FF66';
 const STORAGE_KEY = 'merit_subscribe_popup_v1';
 const SUPPRESS_DAYS_DISMISS = 14;
 const SUPPRESS_DAYS_DONE = 365;
-const TIMED_DELAY_MS = 25_000;
+/* 25s outlasted most sessions: three quarters of Merit's orders carry a
+ * discount code, yet a first-time visitor saw no offer anywhere on the site
+ * until this fired, so a shorter delay is the difference between showing the
+ * offer and not showing it at all. */
+const TIMED_DELAY_MS = 9_000;
 /** Fraction of the page scrolled that counts as intent on touch, where
  *  exit-intent has no equivalent and the timer often never fires. */
-const SCROLL_TRIGGER = 0.55;
+const SCROLL_TRIGGER = 0.35;
 
 const HIDDEN_PREFIXES = [
   '/checkout', '/cart', '/admin', '/auth',
@@ -126,10 +130,26 @@ export function SubscribePopup() {
     setStatus('submitting');
     setErrorMsg(null);
     try {
+      // Mint the submission token FIRST, as its own awaited step. This used to
+      // be an inline `await` inside the JSON.stringify argument: when that GET
+      // failed the body went out with `t: undefined`, the server treated it as
+      // a bot and returned its deliberate fake success, and the visitor saw a
+      // code while nothing was captured. Silent lost signups, so a missing
+      // token is now a visible retryable error instead.
+      const t = await fetch('/api/newsletter', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((d) => d?.t as string | undefined)
+        .catch(() => undefined);
+      if (!t) {
+        setErrorMsg('Could not reach us just now. Try again.');
+        setStatus('error');
+        return;
+      }
+
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, source: 'popup', t: (await fetch('/api/newsletter').then((r) => r.json()).catch(() => ({})))?.t }),
+        body: JSON.stringify({ email: trimmed, source: 'popup', t }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -137,7 +157,17 @@ export function SubscribePopup() {
         setStatus('error');
         return;
       }
-      if (data.code) setCode(data.code);
+      const issued = typeof data.code === 'string' && data.code ? data.code : WELCOME_CODE;
+      setCode(issued);
+      // Hand the code to checkout, which is the whole point of issuing one.
+      // Without this the popup showed a code the buyer then had to retype:
+      // every other entry path (/access gate, ?code= links, the shop-host
+      // cookie) writes this key, and checkout auto-applies whatever is in it.
+      try {
+        localStorage.setItem('merit_welcome_code', issued.toUpperCase());
+      } catch {
+        /* private mode — they still have the code on screen and by email */
+      }
       identify(trimmed);
       track('subscribe', { source: 'popup' });
       setStatus('done');
@@ -212,13 +242,16 @@ export function SubscribePopup() {
                   locked in.
                 </span>
               </h2>
-              <p className="text-[15px] text-white/70 mb-7">Use it at checkout — emailed to you too.</p>
+              <p className="text-[15px] text-white/70 mb-7">Already applied to your cart, and emailed to you too.</p>
               <div className="inline-block font-mono text-2xl sm:text-3xl font-bold tracking-[0.14em] border border-dashed px-8 py-5 mb-8" style={{ borderColor: LIME, color: LIME }}>
                 {code}
               </div>
               <div>
+                {/* The code rides the URL as well as localStorage: if the
+                    storage write was refused (private mode), DiscountCodeCapture
+                    picks it up from ?code= instead, so the offer still lands. */}
                 <a
-                  href="/catalog"
+                  href={`/catalog?code=${encodeURIComponent(code)}`}
                   onClick={() => setOpen(false)}
                   className="inline-block bg-white text-black px-9 py-4 text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-[#B9FF66] transition"
                 >
