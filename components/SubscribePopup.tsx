@@ -38,8 +38,9 @@ const HIDDEN_PREFIXES = [
   '/checkout', '/cart', '/admin', '/auth',
   '/affiliate/dashboard', '/affiliate/login',
   '/practitioners/portal', '/practitioners/login',
-  // Reading certificates IS the action this popup asks for — interrupting
-  // that with an offer to send certificates is nonsense.
+  // Someone reading certificates is mid-evaluation on the one experience that
+  // sets Merit apart. Still worth leaving alone even now the popup leads with
+  // the offer rather than the lab report.
   '/coa',
 ];
 
@@ -233,7 +234,7 @@ export function SubscribePopup() {
           {status === 'done' ? (
             <>
               <p className="font-mono text-[11px] sm:text-[12px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
-                You&rsquo;re on the list
+                Code is live
               </p>
               <h2 className="font-poster font-black uppercase tracking-[-0.05em] leading-[0.86] mb-6" style={{ fontSize: 'clamp(40px, 8vw, 88px)' }}>
                 {WELCOME_PCT}% off,
@@ -262,24 +263,28 @@ export function SubscribePopup() {
           ) : (
             <>
               <p className="font-mono text-[11px] sm:text-[12px] tracking-[0.16em] uppercase mb-5" style={{ color: LIME }}>
-                Before you go
+                First order
               </p>
-              {/* Lead with the thing no competitor can copy, not the discount.
-                  a percentage off is the same offer every gray-market peptide site
-                  runs, and it argues on price from a brand whose entire
-                  position is that it argues on proof. The certificate is the
-                  differentiator; the code is the close, not the headline. */}
+              {/* Offer-led on purpose (Parker, 2026-09-21: "more sales forward
+                  given that we are so strongly research based on the actual
+                  site"). This used to headline the certificate and treat the
+                  discount as a footnote, on the logic that proof is the thing
+                  no competitor can copy. That logic holds for the SITE, which
+                  argues purity on every page; by the time this interrupts
+                  someone, the case is already made and re-arguing it wastes the
+                  one moment they are deciding. The proof stays as the
+                  reassurance line under the offer, not the headline. */}
               <h2 className="font-poster font-black uppercase tracking-[-0.05em] leading-[0.86] mb-6" style={{ fontSize: 'clamp(38px, 7.5vw, 92px)' }}>
-                Read the lab
+                {WELCOME_PCT}% off
                 <br />
                 <span className="text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.6)' }}>
-                  report first.
+                  your first order.
                 </span>
               </h2>
               <p className="text-[15px] sm:text-base text-white/70 mb-8 leading-[1.62] max-w-[52ch] mx-auto">
-                Every Merit batch is assayed by an independent laboratory before it is listed, and the
-                certificate is published in the COA library. Join the list and we&rsquo;ll send new batch
-                reports as they post — plus <b className="text-white font-semibold">{WELCOME_PCT}% off your first order</b>.
+                Drop your email and the code is <b className="text-white font-semibold">applied at checkout automatically</b>.
+                No minimum, no subscription. Every batch ships with its independent lab report published,
+                so you can check the purity before you spend a dollar.
               </p>
               <form onSubmit={handleSubmit} className="max-w-md mx-auto">
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -298,7 +303,7 @@ export function SubscribePopup() {
                     disabled={status === 'submitting'}
                     className="shrink-0 bg-white text-black px-8 py-4 text-[12px] font-poster font-black tracking-[0.16em] uppercase hover:bg-[#B9FF66] transition disabled:opacity-60"
                   >
-                    {status === 'submitting' ? 'Sending…' : 'Send batch reports'}
+                    {status === 'submitting' ? 'Sending…' : 'Get my code'}
                   </button>
                 </div>
                 {status === 'error' && errorMsg && <p className="text-sm text-rose-300 mt-3">{errorMsg}</p>}
@@ -311,7 +316,7 @@ export function SubscribePopup() {
                 Not now
               </button>
               <p className="font-mono text-[10px] tracking-[0.06em] text-white/35 mt-4">
-                Research use only · No spam — unsubscribe anytime
+                Research use only · No spam · Unsubscribe anytime
               </p>
             </>
           )}
