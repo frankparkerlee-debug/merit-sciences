@@ -1,4 +1,5 @@
 import { listProducts } from '@/lib/catalog';
+import { isAdsView, withoutAdRestricted } from '@/lib/ads-restricted';
 import type { Product } from '@/lib/product-types';
 import { familyByCompound, familySortRank } from '@/lib/catalog-meta';
 import { withPricingMany } from '@/lib/pricing';
@@ -12,11 +13,28 @@ function sizeWeight(s: string): number {
 }
 import { CatalogClient } from './CatalogClient';
 
-export const metadata = {
-  title: 'Catalog',
-  description:
-    'The full Merit Sciences catalog — lab-verified research compounds, HPLC-tested ≥99% per batch, with a QR on every label that opens the COA library. Browse by pathway family or build a stack. Ships 48hr from San Antonio.',
-};
+const CATALOG_DESCRIPTION =
+  'The full Merit Sciences catalog — lab-verified research compounds, HPLC-tested ≥99% per batch, with a QR on every label that opens the COA library. Browse by pathway family or build a stack. Ships 48hr from San Antonio.';
+
+/**
+ * The paid-traffic view is noindex: it is a partial copy of this same catalog,
+ * so letting it into the index would compete with the canonical page for the
+ * identical products. `follow` stays on so the listings it does show keep
+ * passing signal.
+ */
+export function generateMetadata({
+  searchParams,
+}: {
+  searchParams?: { [k: string]: string | string[] | undefined };
+}) {
+  return {
+    title: 'Catalog',
+    description: CATALOG_DESCRIPTION,
+    ...(isAdsView(searchParams)
+      ? { robots: { index: false, follow: true }, alternates: { canonical: '/catalog' } }
+      : {}),
+  };
+}
 // Force-dynamic — see app/page.tsx for rationale (Supabase pool cap).
 export const dynamic = 'force-dynamic';
 
@@ -136,7 +154,15 @@ function centsPerMg(p: Product): number | null {
 
 // Server data prep — runs once at request time, hands a single bundle
 // to the client component.
-export default async function CatalogPage() {
+export default async function CatalogPage({
+  searchParams,
+}: {
+  searchParams?: { [k: string]: string | string[] | undefined };
+}) {
+  // `?ads=1` serves the paid-traffic view: the same catalog minus the listings
+  // in lib/ads-restricted. Paid landers point here because Google's healthcare
+  // enforcement follows the click out of the landing page into the destination.
+  const adsView = isAdsView(searchParams);
   const rawProducts = await listProducts({ status: 'active' });
   // Decorate with effective pricing — practitioner price replaces
   // priceCents in-place when a signed-in practitioner is browsing,
@@ -151,7 +177,10 @@ export default async function CatalogPage() {
   // got nothing, and the item most carts need was the hardest one to find.
   // It carries no family, so familySortRank() lands it at 999 and it sorts to
   // the end of the grid on its own, without a special case.
-  const main = products;
+  // Filtered SERVER-SIDE, before the client component sees anything: a
+  // withheld listing is absent from the grid, the search index and the
+  // category chips, not merely hidden from the first paint.
+  const main = adsView ? withoutAdRestricted(products) : products;
   const accessories: Product[] = [];
 
   // Enrich each product with its family + pharmacist note + restock signal

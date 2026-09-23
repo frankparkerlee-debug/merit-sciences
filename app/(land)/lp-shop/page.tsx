@@ -41,7 +41,14 @@ export const metadata = {
 };
 
 const STORE = 'https://meritsciences.com';
-const CTA_HREF = `${STORE}/catalog?code=${WELCOME_CODE}`;
+/**
+ * `ads=1` serves the paid-traffic catalog (lib/ads-restricted): the same grid
+ * without the listings whose displayed title is a prescription drug name.
+ * Google's healthcare enforcement follows the click out of the landing page,
+ * so a clean lander pointing at a catalog that names Semaglutide and
+ * Tesamorelin is only half-clean. Every CTA on this page carries it.
+ */
+const CTA_HREF = `${STORE}/catalog?code=${WELCOME_CODE}&ads=1`;
 const CTA_LABEL = `Claim ${WELCOME_PCT}% and shop`;
 
 /* Live figures for the numbers band. Fallbacks are the values on the day this
