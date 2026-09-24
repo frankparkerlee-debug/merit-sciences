@@ -175,12 +175,28 @@ export function trackInitiateCheckout(props: { value: number; currency?: string;
 const GADS_PURCHASE_SEND_TO =
   process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO || 'AW-18408760902/FqhjCID5__wcEMbM_clE';
 
+/**
+ * How long to let the Google beacon leave the browser before the caller
+ * navigates. gtag sends the conversion as an async request; the caller here
+ * hard-navigates to the success page, which cancels an in-flight request and
+ * loses the conversion outright. Meta survives that because the PayPal webhook
+ * re-fires Purchase server-side through the CAPI, deduped by order id. Google
+ * has no such fallback, so the hit has to actually go.
+ */
+const GADS_BEACON_TIMEOUT_MS = 1000;
+
+/**
+ * Returns a promise that settles once Google confirms the conversion left the
+ * browser, or after GADS_BEACON_TIMEOUT_MS, whichever comes first. Callers that
+ * navigate immediately afterwards MUST wait on it. It never rejects and never
+ * hangs: a missing gtag resolves on the spot.
+ */
 export function trackPurchase(props: {
   value: number;
   orderId: string;
   currency?: string;
   [k: string]: unknown;
-}): void {
+}): Promise<void> {
   const { value, orderId, currency = 'USD', ...rest } = props;
   track('purchase', { order_id: orderId, value_usd: value, currency, ...rest });
   try {
@@ -193,16 +209,38 @@ export function trackPurchase(props: {
   } catch {
     /* pixel not loaded — ignore */
   }
-  try {
-    (window as any).gtag?.('event', 'conversion', {
-      send_to: GADS_PURCHASE_SEND_TO,
-      value,
-      currency,
-      transaction_id: orderId,
-    });
-  } catch {
-    /* gtag not loaded — ignore */
-  }
+
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(finish, GADS_BEACON_TIMEOUT_MS);
+
+    const gtag = (window as any).gtag;
+    if (typeof gtag !== 'function') {
+      finish(); // nothing to wait for
+      return;
+    }
+    try {
+      gtag('event', 'conversion', {
+        send_to: GADS_PURCHASE_SEND_TO,
+        value,
+        currency,
+        transaction_id: orderId,
+        // gtag calls this once the hit is away. event_timeout makes gtag fire
+        // it regardless after the same ceiling, so a dropped network cannot
+        // leave the buyer staring at a spinner.
+        event_callback: finish,
+        event_timeout: GADS_BEACON_TIMEOUT_MS,
+      });
+    } catch {
+      finish();
+    }
+  });
 }
 
 /**

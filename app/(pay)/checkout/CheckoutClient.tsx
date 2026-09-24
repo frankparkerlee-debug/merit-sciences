@@ -480,6 +480,28 @@ export function CheckoutClient({
 
   /** Confirmed paid → fire best-effort analytics, clear cart, HARD-navigate. */
   function goToSuccess(orderId: string, captured?: any) {
+    // The navigation below used to run in the same tick as trackPurchase,
+    // which cancelled the Google conversion beacon before it left the browser:
+    // every paid order fired a conversion Google never received. Meta was fine
+    // because the PayPal webhook re-sends Purchase server-side, deduped by
+    // order id; Google has no such fallback.
+    //
+    // So navigation now waits for the beacon, and is fenced twice so a paying
+    // customer can never be stranded by analytics: trackPurchase resolves on
+    // its own 1s ceiling, and this timer navigates regardless at 1.5s.
+    let navigated = false;
+    const goOnce = () => {
+      if (navigated) return;
+      navigated = true;
+      // HARD navigation, deliberately not router.push(). A soft navigation
+      // fetches RSC payloads/JS chunks and throws to Next's bare "Application
+      // error" screen when that fetch hiccups (mid-deploy chunk swap, flaky
+      // network) — which is how paid customers ended up back on checkout
+      // paying again. The browser owns this navigation; React can't crash it.
+      window.location.assign(`/checkout/success?order_id=${encodeURIComponent(orderId)}`);
+    };
+    setTimeout(goOnce, 1500);
+
     // Analytics + cart-clear must never block the handoff. The server-side
     // CAPI Purchase (deduped by order id) covers us if the pixel drops here.
     try {
@@ -493,17 +515,14 @@ export function CheckoutClient({
         item_count: lines.reduce((n, l) => n + l.qty, 0),
         discount_usd: localDiscountCents / 100,
         code: appliedCode ?? undefined,
-      });
+      })
+        .catch(() => {})
+        .then(goOnce);
       clear();
     } catch (e) {
       console.error('[checkout] post-capture side-effect failed (non-fatal)', e);
+      goOnce();
     }
-    // HARD navigation, deliberately not router.push(). A soft navigation
-    // fetches RSC payloads/JS chunks and throws to Next's bare "Application
-    // error" screen when that fetch hiccups (mid-deploy chunk swap, flaky
-    // network) — which is how paid customers ended up back on checkout
-    // paying again. The browser owns this navigation; React can't crash it.
-    window.location.assign(`/checkout/success?order_id=${encodeURIComponent(orderId)}`);
   }
 
   /** Show a blocking checkout error and scroll it into view. */
