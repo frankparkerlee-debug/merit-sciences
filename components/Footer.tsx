@@ -1,3 +1,6 @@
+import { Suspense } from 'react';
+import { FooterResearchNav } from './FooterResearchNav';
+
 export function Footer() {
   return (
     <footer className="bg-steel text-white/65 px-6 sm:px-8 pt-10 pb-7 text-xs">
@@ -68,17 +71,11 @@ export function Footer() {
       </div>
 
       {/* Popular research — deep internal links to the top compound monographs,
-          site-wide crawl equity straight to the highest-intent SEO pages. */}
-      <nav className="max-w-container mx-auto mt-6 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]" aria-label="Popular research">
-        <span className="text-white/40 font-bold uppercase tracking-[0.16em]">Research</span>
-        {([
-          ['Tirzepatide', 'tirzepatide'], ['Retatrutide', 'retatrutide'], ['Semaglutide', 'semaglutide'],
-          ['Tesamorelin', 'tesamorelin'], ['BPC-157 + TB-500', 'bpc-157-tb-500'], ['GHK-Cu', 'ghk-cu'],
-          ['NAD+', 'nad'], ['MOTS-c', 'mots-c'], ['PT-141', 'pt-141'],
-        ] as const).map(([label, slug]) => (
-          <a key={slug} href={`/library/${slug}`} className="text-white/50 hover:text-white transition">{label}</a>
-        ))}
-      </nav>
+          site-wide crawl equity straight to the highest-intent SEO pages.
+          Suppressed on the paid-traffic catalog view; see FooterResearchNav. */}
+      <Suspense fallback={null}>
+        <FooterResearchNav />
+      </Suspense>
 
       {/* RUO + copyright */}
       <p className="max-w-container mx-auto mt-6 text-[10.5px] leading-relaxed text-white/45">
