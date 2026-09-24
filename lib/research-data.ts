@@ -1121,6 +1121,215 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
       },
     ],
   },
+  // ── BPC-157 (stable gastric pentadecapeptide, PL 14736) ──
+  'bpc-157': {
+    compoundClass:
+      'Synthetic pentadecapeptide, Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val — a partial sequence of the human gastric juice protein designated Body Protection Compound',
+    discovery:
+      'Described from the early 1990s onward by Predrag Sikiric, Sven Seiwerth and colleagues at the University of Zagreb, who isolated a 15-residue partial sequence of a protein found in human gastric juice and characterised it in rodent injury models. The great majority of the published literature originates from that group or its collaborators.',
+    description: [
+      'BPC-157 is a synthetic pentadecapeptide corresponding to a partial sequence of a protein identified in human gastric juice. Unlike most peptides used in laboratory work it carries no disulfide bridge, no terminal amidation and no unnatural residues, and it is repeatedly reported as stable in aqueous solution and in gastric juice, which is unusual for a peptide of this length and is one reason it appears so often in oral-administration animal work. The sequence is frequently written with the research code PL 14736 in the earlier literature.',
+      'The published record is overwhelmingly preclinical. A PubMed search returns on the order of two hundred papers, of which a large majority list Sikiric or Seiwerth as first or senior author, and the experimental subjects are almost entirely rats and mice. Reported observations cluster around tissue-repair endpoints: transected Achilles tendon, transected muscle, colonic anastomosis, corneal injury, and various models of gastrointestinal lesion. A 2019 review by Chang and colleagues collected the musculoskeletal soft-tissue work, and a 2025 systematic review examined the orthopaedic sports-medicine literature specifically, both concluding that the animal evidence is consistent in direction while human evidence remains scarce.',
+      'The concentration of authorship in a single research group is the most important caveat a reader should carry into this literature, and it is a limitation the field itself acknowledges. Independent replication outside Zagreb is comparatively thin, and controlled human trials of the pentadecapeptide are largely absent from the peer-reviewed record. Merit Sciences supplies BPC-157 strictly for laboratory research use. Nothing in this entry describes or implies use in humans or animals, and no preparation, dosing or administration guidance is published here.',
+    ],
+    mechanism:
+      'The mechanism most consistently proposed in the literature is angiomodulatory rather than directly mitogenic. Work from the Sikiric group reports upregulation of vascular endothelial growth factor receptor 2 with downstream activation of the Akt and endothelial nitric oxide synthase pathway, and a body of related work situates the peptide as an interacting partner of the nitric oxide system, reported as counteracting both excessive and deficient NO signalling in different injury models rather than acting in a single direction. Separate in vitro work by Chang and colleagues reported increased outgrowth from tendon explants, improved fibroblast survival under hydrogen peroxide stress and dose-dependent fibroblast migration, with FAK-paxillin signalling implicated, and a subsequent paper from the same group reported growth hormone receptor as among the most abundantly upregulated transcripts in treated tendon fibroblasts. These are proposed mechanisms drawn from animal and cell-culture models, reported here as literature and not as established pharmacology in any species.',
+    halfLife:
+      'No reliable human pharmacokinetic figure exists in the peer-reviewed record, and none is asserted here. Circulating half-life values quoted widely in non-academic sources could not be traced to a primary study during preparation of this entry. What the literature does report is unusual stability in aqueous solution and resistance to degradation in human gastric juice, which is the property most frequently cited to explain the peptide appearing in oral-administration rodent protocols. Stated for interpretation of the research literature only.',
+    solubility:
+      'Supplied lyophilised, commonly as the acetate or trifluoroacetate salt. Reported as freely soluble in water and in aqueous buffers. The sequence is rich in proline and contains two adjacent aspartate residues and a single lysine, giving a net negative charge at neutral pH, and it contains no cysteine, so there is no disulfide to reduce or scramble and no methionine or tryptophan to oxidise. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
+    researchApplications: [
+      'Tendon, ligament and muscle repair models in rodents',
+      'Angiogenesis and VEGFR2/Akt/eNOS pathway investigation',
+      'Gastrointestinal mucosal injury and anastomotic healing models',
+      'Nitric oxide system interaction studies',
+      'Fibroblast migration, survival and outgrowth assays in vitro',
+    ],
+    references: [
+      {
+        title:
+          'The promoting effect of pentadecapeptide BPC 157 on tendon healing involves tendon outgrowth, cell survival, and cell migration',
+        authors: 'Chang CH, Tsai WC, Lin MS, Hsu YH, Pang JHS',
+        journal: 'Journal of Applied Physiology',
+        year: 2011,
+        pubmedId: '21030672',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/21030672/',
+        verify: true,
+      },
+      {
+        title:
+          'Gastric pentadecapeptide body protection compound BPC 157 and its role in accelerating musculoskeletal soft tissue healing',
+        authors: 'Gwyer D, Wragg NM, Wilson SL',
+        journal: 'Cell and Tissue Research',
+        year: 2019,
+        pubmedId: '30915550',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/30915550/',
+        verify: true,
+      },
+      {
+        title:
+          'Modulatory effect of gastric pentadecapeptide BPC 157 on angiogenesis in muscle and tendon healing',
+        authors: 'Sikiric P, Seiwerth S, Brcic L, et al.',
+        journal: 'Journal of Physiology and Pharmacology',
+        year: 2010,
+        pubmedId: '20388964',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/20388964/',
+        verify: true,
+      },
+      {
+        title:
+          'BPC 157 and Standard Angiogenic Growth Factors. Gastrointestinal Tract Healing, Lessons from Tendon, Ligament, Muscle and Bone Healing',
+        authors: 'Seiwerth S, Rucman R, Turkovic B, et al.',
+        journal: 'Current Pharmaceutical Design',
+        year: 2018,
+        pubmedId: '29998800',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/29998800/',
+        verify: true,
+      },
+      {
+        title: 'Emerging Use of BPC-157 in Orthopaedic Sports Medicine: A Systematic Review',
+        authors: 'Systematic review, authorship to be confirmed on validation',
+        journal: 'PubMed-indexed systematic review',
+        year: 2025,
+        pubmedId: '40756949',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/40756949/',
+        verify: true,
+      },
+    ],
+  },
+
+  // ── TB-500 (synthetic thymosin beta-4 actin-binding fragment) ──
+  'tb-500': {
+    compoundClass:
+      'Synthetic peptide corresponding to the actin-binding region of thymosin beta-4, a 43-residue endogenous actin-sequestering protein. The research-supply designation TB-500 and the endogenous protein Tβ4 are not interchangeable terms.',
+    discovery:
+      'Thymosin beta-4 was isolated from calf thymus in the 1960s by Allan Goldstein and colleagues during work on thymic hormone fractions, and was later characterised as the principal actin-sequestering protein of mammalian cells rather than as a thymic hormone. TB-500 entered the research-supply literature considerably later as a synthetic construct based on the protein\'s actin-binding domain.',
+    description: [
+      'The distinction between TB-500 and thymosin beta-4 is the single most important thing to establish before reading this literature, and it is routinely collapsed in secondary sources. Thymosin beta-4 is an endogenous, 43-amino-acid, highly conserved protein present at high intracellular concentration in most mammalian cell types, and essentially all of the peer-reviewed research is conducted on it. TB-500 is a research-supply designation for a synthetic peptide based on the actin-binding region of that protein, most often given as the heptapeptide motif around residues 17 to 23. Papers describing outcomes for Tβ4 should not be read as describing outcomes for the shorter construct without checking which material was actually used.',
+      'The Tβ4 literature has two distinct strands. The first is structural cell biology: Tβ4 is the major G-actin sequestering peptide in mammalian cells, maintaining a monomeric actin pool and thereby influencing the rate at which filaments can be assembled. The second strand, which drew far wider attention, is repair biology. A 2004 report in Nature by Bock-Marquette and colleagues described systemic administration of Tβ4 following experimental myocardial infarction in mice and reported improved cardiac function, reduced scar size and increased neovascularisation, with integrin-linked kinase activation proposed as the pathway. Goldstein, Hannappel and Kleinman reviewed the broader repair literature in 2005 under the framing that an actin-sequestering protein appeared to moonlight in tissue repair, covering dermal wound healing, corneal repair and post-ischaemic cardiac signalling.',
+      'Human clinical evidence for the shorter synthetic construct is not established in the peer-reviewed record, and readers should treat the cardiac and dermal findings as belonging to the endogenous 43-mer in animal models. Merit Sciences supplies this material strictly for laboratory research use. Nothing here describes use in humans or animals, and no preparation, dosing or administration guidance is published.',
+    ],
+    mechanism:
+      'The established biochemistry is actin sequestration: thymosin beta-4 binds monomeric G-actin in a one-to-one complex and holds it in a polymerisation-incompetent state, which buffers the free monomer pool available for filament assembly. Because cell migration depends on controlled, local actin polymerisation, this buffering role is the proposed starting point for the migration and repair observations reported downstream. In the cardiac work, integrin-linked kinase and Akt activation were reported as the signalling route associated with cardiomyocyte survival and migration. Reported here as proposed mechanism from animal and cell-culture models, and predominantly for the full-length endogenous protein rather than the shorter synthetic construct.',
+    halfLife:
+      'No reliable human pharmacokinetic figure for the synthetic construct appears in the peer-reviewed record, and none is asserted here. Short peptides of this length lacking terminal modification are generally reported as rapidly cleared, but a specific validated figure could not be traced to a primary source during preparation of this entry. Stated for interpretation of the literature only.',
+    solubility:
+      'Supplied lyophilised, commonly as the acetate salt. Reported as soluble in water and in aqueous buffers. The actin-binding motif is strongly polar, carrying multiple lysine and glutamate residues, and contains no cysteine, so there is no disulfide chemistry to manage. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
+    researchApplications: [
+      'G-actin sequestration and cytoskeletal dynamics studies',
+      'Cell migration and wound-closure assays in vitro',
+      'Preclinical cardiac repair and neovascularisation models',
+      'Corneal and dermal repair models',
+      'Comparative work distinguishing full-length Tβ4 from shorter synthetic fragments',
+    ],
+    references: [
+      {
+        title:
+          'Thymosin beta4 activates integrin-linked kinase and promotes cardiac cell migration, survival and cardiac repair',
+        authors: 'Bock-Marquette I, Saxena A, White MD, DiMaio JM, Srivastava D',
+        journal: 'Nature',
+        year: 2004,
+        pubmedId: '15565145',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/15565145/',
+        verify: true,
+      },
+      {
+        title: 'Thymosin beta4: actin-sequestering protein moonlights to repair injured tissues',
+        authors: 'Goldstein AL, Hannappel E, Kleinman HK',
+        journal: 'Trends in Molecular Medicine',
+        year: 2005,
+        url: 'https://pubmed.ncbi.nlm.nih.gov/16099219/',
+        verify: true,
+      },
+    ],
+  },
+
+  // ── CJC-1295 (GHRH(1-29) analog; with and without DAC) ──
+  'cjc-1295': {
+    compoundClass:
+      'Synthetic analog of growth-hormone-releasing hormone residues 1 to 29, supplied in two distinct forms: with a Drug Affinity Complex albumin-binding linker, and without it (the form usually labelled modified GRF 1-29)',
+    discovery:
+      'Developed by ConjuChem in the early 2000s as a long-acting GHRH analog. The defining chemistry is the Drug Affinity Complex: a maleimidopropionyl group that forms a covalent bond with circulating serum albumin after administration, extending plasma residence far beyond that of native GHRH.',
+    description: [
+      'CJC-1295 is the name applied to two materials that behave very differently, and conflating them is the most common error in reading this literature. The form carrying the Drug Affinity Complex binds covalently to albumin and persists for days. The form without it, commonly sold and cited as modified GRF 1-29 or CJC-1295 without DAC, carries four amino acid substitutions that resist enzymatic degradation but has no albumin anchor, and its duration of action is on a completely different scale. Published human pharmacokinetics for CJC-1295 refer to the DAC form unless stated otherwise. Merit supplies the without-DAC form co-formulated with ipamorelin.',
+      'The principal human study is Teichman and colleagues, published in the Journal of Clinical Endocrinology and Metabolism in 2006: two randomised, placebo-controlled, double-blind ascending-dose trials in healthy adults aged 21 to 61, running 28 and 49 days. After a single administration the investigators reported dose-dependent increases in mean plasma growth hormone of roughly two to ten fold sustained for six days or more, and increases in mean plasma IGF-1 of roughly 1.5 to three fold sustained for nine to eleven days, with an estimated half-life of 5.8 to 8.1 days. After repeated administration mean IGF-1 remained above baseline for up to 28 days, indicating a cumulative effect.',
+      'The mechanistic significance of a GHRH analog rather than a direct growth hormone preparation is that secretion remains under pituitary control and retains its pulsatile character, which is the basis for the class being studied at all. Those findings are reported in small enrolled populations under controlled clinical conditions and are summarised here as literature only. Merit Sciences supplies this material strictly for laboratory research use, and publishes no preparation, dosing or administration guidance.',
+    ],
+    mechanism:
+      'CJC-1295 is described as an agonist at the growth-hormone-releasing hormone receptor on pituitary somatotrophs, a Gs-coupled receptor whose activation raises intracellular cyclic AMP and drives synthesis and pulsatile release of growth hormone, with hepatic IGF-1 rising downstream. The four substitutions in the 1-29 sequence are reported to confer resistance to dipeptidyl peptidase-4 cleavage, which is the principal route of native GHRH degradation. In the DAC form the maleimidopropionyl linker reacts with a free cysteine thiol on serum albumin, producing a circulating depot and the multi-day half-life reported by Teichman and colleagues. Because the analog acts upstream at the pituitary rather than replacing growth hormone directly, negative feedback through somatostatin and IGF-1 remains in the loop, which the literature treats as the distinguishing feature of the class.',
+    halfLife:
+      'Form-dependent, and the distinction matters more here than for most compounds. For the DAC form, Teichman and colleagues estimated 5.8 to 8.1 days in healthy adults, with IGF-1 elevation reported for nine to eleven days after a single administration. For the without-DAC form no comparable validated human figure was traced during preparation of this entry, and none is asserted; the absence of the albumin anchor means its duration is not comparable to the DAC figures and those numbers should not be transferred to it. Stated for interpretation of the literature only.',
+    solubility:
+      'Supplied lyophilised, commonly as the acetate or trifluoroacetate salt. Reported as soluble in water and in aqueous buffers. The DAC form carries a maleimide group, which is thiol-reactive by design and is the chemistry responsible for albumin conjugation; that reactivity is also why the two forms should not be assumed to share handling characteristics. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
+    researchApplications: [
+      'GHRH receptor pharmacology and somatotroph signalling',
+      'Growth hormone pulsatility and hypothalamic-pituitary axis models',
+      'Albumin-conjugation and half-life-extension chemistry',
+      'Comparative studies of DAC and non-DAC GHRH analogs',
+      'IGF-1 axis and downstream endocrine research',
+    ],
+    references: [
+      {
+        title:
+          'Prolonged stimulation of growth hormone (GH) and insulin-like growth factor I secretion by CJC-1295, a long-acting analog of GH-releasing hormone, in healthy adults',
+        authors: 'Teichman SL, Neale A, Lawrence B, Gagnon C, Castaigne JP, Frohman LA',
+        journal: 'The Journal of Clinical Endocrinology and Metabolism',
+        year: 2006,
+        pubmedId: '16352683',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/16352683/',
+        verify: true,
+      },
+      {
+        title:
+          'Activation of the GH/IGF-1 axis by CJC-1295, a long-acting GHRH analog, results in serum protein profile changes in normal adult subjects',
+        authors: 'Ionescu M, Frohman LA (authorship to be confirmed on validation)',
+        journal: 'Growth Hormone and IGF Research',
+        year: 2009,
+        pubmedId: '19386527',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/19386527/',
+        verify: true,
+      },
+    ],
+  },
+
+  // ── Ipamorelin (selective ghrelin-receptor agonist) ──
+  'ipamorelin': {
+    compoundClass:
+      'Synthetic pentapeptide growth hormone secretagogue, Aib-His-D-2-Nal-D-Phe-Lys-NH₂, acting at the ghrelin receptor GHS-R1a',
+    discovery:
+      'Described in 1998 by Raun and colleagues at Novo Nordisk, who reported it in the European Journal of Endocrinology under the title that has defined it since: the first selective growth hormone secretagogue.',
+    description: [
+      'Ipamorelin is a C-terminally amidated pentapeptide containing two unnatural residues, the α-aminoisobutyric acid at the N-terminus and D-2-naphthylalanine at position three, together with a D-phenylalanine. Those substitutions are what give a five-residue peptide meaningful receptor potency and resistance to rapid proteolysis, and they are the reason it should not be thought of as a fragment of anything endogenous. It is a designed molecule.',
+      'The claim to selectivity is the substantive finding and it is worth stating precisely, because it is the property that distinguishes the compound within its class. Raun and colleagues reported that ipamorelin released growth hormone with potency and efficacy comparable to other secretagogues of the period, but did not release adrenocorticotropic hormone or cortisol at levels significantly different from those following growth-hormone-releasing hormone stimulation. Earlier secretagogues in the same class had generally raised cortisol and prolactin alongside growth hormone, and it was that separation, rather than raw potency, that the 1998 paper presented as novel.',
+      'The literature on ipamorelin is substantially narrower than for the GHRH analogs it is often co-formulated with, and controlled human trials are limited. Findings described here are from the preclinical and early clinical record and are reported as literature only. Merit Sciences supplies this material strictly for laboratory research use, and publishes no preparation, dosing or administration guidance.',
+    ],
+    mechanism:
+      'Ipamorelin is described as an agonist at the growth hormone secretagogue receptor 1a, the Gq-coupled receptor for which ghrelin is the endogenous ligand. Receptor activation drives phospholipase C signalling, inositol trisphosphate generation and intracellular calcium mobilisation in pituitary somatotrophs, producing growth hormone release. Because the ghrelin receptor pathway is distinct from the GHRH receptor pathway, the two are frequently studied in combination on the reasoning that they act through separate mechanisms on the same cell, which is the stated rationale for the co-formulations common in research supply. The reported selectivity, releasing growth hormone without a corresponding rise in adrenocorticotropic hormone or cortisol, is attributed in the literature to the specific receptor interaction profile of the pentapeptide rather than to a difference in downstream signalling.',
+    halfLife:
+      'Reported in the early literature as approximately two hours following intravenous administration in the preclinical work accompanying its characterisation. A validated human figure was not traced to a primary source during preparation of this entry, and none is asserted beyond that. Stated for interpretation of the research literature only.',
+    solubility:
+      'Supplied lyophilised, commonly as the acetate salt. Reported as soluble in water and in aqueous buffers. The single lysine and the free imidazole of histidine carry the charge at neutral pH, while the naphthylalanine and phenylalanine contribute substantial local hydrophobicity for a peptide of this length. The C-terminal amide is a structural requirement of the molecule rather than a formality, and the free-acid form is a different compound. No cysteine is present. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
+    researchApplications: [
+      'GHS-R1a (ghrelin receptor) pharmacology and agonist selectivity',
+      'Growth hormone secretagogue class comparison studies',
+      'Pituitary somatotroph signalling and calcium mobilisation assays',
+      'Combination studies with GHRH-receptor analogs',
+      'Structure-activity work on unnatural-residue pentapeptides',
+    ],
+    references: [
+      {
+        title: 'Ipamorelin, the first selective growth hormone secretagogue',
+        authors: 'Raun K, Hansen BS, Johansen NL, Thøgersen H, Madsen K, Ankersen M, Andersen PH',
+        journal: 'European Journal of Endocrinology',
+        year: 1998,
+        pubmedId: '9849822',
+        doi: '10.1530/eje.0.1390552',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/9849822/',
+        verify: true,
+      },
+    ],
+  },
+
 };
 
 // Common name / research-code → canonical RESEARCH_DATA key. Lets the

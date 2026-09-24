@@ -25,7 +25,7 @@ export type CompoundMeta = {
   relatedSlugs?: string[]; // trial deep-dives / evidence summaries
 };
 
-// ── The 20 compounds. ─────────────────────────────────────────────────────
+// ── The 25 compounds. ─────────────────────────────────────────────────────
 export const COMPOUND_META: CompoundMeta[] = [
   {
     key: 'ly3298176', slug: 'tirzepatide', title: 'Tirzepatide',
@@ -151,6 +151,40 @@ export const COMPOUND_META: CompoundMeta[] = [
     aka: ['KLOW', 'four-peptide blend'],
     tagline: 'A four-peptide repair blend adding the KPV tripeptide to the GLOW base.',
     product: { handle: 'klow', fromPrice: 175, purity: '≥99%', vialSize: '80 mg' },
+  },
+  {
+    key: 'bpc-157', slug: 'bpc-157', title: 'BPC-157',
+    aka: ['PL 14736', 'Body Protection Compound 157', 'stable gastric pentadecapeptide'],
+    tagline: 'A synthetic pentadecapeptide from human gastric juice, studied almost entirely in rodent repair models.',
+    product: { handle: 'bpc-157-10mg', fromPrice: 61, purity: '≥99%', vialSize: '10 mg' },
+    relatedSlugs: ['bpc-157-preclinical-evidence', 'bpc-157-tb-500', 'why-research-compounds-are-blended'],
+  },
+  {
+    key: 'tb-500', slug: 'tb-500', title: 'TB-500',
+    aka: ['thymosin beta-4 fragment', 'Tβ4 actin-binding domain', 'Thymosin β4'],
+    tagline: 'A synthetic fragment of the actin-sequestering protein thymosin beta-4, which is not the same molecule.',
+    product: { handle: 'bpc-10mg-tb-10mg-wolverine-20mg', fromPrice: 100, purity: '≥99%', vialSize: '20 mg' },
+    relatedSlugs: ['bpc-157-tb-500', 'klow-blend', 'glow-blend'],
+  },
+  {
+    key: 'cjc-1295', slug: 'cjc-1295', title: 'CJC-1295',
+    aka: ['modified GRF (1-29)', 'CJC-1295 without DAC', 'GHRH analog', 'DAC:GRF'],
+    tagline: 'A GHRH(1-29) analog supplied in two forms whose durations are not comparable.',
+    product: { handle: 'cjc-1295-w-o-dac-10-ipa-10-20mg', fromPrice: 80, purity: '≥99%', vialSize: '20 mg' },
+    relatedSlugs: ['growth-hormone-secretagogue-class-overview', 'sermorelin'],
+  },
+  {
+    key: 'ipamorelin', slug: 'ipamorelin', title: 'Ipamorelin',
+    aka: ['GHS-R1a agonist', 'selective growth hormone secretagogue'],
+    tagline: 'The pentapeptide secretagogue reported to raise growth hormone without a matching cortisol rise.',
+    product: { handle: 'ipamorelin-10mg', fromPrice: 60, purity: '≥99%', vialSize: '10 mg' },
+    relatedSlugs: ['growth-hormone-secretagogue-class-overview', 'cjc-1295'],
+  },
+  {
+    key: 'kisspeptin-10', slug: 'kisspeptin-10', title: 'Kisspeptin-10',
+    aka: ['KP-10', 'metastin 45-54', 'KISS1R agonist', 'GPR54 agonist'],
+    tagline: 'The decapeptide fragment of metastin that sits one step upstream of the GnRH pulse generator.',
+    product: { handle: 'kisspeptin-10mg', fromPrice: 70, purity: '≥99%', vialSize: '10 mg' },
   },
 ];
 
