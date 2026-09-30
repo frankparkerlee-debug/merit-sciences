@@ -59,6 +59,21 @@ export default function AboutPage() {
             legitimate channel sells, assayed and documented batch by batch, priced like the material
             it actually is.
           </p>
+
+          <div className="mt-9 flex flex-col sm:flex-row gap-3">
+            <Link
+              href="/catalog"
+              className="inline-flex items-center justify-center bg-cobalt text-white font-bold tracking-[0.16em] uppercase text-xs px-7 py-4 rounded-lg hover:bg-white hover:text-ink transition-colors"
+            >
+              Shop the catalog →
+            </Link>
+            <Link
+              href="/coa"
+              className="inline-flex items-center justify-center bg-white/[0.06] border border-white/20 text-white font-bold tracking-[0.16em] uppercase text-xs px-7 py-4 rounded-lg hover:border-white/50 transition-colors"
+            >
+              Read a lab report →
+            </Link>
+          </div>
         </div>
       </section>
 
