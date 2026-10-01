@@ -104,7 +104,7 @@ export function LpEmailCapture({
         )}
       </form>
       <p className={`text-[11px] mt-3 ${isDark ? 'text-cream/30' : 'text-ink-muted'}`}>
-        Research use only. No spam — unsubscribe anytime.
+        Research use only. No spam. Unsubscribe anytime.
       </p>
     </div>
   );

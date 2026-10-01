@@ -45,6 +45,12 @@ type Props = {
   /** Buyer discount % when the visitor arrived via an active affiliate
    *  link (?ref=). 0 = no referral. Rendered as a strikethrough per card. */
   referralPct?: number;
+  /** Paid-traffic view (?ads=1): a visitor who just left the ads lander has
+   *  read the pitch already, so the header shrinks to a line and the first
+   *  products land above the fold on a phone. Of 54 paid visitors who
+   *  reached this page in late September, one opened a product; the first
+   *  card sat a full screen down. */
+  compact?: boolean;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -103,7 +109,7 @@ function subscribePrice(p: Product): number {
 // Component
 // ─────────────────────────────────────────────────────────────────────────
 
-export function CatalogClient({ products, stacks, accessories, totalCount, isPractitionerPricing = false, referralPct = 0 }: Props) {
+export function CatalogClient({ products, stacks, accessories, totalCount, isPractitionerPricing = false, referralPct = 0, compact = false }: Props) {
   const [selectedFamily, setSelectedFamily] = useState<Family | 'all'>('all');
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('featured');
@@ -335,21 +341,28 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
       {/* ═══════════════ PAGE HEADER ═══════════════
           Compact on mobile (eyebrow + h1 + 1-line tagline = ~110px)
           so the filter row + first product land above the fold. */}
-      <div className="px-6 lg:px-12 pt-6 sm:pt-12 lg:pt-16 pb-4 sm:pb-8 lg:pb-10 max-w-[1400px] mx-auto">
+      <div className={`px-6 lg:px-12 max-w-[1400px] mx-auto ${compact ? 'pt-4 pb-3 sm:pt-8 sm:pb-5' : 'pt-6 sm:pt-12 lg:pt-16 pb-4 sm:pb-8 lg:pb-10'}`}>
         <p className="text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2 sm:mb-4">
           — The Catalog
         </p>
         <h1
           className="font-poster font-black text-ink tracking-[-0.035em] leading-[0.95]"
-          style={{ fontSize: 'clamp(28px, 6vw, 88px)' }}
+          style={{ fontSize: compact ? 'clamp(22px, 4vw, 44px)' : 'clamp(28px, 6vw, 88px)' }}
         >
           {totalCount} compounds<span className="text-cobalt">.</span>
+          {compact && (
+            <span className="block mt-1 font-sans font-medium text-[13px] sm:text-[15px] tracking-normal text-ink-soft">
+              Every batch tested by an independent laboratory, certificate published.
+            </span>
+          )}
         </h1>
-        {/* Tagline: hidden on mobile to reclaim ~80px. */}
-        <p className="hidden sm:block mt-5 text-base lg:text-lg text-ink-soft max-w-xl leading-relaxed">
-          Organized by chemistry, not promise. Every batch independently assayed,
-          every batch tested and its certificate published. Pick a family to narrow it down.
-        </p>
+        {/* Tagline: hidden on mobile to reclaim ~80px, and on the paid view entirely. */}
+        {!compact && (
+          <p className="hidden sm:block mt-5 text-base lg:text-lg text-ink-soft max-w-xl leading-relaxed">
+            Organized by chemistry, not promise. Every batch independently assayed,
+            every batch tested and its certificate published. Pick a family to narrow it down.
+          </p>
+        )}
       </div>
 
       {/* ═══════════════ STICKY FILTER STRIP ═══════════════ */}

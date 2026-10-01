@@ -286,6 +286,7 @@ export default async function CatalogPage({
       totalCount={products.length}
       isPractitionerPricing={isPractitionerPricing}
       referralPct={referral?.discountPct ?? 0}
+      compact={adsView}
     />
     </>
   );

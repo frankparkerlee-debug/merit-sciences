@@ -75,9 +75,29 @@ export function SubscribePopup() {
 
   useEffect(() => {
     if (hidden || suppressed()) return;
+    // A paid-traffic visitor arrives holding the code already (the lander's
+    // CTA carries ?code= and ?ads=1, and the welcome bar says it is applied).
+    // Asking them for an email to get the same code covered the catalog at
+    // nine seconds and was the most-clicked thing on the page: 10 of 19
+    // catalog clicks from that cohort were "Not now". Skip it for them, and
+    // for anyone whose browser already stores a welcome code. Checked both
+    // now and at show time: DiscountCodeCapture strips ?code= and writes the
+    // localStorage slot after this effect has already run.
+    const holdsCode = (): boolean => {
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        if (sp.has('code') || sp.get('ads') === '1') return true;
+        if (localStorage.getItem('merit_welcome_code')) return true;
+        if (document.cookie.includes('merit_welcome=')) return true;
+      } catch {
+        /* private mode or no URL access: fall through to the normal behaviour */
+      }
+      return false;
+    };
+    if (holdsCode()) return;
     let shown = false;
     const show = () => {
-      if (shown) return;
+      if (shown || holdsCode()) return;
       shown = true;
       setOpen(true);
       cleanup();
