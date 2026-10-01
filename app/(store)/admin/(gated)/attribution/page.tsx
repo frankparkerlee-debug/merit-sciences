@@ -1,4 +1,14 @@
+import Link from 'next/link';
 import { prisma } from '@/lib/db';
+import { posthogReadConfigured } from '@/lib/posthog-query';
+import {
+  FUNNEL_RANGES,
+  clampDays,
+  collapseTail,
+  paidFunnel,
+  paidOrdersByCampaign,
+  type FunnelRow,
+} from '@/lib/paid-funnel';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Attribution / ROAS — Admin' };
@@ -12,11 +22,20 @@ function money(cents: number): string {
 
 type Agg = { orders: number; revenue: number };
 
-export default async function AttributionPage() {
-  const orders = await prisma.order.findMany({
-    where: { status: { in: REVENUE_STATUSES as any } },
-    select: { paypalOrderId: true, totalCents: true },
-  });
+export default async function AttributionPage({
+  searchParams,
+}: {
+  searchParams?: { days?: string | string[] };
+}) {
+  const days = clampDays(searchParams?.days);
+  const [orders, funnelRows, funnelOrders] = await Promise.all([
+    prisma.order.findMany({
+      where: { status: { in: REVENUE_STATUSES as any } },
+      select: { paypalOrderId: true, totalCents: true },
+    }),
+    posthogReadConfigured ? paidFunnel(days) : Promise.resolve(null),
+    paidOrdersByCampaign(days),
+  ]);
 
   // Resilient: if the order_attributions table isn't created yet, treat all
   // orders as untagged rather than 500.
@@ -82,6 +101,41 @@ export default async function AttributionPage() {
         <Kpi label="Sources" value={String(sourceRows.filter((r) => r.source !== 'direct / organic').length)} />
       </div>
 
+      {/* Paid traffic funnel: how far ad visitors get, from Merit's own data.
+          The isolated Google Ads account carries no conversion tag by design,
+          so this table is the only place these steps exist. */}
+      <Section title={`Paid traffic funnel · last ${days} days`}>
+        <div className="flex items-center gap-2 mb-3 text-xs">
+          {FUNNEL_RANGES.map((d) => (
+            <Link
+              key={d}
+              href={`/admin/attribution?days=${d}`}
+              className={`px-2.5 py-1 rounded-full border ${
+                d === days ? 'bg-ink text-white border-ink' : 'border-cobalt/15 text-ink-soft hover:border-cobalt/40'
+              }`}
+            >
+              {d} days
+            </Link>
+          ))}
+          <span className="text-ink-muted ml-2">Visitors whose first page carried a utm_campaign or an ad click id.</span>
+        </div>
+        {funnelRows === null ? (
+          <div className="rounded-xl border border-cobalt/12 bg-white px-4 py-8 text-center text-sm text-ink-muted">
+            {posthogReadConfigured
+              ? 'PostHog did not answer. Reload in a minute.'
+              : 'PostHog read access is not configured (POSTHOG_PERSONAL_API_KEY + POSTHOG_PROJECT_ID).'}
+          </div>
+        ) : (
+          <FunnelTable rows={collapseTail(funnelRows)} orders={funnelOrders} />
+        )}
+        <p className="text-[11px] text-ink-muted mt-2 leading-relaxed">
+          Steps are PostHog sessions on meritsciences.com, counted once per visitor: <em>Stayed</em> = left the landing page after 10 s or more;
+          <em> Engaged</em> = clicked anything on the catalog other than the subscribe popup. Orders and revenue come from Merit&rsquo;s order
+          attribution, not from the ad platform. <em>Search partners</em> is Google&rsquo;s syndicated network (parked domains, in-app search),
+          not google.com results.
+        </p>
+      </Section>
+
       {/* By source */}
       <Section title="By source">
         <Table head={['Source', 'Orders', 'Revenue', 'Avg order']}>
@@ -123,6 +177,65 @@ export default async function AttributionPage() {
         carried through the email gate to purchase. Revenue is gross (before refunds). All-time.
       </p>
     </main>
+  );
+}
+
+const FUNNEL_HEAD = ['Campaign', 'Source', 'Landed', 'Stayed', 'Catalog', 'Engaged', 'Product', 'Cart', 'Checkout', 'Orders', 'Revenue'];
+
+function FunnelTable({ rows, orders }: { rows: FunnelRow[]; orders: Map<string, { orders: number; revenueCents: number }> }) {
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-xl border border-cobalt/12 bg-white px-4 py-8 text-center text-sm text-ink-muted">
+        No paid landings in this window.
+      </div>
+    );
+  }
+  // Orders are known per campaign, not per source; show them on the
+  // campaign's first row so the column sums correctly.
+  const seen = new Set<string>();
+  return (
+    <div className="overflow-x-auto rounded-xl border border-cobalt/12 bg-white">
+      <table className="w-full text-sm">
+        <thead className="bg-cobalt/5 text-[10px] tracking-[0.14em] uppercase text-ink-soft font-bold">
+          <tr>
+            {FUNNEL_HEAD.map((h, i) => (
+              <th key={h} className={`px-3 py-2.5 whitespace-nowrap ${i < 2 ? 'text-left' : 'text-right'}`}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const first = !seen.has(r.campaign);
+            seen.add(r.campaign);
+            const o = first ? orders.get(r.campaign) : undefined;
+            const cell = (n: number, strong = false) => (
+              <td className={`px-3 py-2 text-right tabular-nums ${n === 0 ? 'text-ink-muted' : strong ? 'font-bold text-ink' : 'text-ink-soft'}`}>
+                {n}
+              </td>
+            );
+            return (
+              <tr key={`${r.campaign}|${r.source}|${i}`} className={`border-t ${first ? 'border-cobalt/15' : 'border-cobalt/8'}`}>
+                <td className="px-3 py-2 font-semibold text-ink whitespace-nowrap">{first ? r.campaign : ''}</td>
+                <td className="px-3 py-2 text-ink-soft whitespace-nowrap max-w-[220px] truncate" title={r.source}>{r.source}</td>
+                {cell(r.landed, true)}
+                {cell(r.stayed)}
+                {cell(r.catalog)}
+                {cell(r.engaged)}
+                {cell(r.product)}
+                {cell(r.addToCart)}
+                {cell(r.checkout)}
+                <td className={`px-3 py-2 text-right tabular-nums ${o?.orders ? 'font-bold text-ink' : 'text-ink-muted'}`}>
+                  {first ? (o?.orders ?? 0) : ''}
+                </td>
+                <td className={`px-3 py-2 text-right tabular-nums ${o?.revenueCents ? 'font-bold text-ink' : 'text-ink-muted'}`}>
+                  {first ? money(o?.revenueCents ?? 0) : ''}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
