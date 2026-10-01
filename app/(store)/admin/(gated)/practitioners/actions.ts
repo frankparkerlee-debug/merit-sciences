@@ -8,6 +8,8 @@ import { onApplicationApproved } from '@/lib/practitioner-journey';
 import { supabaseAdmin } from '@/lib/supabase';
 import { mintSignInLink } from '@/lib/magic-link';
 import { wrapPractitionerEmail, btn, heading, p, note, link } from '@/lib/practitioner-email-shell';
+import { checkoutOrigin } from '@/lib/checkout-domain';
+import { signCardToken, EMAILED_CARD_LINK_TTL_MS } from '@/lib/practitioner-card';
 
 export type ReviewResult =
   | { ok: true; message: string }
@@ -606,4 +608,75 @@ export async function createPractitionerProfile(
 
   revalidatePath('/admin/practitioners');
   return { ok: true, message: app.id };
+}
+
+/* ─── Card on file: email the practice a link to add one ─────────────────
+   The capture itself lives on the checkout domain behind a signed grant
+   (lib/practitioner-card.ts); the portal mints a 30-minute one on click.
+   Providers who asked Merit to "put a card on file" are rarely in the portal
+   when they ask, so this mints a week-long grant and emails it. Nothing is
+   charged when they add the card, and the same link cannot add a card to any
+   other account. */
+export async function sendCardLink(
+  _prev: ReviewResult | null,
+  formData: FormData,
+): Promise<ReviewResult> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: 'Unauthorized' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return { ok: false, error: 'Missing application id' };
+
+  const app = await prisma.practitionerApplication.findUnique({
+    where: { id },
+    select: { id: true, status: true, email: true, providerName: true, practiceName: true, cardLast4: true },
+  });
+  if (!app) return { ok: false, error: 'Application not found' };
+  if (app.status !== 'APPROVED') return { ok: false, error: `Account is ${app.status}, not APPROVED` };
+
+  const origin = checkoutOrigin();
+  if (!origin) return { ok: false, error: 'Checkout domain is not configured (CHECKOUT_ORIGIN).' };
+
+  const token = signCardToken(app.id, Date.now(), EMAILED_CARD_LINK_TTL_MS);
+  const url = `${origin}/card?t=${encodeURIComponent(token)}`;
+  const first = app.providerName.split(' ')[0] || 'there';
+  const replacing = !!app.cardLast4;
+
+  const subject = replacing
+    ? 'Update the card on file for your Merit orders'
+    : 'Keep a card on file for your Merit orders';
+  const html = wrapPractitionerEmail({
+    subject,
+    eyebrow: 'Practitioner Program · Payment',
+    bodyHtml:
+      heading(replacing ? 'Update your card on file.' : 'Keep a card on file.') +
+      p(
+        `Hi ${first}, you asked us to keep a card on file for ${app.practiceName}. ` +
+          `Add it once below and future orders can be paid without re-entering it, ` +
+          `whether you place them in your portal or send them to us directly.`,
+      ) +
+      btn(replacing ? 'Update card →' : 'Add a card →', url) +
+      note(
+        'Nothing is charged when you add a card. It is stored by Stripe, never by Merit, ' +
+          'and you can remove it from your portal at any time. This link works for 7 days and only for your account.',
+      ),
+  });
+  const text =
+    `Hi ${first},\n\nYou asked us to keep a card on file for ${app.practiceName}. Add it once here and future orders can be paid without re-entering it:\n\n${url}\n\n` +
+    `Nothing is charged when you add a card. It is stored by Stripe, never by Merit, and you can remove it from your portal at any time. This link works for 7 days and only for your account.\n\nMerit Sciences`;
+
+  const result = await sendEmail({
+    to: app.email,
+    subject,
+    html,
+    text,
+    tags: [{ name: 'type', value: 'practitioner_card_link' }],
+  });
+  if (!result.ok) return { ok: false, error: `Email failed: ${result.error}` };
+
+  revalidatePath(`/admin/practitioners/${id}`);
+  return {
+    ok: true,
+    message: `Card setup link emailed to ${app.email}. It works for 7 days. Same link, if you want to send it another way: ${url}`,
+  };
 }

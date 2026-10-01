@@ -37,6 +37,8 @@ type PractitionerHit = {
   pricingBasis: string;
   retailDiscountBps: number | null;
   overrides: Record<string, number>;
+  /** Card on file (brand + last4 only), when the practice has stored one. */
+  card?: { brand: string; last4: string } | null;
 };
 
 type LineItem = {
@@ -460,8 +462,24 @@ export function NewOrderForm({ products }: { products: ProductOption[] }) {
                 <input type="radio" name="paymentMode" value="invoice" className="mt-0.5 accent-cobalt" />
                 <span><strong>Send pay link</strong> — email the customer a secure card-payment link</span>
               </label>
+              {practitioner?.card && (
+                <label className="flex items-start gap-2 rounded-lg border border-emerald-300 bg-emerald-50/60 px-3 py-2 text-sm text-ink flex-1 cursor-pointer">
+                  <input type="radio" name="paymentMode" value="card" className="mt-0.5 accent-cobalt" />
+                  <span>
+                    <strong>Charge card on file</strong> — {practitioner.card.brand.charAt(0).toUpperCase() + practitioner.card.brand.slice(1)} ending {practitioner.card.last4}
+                  </span>
+                </label>
+              )}
             </div>
-            <p className="text-[10px] text-ink-soft mt-1">&ldquo;Send pay link&rdquo; creates the order as <em>Awaiting payment</em> and emails the customer; it auto-marks Paid + sends a receipt when they pay. (Status below is ignored in that mode.)</p>
+            <p className="text-[10px] text-ink-soft mt-1">
+              &ldquo;Send pay link&rdquo; creates the order as <em>Awaiting payment</em> and emails the customer; it auto-marks Paid + sends a receipt when they pay.
+              {practitioner?.card
+                ? ' “Charge card on file” charges the practice’s stored card for the order total now; the order marks Paid and the receipt goes out as soon as Stripe confirms.'
+                : practitioner
+                  ? ' This practice has no card on file yet; send them a card setup link from their practitioner page.'
+                  : ''}
+              {' '}(Status below is ignored in those modes.)
+            </p>
           </div>
           <div>
             <label className="block text-[11px] font-bold tracking-wider uppercase text-ink-soft mb-1">

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { money } from '@/lib/catalog';
 import { ClearCartOnMount } from './ClearCartOnMount';
+import { PurchaseBeacon } from './PurchaseBeacon';
 import { headers } from 'next/headers';
 import { isCheckoutHostname, supportEmailFor } from '@/lib/checkout-domain';
 
@@ -32,8 +33,11 @@ type OrderSummary = {
 async function getOrder(ref: string | undefined): Promise<OrderSummary | null> {
   if (!ref) return null;
   try {
-    return await prisma.order.findUnique({
-      where: { paypalOrderId: ref },
+    // PayPal sends its order id (= our processor id); the Stripe return_url
+    // carries our own order id. Accept either so card payments get the real
+    // summary instead of the generic fallback.
+    return await prisma.order.findFirst({
+      where: { OR: [{ paypalOrderId: ref }, { id: ref }] },
       select: {
         status: true,
         customerEmail: true,
@@ -52,7 +56,7 @@ async function getOrder(ref: string | undefined): Promise<OrderSummary | null> {
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string; order_id?: string };
+  searchParams: { session_id?: string; order_id?: string; redirect_status?: string };
 }) {
   // Accept both order_id (PayPal — current) and session_id (Stripe — legacy)
   const orderRef = searchParams.order_id ?? searchParams.session_id;
@@ -64,11 +68,23 @@ export default async function CheckoutSuccessPage({
   // It also keeps someone who abandoned PayPal and hand-loaded this URL from
   // reading a paid confirmation for an unpaid order.
   const paid = !!order && order.status !== 'PENDING_PAYMENT' && order.status !== 'CANCELED';
+  // Stripe appends redirect_status=succeeded when it sends the buyer here, so
+  // the purchase beacon can fire before the webhook has promoted the order.
+  const paymentConfirmed = paid || searchParams.redirect_status === 'succeeded';
 
   return (
     <main className="bg-cream min-h-screen">
       {/* Client-only effect — clears the persisted Zustand cart on mount */}
       <ClearCartOnMount />
+      {order && orderRef && (
+        <PurchaseBeacon
+          orderRef={orderRef}
+          valueUsd={Number(order.totalCents) / 100}
+          email={order.customerEmail}
+          itemCount={order.lines.reduce((n, l) => n + l.qty, 0)}
+          fire={paymentConfirmed}
+        />
+      )}
 
       <section className="bg-white border-b border-cobalt/10">
         <div className="h-1 bg-gradient-to-r from-cobalt via-[#5078FF] to-cobalt" />

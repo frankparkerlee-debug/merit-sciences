@@ -2,7 +2,8 @@ import 'server-only';
 import { createHmac, timingSafeEqual } from 'crypto';
 import Stripe from 'stripe';
 import { prisma } from './db';
-import { stripe } from './stripe';
+import { stripe, statementDescriptorSuffix } from './stripe';
+import { recordOrderEvent } from './orders';
 
 /**
  * Card-on-file for practitioner accounts.
@@ -24,14 +25,20 @@ import { stripe } from './stripe';
 const SECRET = process.env.CRON_SECRET || 'dev-secret';
 /** Deliberately short — it authorises attaching a card to an account. */
 const TTL_MS = 30 * 60 * 1000;
+/**
+ * An emailed link needs longer than a portal click-through: the provider gets
+ * to it after clinic, not in the next half hour. A week is the balance
+ * between that and a forwarded email becoming a standing grant.
+ */
+export const EMAILED_CARD_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function mac(payload: string): string {
   return createHmac('sha256', SECRET).update(`card:${payload}`).digest('base64url').slice(0, 32);
 }
 
 /** Sign a short-lived grant to add a card to one practice. */
-export function signCardToken(applicationId: string, now: number): string {
-  const payload = Buffer.from(JSON.stringify({ a: applicationId, e: now + TTL_MS })).toString('base64url');
+export function signCardToken(applicationId: string, now: number, ttlMs: number = TTL_MS): string {
+  const payload = Buffer.from(JSON.stringify({ a: applicationId, e: now + ttlMs })).toString('base64url');
   return `${payload}.${mac(payload)}`;
 }
 
@@ -121,6 +128,181 @@ export async function storeCardFromSetupIntent(
     },
   });
   return { brand: pm.card.brand, last4: pm.card.last4 };
+}
+
+export type SavedCard = { brand: string; last4: string; expMonth: number; expYear: number };
+
+/** Displayable facts for the card an APPROVED practice has on file, or null. */
+export async function savedCardFor(applicationId: string): Promise<SavedCard | null> {
+  const app = await prisma.practitionerApplication
+    .findFirst({
+      where: { id: applicationId, status: 'APPROVED' },
+      select: { cardPaymentMethodId: true, cardBrand: true, cardLast4: true, cardExpMonth: true, cardExpYear: true },
+    })
+    .catch(() => null);
+  if (!app?.cardPaymentMethodId || !app.cardBrand || !app.cardLast4 || !app.cardExpMonth || !app.cardExpYear) {
+    return null;
+  }
+  return { brand: app.cardBrand, last4: app.cardLast4, expMonth: app.cardExpMonth, expYear: app.cardExpYear };
+}
+
+/**
+ * Mirror a card that was saved DURING a checkout (a PaymentIntent opened with
+ * setup_future_usage), as opposed to the SetupIntent path above. Same
+ * ownership check: the instrument must already belong to this practice's own
+ * Stripe customer, because the ids arrive from a webhook payload.
+ */
+export async function storeCardFromPaymentMethod(
+  applicationId: string,
+  paymentMethodId: string,
+): Promise<{ brand: string; last4: string } | null> {
+  const app = await prisma.practitionerApplication.findUnique({
+    where: { id: applicationId },
+    select: { stripeCustomerId: true },
+  });
+  if (!app?.stripeCustomerId) return null;
+
+  const pm = await stripe().paymentMethods.retrieve(paymentMethodId);
+  if (!pm.card || pm.customer !== app.stripeCustomerId) return null;
+
+  await stripe().customers.update(app.stripeCustomerId, {
+    invoice_settings: { default_payment_method: pm.id },
+  });
+  await prisma.practitionerApplication.update({
+    where: { id: applicationId },
+    data: {
+      cardPaymentMethodId: pm.id,
+      cardBrand: pm.card.brand,
+      cardLast4: pm.card.last4,
+      cardExpMonth: pm.card.exp_month,
+      cardExpYear: pm.card.exp_year,
+      cardAddedAt: new Date(),
+    },
+  });
+  return { brand: pm.card.brand, last4: pm.card.last4 };
+}
+
+export type ChargeSavedCardResult =
+  | { ok: true; status: 'succeeded'; paymentIntentId: string }
+  | { ok: true; status: 'requires_action'; paymentIntentId: string; clientSecret: string }
+  | { ok: false; code: 'no-card' | 'not-pending' | 'declined' | 'error'; message: string };
+
+/**
+ * Charge a practice's card on file for an order that is already persisted
+ * and PENDING_PAYMENT. The amount is the order's stored total, never a
+ * client figure, and Stripe sees the same three fields every other charge
+ * sends: amount, a generic description, internal ids in metadata.
+ *
+ * Who initiated it changes one thing. `admin` is an off-session charge (the
+ * provider asked for it over the phone or by email and is not present), so
+ * a card that insists on authentication fails here and the order falls back
+ * to a pay link. `buyer` is on-session: the provider is at checkout, so
+ * Stripe may return requires_action and the browser completes it.
+ *
+ * Fulfilment is NOT run here. The order's processor id is pointed at the
+ * intent and the Stripe webhook promotes it exactly as it does for every
+ * other card payment, so there is one path that books orders, not two.
+ */
+export async function chargeSavedCard(args: {
+  orderId: string;
+  idempotencyKey: string;
+  initiatedBy: 'buyer' | 'admin';
+}): Promise<ChargeSavedCardResult> {
+  const order = await prisma.order.findUnique({
+    where: { id: args.orderId },
+    select: {
+      id: true, status: true, totalCents: true, customerEmail: true,
+      affiliateId: true, discountCode: true, practitionerApplicationId: true,
+    },
+  });
+  if (!order) return { ok: false, code: 'error', message: 'Order not found.' };
+  if (order.status !== 'PENDING_PAYMENT') {
+    return { ok: false, code: 'not-pending', message: 'This order is not awaiting payment.' };
+  }
+  if (!order.practitionerApplicationId) {
+    return { ok: false, code: 'no-card', message: 'This order is not linked to a practitioner account.' };
+  }
+
+  const app = await prisma.practitionerApplication.findFirst({
+    where: { id: order.practitionerApplicationId, status: 'APPROVED' },
+    select: { stripeCustomerId: true, cardPaymentMethodId: true, cardBrand: true, cardLast4: true },
+  });
+  if (!app?.stripeCustomerId || !app.cardPaymentMethodId) {
+    return { ok: false, code: 'no-card', message: 'This practice has no card on file.' };
+  }
+
+  const amountCents = Number(order.totalCents);
+  if (!(amountCents >= 50)) {
+    return { ok: false, code: 'error', message: 'Order total is below the $0.50 card minimum.' };
+  }
+
+  let pi;
+  try {
+    pi = await stripe().paymentIntents.create(
+      {
+        amount: amountCents,
+        currency: 'usd',
+        description: 'Merit order',
+        statement_descriptor_suffix: statementDescriptorSuffix(),
+        customer: app.stripeCustomerId,
+        payment_method: app.cardPaymentMethodId,
+        payment_method_types: ['card'],
+        confirm: true,
+        off_session: args.initiatedBy === 'admin',
+        metadata: {
+          orderId: order.id,
+          buyerEmail: order.customerEmail || '',
+          affiliateId: order.affiliateId ?? '',
+          discountCode: order.discountCode ?? '',
+          practitionerApplicationId: order.practitionerApplicationId,
+          chargedBy: args.initiatedBy,
+        },
+      },
+      { idempotencyKey: args.idempotencyKey },
+    );
+  } catch (err: any) {
+    console.error('[practitioner-card] charge failed', {
+      type: err?.type, code: err?.code, decline: err?.decline_code, message: err?.message,
+    });
+    const card = `${app.cardBrand ?? 'card'} ending ${app.cardLast4 ?? '????'}`;
+    await recordOrderEvent({
+      orderId: order.id,
+      kind: 'ADMIN_COMMENT',
+      message: `Card on file (${card}) was not charged: ${err?.message ?? 'Stripe error'}`,
+      metadata: { stripeCode: err?.code ?? null, declineCode: err?.decline_code ?? null },
+    }).catch(() => { /* logging never blocks */ });
+    if (err?.type === 'StripeCardError') {
+      return {
+        ok: false,
+        code: 'declined',
+        message:
+          err?.code === 'authentication_required'
+            ? 'The card requires the cardholder to authenticate, so it cannot be charged without them.'
+            : err?.message ?? 'The card was declined.',
+      };
+    }
+    return { ok: false, code: 'error', message: 'Could not charge the card. Try again in a moment.' };
+  }
+
+  // Point the order at the intent so the webhook promotes THIS order.
+  await prisma.order.update({ where: { id: order.id }, data: { paypalOrderId: pi.id } });
+
+  const card = `${app.cardBrand ?? 'card'} ending ${app.cardLast4 ?? '????'}`;
+  await recordOrderEvent({
+    orderId: order.id,
+    kind: 'ADMIN_COMMENT',
+    message:
+      pi.status === 'succeeded'
+        ? `Charged card on file (${card}) for $${(amountCents / 100).toFixed(2)}, ${args.initiatedBy === 'admin' ? 'initiated by Merit' : 'initiated by the buyer at checkout'}.`
+        : `Card on file (${card}) charge is ${pi.status}.`,
+    metadata: { stripePaymentIntentId: pi.id, chargedBy: args.initiatedBy },
+  }).catch(() => { /* logging never blocks */ });
+
+  if (pi.status === 'succeeded') return { ok: true, status: 'succeeded', paymentIntentId: pi.id };
+  if (pi.status === 'requires_action' && pi.client_secret) {
+    return { ok: true, status: 'requires_action', paymentIntentId: pi.id, clientSecret: pi.client_secret };
+  }
+  return { ok: false, code: 'error', message: `Payment is ${pi.status.replace(/_/g, ' ')}; it was not completed.` };
 }
 
 /** Detach at Stripe and clear our mirror. Best-effort on the Stripe side. */

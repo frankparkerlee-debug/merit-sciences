@@ -19,6 +19,8 @@
 import { NextResponse } from 'next/server';
 import { consumeHandoff, signPractitionerId, PRACTITIONER_COOKIE } from '@/lib/checkout-handoff';
 import { ATTR_COOKIE, ATTR_COOKIE_MAX_AGE } from '@/lib/attribution';
+import { prisma } from '@/lib/db';
+import { savedCardFor } from '@/lib/practitioner-card';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,9 +49,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ lines: [], welcomeCode: null }, { status: 200 });
   }
 
+  // Card on file: tell the checkout whether this buyer is an approved
+  // practice and which card (brand, last4, expiry only) it has stored, so
+  // the payment step can offer "pay with the card on file" or "save this
+  // card". Display facts only; the instrument stays at Stripe. Best-effort,
+  // like everything else here: a lookup failure means no option, not no
+  // checkout.
+  let practitioner: { savedCard: Awaited<ReturnType<typeof savedCardFor>> } | null = null;
+  if (payload.practitionerApplicationId) {
+    try {
+      const approved = await prisma.practitionerApplication.findFirst({
+        where: { id: payload.practitionerApplicationId, status: 'APPROVED' },
+        select: { id: true },
+      });
+      if (approved) practitioner = { savedCard: await savedCardFor(approved.id) };
+    } catch (err) {
+      console.error('[checkout/claim] practitioner lookup failed', err);
+    }
+  }
+
   const res = NextResponse.json({
     lines: payload.lines,
     welcomeCode: payload.welcomeCode,
+    practitioner,
   });
 
   const secure = process.env.NODE_ENV === 'production';

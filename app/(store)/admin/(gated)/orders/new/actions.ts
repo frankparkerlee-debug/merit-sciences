@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 import { validateDiscountCode } from '@/lib/discount';
 import { issuePaymentRequestEmail } from '@/lib/orders';
+import { chargeSavedCard } from '@/lib/practitioner-card';
 
 export type ManualOrderResult =
   | { ok: true; orderId: string }
@@ -96,12 +97,16 @@ export async function createManualOrder(
   // 'paid'    = record an order money was already collected on (default).
   // 'invoice' = create it UNPAID and email the customer a self-serve pay
   //             link — they pay via PayPal, it auto-flips to PAID + receipt.
-  const paymentMode = String(formData.get('paymentMode') ?? 'paid').trim() === 'invoice' ? 'invoice' : 'paid';
+  // 'card'    = create it UNPAID and charge the practitioner's card on file
+  //             right now; the Stripe webhook flips it to PAID + receipt.
+  const paymentModeRaw = String(formData.get('paymentMode') ?? 'paid').trim();
+  const paymentMode: 'paid' | 'invoice' | 'card' =
+    paymentModeRaw === 'invoice' ? 'invoice' : paymentModeRaw === 'card' ? 'card' : 'paid';
 
   // ── Order metadata ────────────────────────────────────────────────
   const statusInput = String(formData.get('status') ?? 'PAID').trim();
   const validStatuses = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELED'];
-  const status = paymentMode === 'invoice'
+  const status = paymentMode !== 'paid'
     ? 'PENDING_PAYMENT'
     : (validStatuses.includes(statusInput) ? statusInput : 'PAID');
   const internalNotes = String(formData.get('internalNotes') ?? '').trim() || null;
@@ -118,8 +123,19 @@ export async function createManualOrder(
   // their referring affiliate's gross-profit commission when the order pays.
   const practitionerApp = await prisma.practitionerApplication.findFirst({
     where: { email: customerEmail, status: 'APPROVED' },
-    select: { id: true },
+    select: { id: true, cardPaymentMethodId: true, cardBrand: true, cardLast4: true },
   });
+
+  // Charging a card on file needs a practice with one. Checked before any
+  // row is written so a mis-click leaves nothing behind.
+  if (paymentMode === 'card' && !practitionerApp?.cardPaymentMethodId) {
+    return {
+      ok: false,
+      error: practitionerApp
+        ? 'This practice has no card on file. Send them a card setup link from their practitioner page, or use a pay link.'
+        : 'Only an approved practitioner account can be charged to a card on file. Use that account email, or send a pay link.',
+    };
+  }
 
   // Synthetic PayPal order ID for manual orders
   const syntheticOrderId = `manual_${crypto.randomUUID().replace(/-/g, '').slice(0, 20)}`;
@@ -149,9 +165,10 @@ export async function createManualOrder(
       internalNotes,
       // For an invoice order the CUSTOMER attests RUO when they tick the box
       // on the pay page (pay-link/create records it); for a recorded-paid
-      // order the admin is standing in for a completed sale.
-      ruoAttested: paymentMode === 'paid',
-      ruoAttestedAt: paymentMode === 'paid' ? new Date() : null,
+      // order, or a card-on-file charge placed on the practice's instruction,
+      // the admin is standing in for a completed sale.
+      ruoAttested: paymentMode !== 'invoice',
+      ruoAttestedAt: paymentMode !== 'invoice' ? new Date() : null,
       paidAt: new Date(),
       lines: {
         create: lines.map((l) => ({
@@ -167,7 +184,9 @@ export async function createManualOrder(
           kind: 'ADMIN_COMMENT',
           message: paymentMode === 'invoice'
             ? `Invoice order created by ${admin.email ?? 'admin'} — awaiting customer payment (pay link).`
-            : `Manual order created by ${admin.email ?? 'admin'}.`,
+            : paymentMode === 'card'
+              ? `Order created by ${admin.email ?? 'admin'} to be charged to the practice's card on file.`
+              : `Manual order created by ${admin.email ?? 'admin'}.`,
           actorEmail: admin.email ?? null,
         },
       },
@@ -182,6 +201,23 @@ export async function createManualOrder(
     await issuePaymentRequestEmail(order.id).catch((err) =>
       console.error('[manual-order] payment-request email failed', err),
     );
+  }
+
+  // Card on file: charge now. Off-session, because the provider is not at a
+  // keyboard; a card that insists on authentication fails cleanly here and
+  // the order stays awaiting payment so a pay link can go out instead.
+  if (paymentMode === 'card') {
+    const charge = await chargeSavedCard({
+      orderId: order.id,
+      idempotencyKey: `manual_card_${order.id}`,
+      initiatedBy: 'admin',
+    });
+    if (!charge.ok) {
+      return {
+        ok: false,
+        error: `${charge.message} The order was saved as awaiting payment (open it under Orders to send a pay link instead).`,
+      };
+    }
   }
 
   redirect(`/admin/orders/${order.id}`);

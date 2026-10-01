@@ -27,6 +27,7 @@ import { prisma } from '@/lib/db';
 import { preCreateOrder } from '@/lib/orders';
 import { sanitizeCartLines, priceCart, isPriceError } from '@/lib/checkout-pricing';
 import { ATTR_COOKIE, decodeAttrCookie } from '@/lib/attribution';
+import { ensureStripeCustomer } from '@/lib/practitioner-card';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -119,6 +120,20 @@ export async function POST(req: Request) {
   // priced cart in as well means an edited cart under the same attemptId still
   // produces a NEW key — reusing a key with changed parameters is itself an
   // error, so content must be part of the identity.
+  // Card on file: an approved practitioner asked to keep this card for future
+  // orders. Only honoured when priceCart resolved a practice from the signed
+  // cookie, so a retail buyer sending saveCard:true gets a normal charge.
+  const saveCard = body?.saveCard === true && !!priced.practitionerApplicationId;
+  let customerId: string | null = null;
+  if (saveCard) {
+    try {
+      customerId = await ensureStripeCustomer(priced.practitionerApplicationId!);
+    } catch (err) {
+      // Saving the card is a convenience; the payment itself must not fail on it.
+      console.error('[stripe/create-intent] could not resolve Stripe customer for card on file', err);
+    }
+  }
+
   const attemptId = String(body?.attemptId ?? '').slice(0, 64) || randomUUID();
   const fingerprint = createHash('sha256')
     .update(
@@ -128,6 +143,9 @@ export async function POST(req: Request) {
         priced.totalCents,
         priced.discountCode ?? '',
         priced.lines.map((l) => `${l.handle}:${l.qty}:${l.unitCents}`).join(','),
+        // Ticking "save card" changes the intent's parameters, and reusing an
+        // idempotency key with different parameters is itself an error.
+        customerId ? 'save' : '',
       ].join('|'),
     )
     .digest('hex')
@@ -143,6 +161,9 @@ export async function POST(req: Request) {
       affiliateId: priced.affiliateId,
       discountCode: priced.discountCode,
       idempotencyKey: `pi_${fingerprint}`,
+      customerId,
+      setupFutureUsage: customerId ? 'off_session' : null,
+      practitionerApplicationId: priced.practitionerApplicationId,
     });
 
     // 2. Persist the order keyed to the PaymentIntent id. Storing it here (not
@@ -211,6 +232,7 @@ export async function POST(req: Request) {
           orderId: order.id,
           affiliateId: priced.affiliateId ?? '',
           discountCode: priced.discountCode ?? '',
+          practitionerApplicationId: priced.practitionerApplicationId ?? '',
         },
       })
       .catch((err) => {
@@ -227,6 +249,7 @@ export async function POST(req: Request) {
       shippingCents: priced.shippingCents,
       totalCents: priced.totalCents,
       attributionVia: priced.attributionVia,
+      saveCard: !!customerId,
     });
   } catch (err: any) {
     // Log Stripe's own type/code, not just the message. The generic response

@@ -29,6 +29,7 @@ import { fulfillCapturedOrder } from '@/lib/paypal-fulfillment';
 import { recordOrderEvent } from '@/lib/orders';
 import { findByStripeId, syncStatus } from '@/lib/subscriptions';
 import { fulfillSubscriptionInvoice } from '@/lib/subscription-fulfillment';
+import { storeCardFromPaymentMethod } from '@/lib/practitioner-card';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -74,6 +75,22 @@ export async function POST(req: Request) {
         console.log(
           `[stripe/webhook] succeeded pi=${pi.id} order=${result.orderId} new=${result.isNew} commission=${result.commissionCents}`,
         );
+
+        // Card on file: a practitioner ticked "save this card" at checkout, so
+        // the intent carried setup_future_usage and the instrument now sits on
+        // their Stripe customer. Mirror the displayable facts so the portal and
+        // admin can show it and future orders can use it. Best-effort: the
+        // order is already booked above and must not be unbooked by this.
+        const practitionerApplicationId = pi.metadata?.practitionerApplicationId;
+        const paymentMethodId =
+          typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id ?? null;
+        if (practitionerApplicationId && paymentMethodId && pi.setup_future_usage && pi.customer) {
+          await storeCardFromPaymentMethod(practitionerApplicationId, paymentMethodId)
+            .then((card) => {
+              if (card) console.log(`[stripe/webhook] card on file saved for ${practitionerApplicationId}: ${card.brand} ${card.last4}`);
+            })
+            .catch((err) => console.error('[stripe/webhook] card mirror failed', err));
+        }
         break;
       }
 

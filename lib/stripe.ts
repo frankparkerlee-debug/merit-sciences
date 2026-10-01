@@ -124,6 +124,18 @@ export type CreateIntentArgs = {
    * is now built (per-attempt nonce + a fingerprint of the priced cart).
    */
   idempotencyKey: string;
+  /**
+   * Practitioner checkout only: the practice's Stripe Customer, so the card
+   * used for this payment can be kept for future orders. Set together with
+   * setupFutureUsage; neither is ever set for a retail buyer.
+   */
+  customerId?: string | null;
+  /** 'off_session' tells Stripe to store the instrument for later charges
+   *  without the buyer present (card on file). */
+  setupFutureUsage?: 'off_session' | null;
+  /** Internal id only, like the others. Lets the webhook know which practice
+   *  a saved card belongs to. */
+  practitionerApplicationId?: string | null;
 };
 
 /**
@@ -149,6 +161,11 @@ export async function createPaymentIntent(args: CreateIntentArgs): Promise<Strip
          below, because fulfilment reads it back and it is no longer on the
          intent. */
       automatic_payment_methods: { enabled: true },
+      // Card on file (practitioners): attach the practice's Customer and ask
+      // Stripe to keep the instrument. Payment methods that cannot be saved
+      // off-session are filtered out of the Payment Element automatically.
+      ...(args.customerId ? { customer: args.customerId } : {}),
+      ...(args.customerId && args.setupFutureUsage ? { setup_future_usage: args.setupFutureUsage } : {}),
       metadata: {
         orderId: args.orderId,
         // Carries the buyer address that receipt_email used to. Still just an
@@ -157,6 +174,7 @@ export async function createPaymentIntent(args: CreateIntentArgs): Promise<Strip
         // Attribution, mirroring PayPal's custom_id. Ids and codes only.
         affiliateId: args.affiliateId ?? '',
         discountCode: args.discountCode ?? '',
+        practitionerApplicationId: args.practitionerApplicationId ?? '',
       },
     },
     // Idempotent per ATTEMPT: a retry of the same submit reuses the intent

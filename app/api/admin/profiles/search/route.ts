@@ -68,6 +68,11 @@ export async function GET(req: Request) {
         pricingBasis: true,
         retailDiscountBps: true,
         priceOverrides: { select: { productHandle: true, priceCents: true } },
+        // Card on file, display facts only, so the order form can offer
+        // "charge the card on file" for this practice.
+        cardPaymentMethodId: true,
+        cardBrand: true,
+        cardLast4: true,
       },
     }),
   ]);
@@ -87,6 +92,7 @@ export async function GET(req: Request) {
       phone: p.phone,
       pricingBasis: p.pricingBasis,
       retailDiscountBps: p.retailDiscountBps,
+      card: p.cardPaymentMethodId && p.cardBrand && p.cardLast4 ? { brand: p.cardBrand, last4: p.cardLast4 } : null,
       overrides: Object.fromEntries(
         p.priceOverrides
           .filter((o) => o.priceCents > 0)

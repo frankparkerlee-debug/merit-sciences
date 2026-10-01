@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { ReviewActions } from './ReviewActions';
 import { PricingSection } from './PricingSection';
+import { CardOnFileAdmin } from './CardOnFileAdmin';
 
 export const metadata = { title: 'Application — Merit Admin' };
 export const dynamic = 'force-dynamic';
@@ -137,6 +138,25 @@ export default async function PractitionerApplicationDetail({
         providerFirst={app.providerName.split(' ')[0]}
         practiceName={app.practiceName}
       />
+
+      {/* Card on file — approved practices only; admin can email the setup link */}
+      {app.status === 'APPROVED' && (
+        <CardOnFileAdmin
+          id={app.id}
+          email={app.email}
+          card={
+            app.cardPaymentMethodId && app.cardBrand && app.cardLast4 && app.cardExpMonth && app.cardExpYear
+              ? {
+                  brand: app.cardBrand,
+                  last4: app.cardLast4,
+                  expMonth: app.cardExpMonth,
+                  expYear: app.cardExpYear,
+                  addedAt: app.cardAddedAt ? app.cardAddedAt.toISOString().slice(0, 10) : null,
+                }
+              : null
+          }
+        />
+      )}
 
       {/* Per-practice pricing — book-level multiplier + per-SKU overrides */}
       {pricingProps && (

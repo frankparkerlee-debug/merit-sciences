@@ -232,6 +232,12 @@ export function CheckoutClient({
   // money path.
   const [claimPending, setClaimPending] = useState<boolean>(!!handoffToken);
   const claimedRef = useRef(false);
+  // Approved practice behind this checkout, as the claim endpoint reports it:
+  // present means "offer to save the card", with a savedCard means "offer the
+  // card on file". Null for every retail buyer.
+  const [practitioner, setPractitioner] = useState<{
+    savedCard: { brand: string; last4: string; expMonth: number; expYear: number } | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!handoffToken || claimedRef.current) return;
@@ -264,6 +270,9 @@ export function CheckoutClient({
         }
         if (data?.welcomeCode) {
           try { localStorage.setItem('merit_welcome_code', data.welcomeCode); } catch { /* private mode */ }
+        }
+        if (data?.practitioner && typeof data.practitioner === 'object') {
+          setPractitioner({ savedCard: data.practitioner.savedCard ?? null });
         }
       } catch {
         /* fall through — buyer keeps whatever cart exists on this origin */
@@ -655,6 +664,8 @@ export function CheckoutClient({
               discountCode={appliedCode}
               ruoAttested={form.ruoAttested}
               onError={setFormError}
+              isPractitioner={!!practitioner}
+              savedCard={practitioner?.savedCard ?? null}
             />
           </PaymentSection>
         ) : !resolvedPaypalClientId ? (
