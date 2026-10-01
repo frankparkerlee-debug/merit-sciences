@@ -109,6 +109,7 @@ export default async function AttributionPage({
           {FUNNEL_RANGES.map((d) => (
             <Link
               key={d}
+              prefetch={false}
               href={`/admin/attribution?days=${d}`}
               className={`px-2.5 py-1 rounded-full border ${
                 d === days ? 'bg-ink text-white border-ink' : 'border-cobalt/15 text-ink-soft hover:border-cobalt/40'

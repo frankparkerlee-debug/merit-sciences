@@ -10,6 +10,7 @@ const PROJECT = process.env.POSTHOG_PROJECT_ID;
 const API_HOST = (process.env.POSTHOG_API_HOST || 'https://us.posthog.com').replace(/\/$/, '');
 
 export const posthogReadConfigured = Boolean(KEY && PROJECT);
+const HOGQL_TIMEOUT_MS = 8_000;
 
 /**
  * Run a HogQL query against the PostHog Query API. Returns the result rows
@@ -23,6 +24,12 @@ export async function hogql(query: string, opts?: { forCache?: boolean }): Promi
       method: 'POST',
       headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: { kind: 'HogQLQuery', query } }),
+      // Hard ceiling. On 2026-10-01 PostHog answered in 20 s under load and
+      // /admin/analytics held a server render open that long per request;
+      // with Next prefetching a dozen of those links at once, the single
+      // instance stalled for every visitor on the storefront. A panel that
+      // shows "did not answer" beats a store that does not load.
+      signal: AbortSignal.timeout(HOGQL_TIMEOUT_MS),
       // `no-store` inside unstable_cache OPTS THE WHOLE ENTRY OUT of the
       // data cache — the "cached" wrapper below was re-querying ClickHouse
       // on every request, which is exactly the slowness it existed to fix.

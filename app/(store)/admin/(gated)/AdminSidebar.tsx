@@ -80,7 +80,7 @@ export function AdminSidebar({ adminEmail }: { adminEmail: string }) {
     .sort((a, b) => b.length - a.length)[0];
 
   const brand = (
-    <Link href="/admin/analytics" onClick={() => setOpen(false)} className="font-display font-black text-ink text-base tracking-[-0.02em]">
+    <Link prefetch={false} href="/admin/analytics" onClick={() => setOpen(false)} className="font-display font-black text-ink text-base tracking-[-0.02em]">
       Merit <span className="text-cobalt text-[10px] tracking-[0.2em] uppercase font-bold align-middle">Admin</span>
     </Link>
   );
@@ -94,7 +94,7 @@ export function AdminSidebar({ adminEmail }: { adminEmail: string }) {
             {sec.items.map((item) => (
               <li key={item.label}>
                 {item.href ? (
-                  <Link href={item.href} onClick={() => setOpen(false)} className={itemClass(item.href === activeHref)}>
+                  <Link prefetch={false} href={item.href} onClick={() => setOpen(false)} className={itemClass(item.href === activeHref)}>
                     {item.label}
                   </Link>
                 ) : (
@@ -104,7 +104,7 @@ export function AdminSidebar({ adminEmail }: { adminEmail: string }) {
                   <ul className="ml-3 mt-0.5 space-y-0.5 border-l border-cobalt/10 pl-2">
                     {item.children.map((c) => (
                       <li key={c.label}>
-                        <Link href={c.href} onClick={() => setOpen(false)} className={itemClass(c.href === activeHref, true)}>
+                        <Link prefetch={false} href={c.href} onClick={() => setOpen(false)} className={itemClass(c.href === activeHref, true)}>
                           {c.label}
                         </Link>
                       </li>
@@ -123,7 +123,7 @@ export function AdminSidebar({ adminEmail }: { adminEmail: string }) {
     <div className="border-t border-cobalt/10 px-4 py-3">
       <p className="text-[11px] text-ink-soft truncate mb-2">{adminEmail}</p>
       <div className="flex items-center justify-between">
-        <Link href="/" className="text-[11px] font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition">View site ↗</Link>
+        <Link prefetch={false} href="/" className="text-[11px] font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition">View site ↗</Link>
         <form action="/auth/logout" method="POST">
           <button type="submit" className="text-[11px] font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition">Sign out</button>
         </form>

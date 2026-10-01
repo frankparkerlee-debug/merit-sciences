@@ -530,7 +530,7 @@ function Bar({ heightPct, tip, href }: { heightPct: number; tip: string; href?: 
     </>
   );
   return href ? (
-    <Link href={href} className="relative flex-1 h-full flex flex-col justify-end group">
+    <Link prefetch={false} href={href} className="relative flex-1 h-full flex flex-col justify-end group">
       {inner}
     </Link>
   ) : (
@@ -596,7 +596,7 @@ function ChannelList({
           <li key={r.channel}>
             {/* A channel row IS the drill-down: clicking applies it as the
                 source filter (click again to clear). */}
-            <Link
+            <Link prefetch={false}
               href={`/admin/analytics?range=${rangeKey}${active ? '' : `&channel=${encodeURIComponent(r.channel)}`}`}
               className={`relative flex items-center justify-between text-[12px] px-2.5 py-1.5 rounded-lg overflow-hidden transition ${
                 active ? 'ring-1 ring-cobalt' : 'hover:ring-1 hover:ring-cobalt/30'
@@ -633,7 +633,7 @@ function MoneyTable({ rows, countLabel }: { rows: NamedRow[]; countLabel: string
             <tr key={r.name} className="text-ink">
               <td className="px-3 py-2 truncate max-w-[240px]">
                 {r.href ? (
-                  <Link href={r.href} className="text-cobalt font-medium hover:underline underline-offset-2">
+                  <Link prefetch={false} href={r.href} className="text-cobalt font-medium hover:underline underline-offset-2">
                     {r.name}
                   </Link>
                 ) : (
