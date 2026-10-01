@@ -169,7 +169,16 @@ export async function POST(req: Request) {
     });
 
     if (!charge.ok) {
-      const status = charge.code === 'declined' ? 402 : charge.code === 'no-card' ? 409 : 500;
+      // A duplicate submit already charged an earlier order for this attempt;
+      // the row created above is a stray. Remove it so admin never sees a
+      // second "awaiting payment" order for one purchase. Best-effort.
+      if (charge.code === 'duplicate') {
+        await prisma.order
+          .deleteMany({ where: { id: order.id, status: 'PENDING_PAYMENT' } })
+          .catch((err) => console.error('[stripe/charge-saved] stray order cleanup failed', err));
+      }
+      const status =
+        charge.code === 'declined' ? 402 : charge.code === 'no-card' || charge.code === 'duplicate' ? 409 : 500;
       return NextResponse.json({ error: charge.message, code: charge.code }, { status });
     }
 

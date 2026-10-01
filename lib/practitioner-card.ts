@@ -185,7 +185,7 @@ export async function storeCardFromPaymentMethod(
 export type ChargeSavedCardResult =
   | { ok: true; status: 'succeeded'; paymentIntentId: string }
   | { ok: true; status: 'requires_action'; paymentIntentId: string; clientSecret: string }
-  | { ok: false; code: 'no-card' | 'not-pending' | 'declined' | 'error'; message: string };
+  | { ok: false; code: 'no-card' | 'not-pending' | 'declined' | 'duplicate' | 'error'; message: string };
 
 /**
  * Charge a practice's card on file for an order that is already persisted
@@ -271,6 +271,16 @@ export async function chargeSavedCard(args: {
       message: `Card on file (${card}) was not charged: ${err?.message ?? 'Stripe error'}`,
       metadata: { stripeCode: err?.code ?? null, declineCode: err?.decline_code ?? null },
     }).catch(() => { /* logging never blocks */ });
+    // The same attempt was already submitted (a retry after a lost response):
+    // Stripe refuses the reused key because this order's id differs from the
+    // one it charged. Nothing was charged twice; say so instead of "error".
+    if (err?.type === 'StripeIdempotencyError') {
+      return {
+        ok: false,
+        code: 'duplicate',
+        message: 'This payment was already submitted. Check your email for the receipt before trying again.',
+      };
+    }
     if (err?.type === 'StripeCardError') {
       return {
         ok: false,
