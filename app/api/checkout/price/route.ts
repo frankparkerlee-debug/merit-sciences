@@ -55,5 +55,8 @@ export async function POST(req: Request) {
     totalCents: priced.totalCents,
     discountCode: priced.discountCode,
     attributionVia: priced.attributionVia,
+    // Non-zero when the code skipped Subscribe & Save / multi-pack lines, so
+    // the checkout can say so next to the applied code.
+    codeIneligibleCents: priced.codeIneligibleCents,
   });
 }

@@ -118,6 +118,9 @@ export function CheckoutClient({
     discountCents: number;
     shippingCents: number;
     totalCents: number;
+    /** Cart cents the code skipped because those lines already carry a tier
+     *  discount (Subscribe & Save, multi-pack). One offer per item. */
+    codeIneligibleCents: number;
   } | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeApplying, setCodeApplying] = useState(false);
@@ -203,6 +206,7 @@ export function CheckoutClient({
         discountCents: Number(data.discountCents ?? 0),
         shippingCents: Number(data.shippingCents ?? 0),
         totalCents: Number(data.totalCents ?? 0),
+        codeIneligibleCents: Number(data.codeIneligibleCents ?? 0),
       });
       setDiscountCode('');
     } catch {
@@ -769,17 +773,25 @@ export function CheckoutClient({
 
           <div className="px-5 sm:px-6 py-4 border-t border-cobalt/10 bg-cobalt/5">
             {appliedCode ? (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-ink">
-                  Code <strong className="font-mono">{appliedCode}</strong> applied
-                </span>
-                <button
-                  type="button"
-                  onClick={handleRemoveCode}
-                  className="text-xs font-bold tracking-wider uppercase text-ink-soft hover:text-rose-700 transition"
-                >
-                  Remove
-                </button>
+              <div className="text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-ink">
+                    Code <strong className="font-mono">{appliedCode}</strong> applied
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCode}
+                    className="text-xs font-bold tracking-wider uppercase text-ink-soft hover:text-rose-700 transition"
+                  >
+                    Remove
+                  </button>
+                </div>
+                {(appliedAmounts?.codeIneligibleCents ?? 0) > 0 && (
+                  <p className="mt-1.5 text-[11px] leading-snug text-ink-muted">
+                    Applied to full-price items only. Subscribe &amp; Save and multi-pack items already include
+                    their discount, so the code does not stack on those.
+                  </p>
+                )}
               </div>
             ) : (
               <form onSubmit={handleApplyCode} className="flex gap-2">

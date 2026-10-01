@@ -53,6 +53,17 @@ export function packMultiplier(bundleLabel: string): number {
   return 1;
 }
 
+/**
+ * True when the line's tier already carries a discount (Subscribe & Save,
+ * 3-Pack, 6-Pack). These lines are NOT eligible for a discount code: one
+ * offer per item. Before 2026-10-01 a code applied on top of the tier price,
+ * so a 6-pack with WELCOME15 was 23.5% off and a Subscribe cart with a
+ * 20% code was 28% off; the order history shows fourteen such orders.
+ */
+export function hasTierDiscount(bundleLabel: string): boolean {
+  return packMultiplier(bundleLabel) !== 1;
+}
+
 export type CartLineIn = {
   handle: string;
   title: string;
@@ -74,6 +85,13 @@ export type PricedCart = {
   attributionVia: 'discount_code' | 'cookie' | null;
   /** Approved practitioner whose session priced this cart, if any. */
   practitionerApplicationId: string | null;
+  /**
+   * Cents of the cart that a code could NOT touch because those lines already
+   * carry a tier discount (Subscribe & Save, multi-pack). Lets the checkout
+   * say "applied to full-price items only" instead of leaving the buyer to
+   * wonder why the number is smaller than the code promised.
+   */
+  codeIneligibleCents: number;
 };
 
 export type PriceCartError = { error: string; field?: string; status: number };
@@ -262,8 +280,16 @@ export async function priceCart(args: {
   //
   // Identified by the `supply:` handle prefix set in SupplyAddToCart, the same
   // convention the cart already uses for `stack:`.
+  //
+  // Lines already priced at a discounted tier (Subscribe & Save, 3-Pack,
+  // 6-Pack) are likewise excluded: one offer per item, by Parker's rule of
+  // 2026-10-01. A code still applies to the full-price lines in the same cart.
+  const codeEligible = (l: CartLineIn) => !l.handle.startsWith('supply:') && !hasTierDiscount(l.bundleLabel);
   const discountableCents = lines
-    .filter((l) => !l.handle.startsWith('supply:'))
+    .filter(codeEligible)
+    .reduce((sum, l) => sum + l.unitCents * l.qty, 0);
+  const codeIneligibleCents = lines
+    .filter((l) => !l.handle.startsWith('supply:') && hasTierDiscount(l.bundleLabel))
     .reduce((sum, l) => sum + l.unitCents * l.qty, 0);
 
   // ── Discount + attribution ─────────────────────────────────────────────
@@ -277,13 +303,16 @@ export async function priceCart(args: {
   if (discountCodeInput) {
     if (discountableCents <= 0) {
       return {
-        error: 'Discount codes cannot be applied to clinical supply orders.',
+        error:
+          codeIneligibleCents > 0
+            ? 'This code cannot be combined with Subscribe & Save or multi-pack pricing, which already include a discount. Switch those items to one-time, single pricing to use the code.'
+            : 'Discount codes cannot be applied to clinical supply orders.',
         field: 'discountCode',
         status: 400,
       };
     }
     const cartQuantity = lines
-      .filter((l) => !l.handle.startsWith('supply:'))
+      .filter(codeEligible)
       .reduce((sum, l) => sum + l.qty, 0);
     // Validated against the DISCOUNTABLE subtotal, not the cart total — a
     // minimum-spend code must not be unlocked by supply lines it can't apply to.
@@ -345,5 +374,6 @@ export async function priceCart(args: {
     affiliateSlug,
     attributionVia,
     practitionerApplicationId: practitionerSession?.applicationId ?? null,
+    codeIneligibleCents,
   };
 }
