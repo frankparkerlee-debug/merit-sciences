@@ -37,10 +37,21 @@ import { StickyCta } from './StickyCta';
 
 export const dynamic = 'force-dynamic';
 
+/*
+ * 2026-10-02 revision after two rejected directions in one day. Parker's
+ * brief: keep the full-bleed hero, make the headline more human and punchy
+ * so it reads as about the certificates but not only about them, and show
+ * Merit's own branded imagery instead of generated or stock scenes. So:
+ * hero = three Merit vials (brand/hero-A-cluster), the steps band = the
+ * Merit vial wall from the locked homepage, the mid-page figure = the Merit
+ * packshot. Labels read "Merit." and "Research use only"; no compound name
+ * is legible anywhere, which is the Google constraint.
+ */
+
 export const metadata = {
-  title: 'Research compounds with the certificate published first',
+  title: 'Research compounds. Tested by an independent lab, published, shipped in 48 hours.',
   description:
-    'Every batch is tested by an independent laboratory and its certificate of analysis is published before it is listed. Licensed US facility, ships in 48 hours.',
+    'Every batch is tested by an independent laboratory before it is listed and the report is public. Orders leave San Antonio within 48 hours on business days, tracked. 15% off your first order.',
   robots: { index: false, follow: true },
 };
 
@@ -132,7 +143,7 @@ const LEDGER: [string, string, string][] = [
   ['Who tests it', 'The seller, if anyone', 'An independent laboratory, every batch'],
   ['When you see the certificate', 'On request, if you ask twice', 'Before the batch is listed'],
   ['The label', 'A marker and a hope', 'A QR code that opens the certificate'],
-  ['Shipping', 'Weeks, untracked', '48 hours, tracked and insured'],
+  ['Shipping', 'Weeks, untracked', 'Within 48 hours on business days, tracked'],
   ['Paying', 'Apps and DMs', 'Major cards on a secure checkout'],
 ];
 
@@ -144,22 +155,21 @@ const FAQ: [string, string][] = [
   ['How do I check a batch?',
    'The QR code on every vial opens our COA library. Search by compound to find the certificate for the batch currently shipping. No account and no request form.'],
   ['How fast does it ship?',
-   'Orders dispatch within 48 hours, Monday through Thursday, by UPS Ground with tracking and insurance. Most US addresses receive within 3 to 5 business days.'],
+   'Orders leave San Antonio within 48 hours on business days. The tracking number is emailed as soon as the carrier scans the parcel, and transit is usually 2 to 5 business days. US addresses only, no PO boxes or freight forwarders.'],
   ['Is there a minimum order?',
-   `No. One vial ships the same way a case does: within 48 hours, tracked and insured. Orders over ${money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', '')} ship free.`],
+   `No. One vial ships the same way a case does: within 48 hours on business days, tracked. Orders over ${money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', '')} ship free.`],
   ['Who can order?',
    'Qualified researchers and licensed practitioners. Practitioners can apply for account pricing through the Practitioner Program; retail buyers order directly.'],
   ['What does research use only mean?',
    'Everything we supply is for laboratory and scientific research. It is not for human or veterinary use and has not been evaluated or approved by the FDA.'],
 ];
 
+/* Store routes that exist. (/legal/refunds and /legal/contact were 404s.) */
 const POLICIES: [string, string][] = [
-  ['Shipping', '/legal/shipping'],
-  ['Refunds', '/legal/refunds'],
-  ['Returns', '/legal/returns'],
-  ['Privacy', '/legal/privacy'],
-  ['Terms', '/legal/terms'],
-  ['Contact', '/legal/contact'],
+  ['Shipping', '/shipping'],
+  ['Returns and refunds', '/returns'],
+  ['Privacy', '/privacy'],
+  ['Terms', '/terms'],
 ];
 
 /* The one button. Same words everywhere it appears. */
@@ -208,21 +218,21 @@ export default async function ShopLanding() {
         @media (prefers-reduced-motion: reduce) { .lp-rise { animation: none; } }
       `}</style>
 
-      {/* §01 HERO. Dark object cinema: the certificate and the vial on the
-          bench, the only two things this business is about. The paper's text
-          is out of focus by design: nothing on it is legible. */}
-      <section className="relative isolate bg-[#070A12] text-white overflow-hidden">
+      {/* §01 HERO. Dark object cinema, Merit's own vials. The cluster sits on
+          the left of the frame, so on desktop the words take the right half;
+          on a phone the vials sit behind the text under a gradient. */}
+      <section className="relative isolate bg-[#1B1F26] text-white overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/brand/hero-bench.webp"
-            alt="A printed certificate of analysis standing beside a sealed glass vial on a dark bench"
+            src="/brand/hero-A-cluster.webp"
+            alt="Three sealed Merit vials on a dark surface, labels reading Merit, research use only"
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[68%_center] lg:object-[62%_center] opacity-95"
+            className="object-cover object-[22%_35%] lg:object-[0%_center]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#070A12] via-[#070A12]/80 to-[#070A12]/10 lg:via-[#070A12]/55" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#070A12] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1B1F26] via-[#1B1F26]/90 to-[#1B1F26]/15 lg:bg-gradient-to-l lg:from-[#1B1F26] lg:via-[#1B1F26]/60 lg:to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#1B1F26] to-transparent" />
         </div>
 
         <header className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 pt-6 flex items-center justify-between">
@@ -234,27 +244,29 @@ export default async function ShopLanding() {
           </Link>
         </header>
 
-        <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 pt-[18vh] pb-20 lg:pt-[20vh] lg:pb-28 min-h-[88svh] flex flex-col justify-end">
-          <Kicker light>
-            <span className="lp-rise inline-block">Research compounds · Independently tested · Ships in 48 hours</span>
-          </Kicker>
-          <h1
-            className="lp-rise lp-rise-2 mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.92] max-w-[11ch]"
-            style={{ fontSize: 'clamp(46px, 8.4vw, 118px)', textWrap: 'balance' }}
-          >
-            Buy the batch
-            <br />
-            you can <span className="text-cobalt-soft">read.</span>
-          </h1>
-          <p className="lp-rise lp-rise-3 mt-7 max-w-[46ch] text-[17px] lg:text-[19px] leading-[1.5] text-white/78">
-            Every vial ships from a licensed US facility with its certificate of analysis already
-            published. Identity, purity, heavy metals. Read the numbers before you pay.
-          </p>
-          <div className="lp-rise lp-rise-4 mt-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-            <Cta id="hero-cta" tone="paper" />
-            <p className="text-[13.5px] text-white/60">
-              Code <span className="font-mono text-white/90">{WELCOME_CODE}</span> is applied for you at checkout. No minimum order.
+        <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 pt-[18vh] pb-20 lg:pt-[16vh] lg:pb-28 min-h-[88svh] flex flex-col justify-end lg:items-end">
+          <div className="lg:w-[54%]">
+            <Kicker light>
+              <span className="lp-rise inline-block">Same stack. Better source.</span>
+            </Kicker>
+            <h1
+              className="lp-rise lp-rise-2 mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.94] max-w-[12ch]"
+              style={{ fontSize: 'clamp(44px, 7vw, 96px)', textWrap: 'balance' }}
+            >
+              Don&rsquo;t take our word for it.{' '}
+              <span className="text-cobalt-soft">Take the lab&rsquo;s.</span>
+            </h1>
+            <p className="lp-rise lp-rise-3 mt-7 max-w-[46ch] text-[17px] lg:text-[19px] leading-[1.5] text-white/80">
+              Every batch is tested by an independent laboratory before it is listed, and the
+              report is public. Orders leave San Antonio within 48 hours on business days, tracked.
+              Your first one is {WELCOME_PCT}% off.
             </p>
+            <div className="lp-rise lp-rise-4 mt-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+              <Cta id="hero-cta" tone="paper" />
+              <p className="text-[13.5px] text-white/60">
+                Code <span className="font-mono text-white/90">{WELCOME_CODE}</span> is applied for you at checkout. No minimum order.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -353,8 +365,8 @@ export default async function ShopLanding() {
           {([
             [String(n.certificates), 'certificates published'],
             [String(n.compounds), 'compounds in the catalog'],
-            [money(n.fromCents), 'per vial and up, one price for everyone'],
-            ['48 h', 'to dispatch, tracked and insured'],
+            [money(n.fromCents), 'per vial and up'],
+            ['48 h', 'to dispatch on business days, tracked'],
           ] as [string, string][]).map(([v, l]) => (
             <div key={l}>
               <dt className="sr-only">{l}</dt>
@@ -367,41 +379,38 @@ export default async function ShopLanding() {
         </dl>
       </section>
 
-      {/* §04 THE INSTRUMENT. Where the purity number comes from, as a wide
-          photograph with one caption. Photograph by Yura Shkoda on Pexels,
-          free for commercial use. */}
-      <section id="lab" className="bg-paper">
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 pt-20 lg:pt-28">
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-10 lg:gap-16 items-end">
-            <div>
-              <Kicker>Where the number comes from</Kicker>
-              <h2
-                className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
-                style={{ fontSize: 'clamp(34px, 4.6vw, 64px)', textWrap: 'balance' }}
-              >
-                We spend on the laboratory, not the logo.
-              </h2>
-            </div>
-            <p className="max-w-[52ch] text-[16.5px] leading-[1.6] text-ink-soft lg:pb-2">
-              Each batch is run through high-performance liquid chromatography by a laboratory that
-              does not make the material and does not sell it. The main-peak percentage on the
-              certificate is the purity figure, printed as measured. The same price whether you buy
-              one vial or a case.
+      {/* §04 WHAT ARRIVES. The vial itself, Merit's packshot, and the plain
+          facts about getting it: sealed, lot on the label, QR to the report,
+          out the door in 48 hours. The one section that is about the box
+          rather than the paperwork. */}
+      <section id="vial" className="bg-paper">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 pt-20 lg:pt-28 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-10 lg:gap-20 items-center">
+          <div>
+            <Kicker>What arrives</Kicker>
+            <h2
+              className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
+              style={{ fontSize: 'clamp(34px, 4.6vw, 64px)', textWrap: 'balance' }}
+            >
+              Sealed, labeled, and already on record.
+            </h2>
+            <p className="mt-7 max-w-[48ch] text-[16.5px] leading-[1.6] text-ink-soft">
+              Each vial comes sealed with its lot number on the label, and the QR code on that label
+              opens the lot&rsquo;s report. Orders leave San Antonio within 48 hours on business
+              days with a tracking number. One vial ships the same way a case does, and orders
+              over {money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', '')} ship free.
             </p>
+            <div className="mt-9">
+              <Cta />
+            </div>
           </div>
-        </div>
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 mt-12 lg:mt-16">
-          <figure className="relative aspect-[16/10] lg:aspect-[21/9] overflow-hidden ring-1 ring-ink/8">
+          <figure className="relative aspect-square overflow-hidden ring-1 ring-ink/8">
             <Image
-              src="/brand/lab-hplc-autosampler.webp"
-              alt="Sample vials loaded in the autosampler of an HPLC instrument"
+              src="/brand/merit-vial-hero.webp"
+              alt="A sealed Merit vial on a cobalt and cream background, label reading Merit, research use only"
               fill
-              sizes="(max-width: 1280px) 100vw, 1280px"
+              sizes="(max-width: 1024px) 100vw, 45vw"
               className="object-cover"
             />
-            <figcaption className="absolute left-5 bottom-5 font-mono text-[11px] tracking-[0.12em] uppercase text-white bg-ink/85 px-3 py-2">
-              HPLC autosampler
-            </figcaption>
           </figure>
         </div>
       </section>
@@ -411,7 +420,7 @@ export default async function ShopLanding() {
       <section id="ledger" className="bg-paper">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-20 lg:py-32">
           <div className="max-w-[760px]">
-            <Kicker>Same stack. Better source.</Kicker>
+            <Kicker>Side by side</Kicker>
             <h2
               className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
               style={{ fontSize: 'clamp(34px, 4.6vw, 64px)', textWrap: 'balance' }}
@@ -445,18 +454,19 @@ export default async function ShopLanding() {
         </div>
       </section>
 
-      {/* §06 HOW IT WORKS. Dark again: the row of vials, three plain steps.
-          Numbered because it is a sequence. */}
+      {/* §06 HOW IT WORKS. Dark again over the Merit vial wall (the locked
+          homepage asset; labels blurred by design, only the wordmark reads),
+          three plain steps. Numbered because it is a sequence. */}
       <section id="steps" className="relative isolate bg-[#070A12] text-white overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/brand/hero-row.webp"
-            alt="A row of sealed glass vials receding into darkness"
+            src="/brand/pattern-vials-dof.webp"
+            alt="A wall of Merit vials receding into shallow focus"
             fill
             sizes="100vw"
-            className="object-cover object-center opacity-80"
+            className="object-cover object-center opacity-70"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#070A12]/40 via-[#070A12]/70 to-[#070A12]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070A12]/50 via-[#070A12]/75 to-[#070A12]" />
         </div>
         <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 py-24 lg:py-36">
           <Kicker light>From batch to bench</Kicker>
@@ -518,12 +528,12 @@ export default async function ShopLanding() {
               className="mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.92]"
               style={{ fontSize: 'clamp(44px, 7vw, 104px)', textWrap: 'balance' }}
             >
-              {WELCOME_PCT}% off.<br />
-              <span className="text-cobalt-soft">Read first.</span>
+              {WELCOME_PCT}% off the first one.<br />
+              <span className="text-cobalt-soft">We&rsquo;ll earn the rest.</span>
             </h2>
             <p className="mt-7 max-w-[44ch] text-[16.5px] leading-[1.55] text-white/70">
-              Code {WELCOME_CODE} applies itself at checkout. Ships within 48 hours, tracked and
-              insured, from a licensed US facility.
+              Code {WELCOME_CODE} applies itself at checkout. Out of San Antonio within 48 hours on
+              business days, tracked, with the report already published.
             </p>
             <div className="mt-9">
               <Cta tone="paper" />
