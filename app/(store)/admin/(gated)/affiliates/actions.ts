@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 import { validateCodeFormat } from '@/lib/code-rules';
+import { AFFILIATE_PROGRAM, NEW_AFFILIATE_PLAN } from '@/lib/affiliate';
 
 export type ActionResult =
   | { ok: true; message: string }
@@ -203,7 +204,12 @@ export async function inviteAffiliate(
   let affiliateId: string;
   try {
     const affiliate = await prisma.affiliate.create({
-      data: { email, name, slug, discountCode },
+      data: {
+        email, name, slug, discountCode,
+        // The 2026-10-02 offer for new affiliates: 40% first order, 15% after.
+        firstOrderRateBp: NEW_AFFILIATE_PLAN.firstOrderRateBp,
+        repeatRateBp: NEW_AFFILIATE_PLAN.repeatRateBp,
+      },
       select: { id: true },
     });
     affiliateId = affiliate.id;
@@ -235,8 +241,9 @@ export async function inviteAffiliate(
       h(`${firstName}, you're invited.`),
       p(
         `We'd like you in the <strong>Merit Sciences affiliate program</strong>. ` +
-          `You earn a <strong>flat 20% commission</strong> on every order you send — and the ` +
-          `people you send get 10% off with your code.`,
+          `You earn <strong>40% on a new customer's first order</strong> and <strong>15% on every ` +
+          `order they place after that</strong>, for life — and the people you send get 10% off ` +
+          `with your code.`,
       ),
       p(
         `<strong>Your referral link</strong><br/>` +
@@ -256,7 +263,7 @@ export async function inviteAffiliate(
       ),
       payoutSetupStepsHtml(),
       quiet(
-        `Payouts run after a 30-day hold on each sale with a $50 minimum balance. ` +
+        `Payouts run after a 30-day hold on each sale with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum balance. ` +
           `Commissions accrue from your first sale either way — they just can't be sent ` +
           `until direct deposit is connected.`,
       ),

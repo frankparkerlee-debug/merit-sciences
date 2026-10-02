@@ -2,6 +2,7 @@ import 'server-only';
 import { prisma } from './db';
 import { sendEmail } from './email';
 import { wrapMarketingEmail, p, cta, quiet, SITE } from './marketing-email-shell';
+import { AFFILIATE_PROGRAM } from './affiliate';
 
 /* ─────────────────────────────────────────────────────────────────────────
    PAYOUT-DETAILS NUDGE — emails affiliates who have no way to get paid.
@@ -100,7 +101,7 @@ function buildEmail(args: { firstName: string; touch: number; owedCents: number;
     ),
     cta('Add payout details', settingsUrl),
     quiet(
-      `Payouts run after a 30-day hold with a $50 minimum — details in your dashboard. ` +
+      `Payouts run after a 30-day hold with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum — details in your dashboard. ` +
         `Already added them? Then you're all set and this is the last note about it.`,
     ),
   ].join('');

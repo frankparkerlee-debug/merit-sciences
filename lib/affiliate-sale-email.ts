@@ -1,7 +1,7 @@
 import 'server-only';
 import { prisma } from './db';
 import { sendEmail } from './email';
-import { AFFILIATE_PROGRAM, tierForOrderCount } from './affiliate';
+import { AFFILIATE_PROGRAM, tierForOrderCount, hasSplitPlan } from './affiliate';
 import { wrapMarketingEmail, p, cta, stat, quiet, a, SITE } from './marketing-email-shell';
 
 function money(cents: number): string {
@@ -22,13 +22,13 @@ function esc(s: string): string {
  */
 export async function notifyAffiliateOfSale(
   affiliateId: string,
-  sale: { commissionCents: number; orderTotalCents: number; rateBp: number },
+  sale: { commissionCents: number; orderTotalCents: number; rateBp: number; isFirstOrder?: boolean },
 ): Promise<void> {
   if (sale.commissionCents <= 0) return;
 
   const aff = await prisma.affiliate.findUnique({
     where: { id: affiliateId },
-    select: { email: true, name: true, discountCode: true, status: true },
+    select: { email: true, name: true, discountCode: true, status: true, firstOrderRateBp: true, repeatRateBp: true },
   });
   if (!aff || aff.status !== 'ACTIVE') return;
 
@@ -41,19 +41,28 @@ export async function notifyAffiliateOfSale(
   const nextTier = AFFILIATE_PROGRAM.tiers.find((t) => t.minOrders > count30);
   const toNext = nextTier ? nextTier.minOrders - count30 : 0;
   const ratePct = Math.round(sale.rateBp / 100);
+  const split = hasSplitPlan(aff) ? aff : null;
 
   const firstName = (aff.name || 'there').split(' ')[0];
   const code = aff.discountCode.toUpperCase();
   const dashUrl = `${SITE}/affiliate/dashboard`;
   const kitUrl = `${SITE}/affiliate/dashboard/kit`;
 
-  const nextLine = nextTier
+  const nextLine = split
     ? p(
-        `You're at <strong>${esc(tierName)}</strong> — ${ratePct}% per order. ` +
-          `<strong>${toNext} more sale${toNext === 1 ? '' : 's'}</strong> in the next 30 days unlocks ` +
-          `<strong>${esc(nextTier.name)} at ${nextTier.commissionPct}%</strong> on everything. Keep it rolling.`,
+        sale.isFirstOrder
+          ? `That was a <strong>new customer's first order</strong>, so it paid your ${ratePct}% first-order rate. ` +
+              `Every order they place from here pays you ${split.repeatRateBp / 100}%, for as long as they keep buying.`
+          : `That was a <strong>repeat order</strong> from a customer you already brought in, paid at your ` +
+              `${ratePct}% repeat rate. New customers' first orders pay ${split.firstOrderRateBp / 100}%.`,
       )
-    : p(`You're at <strong>${esc(tierName)}</strong> — top tier, earning the max ${ratePct}% on every order. 🔥`);
+    : nextTier
+      ? p(
+          `You're at <strong>${esc(tierName)}</strong> — ${ratePct}% per order. ` +
+            `<strong>${toNext} more sale${toNext === 1 ? '' : 's'}</strong> in the next 30 days unlocks ` +
+            `<strong>${esc(nextTier.name)} at ${nextTier.commissionPct}%</strong> on everything. Keep it rolling.`,
+        )
+      : p(`You're at <strong>${esc(tierName)}</strong> — ${ratePct}% on every order. 🔥`);
 
   const bodyHtml =
     p(`Nice one, ${esc(firstName)} — someone just checked out with your code and <strong>you got paid</strong>.`) +
@@ -74,9 +83,13 @@ export async function notifyAffiliateOfSale(
 
   const text =
     `Nice one, ${firstName} — you just earned ${money(sale.commissionCents)} on a ${money(sale.orderTotalCents)} order.\n` +
-    (nextTier
-      ? `You're at ${tierName} (${ratePct}%). ${toNext} more sale${toNext === 1 ? '' : 's'} in 30 days unlocks ${nextTier.name} at ${nextTier.commissionPct}%.\n`
-      : `You're at ${tierName} — top tier, ${ratePct}% on every order.\n`) +
+    (split
+      ? sale.isFirstOrder
+        ? `A new customer's first order: paid at your ${ratePct}% first-order rate. Their reorders pay ${split.repeatRateBp / 100}%.\n`
+        : `A repeat order from an existing customer: paid at your ${ratePct}% repeat rate. New customers' first orders pay ${split.firstOrderRateBp / 100}%.\n`
+      : nextTier
+        ? `You're at ${tierName} (${ratePct}%). ${toNext} more sale${toNext === 1 ? '' : 's'} in 30 days unlocks ${nextTier.name} at ${nextTier.commissionPct}%.\n`
+        : `You're at ${tierName} — ${ratePct}% on every order.\n`) +
     `Share your link and line up the next one: ${kitUrl}`;
 
   await sendEmail({

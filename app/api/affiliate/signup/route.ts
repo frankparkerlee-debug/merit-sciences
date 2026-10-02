@@ -4,7 +4,7 @@ import {
   normalizeIdentifier,
   validateEmail,
   validateIdentifier,
-  validateName, isReservedDiscountCode } from '@/lib/affiliate';
+  validateName, isReservedDiscountCode, AFFILIATE_PROGRAM, NEW_AFFILIATE_PLAN } from '@/lib/affiliate';
 
 export const runtime = 'nodejs';
 
@@ -26,8 +26,9 @@ async function sendAffiliateWelcomeEmail(args: {
   const bodyHtml = [
     h(`Welcome to the program, ${firstName}.`),
     p(
-      `Your Merit affiliate account is live. You earn a <strong>flat 20% commission</strong> on ` +
-        `every order you send, and the people you send get 10% off with your code.`,
+      `Your Merit affiliate account is live. You earn <strong>40% on a new customer's first order</strong> ` +
+        `and <strong>15% on every order they place after that</strong>, for as long as they keep buying. ` +
+        `The people you send get 10% off with your code.`,
     ),
     p(
       `<strong>Your referral link</strong><br/>` +
@@ -47,7 +48,7 @@ async function sendAffiliateWelcomeEmail(args: {
     ),
     payoutSetupStepsHtml(),
     quiet(
-      `Payouts run after a 30-day hold on each sale with a $50 minimum balance. Commissions ` +
+      `Payouts run after a 30-day hold on each sale with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum balance. Commissions ` +
         `accrue from your first sale either way — they just can't be sent until direct ` +
         `deposit is connected. Questions — just reply to this email.`,
     ),
@@ -144,6 +145,9 @@ export async function POST(req: Request) {
         socialUrl,
         audienceSize,
         pitch,
+        // The 2026-10-02 offer for new affiliates: 40% first order, 15% after.
+        firstOrderRateBp: NEW_AFFILIATE_PLAN.firstOrderRateBp,
+        repeatRateBp: NEW_AFFILIATE_PLAN.repeatRateBp,
       },
       select: { id: true, name: true, slug: true, discountCode: true, email: true },
     });

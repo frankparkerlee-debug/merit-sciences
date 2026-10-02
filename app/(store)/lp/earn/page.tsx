@@ -1,4 +1,4 @@
-import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
+import { AFFILIATE_PROGRAM, NEW_AFFILIATE_PLAN } from '@/lib/affiliate';
 import { AffiliateSignupForm } from '@/app/(store)/affiliate/AffiliateSignupForm';
 
 export const metadata = {
@@ -11,6 +11,8 @@ export const metadata = {
 // Sells the affiliate OPPORTUNITY only: zero molecule names, zero product or
 // health claims. The signup form is embedded so the whole funnel stays clean.
 const D = AFFILIATE_PROGRAM.buyerDiscountPct;
+const FIRST = NEW_AFFILIATE_PLAN.firstOrderRateBp / 100; // 40
+const REPEAT = NEW_AFFILIATE_PLAN.repeatRateBp / 100; // 15
 
 export default function EarnPage() {
   return (
@@ -41,7 +43,8 @@ export default function EarnPage() {
           </h1>
           <p className="mt-6 text-base sm:text-lg text-white/80 leading-relaxed max-w-xl">
             Share your code — your people save {D}%, and you earn{' '}
-            <strong className="text-white">a flat 20%</strong> on every order they ever place. We give
+            <strong className="text-white">{FIRST}%</strong> of their first order and{' '}
+            <strong className="text-white">{REPEAT}%</strong> of every order after, for life. We give
             you the captions, the assets, and a simple playbook. You just share.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
@@ -68,8 +71,8 @@ export default function EarnPage() {
       {/* ───────── STATS ───────── */}
       <section className="bg-white border-b border-cobalt/10">
         <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-14 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-cobalt/10">
-          <Stat top="FLAT" big="20%" label="On every order" sub="One rate, from your first sale." />
-          <Stat top="EVERY REORDER" big="∞" label="Evergreen earnings" sub="One referral pays you for that customer's lifetime." accent />
+          <Stat top="FIRST ORDER" big={`${FIRST}%`} label="On a new customer's first order" sub="The big one, paid on their first purchase." />
+          <Stat top="EVERY REORDER" big={`${REPEAT}%`} label="On every order after, forever" sub="One referral pays you for that customer's lifetime." accent />
           <Stat top="THEY SAVE" big={`${D}%`} label="For your audience" sub="Your code, applied instantly at checkout." />
         </div>
       </section>
@@ -81,7 +84,7 @@ export default function EarnPage() {
           <ol className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Step num="01" eyebrow="You share" head="Your custom code" body="Pick something memorable at sign-up. Drop it in your bio, a story, a video description, a DM." />
             <Step num="02" eyebrow="They save" head={`${D}% off, instantly`} body={`Your audience enters your code at checkout and ${D}% comes off — a real reason to choose Merit.`} />
-            <Step num="03" eyebrow="You earn" head="Forever, on every order" body="Their first order pays you a flat 20%. Every reorder, months later, pays you again — no re-attribution." />
+            <Step num="03" eyebrow="You earn" head="Forever, on every order" body={`Their first order pays you ${FIRST}%. Every reorder, months later, pays you ${REPEAT}% — no re-attribution.`} />
           </ol>
         </div>
       </section>
@@ -95,23 +98,24 @@ export default function EarnPage() {
               What 50 referrals looks like<span className="text-cobalt-soft">.</span>
             </h2>
             <p className="text-white/75 leading-relaxed">
-              Refer 50 customers in a month at a $150 average order — every order pays a flat 20%.
-              Here&rsquo;s month one, and month twelve as they reorder.
+              Refer 50 customers in a month at a $150 average order. First orders pay {FIRST}%,
+              every reorder pays {REPEAT}%. Here&rsquo;s month one, and month twelve as they reorder.
             </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 lg:p-8">
             <Row l="Customers referred" v="50" />
             <Row l="Avg order" v="$150" />
-            <Row l="Commission" v="20% flat" />
+            <Row l="Commission" v={`${FIRST}% first · ${REPEAT}% after`} />
             <div className="my-3 border-t border-white/10" />
-            <Row l="Month 1 commission" v="$1,500" />
-            <Row l="Month 12 cumulative" v="$13,200+" hi sub="If 60% reorder monthly" />
+            {/* 50 × $150 × 40% = $3,000; then 30 reorders × $150 × 15% = $675/month × 11 = $7,425. */}
+            <Row l="Month 1 commission" v="$3,000" />
+            <Row l="Month 12 cumulative" v="$10,400+" hi sub="If 60% reorder monthly" />
           </div>
         </div>
         <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-12 pb-8">
           <p className="text-[11px] text-white/40 italic max-w-2xl leading-relaxed">
-            Illustrative, at the flat 20% rate. Actual earnings depend on referral volume
-            and repeat purchases — not a guarantee.
+            Illustrative, at {FIRST}% on first orders and {REPEAT}% on reorders. Actual earnings depend
+            on referral volume and repeat purchases — not a guarantee.
           </p>
         </div>
       </section>
@@ -148,24 +152,25 @@ export default function EarnPage() {
       {/* ───────── TIERS ───────── */}
       <section className="bg-cream/40 border-b border-cobalt/10">
         <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-12 py-12 lg:py-16">
-          <SectionHead eyebrow="Your commission" title="One flat rate, forever" />
-          <div className="grid grid-cols-1 max-w-xs">
-            {AFFILIATE_PROGRAM.tiers.map((t) => (
+          <SectionHead eyebrow="Your commission" title="Two rates. One customer, forever" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+            {[
+              { k: 'First order', pct: FIRST, sub: 'of a new customer’s first purchase', hi: true },
+              { k: 'Every order after', pct: REPEAT, sub: 'of every reorder they ever place', hi: false },
+            ].map((t) => (
               <div
-                key={t.name}
-                className="rounded-2xl bg-white p-6 lg:p-7 border-2 border-cobalt ring-4 ring-cobalt/10"
+                key={t.k}
+                className={`rounded-2xl bg-white p-6 lg:p-7 ${t.hi ? 'border-2 border-cobalt ring-4 ring-cobalt/10' : 'border border-cobalt/15'}`}
               >
-                <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">Every affiliate</p>
+                <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">{t.k}</p>
                 <p
                   className="font-display font-black text-ink tracking-[-0.04em] leading-none"
                   style={{ fontSize: 'clamp(40px, 6vw, 64px)' }}
                 >
-                  {t.commissionPct}
+                  {t.pct}
                   <span className="text-cobalt-soft">%</span>
                 </p>
-                <p className="text-[13px] text-ink-soft mt-2">
-                  Every order · forever
-                </p>
+                <p className="text-[13px] text-ink-soft mt-2">{t.sub}</p>
               </div>
             ))}
           </div>

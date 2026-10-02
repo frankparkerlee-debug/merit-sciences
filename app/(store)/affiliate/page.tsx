@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import { AffiliateSignupForm } from './AffiliateSignupForm';
-import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
+import { AFFILIATE_PROGRAM, NEW_AFFILIATE_PLAN } from '@/lib/affiliate';
 
 export const metadata = {
   title: 'Become a Merit Sciences Affiliate',
   description:
-    'Earn 20% on every order — forever. Your audience saves 10%. Open sign-up, monthly direct-deposit payouts, no approval queue.',
+    'Earn 40% on every new customer’s first order and 15% on every order after, for life. Your audience saves 10%. Open sign-up, monthly direct-deposit payouts, no approval queue.',
 };
 
 export default function AffiliateLandingPage() {
@@ -47,8 +47,9 @@ export default function AffiliateLandingPage() {
             <span className="text-cobalt-soft">what you trust.</span>
           </h1>
           <p className="mt-8 text-base sm:text-lg lg:text-xl text-white/85 leading-relaxed max-w-2xl">
-            Every customer you bring to Merit Sciences pays you for life —
-            first order and every reorder, at a flat <strong className="text-white">20%</strong> commission.
+            Every customer you bring to Merit Sciences pays you for life:
+            <strong className="text-white"> {NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}%</strong> of their first order,
+            then <strong className="text-white">{NEW_AFFILIATE_PLAN.repeatRateBp / 100}%</strong> of every reorder.
             Your audience uses your code at checkout and saves <strong className="text-white">{AFFILIATE_PROGRAM.buyerDiscountPct}%</strong> instantly.
           </p>
 
@@ -86,17 +87,17 @@ export default function AffiliateLandingPage() {
         <div className="max-w-[1300px] mx-auto px-5 sm:px-6 lg:px-12 py-12 lg:py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-cobalt/10">
             <BigStat
-              top="FLAT"
-              number="20%"
-              label="Commission on every order"
-              detail="One rate, from your very first sale."
+              top="FIRST ORDER"
+              number={`${NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}%`}
+              label="On a new customer's first order"
+              detail="The big one. Paid on the first purchase from anyone you bring in."
               accent="ink"
             />
             <BigStat
-              top="EVERY ORDER"
-              number="∞"
-              label="Months of evergreen earnings"
-              detail="One referral pays you for the lifetime of that customer."
+              top="EVERY REORDER"
+              number={`${NEW_AFFILIATE_PLAN.repeatRateBp / 100}%`}
+              label="On every order after that, forever"
+              detail="One referral keeps paying you for the lifetime of that customer."
               accent="cobalt"
             />
             <BigStat
@@ -142,7 +143,7 @@ export default function AffiliateLandingPage() {
               num="03"
               eyebrow="You earn"
               headline="Forever, on every order"
-              body="First purchase pays you a flat 20%. Every reorder by that same customer — months and years later — pays you again. No re-attribution needed."
+              body={`Their first purchase pays you ${NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}%. Every reorder by that same customer — months and years later — pays you ${NEW_AFFILIATE_PLAN.repeatRateBp / 100}%. No re-attribution needed.`}
             />
           </ol>
         </div>
@@ -165,7 +166,8 @@ export default function AffiliateLandingPage() {
               </h2>
               <p className="text-base text-white/80 leading-relaxed">
                 Say you refer 50 customers in a month. They each spend $150
-                on average, and every order pays you a flat <strong className="text-white">20%</strong>.
+                on average. Their first orders pay you <strong className="text-white">{NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}%</strong>,
+                and every reorder pays <strong className="text-white">{NEW_AFFILIATE_PLAN.repeatRateBp / 100}%</strong>.
                 Here&apos;s what month one looks like — and what
                 month twelve looks like as those customers reorder.
               </p>
@@ -174,20 +176,22 @@ export default function AffiliateLandingPage() {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 lg:p-8">
               <ExampleRow label="Customers referred" value="50" highlight={false} />
               <ExampleRow label="Avg order size" value="$150" highlight={false} />
-              <ExampleRow label="Commission rate" value="20% flat" highlight={false} />
+              <ExampleRow label="Commission rate" value={`${NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}% first · ${NEW_AFFILIATE_PLAN.repeatRateBp / 100}% after`} highlight={false} />
               <div className="my-3 border-t border-white/10" />
-              <ExampleRow label="Month 1 commission" value="$1,500" highlight={false} />
+              {/* 50 × $150 × 40% = $3,000. Then 30 of them (60%) reorder monthly
+                  at $150 × 15% = $675 a month for eleven months = $7,425. */}
+              <ExampleRow label="Month 1 commission" value="$3,000" highlight={false} />
               <ExampleRow
                 label="Month 12 cumulative"
                 detail="Assuming 60% of customers reorder monthly at avg $150"
-                value="$13,200+"
+                value="$10,400+"
                 highlight={true}
               />
             </div>
           </div>
           <p className="text-[11px] text-white/45 italic mt-6 max-w-2xl">
-            Illustrative example at the flat 20% rate. Actual
-            earnings depend on referral volume and repeat-purchase
+            Illustrative example at {NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}% on first orders and {NEW_AFFILIATE_PLAN.repeatRateBp / 100}% on
+            reorders. Actual earnings depend on referral volume and repeat-purchase
             behavior — not a guarantee.
           </p>
         </div>
@@ -250,18 +254,33 @@ export default function AffiliateLandingPage() {
               className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
               style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}
             >
-              One flat rate. Forever<span className="text-cobalt">.</span>
+              Two rates. One customer, forever<span className="text-cobalt">.</span>
             </h2>
             <p className="mt-3 text-sm sm:text-base text-ink-soft leading-relaxed">
-              No tiers, no thresholds, no rate that resets. Every order you
-              drive pays the same — your first sale and your thousandth.
+              No thresholds, no quotas, no rate that resets. Bringing in a new
+              customer pays the most; keeping them pays every month after.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 max-w-sm">
-            {AFFILIATE_PROGRAM.tiers.map((t) => (
-              <TierCard key={t.name} tier={t} highlight />
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+            <TierCard
+              badge="New customer"
+              name="First order"
+              pct={NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}
+              line="of the first order a referred customer places"
+              footTop="Paid once"
+              foot="Per new customer"
+              highlight
+            />
+            <TierCard
+              badge="Same customer"
+              name="Every order after"
+              pct={NEW_AFFILIATE_PLAN.repeatRateBp / 100}
+              line="of every reorder that customer ever places"
+              footTop="Paid for life"
+              foot="Every reorder · forever"
+              highlight={false}
+            />
           </div>
         </div>
       </section>
@@ -295,15 +314,15 @@ export default function AffiliateLandingPage() {
           <div className="space-y-3">
             <Faq
               q="Is this MLM or a pyramid scheme?"
-              a="No. No downline, no recruitment quota, no buy-in — ever. You earn a flat 20% on real orders the people you refer actually place. That's the whole program."
+              a={`No. No downline, no recruitment quota, no buy-in — ever. You earn ${NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}% on a referred customer's first order and ${NEW_AFFILIATE_PLAN.repeatRateBp / 100}% on every order after, on real orders the people you refer actually place. That's the whole program.`}
             />
             <Faq
               q="Do I need a big following?"
-              a="No. 500 followers or 500,000 — the rate is the same 20%. Refer one person and you earn on their orders for as long as they keep buying."
+              a={`No. 500 followers or 500,000 — the rates are the same: ${NEW_AFFILIATE_PLAN.firstOrderRateBp / 100}% on a first order, ${NEW_AFFILIATE_PLAN.repeatRateBp / 100}% after. Refer one person and you earn on their orders for as long as they keep buying.`}
             />
             <Faq
               q="When and how do I get paid?"
-              a="Monthly, by bank direct deposit through Stripe, once you clear a $50 minimum. Each commission clears a 30-day refund window first, then it's payable."
+              a={`Monthly, by bank direct deposit through Stripe, once you clear a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum. Each commission clears a 30-day refund window first, then it's payable.`}
             />
             <Faq
               q="What am I allowed to say?"
@@ -502,10 +521,20 @@ function Faq({ q, a }: { q: string; a: string }) {
 }
 
 function TierCard({
-  tier,
+  badge,
+  name,
+  pct,
+  line,
+  footTop,
+  foot,
   highlight,
 }: {
-  tier: { name: string; commissionPct: number; minOrders: number; maxOrders: number | null };
+  badge: string;
+  name: string;
+  pct: number;
+  line: string;
+  footTop: string;
+  foot: string;
   highlight: boolean;
 }) {
   return (
@@ -516,29 +545,27 @@ function TierCard({
           : 'border border-cobalt/15'
       }`}
     >
-      {highlight && (
-        <span className="absolute -top-3 left-6 bg-cobalt text-white text-[9px] font-bold tracking-[0.22em] uppercase px-2.5 py-1 rounded">
-          Every affiliate
-        </span>
-      )}
+      <span className={`absolute -top-3 left-6 text-[9px] font-bold tracking-[0.22em] uppercase px-2.5 py-1 rounded ${highlight ? 'bg-cobalt text-white' : 'bg-ink text-white'}`}>
+        {badge}
+      </span>
       <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
-        {tier.name}
+        {name}
       </p>
       <p
         className="font-display font-black text-ink tracking-[-0.04em] leading-none mb-2"
         style={{ fontSize: 'clamp(48px, 7vw, 72px)' }}
       >
-        {tier.commissionPct}<span className="text-cobalt-soft">%</span>
+        {pct}<span className="text-cobalt-soft">%</span>
       </p>
       <p className="text-[13px] text-ink-soft leading-tight mb-4">
-        commission on every order
+        {line}
       </p>
       <div className="pt-4 border-t border-cobalt/10">
         <p className="text-[11px] tracking-[0.14em] uppercase text-ink-muted font-bold">
-          From day one
+          {footTop}
         </p>
         <p className="font-display text-base lg:text-lg font-extrabold text-ink mt-1">
-          Every order · forever
+          {foot}
         </p>
       </div>
     </div>

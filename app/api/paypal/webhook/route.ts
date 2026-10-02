@@ -5,6 +5,7 @@ import { tierForOrderCount } from '@/lib/affiliate';
 import { createOrderFromPayPal, issueOrderConfirmationEmail } from '@/lib/orders';
 import { sendMetaPurchase } from '@/lib/meta-capi';
 import { notifyAffiliateOfSale } from '@/lib/affiliate-sale-email';
+import { commissionRateBpFor } from '@/lib/affiliate-plan';
 
 export const runtime = 'nodejs';
 
@@ -239,16 +240,11 @@ async function handleCaptureCompleted(event: any) {
   })();
   if (orderTotalCents <= 0) return;
 
-  // Tier from trailing-30-day count
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const trailing30 = await prisma.orderCommission.count({
-    where: {
-      affiliateId: affiliate.id,
-      occurredAt: { gte: since },
-      status: { not: 'CLAWED_BACK' },
-    },
-  });
-  const { rateBp } = tierForOrderCount(trailing30);
+  // Rate per the credited affiliate's plan: 40% first order / 15% after for
+  // affiliates who joined on/after 2026-10-02, flat 20% for the earlier
+  // roster (lib/affiliate-plan). totalOrders === 0 → first order.
+  const isFirstOrder = link.totalOrders === 0;
+  const rateBp = await commissionRateBpFor(affiliate.id, { isFirstOrder });
   const commissionCents = isSelfPurchase
     ? 0
     : Math.floor((orderTotalCents * rateBp) / 10_000);
@@ -285,7 +281,7 @@ async function handleCaptureCompleted(event: any) {
 
   // Momentum email — non-blocking; skip $0 self-purchase rows.
   if (commissionCents > 0) {
-    void notifyAffiliateOfSale(affiliate.id, { commissionCents, orderTotalCents, rateBp }).catch(() => {});
+    void notifyAffiliateOfSale(affiliate.id, { commissionCents, orderTotalCents, rateBp, isFirstOrder }).catch(() => {});
   }
 }
 

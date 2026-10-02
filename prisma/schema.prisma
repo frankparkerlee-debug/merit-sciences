@@ -136,6 +136,14 @@ model Affiliate {
   discountCode          String          @unique
   // Lifecycle. Open sign-up: ACTIVE by default; SUSPENDED for fraud/TOS.
   status                AffiliateStatus @default(ACTIVE)
+  // Commission plan (basis points). Affiliates who joined on or after
+  // 2026-10-02 are created with 4000 / 1500: 40% of a referred customer's
+  // FIRST order, 15% of every order that customer places after it. Both
+  // NULL = legacy flat program rate (AFFILIATE_PROGRAM.tiers, 20%) for the
+  // roster that predates the change; they keep their terms. Columns added
+  // in prod via Supabase SQL on 2026-10-02 (the pooler cannot run DDL).
+  firstOrderRateBp      Int?
+  repeatRateBp          Int?
   // Payout-details nudge sequence state: how many "add your payout
   // details" emails this affiliate has received, and when the last one
   // went. Reset both to re-enter the sequence. Columns exist in prod

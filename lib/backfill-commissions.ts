@@ -1,6 +1,6 @@
 import 'server-only';
 import { prisma } from './db';
-import { tierForOrderCount } from './affiliate';
+import { commissionRateBpFor, isFirstOrderForLink } from './affiliate-plan';
 
 export type BackfillResult = {
   scanned: number;
@@ -80,21 +80,20 @@ export async function backfillMissingCommissions(): Promise<BackfillResult> {
     const email = o.customerEmail.toLowerCase();
     const isSelf = email === aff.email.toLowerCase();
 
-    // Trailing-30-day tier as of the order's date.
-    const since = new Date(o.createdAt.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const trailing30 = await prisma.orderCommission.count({
-      where: { affiliateId, occurredAt: { gte: since, lte: o.createdAt }, status: { not: 'CLAWED_BACK' } },
-    });
-    const { rateBp } = tierForOrderCount(trailing30);
-    const commissionCents = isSelf ? 0 : Math.floor((base * rateBp) / 10_000);
-
-    // FK: find-or-create the customer→affiliate link.
+    // FK: find-or-create the customer→affiliate link (needed first, because
+    // the rate depends on whether this customer had been commissioned before).
     let link = await prisma.customerAffiliateLink.findUnique({ where: { customerEmail: email } });
     if (!link) {
       link = await prisma.customerAffiliateLink.create({
         data: { customerEmail: email, paypalPayerId: o.paypalPayerId, affiliateId },
       });
     }
+
+    // Rate as of the order's date under the affiliate's plan (first-order vs
+    // repeat for the 2026-10-02 plan, flat legacy tier otherwise).
+    const isFirstOrder = await isFirstOrderForLink(link.id, o.createdAt);
+    const rateBp = await commissionRateBpFor(affiliateId, { isFirstOrder, asOf: o.createdAt });
+    const commissionCents = isSelf ? 0 : Math.floor((base * rateBp) / 10_000);
 
     try {
       await prisma.$transaction([

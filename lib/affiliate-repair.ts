@@ -1,5 +1,5 @@
 import { prisma } from './db';
-import { tierForOrderCount } from './affiliate';
+import { commissionRateBpFor, isFirstOrderForLink } from './affiliate-plan';
 import { computeGrossProfitCommission, referringAffiliateFor } from './practitioner-commission';
 import { detectSelfPurchase } from './self-purchase';
 
@@ -71,6 +71,7 @@ export async function recordCommissionFromOrder(
       discountCents: true,
       affiliateId: true,
       practitionerApplicationId: true,
+      createdAt: true, // first-order vs repeat is judged as of the order's date
       lines: { select: { handle: true, bundleLabel: true, unitCents: true, qty: true } },
     },
   });
@@ -157,11 +158,14 @@ export async function recordCommissionFromOrder(
   const orderTotalCents = Number(order.subtotalCents) - Number(order.discountCents);
   if (!(orderTotalCents > 0)) return { ...base, reason: 'zero-base' };
 
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const trailing30 = await prisma.orderCommission.count({
-    where: { affiliateId: creditedAffiliateId, occurredAt: { gte: since }, status: { not: 'CLAWED_BACK' } },
-  });
-  let { rateBp } = tierForOrderCount(trailing30);
+  /* Same rate rule as the live recorder (lib/affiliate-plan): the credited
+     affiliate's plan decides first-order vs repeat rate, or the legacy flat
+     tier. "First" is judged from what was already commissioned for this
+     customer before this order's date, so a repair books what the live path
+     would have booked at the time. */
+  const orderAt: Date = order.createdAt;
+  const isFirstOrder = await isFirstOrderForLink(link.id, orderAt);
+  let rateBp = await commissionRateBpFor(creditedAffiliateId, { isFirstOrder, asOf: orderAt });
   let commissionCents = isSelfPurchase ? 0 : Math.floor((orderTotalCents * rateBp) / 10_000);
 
   /* Same basis rule as the live recorder: when the credited affiliate is the

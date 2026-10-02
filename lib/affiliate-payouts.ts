@@ -36,7 +36,7 @@ import { sendPayoutPaidEmail } from '@/lib/affiliate-payout-paid-email';
 // chargeback period so we don't pay out money we may claw back.
 export const COMMISSION_HOLD_DAYS = 30;
 
-/** Payout minimum. Normally $50 (AFFILIATE_PROGRAM.payoutMinUsd) — the
+/** Payout minimum. Normally $75 since 2026-10-02 (AFFILIATE_PROGRAM.payoutMinUsd) — the
  *  threshold that keeps transfer fees from eating small balances. Overridable
  *  via PAYOUT_MIN_USD so a test run can pay a $1 balance without a code
  *  change, and so a promo period can lower it temporarily. Unset the env var

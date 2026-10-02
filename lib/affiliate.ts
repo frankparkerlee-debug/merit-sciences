@@ -75,23 +75,68 @@ export const AFFILIATE_PROGRAM = {
   buyerDiscountPct: 10,
   // Discount the affiliate gets on their own purchases
   selfDiscountPct: 15,
-  // Tier thresholds (orders in trailing 30 days)
+  // LEGACY plan: flat 20% for affiliates who joined before 2026-10-02
+  // (locked 2026-07-14). Still the rate for every Affiliate row whose plan
+  // columns are NULL. New signups get NEW_AFFILIATE_PLAN below.
   tiers: [
-    // Flat 20% for every affiliate — no tiers, no thresholds (locked 2026-07-14).
     { name: 'Partner', commissionPct: 20, minOrders: 0, maxOrders: null as number | null },
   ],
+  // The referral cookie follows the visitor for 30 days (the live value is
+  // COOKIE_MAX_AGE_SECONDS in middleware.ts; keep the two in step). The only
+  // thing that overrides affiliate attribution is Merit's own paid traffic:
+  // a sale on the ad-funnel code (AD_FUNNEL_CODES in lib/welcome-offer.ts)
+  // pays no commission.
   cookieWindowDays: 30,
-  payoutMinUsd: 50,
+  // Payout minimum. $75 since 2026-10-02 (Parker), was $50. The env var
+  // PAYOUT_MIN_USD on Render overrides this at runtime (lib/affiliate-payouts).
+  payoutMinUsd: 75,
 } as const;
 
 /**
- * Given the affiliate's order count in the trailing 30 days, return
- * the tier they belong in + the commission rate in basis points.
- *
- * Tier is calculated AT THE MOMENT OF EACH ORDER — so the 26th order
- * of the month is the first to pay at Partner rate, the 76th at Elite.
- * Stored as basis points (15% = 1500) on OrderCommission so the rate
- * paid is permanently locked in even if program rates change later.
+ * The offer for affiliates who join on or after 2026-10-02 (Parker):
+ * 40% of a referred customer's FIRST order, 15% of every order that
+ * customer places after it, for life. Buyer discount unchanged at 10%.
+ * Written onto the Affiliate row at creation (signup route, admin invite)
+ * so the roster that predates the change keeps its flat 20%.
+ */
+export const NEW_AFFILIATE_PLAN = {
+  firstOrderRateBp: 4000,
+  repeatRateBp: 1500,
+} as const;
+export const NEW_AFFILIATE_PLAN_SINCE = '2026-10-02';
+
+export type AffiliatePlan = {
+  firstOrderRateBp: number | null;
+  repeatRateBp: number | null;
+};
+
+/** True when the row carries the first/repeat plan (both columns set). */
+export function hasSplitPlan(plan: AffiliatePlan | null | undefined): plan is { firstOrderRateBp: number; repeatRateBp: number } {
+  return !!plan && plan.firstOrderRateBp != null && plan.repeatRateBp != null;
+}
+
+/** Rate in basis points for an order under the split plan, or null when
+ *  the affiliate is on the legacy flat program (use tierForOrderCount). */
+export function planRateBp(plan: AffiliatePlan | null | undefined, isFirstOrder: boolean): number | null {
+  if (!hasSplitPlan(plan)) return null;
+  return isFirstOrder ? plan.firstOrderRateBp : plan.repeatRateBp;
+}
+
+/** Human label for a plan, for dashboards and emails. */
+export function describePlan(plan: AffiliatePlan | null | undefined): string {
+  if (hasSplitPlan(plan)) {
+    return `${plan.firstOrderRateBp / 100}% on a customer's first order · ${plan.repeatRateBp / 100}% on every order after`;
+  }
+  const t = AFFILIATE_PROGRAM.tiers[0];
+  return `${t.commissionPct}% flat on every order`;
+}
+
+/**
+ * LEGACY rate: given the affiliate's order count in the trailing 30 days,
+ * return the tier + commission rate in basis points. With the single
+ * "Partner" tier this always returns 20%. Only used for affiliates whose
+ * plan columns are NULL. Stored as basis points on OrderCommission so the
+ * rate paid is permanently locked in even if program rates change later.
  */
 export function tierForOrderCount(count: number): {
   tierName: string;

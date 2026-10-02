@@ -4,6 +4,7 @@ import { createOrderFromPayPal, issueOrderConfirmationEmail } from './orders';
 import { notifyOpsOfOrder } from './ops-notify';
 import { sendMetaPurchase } from './meta-capi';
 import { notifyAffiliateOfSale } from './affiliate-sale-email';
+import { commissionRateBpFor } from './affiliate-plan';
 import { computeGrossProfitCommission, referringAffiliateFor } from './practitioner-commission';
 import { detectSelfPurchase } from './self-purchase';
 
@@ -212,11 +213,13 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
   })();
   if (orderTotalCents <= 0) return 0;
 
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const trailing30 = await prisma.orderCommission.count({
-    where: { affiliateId: affiliate.id, occurredAt: { gte: since }, status: { not: 'CLAWED_BACK' } },
-  });
-  const { rateBp: tierRateBp } = tierForOrderCount(trailing30);
+  /* Rate per the credited affiliate's plan (lib/affiliate-plan): affiliates
+     who joined on/after 2026-10-02 earn 40% on a customer's first order and
+     15% after; the earlier roster keeps the flat 20%. `link.totalOrders` is
+     the count of orders already commissioned for this customer, so 0 means
+     this is the first. */
+  const isFirstOrder = link.totalOrders === 0;
+  const tierRateBp = await commissionRateBpFor(affiliate.id, { isFirstOrder });
 
   /* Practitioner referrals earn on GROSS PROFIT, not revenue.
      A practice buys at account pricing and reorders steadily, so a share of
@@ -297,7 +300,7 @@ async function recordAffiliateCommission(paypalOrder: any): Promise<number> {
 
   // Momentum email — non-blocking; skip $0 self-purchase rows.
   if (commissionCents > 0) {
-    void notifyAffiliateOfSale(affiliate.id, { commissionCents, orderTotalCents, rateBp }).catch(() => {});
+    void notifyAffiliateOfSale(affiliate.id, { commissionCents, orderTotalCents, rateBp, isFirstOrder }).catch(() => {});
   }
   return commissionCents;
 }

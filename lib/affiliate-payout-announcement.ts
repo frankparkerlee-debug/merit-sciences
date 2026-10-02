@@ -2,6 +2,7 @@ import 'server-only';
 import { prisma } from './db';
 import { sendEmail } from './email';
 import { wrapMarketingEmail, h, p, cta, quiet, SITE } from './marketing-email-shell';
+import { AFFILIATE_PROGRAM } from './affiliate';
 
 /* ─────────────────────────────────────────────────────────────────────────
    PAYOUT SETUP ANNOUNCEMENT — the one-time "here is how you get paid now"
@@ -98,7 +99,7 @@ export function buildPayoutAnnouncement(args: {
     ),
 
     quiet(
-      `Payouts run after a 30-day hold on each sale (covering the refund window) with a $50 ` +
+      `Payouts run after a 30-day hold on each sale (covering the refund window) with a $${AFFILIATE_PROGRAM.payoutMinUsd} ` +
         `minimum balance. Questions about your account or your balance — just reply to this email.`,
     ),
   ].join('');

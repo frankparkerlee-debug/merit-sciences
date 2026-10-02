@@ -1,6 +1,7 @@
 import 'server-only';
 import { sendEmail } from './email';
 import { wrapMarketingEmail, h, p, cta, quiet, SITE } from './marketing-email-shell';
+import { AFFILIATE_PROGRAM } from './affiliate';
 
 /**
  * "You've been paid" — sent the moment a payout transfer succeeds, from every
@@ -35,7 +36,7 @@ export async function sendPayoutPaidEmail(args: {
     ),
     cta('View your dashboard', `${SITE}/affiliate/dashboard`),
     quiet(
-      `Payouts run after a 30-day hold on each sale with a $50 minimum balance. ` +
+      `Payouts run after a 30-day hold on each sale with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum balance. ` +
         `Questions about this payout — just reply to this email.`,
     ),
   ].join('');

@@ -277,7 +277,7 @@ function SuccessState({ data }: { data: SuccessResult }) {
         <p className="text-[11px] text-ink-muted leading-relaxed">
           Connect direct deposit in your dashboard settings so we can pay you.
           Commissions clear a 30-day refund window, then pay out by bank
-          transfer once you reach the ${'$'}50 minimum.
+          transfer once you reach the ${'$'}{AFFILIATE_PROGRAM.payoutMinUsd} minimum.
         </p>
       </div>
     </div>

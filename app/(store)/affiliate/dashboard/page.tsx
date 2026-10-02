@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentAffiliate } from '@/lib/affiliate-session';
 import { prisma } from '@/lib/db';
-import { tierForOrderCount, AFFILIATE_PROGRAM } from '@/lib/affiliate';
+import { tierForOrderCount, AFFILIATE_PROGRAM, hasSplitPlan } from '@/lib/affiliate';
 
 export const metadata = {
   title: 'Dashboard — Merit Sciences Affiliate',
@@ -106,7 +106,14 @@ export default async function AffiliateDashboardPage() {
     0,
   );
 
-  // Current tier — based on trailing-30-day order count
+  // Commission plan. Affiliates who joined on/after 2026-10-02 carry the
+  // split plan (first order / repeat) on their row; the earlier roster is on
+  // the legacy flat tier, computed from the trailing-30-day order count.
+  const planRow = await prisma.affiliate.findUnique({
+    where: { id: affiliate.id },
+    select: { firstOrderRateBp: true, repeatRateBp: true },
+  });
+  const split = hasSplitPlan(planRow) ? planRow : null;
   const { tierName, rateBp } = tierForOrderCount(last30OrderCount);
   const nextTier = AFFILIATE_PROGRAM.tiers.find((t) => t.minOrders > last30OrderCount);
   const ordersToNextTier = nextTier ? nextTier.minOrders - last30OrderCount : 0;
@@ -170,16 +177,30 @@ export default async function AffiliateDashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
             <div className="md:col-span-2">
               <p className="text-[10px] tracking-[0.22em] uppercase opacity-70 font-bold mb-2">
-                — Current tier
+                — Your commission
               </p>
-              <h2 className="font-display font-black tracking-[-0.025em] text-4xl sm:text-5xl mb-3">
-                {tierName} <span className="opacity-50 font-normal">·</span> {fmtPct(rateBp)}
-              </h2>
-              <p className="text-sm opacity-80 leading-relaxed">
-                {nextTier
-                  ? `${ordersToNextTier} more order${ordersToNextTier === 1 ? '' : 's'} in the next 30 days to reach ${nextTier.name} (${nextTier.commissionPct}%).`
-                  : `Top tier. You're earning the maximum ${fmtPct(rateBp)} on every commissionable order.`}
-              </p>
+              {split ? (
+                <>
+                  <h2 className="font-display font-black tracking-[-0.025em] text-4xl sm:text-5xl mb-3">
+                    {fmtPct(split.firstOrderRateBp)} <span className="opacity-50 font-normal">·</span> {fmtPct(split.repeatRateBp)}
+                  </h2>
+                  <p className="text-sm opacity-80 leading-relaxed">
+                    {fmtPct(split.firstOrderRateBp)} on a new customer&apos;s first order, {fmtPct(split.repeatRateBp)} on
+                    every order they place after it, for as long as they keep buying.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-display font-black tracking-[-0.025em] text-4xl sm:text-5xl mb-3">
+                    {tierName} <span className="opacity-50 font-normal">·</span> {fmtPct(rateBp)}
+                  </h2>
+                  <p className="text-sm opacity-80 leading-relaxed">
+                    {nextTier
+                      ? `${ordersToNextTier} more order${ordersToNextTier === 1 ? '' : 's'} in the next 30 days to reach ${nextTier.name} (${nextTier.commissionPct}%).`
+                      : `Your rate is ${fmtPct(rateBp)} on every commissionable order, first sale and every reorder.`}
+                  </p>
+                </>
+              )}
             </div>
             <div className="text-right md:text-right">
               <p className="text-[10px] tracking-[0.22em] uppercase opacity-70 font-bold mb-2">
