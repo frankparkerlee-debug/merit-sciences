@@ -37,7 +37,9 @@ export function buildChromatogram(purity: number, seed: string) {
     peaks.push({ mu, sigma: 0.008 + rnd() * 0.007, amp: (0.015 + rnd() * 0.05) * (1 + impurity * 25) });
   }
 
-  const N = 220;
+  // 120 samples (was 220): still smooth at 440 px wide, and the path string
+  // is what made /coa a 1.6 MB page when it carried 150 of these twice over.
+  const N = 120;
   const ys: number[] = [];
   let maxY = 1e-6;
   for (let i = 0; i <= N; i++) {
@@ -66,8 +68,11 @@ export function Chromatogram({ purity, seed }: { purity: number; seed: string })
       aria-label={`Representative HPLC chromatogram, ${c.purity}% main peak`}
     >
       <line x1={c.padL} y1={c.baseY} x2={c.padL + c.plotW} y2={c.baseY} stroke="currentColor" strokeOpacity="0.18" />
-      <path d={c.area} fill="currentColor" fillOpacity="0.08" />
-      <path d={c.line} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+      {/* One path carries both the fill and the stroke. Filling an open path
+          closes it from the last point back to the first, and both ends of
+          the trace sit on the baseline, so this draws the same shaded area
+          the old second path did without repeating ~1.4 KB of coordinates. */}
+      <path d={c.line} fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
       <line x1={c.mainX} y1={c.mainTopY} x2={c.mainX} y2={c.baseY} stroke="currentColor" strokeOpacity="0.22" strokeDasharray="2 2" />
       <text x={c.mainX} y={c.mainTopY - 4} textAnchor="middle" fill="currentColor" fontSize="11" fontWeight="700">
         {c.purity}%

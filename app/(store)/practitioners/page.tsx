@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { prisma } from '@/lib/db';
+import { getLatestLot } from '@/lib/coa-cache';
 import { PractitionerApplicationForm } from './PractitionerApplicationForm';
 import { LeadCaptureForm } from './LeadCaptureForm';
 
@@ -91,16 +91,7 @@ export const metadata = {
  *  the DB is unreachable. */
 async function latestLot() {
   try {
-    return await prisma.coa.findFirst({
-      where: {
-        NOT: [
-          { compound: { contains: 'water', mode: 'insensitive' } },
-          { compound: { contains: 'bacteriostatic', mode: 'insensitive' } },
-        ],
-      },
-      orderBy: { createdAt: 'desc' },
-      select: { lotId: true, compound: true, purity: true, testedDate: true },
-    });
+    return await getLatestLot(); // cached five minutes, see lib/coa-cache
   } catch {
     return null;
   }

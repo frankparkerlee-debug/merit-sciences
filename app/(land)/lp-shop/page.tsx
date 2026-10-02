@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { prisma } from '@/lib/db';
+import { listProducts } from '@/lib/catalog';
+import { countCoas, listRecentCoas } from '@/lib/coa-cache';
 import { FREE_SHIPPING_CENTS_THRESHOLD } from '@/lib/checkout-pricing';
 import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
 import { ADS_RESTRICTED_HANDLES } from '@/lib/ads-restricted';
@@ -84,20 +85,16 @@ async function live(): Promise<Live> {
     coa: { number: 'COA-2026-5HUDMG', purity: '99.79', tested: '2026-08-01', identity: 'Confirmed' },
   };
   try {
+    // All three reads come from Next's data cache (lib/catalog, lib/coa-cache),
+    // so a paid click no longer waits on three cross-region queries.
     const [products, certs, coas] = await Promise.all([
-      prisma.product.findMany({
-        where: { status: 'ACTIVE', handle: { not: 'bacteriostatic-water' } },
-        select: { handle: true, priceCents: true },
-      }),
-      prisma.coa.count({ where: { retiredAt: null } }),
-      prisma.coa.findMany({
-        where: { retiredAt: null },
-        orderBy: { createdAt: 'desc' },
-        take: 12,
-        select: { coaNumber: true, purity: true, testedDate: true, identity: true },
-      }),
+      listProducts({ status: 'active' }),
+      countCoas(true),
+      listRecentCoas(12),
     ]);
-    const shown = products.filter((p) => !ADS_RESTRICTED_HANDLES.has(p.handle) && p.priceCents > 0);
+    const shown = products.filter(
+      (p) => p.handle !== 'bacteriostatic-water' && !ADS_RESTRICTED_HANDLES.has(p.handle) && p.priceCents > 0,
+    );
     // Purity is stored as the laboratory prints it ("99.79%"). One row in the
     // table is corrupted (0.85), so the window below skips it rather than
     // putting a nonsense figure on the page.

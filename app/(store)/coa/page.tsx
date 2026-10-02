@@ -1,7 +1,13 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
+import { listPublicCoas } from '@/lib/coa-cache';
 import { JsonLd } from '@/components/JsonLd';
 import { Chromatogram } from './Chromatogram';
+
+/* 60 cards per page. The page used to render all ~150 published
+   certificates at once, each with a 5 KB inline chromatogram serialized
+   twice (markup plus the RSC payload), which made this a 1.6 MB document. */
+const PAGE_SIZE = 60;
 
 export const dynamic = 'force-dynamic';
 
@@ -99,43 +105,46 @@ function parsePurity(s: string): number {
   return isFinite(n) ? n : 99;
 }
 
-export default async function LabResultsPage({ searchParams }: { searchParams: { q?: string } }) {
+export default async function LabResultsPage({ searchParams }: { searchParams: { q?: string; page?: string } }) {
   const q = (searchParams.q ?? '').trim();
-  let coas: CoaRow[] = [];
+  const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1);
+  /* Retired lots are excluded from the public index. These are legacy
+     third-party certificates whose material is covered by newer
+     Merit-branded testing (see `supersededBy`). They are NOT deleted —
+     their lot pages still resolve so a customer holding an older vial can
+     still verify it; they simply no longer represent current release
+     testing in the browsable index or the sitemap. */
+  let all: CoaRow[] = [];
   try {
-    coas = await prisma.coa.findMany({
-      /* Retired lots are excluded from the public index. These are legacy
-         third-party certificates whose material is covered by newer
-         Merit-branded testing (see `supersededBy`). They are NOT deleted —
-         their lot pages still resolve so a customer holding an older vial can
-         still verify it; they simply no longer represent current release
-         testing in the browsable index or the sitemap. */
-      where: {
-        retiredAt: null,
-        ...(q
-          ? {
-              OR: [
-                { compound: { contains: q, mode: 'insensitive' } },
-                { lotId: { contains: q, mode: 'insensitive' } },
-                { coaNumber: { contains: q, mode: 'insensitive' } },
-                { identity: { contains: q, mode: 'insensitive' } },
-              ],
-            }
-          : {}),
-      },
-      // Lots with a published certificate lead — they're the strongest proof.
-      orderBy: [{ createdAt: 'desc' }, { compound: 'asc' }],
-      take: 500,
-      select: {
-        id: true, compound: true, lotId: true, coaNumber: true, purity: true,
-        identity: true, appearance: true, testedDate: true, fileUrl: true,
-      },
-    });
+    all = q
+      ? // A search is rare and specific: run it live.
+        await prisma.coa.findMany({
+          where: {
+            retiredAt: null,
+            OR: [
+              { compound: { contains: q, mode: 'insensitive' } },
+              { lotId: { contains: q, mode: 'insensitive' } },
+              { coaNumber: { contains: q, mode: 'insensitive' } },
+              { identity: { contains: q, mode: 'insensitive' } },
+            ],
+          },
+          orderBy: [{ createdAt: 'desc' }, { compound: 'asc' }],
+          take: 500,
+          select: {
+            id: true, compound: true, lotId: true, coaNumber: true, purity: true,
+            identity: true, appearance: true, testedDate: true, fileUrl: true,
+          },
+        })
+      : // The index itself is served from the data cache (lib/coa-cache).
+        await listPublicCoas();
   } catch {
-    coas = [];
+    all = [];
   }
 
-  const compounds = Array.from(new Set(coas.map((c) => c.compound))).sort();
+  const total = all.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const coas = q ? all : all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const compounds = Array.from(new Set(all.map((c) => c.compound))).sort();
 
   /* ── Structured data ────────────────────────────────────────────────────
      Three graphs, each doing a distinct job:
@@ -151,14 +160,14 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
      Only rendered when there are lots to describe. Emitting an empty
      ItemList would assert "Merit publishes zero certificates", which is
      worse than emitting nothing at all. */
-  const itemList = coas.slice(0, 100).map((c, i) => ({
+  const itemList = coas.map((c, i) => ({
     '@type': 'ListItem',
-    position: i + 1,
+    position: (page - 1) * PAGE_SIZE + i + 1,
     item: {
       '@type': 'Dataset',
       '@id': `${SITE}/coa/${encodeURIComponent(c.coaNumber ?? c.lotId)}#dataset`,
-      name: `${c.compound} — lot ${c.lotId} certificate of analysis`,
-      description: `Independent laboratory analysis of ${c.compound} lot ${c.lotId}: ${c.purity} purity by HPLC${c.identity ? `, identity confirmed (${c.identity})` : ''}.`,
+      name: `${c.compound} — batch ${c.coaNumber ?? c.lotId} certificate of analysis`,
+      description: `Independent laboratory analysis of a ${c.compound} batch (${c.coaNumber ?? c.lotId}): ${c.purity} purity by HPLC${c.identity ? `, identity confirmed (${c.identity})` : ''}.`,
       url: `${SITE}/coa/${encodeURIComponent(c.coaNumber ?? c.lotId)}`,
       identifier: c.coaNumber ?? c.lotId,
       ...(isoDate(c.testedDate) ? { datePublished: isoDate(c.testedDate) } : {}),
@@ -244,8 +253,8 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           <p className="mt-7 max-w-[68ch] text-[15px] lg:text-[16px] leading-[1.65] text-ink-soft">
             Every Merit batch is assayed by an independent laboratory before it is listed — purity by HPLC,
             identity against a reference standard. The certificate is published here before the batch
-            ships, and every vial label and box carries a QR code that opens it. No account, no
-            request form.
+            ships, and every vial label and box carries a QR code that opens this library. No account,
+            no request form.
           </p>
 
           <form method="GET" className="mt-8 flex flex-col sm:flex-row max-w-[520px]">
@@ -276,10 +285,11 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
               </Link>
             </p>
           )}
-          {!q && coas.length > 0 && (
+          {!q && total > 0 && (
             <p className="mt-4 font-mono text-[11px] tracking-[0.08em] uppercase text-ink-muted">
-              {coas.length} published {coas.length === 1 ? 'certificate' : 'certificates'} ·{' '}
+              {total} published {total === 1 ? 'certificate' : 'certificates'} ·{' '}
               {compounds.length} {compounds.length === 1 ? 'compound' : 'compounds'}
+              {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}
             </p>
           )}
         </div>
@@ -340,7 +350,10 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                   )}
 
                   <dl className="mt-4 space-y-2">
-                    <Row label="Lot">{c.lotId}</Row>
+                    {/* Library reference, not a number printed on any vial.
+                        Merit tests and lists batches; it does not run numbered
+                        lots (Parker, 2026-09-13 and 2026-10-02). */}
+                    <Row label="Batch ref">{c.lotId}</Row>
                     {c.coaNumber && <Row label="COA #">{c.coaNumber}</Row>}
                     {c.identity && <Row label="Identity">{c.identity}</Row>}
                     {c.appearance && <Row label="Appearance">{c.appearance}</Row>}
@@ -377,6 +390,22 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
               );
             })}
           </div>
+        )}
+
+        {!q && totalPages > 1 && (
+          <nav aria-label="Certificate pages" className="mt-8 flex items-center justify-between font-mono text-[11px] tracking-[0.08em] uppercase">
+            {page > 1 ? (
+              <Link href={page === 2 ? '/coa' : `/coa?page=${page - 1}`} className="text-cobalt hover:underline">
+                ← Newer
+              </Link>
+            ) : <span />}
+            <span className="text-ink-muted">Page {page} of {totalPages}</span>
+            {page < totalPages ? (
+              <Link href={`/coa?page=${page + 1}`} className="text-cobalt hover:underline">
+                Older →
+              </Link>
+            ) : <span />}
+          </nav>
         )}
       </section>
 

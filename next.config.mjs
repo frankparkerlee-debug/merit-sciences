@@ -13,6 +13,10 @@ const nextConfig = {
     // SVG block is safe.
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Optimized images were served with max-age=60, so browsers and the CDN
+    // re-fetched every brand and product image after a minute. The files are
+    // immutable in practice (a changed image gets a new path); a day is safe.
+    minimumCacheTTL: 86_400,
   },
   async headers() {
     return [

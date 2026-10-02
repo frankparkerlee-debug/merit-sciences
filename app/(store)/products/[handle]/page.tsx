@@ -140,14 +140,24 @@ export default async function ProductPage({ params }: Props) {
     if (current && current !== params.handle) permanentRedirect(`/products/${current}`);
     return notFound();
   }
-  // Decorate with effective pricing — practitioner pricing replaces
-  // priceCents in-place, retail stays available on retailPriceCents for
-  // strikethrough comparison.
-  const product = await withPricing(raw);
+  // Everything below needs only `raw`, so it runs as one round of parallel
+  // work instead of the five sequential awaits this page used to make
+  // (pricing, referral, siblings, bac water, related products), each paying
+  // the cross-region trip to the database on its own.
+  //   withPricing: practitioner pricing replaces priceCents in-place, retail
+  //     stays available on retailPriceCents for strikethrough comparison.
+  //   getActiveReferral: surfaces the affiliate buyer discount as a
+  //     strikethrough when the visitor arrived via an active ?ref= link.
+  //   getSiblings: other Product rows sharing this compound, for the size
+  //     selector pills in the buybox ([] if this is the only size).
+  const [product, referral, siblings, bacWaterRow, allProducts] = await Promise.all([
+    withPricing(raw),
+    getActiveReferral(),
+    getSiblings(raw.compound, raw.handle),
+    getProduct('bacteriostatic-water'),
+    listProducts({ status: 'active' }),
+  ]);
   const isPractitionerPricing = product.isPractitionerPricing;
-  // Referral pricing: surface the affiliate buyer discount as a strikethrough
-  // when the visitor arrived via an active ?ref= link.
-  const referral = await getActiveReferral();
 
   const family = getFamily(product.handle);
   const pharmacistNote = PHARMACIST_NOTES[product.handle] ?? null;
@@ -197,11 +207,6 @@ export default async function ProductPage({ params }: Props) {
   const faqItems = [...compoundFaqs, ...FAQ_ITEMS];
   const faqSchema = faqJsonLd(faqItems);
 
-  // Sibling sizes — other Product rows sharing this compound. Drives the
-  // size selector pills in the buybox. Returns [] if this is the only
-  // size in the family.
-  const siblings = await getSiblings(product.compound, product.handle);
-
   /* Bacteriostatic water for the reconstitution add-on, resolved from the
      database rather than hardcoded in the client.
      The buybox used to add a line with handle 'bac-water' at a literal price.
@@ -211,7 +216,6 @@ export default async function ProductPage({ params }: Props) {
      (822de4a), every cart containing that line became unpurchasable.
      Sourcing the row here fixes the handle and the price-drift TODO together;
      it is the same thing the checkout cross-sell already does. */
-  const bacWaterRow = await getProduct('bacteriostatic-water');
   const bacWater =
     bacWaterRow && bacWaterRow.handle !== product.handle
       ? {
@@ -229,7 +233,6 @@ export default async function ProductPage({ params }: Props) {
   ) ?? null;
 
   // Related products — same family, exclude self
-  const allProducts = await listProducts({ status: 'active' });
   const related = family
     ? allProducts
         .filter((p) => p.handle !== product.handle && FAMILY_BY_HANDLE[p.handle] === family)

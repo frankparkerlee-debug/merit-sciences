@@ -10,8 +10,26 @@
  */
 
 import 'server-only';
+import { cookies } from 'next/headers';
 import { createServerSupabase } from '@/lib/supabase-server';
 import { prisma } from '@/lib/db';
+
+/** Supabase SSR stores the session in cookies named `sb-<ref>-auth-token`
+ *  (chunked as `.0`, `.1` when large). With none of those present there is
+ *  no session to resolve, and we can skip the Supabase Auth network call
+ *  and the practitioner lookup entirely. That is every anonymous visitor on
+ *  the catalog and every product page, which used to pay both round-trips
+ *  before rendering a price. */
+function hasSupabaseAuthCookie(): boolean {
+  try {
+    return cookies()
+      .getAll()
+      .some((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'));
+  } catch {
+    // Outside a request scope (build-time render): behave as anonymous.
+    return false;
+  }
+}
 
 export type PractitionerSession = {
   email: string;
@@ -35,6 +53,7 @@ export type PractitionerSession = {
 };
 
 export async function getPractitionerSession(): Promise<PractitionerSession | null> {
+  if (!hasSupabaseAuthCookie()) return null;
   const supabase = await createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return null;

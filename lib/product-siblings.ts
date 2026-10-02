@@ -1,5 +1,29 @@
 import 'server-only';
+import { unstable_cache } from 'next/cache';
 import { prisma } from './db';
+
+/* Same cache posture as lib/catalog.ts: product rows change rarely and are
+   identical for every visitor, so the sibling lookup (a case-insensitive
+   compound match, which no index can serve) runs at most once per compound
+   per five minutes. Admin product mutations revalidateTag('products'). */
+const cachedSiblingRows = unstable_cache(
+  async (compound: string) =>
+    prisma.product.findMany({
+      where: {
+        compound: { equals: compound, mode: 'insensitive' },
+        status: 'ACTIVE',
+      },
+      select: {
+        handle: true,
+        title: true,
+        vialSize: true,
+        priceCents: true,
+        stockQty: true,
+      },
+    }),
+  ['product-siblings'],
+  { revalidate: 300, tags: ['products'] },
+);
 
 /**
  * Sibling = a product that shares the same `compound` as the one being
@@ -29,19 +53,7 @@ export async function getSiblings(
 ): Promise<Sibling[]> {
   if (!compound) return [];
   try {
-    const rows = await prisma.product.findMany({
-      where: {
-        compound: { equals: compound, mode: 'insensitive' },
-        status: 'ACTIVE',
-      },
-      select: {
-        handle: true,
-        title: true,
-        vialSize: true,
-        priceCents: true,
-        stockQty: true,
-      },
-    });
+    const rows = await cachedSiblingRows(compound);
     // Need at least 2 sibling products for a picker to be useful
     if (rows.length <= 1) return [];
     return rows

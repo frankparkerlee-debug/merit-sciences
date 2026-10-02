@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProduct, listProducts, money } from '@/lib/catalog';
-import { prisma } from '@/lib/db';
+import { getLatestLot, countCoas } from '@/lib/coa-cache';
 
 // Force-dynamic until Supabase pooling is moved to transaction mode
 // (port 6543 + ?pgbouncer=true). With session mode capped at 15
@@ -110,16 +110,7 @@ function perMg(priceCents: number, vialSize: string): string | null {
  *  number to publish. Anything on a different assay stays out of this slot. */
 async function latestLot() {
   try {
-    return await prisma.coa.findFirst({
-      where: {
-        NOT: [
-          { compound: { contains: 'water', mode: 'insensitive' } },
-          { compound: { contains: 'bacteriostatic', mode: 'insensitive' } },
-        ],
-      },
-      orderBy: { createdAt: 'desc' },
-      select: { lotId: true, coaNumber: true, purity: true, compound: true, testedDate: true },
-    });
+    return await getLatestLot(); // cached five minutes, see lib/coa-cache
   } catch {
     return null; // DB blip — the panel degrades to the verify form, which still works.
   }
@@ -130,7 +121,7 @@ export default async function HomePage() {
     Promise.all(FEATURED_HANDLES.map((f) => getProduct(f.handle).catch(() => null))),
     listProducts({ status: 'active' }).catch(() => []),
     latestLot(),
-    prisma.coa.count().catch(() => 0),
+    countCoas(false).catch(() => 0),
   ]);
 
   const featured = FEATURED_HANDLES.map((f, i) => {

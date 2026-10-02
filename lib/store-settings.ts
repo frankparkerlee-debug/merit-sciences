@@ -15,11 +15,13 @@ const TTL_MS = 60_000;
 export async function getStoreSettings(): Promise<StoreSettings> {
   if (cache && Date.now() < cache.expiresAt) return cache.data;
   try {
-    const row = await prisma.storeSettings.upsert({
-      where: { id: 1 },
-      create: { id: 1 },
-      update: {},
-    });
+    // Read first. The old code upserted on every cache miss, which made the
+    // store layout (every page) perform a WRITE round-trip to the database
+    // once a minute per instance. The row exists after first boot, so the
+    // create path is only taken once in the life of the database.
+    const row =
+      (await prisma.storeSettings.findUnique({ where: { id: 1 } })) ??
+      (await prisma.storeSettings.upsert({ where: { id: 1 }, create: { id: 1 }, update: {} }));
     const data: StoreSettings = { freeShippingThreshold: row.freeShippingThreshold };
     cache = { data, expiresAt: Date.now() + TTL_MS };
     return data;

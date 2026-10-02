@@ -1,6 +1,7 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { COAS_TAG } from '@/lib/coa-cache';
 import { pingIndexNow } from '@/lib/indexnow';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
@@ -66,6 +67,7 @@ export async function uploadCoa(_prev: CoaActionResult | null, fd: FormData): Pr
     });
     revalidatePath('/admin/coa');
     revalidatePath('/coa');
+    revalidateTag(COAS_TAG); // busts the cached library readers (lib/coa-cache)
     // Tell Bing (→ ChatGPT/Copilot) about the new lot page immediately.
     await pingIndexNow([
       'https://meritsciences.com/coa',
@@ -85,6 +87,7 @@ export async function deleteCoa(id: string): Promise<CoaActionResult> {
     await prisma.coa.delete({ where: { id } });
     revalidatePath('/admin/coa');
     revalidatePath('/coa');
+    revalidateTag(COAS_TAG);
     return { ok: true, message: 'Removed.' };
   } catch (err: any) {
     return { ok: false, error: err?.message ?? 'Delete failed.' };

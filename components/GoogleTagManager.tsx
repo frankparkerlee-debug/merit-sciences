@@ -35,9 +35,13 @@ export function GoogleTagManager() {
         />
       </noscript>
       {/* Google Tag Manager */}
+      {/* lazyOnload (2026-10-02): the container pulls ~1.9 MB of tag code
+          and was the single largest main-thread cost on first load. GTM
+          replays every dataLayer push queued before it arrives, so add-to-
+          cart and conversion events fired earlier are not lost. */}
       <Script
         id="gtm-loader"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         dangerouslySetInnerHTML={{
           __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],

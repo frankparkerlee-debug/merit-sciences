@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/db';
+import { findCoasByKey } from '@/lib/coa-cache';
 import { JsonLd } from '@/components/JsonLd';
 import { Chromatogram } from '../Chromatogram';
 
@@ -47,21 +47,11 @@ async function getLot(lotParam: string): Promise<CoaRow[]> {
   const key = decodeURIComponent(lotParam).trim();
   if (!key || key.length > 64) return [];
   try {
-    return await prisma.coa.findMany({
-      where: {
-        OR: [
-          { coaNumber: { equals: key, mode: 'insensitive' } },
-          { lotId: { equals: key, mode: 'insensitive' } },
-        ],
-      },
-      orderBy: [{ compound: 'asc' }, { createdAt: 'desc' }],
-      take: 100,
-      select: {
-        id: true, compound: true, productHandle: true, lotId: true, coaNumber: true,
-        purity: true, identity: true, appearance: true, testedDate: true, fileUrl: true,
-        retiredAt: true, supersededBy: true,
-      },
-    });
+    // Cached (lib/coa-cache) and request-deduplicated: generateMetadata and
+    // the page both call this and used to run the query twice per request.
+    // Dates come back from the data cache as ISO strings; callers only test
+    // retiredAt for truthiness, which is unchanged.
+    return (await findCoasByKey(key)) as unknown as CoaRow[];
   } catch {
     return [];
   }

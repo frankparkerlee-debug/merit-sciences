@@ -53,6 +53,11 @@ model Coa {
   @@index([compound])
   @@index([lotId])
   @@index([coaNumber])
+  // Public index and "newest certificate" reads: filter on retiredAt, sort by
+  // createdAt desc. Added 2026-10-02 (DDL applied via Supabase; the pooler
+  // cannot run db push).
+  @@index([retiredAt, createdAt])
+  @@index([createdAt])
   @@map("coas")
 }
 
