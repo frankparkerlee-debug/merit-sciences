@@ -218,18 +218,20 @@ export default async function ShopLanding() {
         @media (prefers-reduced-motion: reduce) { .lp-rise { animation: none; } }
       `}</style>
 
-      {/* §01 HERO. Dark object cinema, Merit's own vials. The cluster sits on
-          the left of the frame, so on desktop the words take the right half;
-          on a phone the vials sit behind the text under a gradient. */}
+      {/* §01 HERO. Parker's pick (2026-10-02): the Merit vial wall from the
+          locked homepage, faded, with the brand line as the headline. The
+          wall is a texture, so the words sit on the right half on desktop and
+          over a gradient on a phone. Only the wordmark is legible on the
+          labels; that is by design and it is the Google constraint. */}
       <section className="relative isolate bg-[#1B1F26] text-white overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/brand/hero-A-cluster.webp"
-            alt="Three sealed Merit vials on a dark surface, labels reading Merit, research use only"
+            src="/brand/pattern-vials-dof.webp"
+            alt="A wall of Merit vials receding into shallow focus"
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[22%_35%] lg:object-[0%_center]"
+            className="object-cover object-center opacity-85"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#1B1F26] via-[#1B1F26]/90 to-[#1B1F26]/15 lg:bg-gradient-to-l lg:from-[#1B1F26] lg:via-[#1B1F26]/60 lg:to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#1B1F26] to-transparent" />
@@ -247,13 +249,13 @@ export default async function ShopLanding() {
         <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 pt-[18vh] pb-20 lg:pt-[16vh] lg:pb-28 min-h-[88svh] flex flex-col justify-end lg:items-end">
           <div className="lg:w-[54%]">
             <Kicker light>
-              <span className="lp-rise inline-block">Same stack. Better source.</span>
+              <span className="lp-rise inline-block">Research compounds · San Antonio, Texas</span>
             </Kicker>
             <h1
               className="lp-rise lp-rise-2 mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.94] max-w-[12ch]"
               style={{ fontSize: 'clamp(48px, 7.6vw, 108px)', textWrap: 'balance' }}
             >
-              Proof comes <span className="text-cobalt-soft">standard.</span>
+              Same stack. <span className="text-cobalt-soft">Better source.</span>
             </h1>
             <p className="lp-rise lp-rise-3 mt-7 max-w-[46ch] text-[17px] lg:text-[19px] leading-[1.5] text-white/80">
               Every batch is tested by an independent laboratory before it is listed, and the
@@ -453,17 +455,16 @@ export default async function ShopLanding() {
         </div>
       </section>
 
-      {/* §06 HOW IT WORKS. Dark again over the Merit vial wall (the locked
-          homepage asset; labels blurred by design, only the wordmark reads),
-          three plain steps. Numbered because it is a sequence. */}
+      {/* §06 HOW IT WORKS. Dark again over a single Merit vial (the wall is
+          the hero now), three plain steps. Numbered because it is a sequence. */}
       <section id="steps" className="relative isolate bg-[#070A12] text-white overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/brand/pattern-vials-dof.webp"
-            alt="A wall of Merit vials receding into shallow focus"
+            src="/brand/hero-monolith.webp"
+            alt="A single sealed vial standing in low light"
             fill
             sizes="100vw"
-            className="object-cover object-center opacity-70"
+            className="object-cover object-[70%_center] opacity-70"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#070A12]/50 via-[#070A12]/75 to-[#070A12]" />
         </div>
