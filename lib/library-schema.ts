@@ -5,7 +5,11 @@
 import type { Monograph } from './monographs';
 
 const BASE = 'https://meritsciences.com';
-const ORG = { '@type': 'Organization', name: 'Merit Sciences', url: BASE } as const;
+/* Point at the Organization node declared once in app/(store)/layout.tsx
+   instead of inlining a second copy. Two Organization objects with the same
+   name and no shared @id read as two entities; one @id reference reinforces
+   the single site entity on every monograph. */
+const ORG = { '@id': `${BASE}/#organization` } as const;
 // Static so module eval stays deterministic (no Date.now at import time).
 const PUBLISHED = '2026-07-01';
 
@@ -40,12 +44,21 @@ export function monographArticleSchema(m: Monograph, dateModified: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ScholarlyArticle',
+    '@id': `${url}#article`,
     headline: `${m.title}: mechanism, research & handling`,
     description: m.tagline,
+    /* The canonical node for this substance across the whole estate. The
+       category pages at /catalog/<slug> and the topic hubs on theassay.co
+       both reference this exact @id, so an answer engine resolves one
+       compound entity whether it arrives via the monograph, the shop
+       category or the editorial hub. Do not change this id casually. */
     about: {
       '@type': 'ChemicalSubstance',
+      '@id': `${url}#substance`,
       name: m.title,
       alternateName: m.aka,
+      url,
+      ...(m.research.compoundClass ? { description: m.research.compoundClass } : {}),
     },
     author: ORG,
     publisher: ORG,
