@@ -49,9 +49,9 @@ export const dynamic = 'force-dynamic';
  */
 
 export const metadata = {
-  title: 'Lab-tested research peptides. Shipped from Texas in 48 hours.',
+  title: 'Lab-tested research compounds. Shipped from Texas in 48 hours.',
   description:
-    'Research peptides tested by an independent laboratory before they are listed, every report public. Ships from San Antonio within 48 hours on business days. 15% off your first order.',
+    'Research compounds tested by an independent laboratory before they are listed, every report public. Ships from San Antonio within 48 hours on business days. 15% off your first order.',
   robots: { index: false, follow: true },
 };
 
@@ -70,7 +70,7 @@ type Live = {
   compounds: number;
   fromCents: number;
   certificates: number;
-  coa: { number: string; lot: string; purity: string; tested: string; identity: string } | null;
+  coa: { number: string; purity: string; tested: string; identity: string } | null;
 };
 
 /* Live figures. Fallbacks are the values on the day this shipped, so a
@@ -81,7 +81,7 @@ async function live(): Promise<Live> {
     compounds: 25,
     fromCents: 3999,
     certificates: 82,
-    coa: { number: 'COA-2026-5HUDMG', lot: 'LOT2026-06-0001', purity: '99.79', tested: '2026-08-01', identity: 'Confirmed' },
+    coa: { number: 'COA-2026-5HUDMG', purity: '99.79', tested: '2026-08-01', identity: 'Confirmed' },
   };
   try {
     const [products, certs, coas] = await Promise.all([
@@ -94,7 +94,7 @@ async function live(): Promise<Live> {
         where: { retiredAt: null },
         orderBy: { createdAt: 'desc' },
         take: 12,
-        select: { coaNumber: true, lotId: true, purity: true, testedDate: true, identity: true },
+        select: { coaNumber: true, purity: true, testedDate: true, identity: true },
       }),
     ]);
     const shown = products.filter((p) => !ADS_RESTRICTED_HANDLES.has(p.handle) && p.priceCents > 0);
@@ -104,7 +104,7 @@ async function live(): Promise<Live> {
     const purityOf = (c: { purity: string | null }) => parseFloat(String(c.purity ?? '').replace('%', ''));
     const clean = coas.find((c) => {
       const n = purityOf(c);
-      return Number.isFinite(n) && n >= 90 && n <= 100 && c.lotId && c.coaNumber;
+      return Number.isFinite(n) && n >= 90 && n <= 100 && c.coaNumber;
     });
     return {
       compounds: shown.length || fallback.compounds,
@@ -113,7 +113,6 @@ async function live(): Promise<Live> {
       coa: clean
         ? {
             number: clean.coaNumber!,
-            lot: clean.lotId!,
             purity: purityOf(clean).toFixed(2),
             tested: clean.testedDate ?? '',
             // The identity column holds the compound name. It is never
@@ -142,7 +141,7 @@ const LEDGER: [string, string, string][] = [
   ['Where it is made', 'Unknown. Often imported and relabeled.', 'A licensed US facility'],
   ['Who tests it', 'The seller, if anyone', 'An independent laboratory, every batch'],
   ['When you see the certificate', 'On request, if you ask twice', 'Before the batch is listed'],
-  ['The label', 'A marker and a hope', 'A QR code that opens the certificate'],
+  ['The label', 'A marker and a hope', 'A QR code that opens the certificate library'],
   ['Shipping', 'Weeks, untracked', 'Within 48 hours on business days, tracked'],
   ['Paying', 'Apps and DMs', 'Major cards on a secure checkout'],
 ];
@@ -249,7 +248,7 @@ export default async function ShopLanding() {
         <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 pt-[18vh] pb-20 lg:pt-[16vh] lg:pb-28 min-h-[88svh] flex flex-col justify-end lg:items-end">
           <div className="lg:w-[54%]">
             <Kicker light>
-              <span className="lp-rise inline-block">Research peptides · San Antonio, Texas</span>
+              <span className="lp-rise inline-block">Research compounds · San Antonio, Texas</span>
             </Kicker>
             <h1
               className="lp-rise lp-rise-2 mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.94] max-w-[12ch]"
@@ -258,7 +257,7 @@ export default async function ShopLanding() {
               Same stack. <span className="text-cobalt-soft">Better source.</span>
             </h1>
             <p className="lp-rise lp-rise-3 mt-7 max-w-[40ch] text-[17px] lg:text-[19px] leading-[1.5] text-white/80">
-              Lab-tested research peptides, every report public. Ships from Texas within 48 hours,
+              Lab-tested research compounds, every report public. Ships from Texas within 48 hours,
               Monday to Friday. {WELCOME_PCT}% off your first order.
             </p>
             <div className="lp-rise lp-rise-4 mt-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
@@ -287,7 +286,7 @@ export default async function ShopLanding() {
             <p className="mt-7 max-w-[48ch] text-[16.5px] leading-[1.6] text-ink-soft">
               This is the newest certificate in our library, as a laboratory that is not ours
               printed it. Every batch we sell has one, published before the batch is listed, and
-              the QR code on the vial opens it.
+              the QR code on every vial opens the library.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
               <Cta />
@@ -314,8 +313,8 @@ export default async function ShopLanding() {
               </div>
               <dl className="px-7 py-6 grid grid-cols-2 gap-x-8 gap-y-5">
                 <div>
-                  <dt className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Lot</dt>
-                  <dd className="mt-1 font-mono text-[15px] text-ink">{n.coa?.lot}</dd>
+                  <dt className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Library</dt>
+                  <dd className="mt-1 text-[14px] text-ink">Public, searchable by compound</dd>
                 </div>
                 <div>
                   <dt className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Analysis date</dt>
@@ -380,9 +379,11 @@ export default async function ShopLanding() {
       </section>
 
       {/* §04 WHAT ARRIVES. The vial itself, Merit's packshot, and the plain
-          facts about getting it: sealed, lot on the label, QR to the report,
-          out the door in 48 hours. The one section that is about the box
-          rather than the paperwork. */}
+          facts about getting it: sealed, QR to the certificate library, out
+          the door in 48 hours. The one section that is about the box rather
+          than the paperwork. Batches are not numbered lots and nothing on the
+          vial resolves to its own certificate (Parker, 2026-09-13 and again
+          2026-10-02): the QR opens the library, the buyer searches by compound. */}
       <section id="vial" className="bg-paper">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10 pt-20 lg:pt-28 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-10 lg:gap-20 items-center">
           <div>
@@ -394,10 +395,10 @@ export default async function ShopLanding() {
               Sealed, labeled, and already on record.
             </h2>
             <p className="mt-7 max-w-[48ch] text-[16.5px] leading-[1.6] text-ink-soft">
-              Each vial comes sealed with its lot number on the label, and the QR code on that label
-              opens the lot&rsquo;s report. Orders leave San Antonio within 48 hours on business
-              days with a tracking number. One vial ships the same way a case does, and orders
-              over {money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', '')} ship free.
+              Each vial comes sealed, and the QR code on the label opens our certificate library,
+              where every batch&rsquo;s report is published before it goes on sale. Orders leave
+              San Antonio within 48 hours on business days with a tracking number. One vial ships
+              the same way a case does, and orders over {money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', '')} ship free.
             </p>
             <div className="mt-9">
               <Cta />
@@ -479,7 +480,7 @@ export default async function ShopLanding() {
             {([
               ['The batch is tested before it is listed', 'An independent laboratory runs identity, purity and heavy metals. Nothing goes on sale until the results are in.'],
               ['The certificate goes into the library', 'Every certificate we have released, searchable by compound. No account, no request form.'],
-              ['The QR code on the vial opens it', 'Scan the label and you are reading the same numbers we read, for the batch in your hand.'],
+              ['The QR code on the vial opens the library', 'Scan the label, search the compound, and you are reading the same numbers we read.'],
             ] as [string, string][]).map(([t, b], i) => (
               <li key={t} className="border-t border-white/20 pt-6">
                 <span className="font-mono text-[12px] tracking-[0.16em] text-cobalt-soft">0{i + 1}</span>
