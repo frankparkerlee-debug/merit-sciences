@@ -5,7 +5,7 @@ import { AFFILIATE_PROGRAM } from '@/lib/affiliate';
 export const metadata = {
   title: 'Become a Merit Sciences Affiliate',
   description:
-    'Earn 20% on every order — forever. Your audience saves 10%. Open sign-up, monthly PayPal payouts, no approval queue.',
+    'Earn 20% on every order — forever. Your audience saves 10%. Open sign-up, monthly direct-deposit payouts, no approval queue.',
 };
 
 export default function AffiliateLandingPage() {
@@ -227,31 +227,15 @@ export default function AffiliateLandingPage() {
             <Differentiator
               eyebrow="Industry standard"
               headline="Quarterly or annual payouts"
-              ours={`Monthly payouts · $${AFFILIATE_PROGRAM.payoutMinUsd} min · PayPal`}
+              ours={`Monthly payouts · $${AFFILIATE_PROGRAM.payoutMinUsd} min · direct deposit`}
             />
           </div>
 
-          {/* You ALSO save — the affiliate's own perk */}
-          <div className="mt-10 lg:mt-12 bg-cobalt/5 border border-cobalt/20 rounded-2xl p-6 lg:p-8 flex flex-col sm:flex-row sm:items-center gap-5">
-            <div
-              className="flex-shrink-0 w-14 h-14 rounded-full bg-cobalt text-white flex items-center justify-center font-display font-black text-lg shadow-sm"
-              aria-hidden="true"
-            >
-              {AFFILIATE_PROGRAM.selfDiscountPct}%
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] tracking-[0.22em] uppercase text-cobalt font-bold mb-1">
-                — Your own discount
-              </p>
-              <h3 className="font-display text-lg lg:text-xl font-extrabold text-ink leading-tight">
-                You save {AFFILIATE_PROGRAM.selfDiscountPct}% on every Merit order you place yourself.
-              </h3>
-              <p className="text-[13px] text-ink-soft mt-1">
-                Your perk. No commission on your own purchases (can&apos;t pay yourself),
-                but you keep the discount, every time, forever.
-              </p>
-            </div>
-          </div>
+          {/* The "you save 15% on your own orders" perk card was removed on
+              2026-10-02: AFFILIATE_PROGRAM.selfDiscountPct was advertised here
+              and nowhere enforced (no checkout path grants it, and an
+              affiliate using their own code hits the self-purchase $0 path).
+              Restore it only together with the checkout logic that honours it. */}
         </div>
       </section>
 
@@ -319,7 +303,7 @@ export default function AffiliateLandingPage() {
             />
             <Faq
               q="When and how do I get paid?"
-              a="Monthly, by PayPal, once you clear a $50 minimum. Each commission clears a 30-day refund window first, then it's payable."
+              a="Monthly, by bank direct deposit through Stripe, once you clear a $50 minimum. Each commission clears a 30-day refund window first, then it's payable."
             />
             <Faq
               q="What am I allowed to say?"

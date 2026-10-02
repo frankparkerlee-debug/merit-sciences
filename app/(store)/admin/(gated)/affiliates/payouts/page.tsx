@@ -55,7 +55,7 @@ export default async function AffiliatePayoutsPage() {
       </h1>
       <p className="text-sm text-ink-soft mb-6">
         Commissions become payable {COMMISSION_HOLD_DAYS} days after the order (refund window), then
-        pay out by PayPal once an affiliate clears the ${AFFILIATE_PROGRAM.payoutMinUsd} minimum.
+        pay out by Stripe direct deposit once an affiliate clears the ${AFFILIATE_PROGRAM.payoutMinUsd} minimum.
       </p>
 
       {/* Running tally — what's owed + what's been paid, across all affiliates */}

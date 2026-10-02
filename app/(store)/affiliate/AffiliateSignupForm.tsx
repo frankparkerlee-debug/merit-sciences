@@ -275,9 +275,9 @@ function SuccessState({ data }: { data: SuccessResult }) {
         </div>
 
         <p className="text-[11px] text-ink-muted leading-relaxed">
-          Set your PayPal payout email in your dashboard settings so we can
-          pay you. Commissions clear a 30-day refund window, then pay out by
-          PayPal once you reach the ${'$'}50 minimum.
+          Connect direct deposit in your dashboard settings so we can pay you.
+          Commissions clear a 30-day refund window, then pay out by bank
+          transfer once you reach the ${'$'}50 minimum.
         </p>
       </div>
     </div>
