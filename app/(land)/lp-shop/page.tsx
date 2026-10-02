@@ -183,7 +183,7 @@ function Cta({ tone = 'ink', className = '', id }: { tone?: 'ink' | 'paper' | 'c
     <Link
       id={id}
       href={CTA_HREF}
-      className={`${tones[tone]} inline-flex items-center justify-center gap-3 rounded-full pl-7 pr-5 py-4 text-[15px] font-semibold tracking-[-0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cobalt ${className}`}
+      className={`${tones[tone]} inline-flex items-center justify-center gap-3 whitespace-nowrap rounded-full pl-7 pr-5 py-4 text-[15px] font-semibold tracking-[-0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cobalt ${className}`}
     >
       Shop with {WELCOME_PCT}% off
       <span aria-hidden="true" className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-current/10">
