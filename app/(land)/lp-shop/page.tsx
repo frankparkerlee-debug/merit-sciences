@@ -49,9 +49,9 @@ export const dynamic = 'force-dynamic';
  */
 
 export const metadata = {
-  title: 'Research compounds with the lab report included. Shipped in 48 hours.',
+  title: 'Lab-tested research peptides. Shipped from Texas in 48 hours.',
   description:
-    'Every batch is tested by an independent laboratory before it is listed and the report is public. Orders leave San Antonio within 48 hours on business days, tracked. 15% off your first order.',
+    'Research peptides tested by an independent laboratory before they are listed, every report public. Ships from San Antonio within 48 hours on business days. 15% off your first order.',
   robots: { index: false, follow: true },
 };
 
@@ -249,7 +249,7 @@ export default async function ShopLanding() {
         <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 pt-[18vh] pb-20 lg:pt-[16vh] lg:pb-28 min-h-[88svh] flex flex-col justify-end lg:items-end">
           <div className="lg:w-[54%]">
             <Kicker light>
-              <span className="lp-rise inline-block">Research compounds · San Antonio, Texas</span>
+              <span className="lp-rise inline-block">Research peptides · San Antonio, Texas</span>
             </Kicker>
             <h1
               className="lp-rise lp-rise-2 mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.94] max-w-[12ch]"
@@ -257,15 +257,14 @@ export default async function ShopLanding() {
             >
               Same stack. <span className="text-cobalt-soft">Better source.</span>
             </h1>
-            <p className="lp-rise lp-rise-3 mt-7 max-w-[46ch] text-[17px] lg:text-[19px] leading-[1.5] text-white/80">
-              Every batch is tested by an independent laboratory before it is listed, and the
-              report is public. Orders leave San Antonio within 48 hours on business days, tracked.
-              Your first one is {WELCOME_PCT}% off.
+            <p className="lp-rise lp-rise-3 mt-7 max-w-[40ch] text-[17px] lg:text-[19px] leading-[1.5] text-white/80">
+              Lab-tested research peptides, every report public. Ships from Texas within 48 hours,
+              Monday to Friday. {WELCOME_PCT}% off your first order.
             </p>
             <div className="lp-rise lp-rise-4 mt-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
               <Cta id="hero-cta" tone="paper" />
               <p className="text-[13.5px] text-white/60">
-                Code <span className="font-mono text-white/90">{WELCOME_CODE}</span> is applied for you at checkout. No minimum order.
+                <span className="font-mono text-white/90">{WELCOME_CODE}</span> applies at checkout.
               </p>
             </div>
           </div>
