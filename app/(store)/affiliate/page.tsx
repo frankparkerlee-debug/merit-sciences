@@ -23,7 +23,10 @@ export default function AffiliateLandingPage() {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-60"
+          // Blurred (Parker, 2026-10-02): the vial pattern reads as texture
+          // behind the type, not as product. scale-110 hides the soft edge
+          // the blur filter leaves at the frame boundary.
+          className="object-cover opacity-60 blur-[6px] scale-110"
         />
         <div
           aria-hidden="true"
