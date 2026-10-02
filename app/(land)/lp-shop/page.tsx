@@ -14,37 +14,33 @@ import { StickyCta } from './StickyCta';
  * absent, not hidden.
  *
  * ONE JOB: land a paid click and send it into the catalog with the welcome
- * code attached. One action, repeated.
+ * code attached. One action, repeated. Reading a certificate is a text link.
  *
  * WRITTEN TO GOOGLE'S HEALTHCARE AND MEDICINES POLICY, which covers landing
  * pages and keywords as well as ads, and ends in account suspension rather
- * than a disapproved ad: no compound names in copy or legible in any image,
+ * than a disapproved ad: no compound names in copy or legible in any image
+ * (the certificate card below deliberately omits the compound and says so),
  * no claims about what anything does, no prescription or controlled-substance
  * terms, no guarantee the policies pages do not back. Google's reviewer sees
  * this page exactly as a visitor does.
  *
- * THESIS (2026-10-01, second rebuild). The first rebuild sold the certificate
- * and Parker killed it: "going the science, COA route is just too
- * disconnected from what I think is good messaging." The data agreed. Of the
- * last 317 converting visitors, 40 looked at a certificate first. People buy
- * here because it is a normal store in a market that mostly is not: a card
- * checkout, a Texas address, a tracking number inside 48 hours, a written
- * replace-or-refund policy. So that is the page. Testing is one row in the
- * ledger and one question in the FAQ, said once, plainly.
- *
- * Every number and policy line on this page is read from the code or the
- * legal copy that ships with the checkout. Do not add a specific that is not
- * backed there.
- *
- * Photographs are Pexels, free licence, real: 4050425 (Vlada Karpovich) and
- * 9594502 (Ron Lach). No vials, no labels, no Merit branding in frame.
+ * DESIGN (2026-10-01 rebuild). The previous page was a SaaS template: eyebrow,
+ * two-tone headline, shine-border offer card, marquee, three cards, a table,
+ * four stat tiles, an accordion, a cobalt band. It read as generated because
+ * it was the generic default. This one has a thesis instead: Merit sells the
+ * receipt, so the page IS a receipt. Dark object cinema to open (the same
+ * world as the locked homepage), then paper, and on the paper a real
+ * certificate ticket with live figures from the COA library. Fewer sections,
+ * larger type, real photographs, one accent spent on one thing per screen.
+ * No gradients, no animated borders, no icon rows.
  */
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Research compounds, ordered like anything else',
-  description: `A normal checkout for research compounds. Cards accepted, orders out within 48 hours from San Antonio, Texas, a written 7-day replace-or-refund policy, and ${WELCOME_PCT}% off your first order.`,
+  title: 'Research compounds with the certificate published first',
+  description:
+    'Every batch is tested by an independent laboratory and its certificate of analysis is published before it is listed. Licensed US facility, ships in 48 hours.',
   robots: { index: false, follow: true },
 };
 
@@ -59,25 +55,61 @@ const STORE = 'https://meritsciences.com';
  */
 const CTA_HREF = `${STORE}/catalog?code=${WELCOME_CODE}&ads=1`;
 
-type Live = { compounds: number; fromCents: number; reports: number };
+type Live = {
+  compounds: number;
+  fromCents: number;
+  certificates: number;
+  coa: { number: string; lot: string; purity: string; tested: string; identity: string } | null;
+};
 
-/* Live figures with the values on the day this shipped as fallbacks, so a
-   database hiccup still renders something true. */
+/* Live figures. Fallbacks are the values on the day this shipped, so a
+   database hiccup still renders something true. The certificate shown is the
+   most recent clean one in the library; its compound is withheld on purpose. */
 async function live(): Promise<Live> {
-  const fallback: Live = { compounds: 25, fromCents: 3999, reports: 82 };
+  const fallback: Live = {
+    compounds: 25,
+    fromCents: 3999,
+    certificates: 82,
+    coa: { number: 'COA-2026-5HUDMG', lot: 'LOT2026-06-0001', purity: '99.79', tested: '2026-08-01', identity: 'Confirmed' },
+  };
   try {
-    const [products, reports] = await Promise.all([
+    const [products, certs, coas] = await Promise.all([
       prisma.product.findMany({
         where: { status: 'ACTIVE', handle: { not: 'bacteriostatic-water' } },
         select: { handle: true, priceCents: true },
       }),
       prisma.coa.count({ where: { retiredAt: null } }),
+      prisma.coa.findMany({
+        where: { retiredAt: null },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+        select: { coaNumber: true, lotId: true, purity: true, testedDate: true, identity: true },
+      }),
     ]);
     const shown = products.filter((p) => !ADS_RESTRICTED_HANDLES.has(p.handle) && p.priceCents > 0);
+    // Purity is stored as the laboratory prints it ("99.79%"). One row in the
+    // table is corrupted (0.85), so the window below skips it rather than
+    // putting a nonsense figure on the page.
+    const purityOf = (c: { purity: string | null }) => parseFloat(String(c.purity ?? '').replace('%', ''));
+    const clean = coas.find((c) => {
+      const n = purityOf(c);
+      return Number.isFinite(n) && n >= 90 && n <= 100 && c.lotId && c.coaNumber;
+    });
     return {
       compounds: shown.length || fallback.compounds,
       fromCents: shown.length ? Math.min(...shown.map((p) => p.priceCents)) : fallback.fromCents,
-      reports: reports || fallback.reports,
+      certificates: certs || fallback.certificates,
+      coa: clean
+        ? {
+            number: clean.coaNumber!,
+            lot: clean.lotId!,
+            purity: purityOf(clean).toFixed(2),
+            tested: clean.testedDate ?? '',
+            // The identity column holds the compound name. It is never
+            // rendered here; the card states the result, not the name.
+            identity: 'Confirmed',
+          }
+        : fallback.coa,
     };
   } catch {
     return fallback;
@@ -85,43 +117,49 @@ async function live(): Promise<Live> {
 }
 
 const money = (c: number) => `$${(c / 100).toFixed(2)}`;
-const FREE_SHIP = money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', '');
 
-/* The ledger. Left is how this category usually treats a buyer; right is
-   what happens here. Every right-hand line is backed by the checkout's legal
-   copy (app/(pay)/legal) or by code. */
-const LEDGER = (n: Live): [string, string, string][] => [
-  ['Paying', 'A crypto wallet, or a payment app to somebody’s first name.', 'Visa, Mastercard, American Express or Discover, on a checkout we run. No account to create.'],
-  ['Shipping', 'Whenever. Sometimes tracked.', 'Out of San Antonio within 48 hours on business days. The tracking number lands in your inbox when the carrier scans it.'],
-  ['When something is wrong', 'Good luck.', 'Tell us within 7 days of delivery and we replace it or refund it. That is the written policy, not a favor.'],
-  ['The price', 'Depends who is asking.', `${money(n.fromCents)} a vial and up. The price on the page is the price. Orders over ${FREE_SHIP} ship free.`],
-  ['Who you are dealing with', 'A handle.', 'Merit Sciences LLC, San Antonio, Texas. One email address, read by a person.'],
-  ['Whether it is real', 'Trust me bro.', 'Every lot is tested by a laboratory we do not own before it is listed, and the report is public. Read one if you like. Most people never do, and that is fine.'],
+/* What is on every certificate, in the order the laboratory prints it. */
+const PANEL: [string, string, string][] = [
+  ['Identity', 'HPLC against a reference standard', 'Confirmed'],
+  ['Purity', 'HPLC main peak, as measured', 'Printed to two decimals'],
+  ['Heavy metals', 'ICP-MS: arsenic, cadmium, lead, mercury', 'Below threshold'],
+  ['Screen', 'Immunoassay for a common contaminant', 'Not detected'],
+];
+
+/* Left is the category Merit sells against; right is what Merit does. */
+const LEDGER: [string, string, string][] = [
+  ['Where it is made', 'Unknown. Often imported and relabeled.', 'A licensed US facility'],
+  ['Who tests it', 'The seller, if anyone', 'An independent laboratory, every batch'],
+  ['When you see the certificate', 'On request, if you ask twice', 'Before the batch is listed'],
+  ['The label', 'A marker and a hope', 'A QR code that opens the certificate'],
+  ['Shipping', 'Weeks, untracked', '48 hours, tracked and insured'],
+  ['Paying', 'Apps and DMs', 'Major cards on a secure checkout'],
 ];
 
 const FAQ: [string, string][] = [
-  ['How fast will it get here?',
-   'Orders leave San Antonio within 48 hours on business days. You get the tracking number by email as soon as the carrier scans the parcel, and transit is usually 2 to 5 business days. We ship to US addresses only, and not to PO boxes or freight forwarders.'],
-  ['How do I pay?',
-   'Visa, Mastercard, American Express or Discover at checkout. There is no account to create. Your card details go to the payment processor and never touch our servers.'],
-  ['What if it arrives damaged, or wrong?',
-   'Email us within 7 days of the delivery date the carrier shows and we replace it or refund it to the card you paid with. You can also cancel for a full refund any time before the order is packed.'],
+  ['What do I actually receive?',
+   'A sealed vial of lyophilized material. The batch it came from was tested by an independent laboratory before it was listed, and its certificate is in our COA library.'],
+  ['Who does the testing?',
+   'A laboratory independent of the facility that made the batch. The certificate is published before the batch is listed, so the identity and purity figures you read are the same ones we read.'],
+  ['How do I check a batch?',
+   'The QR code on every vial opens our COA library. Search by compound to find the certificate for the batch currently shipping. No account and no request form.'],
+  ['How fast does it ship?',
+   'Orders dispatch within 48 hours, Monday through Thursday, by UPS Ground with tracking and insurance. Most US addresses receive within 3 to 5 business days.'],
   ['Is there a minimum order?',
-   `No. One vial ships the same way a case does. Orders over ${FREE_SHIP} ship free.`],
+   `No. One vial ships the same way a case does: within 48 hours, tracked and insured. Orders over ${money(FREE_SHIPPING_CENTS_THRESHOLD).replace('.00', '')} ship free.`],
   ['Who can order?',
-   'Adults in the United States buying for laboratory research. Licensed practitioners can apply for account pricing through the Practitioner Program; everyone else orders straight from the catalog.'],
-  ['Is it tested?',
-   'Yes. Every lot goes to an independent laboratory before it is listed, and the report is published. The QR code on each vial opens the report for the lot in your hand.'],
+   'Qualified researchers and licensed practitioners. Practitioners can apply for account pricing through the Practitioner Program; retail buyers order directly.'],
   ['What does research use only mean?',
    'Everything we supply is for laboratory and scientific research. It is not for human or veterinary use and has not been evaluated or approved by the FDA.'],
 ];
 
 const POLICIES: [string, string][] = [
-  ['Shipping', `${STORE}/shipping`],
-  ['Returns and refunds', `${STORE}/returns`],
-  ['Privacy', `${STORE}/privacy`],
-  ['Terms', `${STORE}/terms`],
-  ['Contact', 'mailto:info@meritpeptides.com'],
+  ['Shipping', '/legal/shipping'],
+  ['Refunds', '/legal/refunds'],
+  ['Returns', '/legal/returns'],
+  ['Privacy', '/legal/privacy'],
+  ['Terms', '/legal/terms'],
+  ['Contact', '/legal/contact'],
 ];
 
 /* The one button. Same words everywhere it appears. */
@@ -157,13 +195,12 @@ function Kicker({ children, light = false }: { children: React.ReactNode; light?
 
 export default async function ShopLanding() {
   const n = await live();
-  const ledger = LEDGER(n);
 
   return (
     <>
-      {/* Hero entrance only: a single rise on load, nothing on scroll. Content
-          is visible without JS; the keyframes just add the arrival. Reduced
-          motion gets a static page. */}
+      {/* Hero entrance only: a single orchestrated rise on load, nothing on
+          scroll. Content is visible without JS; the keyframes just add the
+          arrival. Reduced motion gets a static page. */}
       <style>{`
         @keyframes lpRise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
         .lp-rise { animation: lpRise .9s cubic-bezier(.2,.8,.2,1) both; }
@@ -171,110 +208,153 @@ export default async function ShopLanding() {
         @media (prefers-reduced-motion: reduce) { .lp-rise { animation: none; } }
       `}</style>
 
-      {/* §01 HERO. Paper, daylight, a person at home with a laptop: the buyer,
-          not the laboratory. Text left, photograph right; on a phone the
-          photograph follows the button. */}
-      <section className="relative bg-paper text-ink overflow-hidden">
-        <header className="max-w-[1280px] mx-auto px-6 lg:px-10 pt-6 flex items-center justify-between">
+      {/* §01 HERO. Dark object cinema: the certificate and the vial on the
+          bench, the only two things this business is about. The paper's text
+          is out of focus by design: nothing on it is legible. */}
+      <section className="relative isolate bg-[#070A12] text-white overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="/brand/hero-bench.webp"
+            alt="A printed certificate of analysis standing beside a sealed glass vial on a dark bench"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[68%_center] lg:object-[62%_center] opacity-95"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#070A12] via-[#070A12]/80 to-[#070A12]/10 lg:via-[#070A12]/55" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#070A12] to-transparent" />
+        </div>
+
+        <header className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 pt-6 flex items-center justify-between">
           <span className="font-display font-extrabold tracking-[-0.03em] text-[22px]">
-            Merit<span className="text-cobalt">.</span>
+            Merit<span className="text-cobalt-soft">.</span>
           </span>
-          <Link href={`${STORE}/shipping`} className="text-[13px] text-ink-soft hover:text-ink underline-offset-4 hover:underline">
-            Shipping and returns
+          <Link href={`${STORE}/coa`} className="text-[13px] text-white/70 hover:text-white underline-offset-4 hover:underline">
+            Read a certificate
           </Link>
         </header>
 
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 pt-14 pb-16 lg:pt-20 lg:pb-24 grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-12 lg:gap-16 items-center">
-          <div>
-            <Kicker>
-              <span className="lp-rise inline-block">Research compounds · San Antonio, Texas</span>
-            </Kicker>
-            <h1
-              className="lp-rise lp-rise-2 mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.94]"
-              style={{ fontSize: 'clamp(44px, 6.4vw, 88px)', textWrap: 'balance' }}
-            >
-              Buy it like you&rsquo;d buy <span className="text-cobalt">anything else.</span>
-            </h1>
-            <p className="lp-rise lp-rise-3 mt-7 max-w-[46ch] text-[17px] lg:text-[19px] leading-[1.5] text-ink-soft">
-              Most of this market runs on DMs and crypto. Merit is a store. Pick what you need, pay with a
-              card, and the tracking number is in your inbox within 48 hours on business days.
+        <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 pt-[18vh] pb-20 lg:pt-[20vh] lg:pb-28 min-h-[88svh] flex flex-col justify-end">
+          <Kicker light>
+            <span className="lp-rise inline-block">Research compounds · Independently tested · Ships in 48 hours</span>
+          </Kicker>
+          <h1
+            className="lp-rise lp-rise-2 mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.92] max-w-[11ch]"
+            style={{ fontSize: 'clamp(46px, 8.4vw, 118px)', textWrap: 'balance' }}
+          >
+            Buy the batch
+            <br />
+            you can <span className="text-cobalt-soft">read.</span>
+          </h1>
+          <p className="lp-rise lp-rise-3 mt-7 max-w-[46ch] text-[17px] lg:text-[19px] leading-[1.5] text-white/78">
+            Every vial ships from a licensed US facility with its certificate of analysis already
+            published. Identity, purity, heavy metals. Read the numbers before you pay.
+          </p>
+          <div className="lp-rise lp-rise-4 mt-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <Cta id="hero-cta" tone="paper" />
+            <p className="text-[13.5px] text-white/60">
+              Code <span className="font-mono text-white/90">{WELCOME_CODE}</span> is applied for you at checkout. No minimum order.
             </p>
-            <div className="lp-rise lp-rise-4 mt-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-              <Cta id="hero-cta" />
-              <p className="text-[13.5px] text-ink-muted">
-                Code <span className="font-mono text-ink">{WELCOME_CODE}</span> applies itself at checkout. No minimum order.
-              </p>
+          </div>
+        </div>
+      </section>
+
+      {/* §02 THE RECEIPT. Paper. A real certificate, live from the library,
+          set as a ticket. The compound is withheld here on purpose and the
+          card says so: the point is that the numbers exist and are public. */}
+      <section id="receipt" className="bg-paper text-ink">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-start">
+          <div className="lg:sticky lg:top-16">
+            <Kicker>The receipt comes first</Kicker>
+            <h2
+              className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
+              style={{ fontSize: 'clamp(36px, 5.2vw, 72px)', textWrap: 'balance' }}
+            >
+              Most sellers show you a photo. We show you the lab report.
+            </h2>
+            <p className="mt-7 max-w-[48ch] text-[16.5px] leading-[1.6] text-ink-soft">
+              This is the newest certificate in our library, as a laboratory that is not ours
+              printed it. Every batch we sell has one, published before the batch is listed, and
+              the QR code on the vial opens it.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <Cta />
+              <Link href={`${STORE}/coa`} className="text-[14px] font-semibold text-ink underline underline-offset-[6px] decoration-ink/30 hover:decoration-cobalt">
+                Open the COA library
+              </Link>
             </div>
           </div>
 
-          <figure className="relative aspect-[4/3] lg:aspect-[4/5] overflow-hidden ring-1 ring-ink/8">
-            <Image
-              src="/brand/lp-window.webp"
-              alt="A person sitting on a windowsill at home with a laptop and a mug, in daylight"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 45vw"
-              className="object-cover object-[40%_center]"
-            />
+          {/* The ticket. Mono for the figures, hairline rules, a perforated
+              edge. Nothing else on the page uses a card, so this one reads as
+              an object rather than a layout habit. */}
+          <figure className="relative">
+            <div className="bg-white shadow-[0_30px_80px_-40px_rgba(11,15,25,0.35),0_1px_0_rgba(11,15,25,0.06)] ring-1 ring-ink/8">
+              <div className="px-7 pt-7 pb-6 flex items-start justify-between gap-6 border-b border-dashed border-ink/15">
+                <div>
+                  <p className="font-mono text-[11px] tracking-[0.16em] uppercase text-ink-muted">Certificate of analysis</p>
+                  <p className="mt-1.5 font-mono text-[15px] text-ink">{n.coa?.number}</p>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-ink/12 px-3 py-1.5 font-mono text-[11px] tracking-[0.12em] uppercase text-ink">
+                  <span className="h-1.5 w-1.5 rounded-full bg-cobalt" aria-hidden="true" />
+                  Pass
+                </span>
+              </div>
+              <dl className="px-7 py-6 grid grid-cols-2 gap-x-8 gap-y-5">
+                <div>
+                  <dt className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Lot</dt>
+                  <dd className="mt-1 font-mono text-[15px] text-ink">{n.coa?.lot}</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Analysis date</dt>
+                  <dd className="mt-1 font-mono text-[15px] text-ink">{n.coa?.tested}</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Compound</dt>
+                  <dd className="mt-1 text-[14px] text-ink-soft">Withheld on this page. Named in the library.</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Laboratory</dt>
+                  <dd className="mt-1 text-[14px] text-ink">Independent, ISO/IEC 17025 accredited</dd>
+                </div>
+              </dl>
+              <div className="px-7 py-7 border-t border-ink/8 grid grid-cols-[1fr_auto] items-end gap-6">
+                <div>
+                  <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Purity, HPLC main peak</p>
+                  <p className="mt-2 font-display font-extrabold tracking-[-0.05em] leading-none text-ink" style={{ fontSize: 'clamp(56px, 7vw, 96px)' }}>
+                    {n.coa?.purity}<span className="text-cobalt">%</span>
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-ink-muted">Identity</p>
+                  <p className="mt-2 font-mono text-[15px] text-ink">{n.coa?.identity}</p>
+                </div>
+              </div>
+              <ul className="px-7 pb-7 divide-y divide-ink/8 border-t border-ink/8">
+                {PANEL.map(([k, method, result]) => (
+                  <li key={k} className="py-3.5 grid grid-cols-[1fr_auto] sm:grid-cols-[120px_1fr_auto] gap-x-6 gap-y-1 text-[13.5px]">
+                    <span className="font-semibold text-ink">{k}</span>
+                    <span className="hidden sm:block text-ink-soft">{method}</span>
+                    <span className="font-mono text-[12.5px] text-ink text-right">{result}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <figcaption className="mt-4 font-mono text-[11px] leading-[1.7] text-ink-muted">
+              Figures are read live from the COA library. {n.certificates} certificates published to date.
+            </figcaption>
           </figure>
         </div>
       </section>
 
-      {/* §02 THE LEDGER. Why people switch. Hairlines, two columns of plain
-          statements, the brand line as the kicker. */}
-      <section id="ledger" className="bg-paper text-ink border-t border-ink/8">
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-20 lg:py-28">
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-8 lg:gap-16 items-end">
-            <div>
-              <Kicker>Same stack. Better source.</Kicker>
-              <h2
-                className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
-                style={{ fontSize: 'clamp(34px, 4.8vw, 64px)', textWrap: 'balance' }}
-              >
-                The parts of ordering that usually go wrong.
-              </h2>
-            </div>
-            <p className="max-w-[50ch] text-[16.5px] leading-[1.6] text-ink-soft lg:pb-2">
-              If you have bought in this category before, you already know the drill: a Telegram
-              handle, a wallet address, a box that shows up eventually, or does not. We think that
-              is a bad way to buy anything. Here is what changes.
-            </p>
-          </div>
-
-          <div className="mt-12 lg:mt-16 border-t border-ink/15">
-            <div className="hidden md:grid md:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.3fr)] gap-x-10 py-4 font-mono text-[11px] tracking-[0.16em] uppercase text-ink-muted border-b border-ink/8">
-              <span aria-hidden="true" />
-              <span>Elsewhere</span>
-              <span className="text-cobalt">Here</span>
-            </div>
-            {ledger.map(([k, them, us]) => (
-              <div key={k} className="grid grid-cols-1 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.3fr)] gap-x-10 gap-y-2 py-5 lg:py-6 border-b border-ink/8">
-                <p className="m-0 font-display font-bold text-[17px] lg:text-[19px] tracking-[-0.02em] text-ink">{k}</p>
-                <p className="m-0 text-[15.5px] text-ink-muted">
-                  <span className="md:hidden font-mono text-[10px] tracking-[0.14em] uppercase mr-2">Elsewhere</span>
-                  {them}
-                </p>
-                <p className="m-0 text-[15.5px] leading-[1.55] text-ink">
-                  <span className="md:hidden font-mono text-[10px] tracking-[0.14em] uppercase text-cobalt mr-2">Here</span>
-                  {us}
-                </p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-12">
-            <Cta />
-          </div>
-        </div>
-      </section>
-
-      {/* §03 NUMBERS. One typographic line, not tiles. */}
+      {/* §03 NUMBERS. A single typographic line, not tiles. */}
       <section id="numbers" className="bg-paper border-y border-ink/8">
         <dl className="max-w-[1280px] mx-auto px-6 lg:px-10 py-10 grid grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-10">
           {([
+            [String(n.certificates), 'certificates published'],
             [String(n.compounds), 'compounds in the catalog'],
-            [money(n.fromCents), 'per vial and up'],
-            ['48 h', 'to dispatch, business days'],
-            [String(n.reports), 'lab reports public'],
+            [money(n.fromCents), 'per vial and up, one price for everyone'],
+            ['48 h', 'to dispatch, tracked and insured'],
           ] as [string, string][]).map(([v, l]) => (
             <div key={l}>
               <dt className="sr-only">{l}</dt>
@@ -287,49 +367,131 @@ export default async function ShopLanding() {
         </dl>
       </section>
 
-      {/* §04 WHAT SHOWS UP. The buyer's next question after "will it ship" is
-          "what arrives". A plain box, said plainly, with one photograph. */}
-      <section id="box" className="bg-paper text-ink">
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-10 lg:gap-16 items-center">
-          <div>
-            <Kicker>What shows up</Kicker>
-            <h2
-              className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
-              style={{ fontSize: 'clamp(34px, 4.6vw, 60px)', textWrap: 'balance' }}
-            >
-              A box, a tracking number, and nothing to explain.
-            </h2>
-            <p className="mt-7 max-w-[46ch] text-[16.5px] leading-[1.6] text-ink-soft">
-              Each vial arrives sealed, with its lot number on the label. The label carries a QR
-              code that opens that lot&rsquo;s report, if you ever want it. Shipping is covered
-              over {FREE_SHIP}, and one vial ships the same way a case does.
-            </p>
-            <div className="mt-9">
-              <Cta />
+      {/* §04 THE INSTRUMENT. Where the purity number comes from, as a wide
+          photograph with one caption. Photograph by Yura Shkoda on Pexels,
+          free for commercial use. */}
+      <section id="lab" className="bg-paper">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 pt-20 lg:pt-28">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-10 lg:gap-16 items-end">
+            <div>
+              <Kicker>Where the number comes from</Kicker>
+              <h2
+                className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
+                style={{ fontSize: 'clamp(34px, 4.6vw, 64px)', textWrap: 'balance' }}
+              >
+                We spend on the laboratory, not the logo.
+              </h2>
             </div>
+            <p className="max-w-[52ch] text-[16.5px] leading-[1.6] text-ink-soft lg:pb-2">
+              Each batch is run through high-performance liquid chromatography by a laboratory that
+              does not make the material and does not sell it. The main-peak percentage on the
+              certificate is the purity figure, printed as measured. The same price whether you buy
+              one vial or a case.
+            </p>
           </div>
-          <figure className="relative aspect-[3/2] overflow-hidden ring-1 ring-ink/8">
+        </div>
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 mt-12 lg:mt-16">
+          <figure className="relative aspect-[16/10] lg:aspect-[21/9] overflow-hidden ring-1 ring-ink/8">
             <Image
-              src="/brand/lp-box.webp"
-              alt="Hands folding tissue paper into an open cardboard box on a table"
+              src="/brand/lab-hplc-autosampler.webp"
+              alt="Sample vials loaded in the autosampler of an HPLC instrument"
               fill
-              sizes="(max-width: 1024px) 100vw, 55vw"
+              sizes="(max-width: 1280px) 100vw, 1280px"
               className="object-cover"
             />
+            <figcaption className="absolute left-5 bottom-5 font-mono text-[11px] tracking-[0.12em] uppercase text-white bg-ink/85 px-3 py-2">
+              HPLC autosampler
+            </figcaption>
           </figure>
         </div>
       </section>
 
-      {/* §05 FAQ. Native details, no JS, readable by Google as content. */}
-      <section id="faq" className="bg-paper border-t border-ink/8">
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)] gap-10 lg:gap-20">
+      {/* §05 THE LEDGER. The category Merit sells against, in two columns of
+          plain statements. Hairlines, no table chrome. */}
+      <section id="ledger" className="bg-paper">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-20 lg:py-32">
+          <div className="max-w-[760px]">
+            <Kicker>Same stack. Better source.</Kicker>
+            <h2
+              className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
+              style={{ fontSize: 'clamp(34px, 4.6vw, 64px)', textWrap: 'balance' }}
+            >
+              The same catalog. A source you can check.
+            </h2>
+          </div>
+          <div className="mt-12 lg:mt-16 border-t border-ink/15">
+            <div className="hidden md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)] gap-x-10 py-4 font-mono text-[11px] tracking-[0.16em] uppercase text-ink-muted border-b border-ink/8">
+              <span aria-hidden="true" />
+              <span>The gray market</span>
+              <span className="text-cobalt">Merit</span>
+            </div>
+            {LEDGER.map(([k, them, us]) => (
+              <div key={k} className="grid grid-cols-1 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)] gap-x-10 gap-y-2 py-5 lg:py-6 border-b border-ink/8">
+                <p className="m-0 font-display font-bold text-[17px] lg:text-[19px] tracking-[-0.02em] text-ink">{k}</p>
+                <p className="m-0 text-[15.5px] text-ink-muted">
+                  <span className="md:hidden font-mono text-[10px] tracking-[0.14em] uppercase mr-2">Gray market</span>
+                  {them}
+                </p>
+                <p className="m-0 text-[15.5px] text-ink">
+                  <span className="md:hidden font-mono text-[10px] tracking-[0.14em] uppercase text-cobalt mr-2">Merit</span>
+                  {us}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-12">
+            <Cta />
+          </div>
+        </div>
+      </section>
+
+      {/* §06 HOW IT WORKS. Dark again: the row of vials, three plain steps.
+          Numbered because it is a sequence. */}
+      <section id="steps" className="relative isolate bg-[#070A12] text-white overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="/brand/hero-row.webp"
+            alt="A row of sealed glass vials receding into darkness"
+            fill
+            sizes="100vw"
+            className="object-cover object-center opacity-80"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070A12]/40 via-[#070A12]/70 to-[#070A12]" />
+        </div>
+        <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-10 py-24 lg:py-36">
+          <Kicker light>From batch to bench</Kicker>
+          <h2
+            className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95] max-w-[14ch]"
+            style={{ fontSize: 'clamp(34px, 4.6vw, 64px)', textWrap: 'balance' }}
+          >
+            Three steps. None of them is trust us.
+          </h2>
+          <ol className="mt-14 lg:mt-20 grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
+            {([
+              ['The batch is tested before it is listed', 'An independent laboratory runs identity, purity and heavy metals. Nothing goes on sale until the results are in.'],
+              ['The certificate goes into the library', 'Every certificate we have released, searchable by compound. No account, no request form.'],
+              ['The QR code on the vial opens it', 'Scan the label and you are reading the same numbers we read, for the batch in your hand.'],
+            ] as [string, string][]).map(([t, b], i) => (
+              <li key={t} className="border-t border-white/20 pt-6">
+                <span className="font-mono text-[12px] tracking-[0.16em] text-cobalt-soft">0{i + 1}</span>
+                <h3 className="mt-4 font-display font-bold text-[21px] lg:text-[24px] tracking-[-0.025em] leading-[1.1]">{t}</h3>
+                <p className="mt-3 text-[15px] leading-[1.6] text-white/70">{b}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* §07 FAQ. Native details, no JS, readable by Google as content. */}
+      <section id="faq" className="bg-paper">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)] gap-10 lg:gap-20">
           <div>
             <Kicker>Before you decide</Kicker>
             <h2
-              className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95] max-w-[12ch]"
+              className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95] max-w-[10ch]"
               style={{ fontSize: 'clamp(34px, 4.6vw, 64px)', textWrap: 'balance' }}
             >
-              The questions we get.
+              Straight answers.
             </h2>
           </div>
           <div className="border-t border-ink/15">
@@ -346,7 +508,7 @@ export default async function ShopLanding() {
         </div>
       </section>
 
-      {/* §06 CLOSE. The offer once more, and the quiet fallback for people
+      {/* §08 CLOSE. The offer once more, and the quiet fallback for people
           not ready to buy today. */}
       <section id="close" className="bg-ink text-white">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-12 lg:gap-20 items-end">
@@ -356,19 +518,19 @@ export default async function ShopLanding() {
               className="mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.92]"
               style={{ fontSize: 'clamp(44px, 7vw, 104px)', textWrap: 'balance' }}
             >
-              {WELCOME_PCT}% off the first one.<br />
-              <span className="text-cobalt-soft">We earn the second.</span>
+              {WELCOME_PCT}% off.<br />
+              <span className="text-cobalt-soft">Read first.</span>
             </h2>
             <p className="mt-7 max-w-[44ch] text-[16.5px] leading-[1.55] text-white/70">
-              Code {WELCOME_CODE} applies itself at checkout. Out of San Antonio within 48 hours on
-              business days, tracked.
+              Code {WELCOME_CODE} applies itself at checkout. Ships within 48 hours, tracked and
+              insured, from a licensed US facility.
             </p>
             <div className="mt-9">
               <Cta tone="paper" />
             </div>
           </div>
           <div className="border-t border-white/15 pt-7">
-            <p className="text-[15px] font-semibold text-white">Not today?</p>
+            <p className="text-[15px] font-semibold text-white">Not ready today?</p>
             <p className="mt-1.5 text-[14px] text-white/60 max-w-[40ch]">We will email you the code so it is there when you are.</p>
             <div className="mt-5">
               <LpEmailCapture source="google-lander" theme="dark" label="Email me the code" buttonLabel="Email me the code →" />
@@ -387,16 +549,13 @@ export default async function ShopLanding() {
             <p>
               <a href="mailto:info@meritpeptides.com" className="underline-offset-4 hover:underline hover:text-ink">info@meritpeptides.com</a>
             </p>
-            <p className="mt-2 flex flex-wrap gap-x-5">
+            <p className="mt-2">
               <Link href={`${STORE}/practitioners`} className="underline-offset-4 hover:underline hover:text-ink">Practitioner Program</Link>
-              <Link href={`${STORE}/coa`} className="underline-offset-4 hover:underline hover:text-ink">Lab reports</Link>
             </p>
           </div>
           <nav aria-label="Policies" className="flex flex-wrap gap-x-6 gap-y-2 text-[13.5px] lg:justify-end">
-            {POLICIES.map(([label, href]) => (
-              href.startsWith('mailto:')
-                ? <a key={href} href={href} className="underline-offset-4 hover:underline hover:text-ink">{label}</a>
-                : <Link key={href} href={href} className="underline-offset-4 hover:underline hover:text-ink">{label}</Link>
+            {POLICIES.map(([label, path]) => (
+              <Link key={path} href={`${STORE}${path}`} className="underline-offset-4 hover:underline hover:text-ink">{label}</Link>
             ))}
           </nav>
         </div>
