@@ -1,3 +1,12 @@
+'use client';
+
+// Client component on purpose (2026-10-02): as a server component the SVG
+// path data was serialised twice into every /coa response, once as markup
+// and once inside the RSC flight payload. As a client component the server
+// still renders the SVG into the HTML, but the payload carries only the two
+// props (purity, seed). The math is pure and deterministic, so the client
+// render matches the server render byte for byte.
+//
 // Representative HPLC chromatogram, generated deterministically from a lot's
 // verified purity. This is a VISUALIZATION of the reported purity — one dominant
 // peak, with small peaks standing in for the impurity remainder — NOT the raw
