@@ -4,6 +4,7 @@ import { listProducts } from '@/lib/catalog';
 import { STACK_TEMPLATES } from '@/lib/catalog-meta';
 import { ARTICLES } from '@/lib/library';
 import { MONOGRAPHS } from '@/lib/monographs';
+import { COLLECTION_SLUGS } from '@/lib/collections';
 
 const BASE = 'https://meritsciences.com';
 
@@ -32,6 +33,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/research-disclosure`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${BASE}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${BASE}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
+    // Category landing pages (lib/collections.ts). Authored, not DB-derived,
+    // so they are safe to list unconditionally.
+    ...COLLECTION_SLUGS.map((slug) => ({
+      url: `${BASE}/catalog/${slug}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
+    })),
   ];
 
   // Product PDPs — active, consumer channel ('rua' includes BOTH). Resilient:

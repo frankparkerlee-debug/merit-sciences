@@ -18,6 +18,8 @@ import {
   type Family,
 } from '@/lib/catalog-meta';
 import { getResearchData } from '@/lib/research-data';
+import { getMonographForHandle } from '@/lib/monographs';
+import { collectionForHandle } from '@/lib/collections';
 import { ProductBuyBox } from './ProductBuyBox';
 import { PdpStackAddButton } from './PdpStackAddButton';
 import { JsonLd } from '@/components/JsonLd';
@@ -158,6 +160,10 @@ export default async function ProductPage({ params }: Props) {
     listProducts({ status: 'active' }),
   ]);
   const isPractitionerPricing = product.isPractitionerPricing;
+  // Reference layer + category page for this product. Both are pure lookups
+  // against authored data, so they cost nothing at render time.
+  const monograph = getMonographForHandle(raw.handle);
+  const collection = collectionForHandle(raw.handle);
 
   const family = getFamily(product.handle);
   const pharmacistNote = PHARMACIST_NOTES[product.handle] ?? null;
@@ -1060,6 +1066,45 @@ export default async function ProductPage({ params }: Props) {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════ MONOGRAPH + CATEGORY ═══════════
+          The monograph links here from its ProductCallout, but until
+          2026-10-02 nothing linked back, so the reference layer got no crawl
+          equity from the highest-traffic page type. Both edges now exist. */}
+      {(monograph || collection) && (
+        <section className="bg-white border-t border-cobalt/10">
+          <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-8 lg:py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="max-w-[62ch]">
+              <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
+                — Go deeper
+              </p>
+              <p className="text-[14.5px] leading-[1.7] text-ink-soft">
+                {monograph
+                  ? `Mechanism, published research and peer-reviewed references for ${monograph.title}, with no product attached.`
+                  : `Browse the rest of this category.`}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3 shrink-0">
+              {monograph && (
+                <Link
+                  href={`/library/${monograph.slug}`}
+                  className="inline-flex items-center gap-2 bg-ink text-white px-5 py-3 rounded-lg text-[13.5px] font-bold hover:bg-cobalt transition-colors"
+                >
+                  Read the {monograph.title} monograph
+                </Link>
+              )}
+              {collection && (
+                <Link
+                  href={`/catalog/${collection.slug}`}
+                  className="inline-flex items-center gap-2 border border-ink/20 text-ink px-5 py-3 rounded-lg text-[13.5px] font-bold hover:border-cobalt hover:text-cobalt transition-colors"
+                >
+                  {collection.name}
+                </Link>
+              )}
+            </div>
           </div>
         </section>
       )}

@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { listProducts } from '@/lib/catalog';
+import { COLLECTIONS } from '@/lib/collections';
 import { isAdsView, withoutAdRestricted } from '@/lib/ads-restricted';
 import type { Product } from '@/lib/product-types';
 import { familyByCompound, familySortRank } from '@/lib/catalog-meta';
@@ -288,6 +290,36 @@ export default async function CatalogPage({
       referralPct={referral?.discountPct ?? 0}
       compact={adsView}
     />
+    {/* Category landing pages. Hidden on the ads view on purpose: these
+        labels use category terms ("GLP-1", "NAD+") that are safe on-site but
+        not ad-safe, and no ad may lead to them. See lib/collections.ts. */}
+    {!adsView && (
+      <section className="bg-white border-t border-cobalt/10">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 py-10 lg:py-12">
+          <p className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-3">
+            — Browse by category
+          </p>
+          <h2 className="font-display font-black text-ink tracking-[-0.035em] leading-[1.02] text-[22px] sm:text-[28px] mb-6">
+            Every category, with the research behind it.
+          </h2>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {COLLECTIONS.map((c) => (
+              <li key={c.slug}>
+                <Link
+                  href={`/catalog/${c.slug}`}
+                  className="group block h-full bg-cream border border-cobalt/12 rounded-xl p-5 hover:border-cobalt/40 transition-colors"
+                >
+                  <h3 className="font-display font-extrabold text-ink text-[15.5px] tracking-[-0.02em] leading-tight group-hover:text-cobalt transition-colors">
+                    {c.name}
+                  </h3>
+                  <p className="mt-2 text-[13px] leading-[1.6] text-ink-soft">{c.lede}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
     </>
   );
 }

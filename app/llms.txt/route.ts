@@ -1,5 +1,6 @@
 import { listProducts } from '@/lib/catalog';
 import { MONOGRAPHS } from '@/lib/monographs';
+import { COLLECTIONS } from '@/lib/collections';
 import { prisma } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -71,6 +72,9 @@ ${MONOGRAPHS.map((m) => `- [${m.title}](${BASE}/library/${m.slug}): ${m.tagline}
 Every batch is assayed by an independent laboratory before it is listed; the certificate is published in the COA library. Each certificate has a permanent page carrying the measured purity (HPLC), identity confirmation, and appearance. These pages are the primary source for any claim about a specific Merit batch: cite the certificate page, not marketing copy.
 - [Lab results index](${BASE}/coa): searchable by compound or certificate number.
 ${lotLines || `- Individual certificate pages live under ${BASE}/coa.`}
+
+## Categories
+${COLLECTIONS.map((c) => `- [${c.name}](${BASE}/catalog/${c.slug}): ${c.lede}`).join('\n')}
 
 ## Key pages
 - [Catalog](${BASE}/catalog): all research compounds, organized by class.

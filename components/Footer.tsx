@@ -26,7 +26,11 @@ export function Footer() {
           <p className="text-[10px] tracking-[0.22em] uppercase text-white/40 font-bold mb-3">Shop</p>
           <ul className="space-y-2">
             <li><a href="/catalog" className="hover:text-white transition">Catalog</a></li>
-            <li><a href="/catalog#stacks" className="hover:text-white transition">Stacks</a></li>
+            <li><a href="/catalog/metabolic" className="hover:text-white transition">Metabolic compounds</a></li>
+            <li><a href="/catalog/repair" className="hover:text-white transition">Repair &amp; recovery</a></li>
+            <li><a href="/catalog/growth-hormone" className="hover:text-white transition">Growth-hormone axis</a></li>
+            <li><a href="/catalog/longevity" className="hover:text-white transition">Longevity &amp; cellular</a></li>
+            <li><a href="/stacks" className="hover:text-white transition">Stacks</a></li>
             <li><a href="/library" className="hover:text-white transition">Research Library</a></li>
             <li><a href="/coa" className="hover:text-white transition">Certificates of Analysis</a></li>
             <li><a href="/about" className="hover:text-white transition">About</a></li>

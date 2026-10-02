@@ -263,6 +263,19 @@ export const MONOGRAPHS: Monograph[] = COMPOUND_META
   .filter((x): x is Monograph => x !== null);
 
 const BY_SLUG = new Map(MONOGRAPHS.map((m) => [m.slug, m]));
+/**
+ * Reverse lookup: product handle → its monograph. Added 2026-10-02 because
+ * the PDP had no link to its own monograph while the monograph linked to the
+ * PDP, so the strongest internal-link edge on the site only ran one way.
+ */
+const MONOGRAPH_BY_HANDLE: Record<string, Monograph> = Object.fromEntries(
+  MONOGRAPHS.filter((m) => m.product?.handle).map((m) => [m.product!.handle, m]),
+);
+
+export function getMonographForHandle(handle: string): Monograph | undefined {
+  return MONOGRAPH_BY_HANDLE[handle];
+}
+
 export function getMonograph(slug: string): Monograph | undefined {
   return BY_SLUG.get(slug);
 }

@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db';
 import { submitToIndexNow } from '@/lib/indexnow';
 import { MONOGRAPHS } from '@/lib/monographs';
 import { ARTICLES } from '@/lib/library';
+import { COLLECTION_SLUGS } from '@/lib/collections';
 import { listProducts } from '@/lib/catalog';
 import { STACK_TEMPLATES } from '@/lib/catalog-meta';
 
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
     `${BASE}/coa`,
     `${BASE}/stacks`,
     `${BASE}/practitioners`,
+    ...COLLECTION_SLUGS.map((slug) => `${BASE}/catalog/${slug}`),
     ...MONOGRAPHS.map((m) => `${BASE}/library/${m.slug}`),
     ...ARTICLES.map((a) => `${BASE}/library/${a.slug}`),
     ...STACK_TEMPLATES.map((s) => `${BASE}/stacks/${s.slug}`),
