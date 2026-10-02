@@ -49,7 +49,7 @@ export const dynamic = 'force-dynamic';
  */
 
 export const metadata = {
-  title: 'Research compounds. Tested by an independent lab, published, shipped in 48 hours.',
+  title: 'Research compounds with the lab report included. Shipped in 48 hours.',
   description:
     'Every batch is tested by an independent laboratory before it is listed and the report is public. Orders leave San Antonio within 48 hours on business days, tracked. 15% off your first order.',
   robots: { index: false, follow: true },
@@ -251,10 +251,9 @@ export default async function ShopLanding() {
             </Kicker>
             <h1
               className="lp-rise lp-rise-2 mt-5 font-display font-extrabold tracking-[-0.045em] leading-[0.94] max-w-[12ch]"
-              style={{ fontSize: 'clamp(44px, 7vw, 96px)', textWrap: 'balance' }}
+              style={{ fontSize: 'clamp(48px, 7.6vw, 108px)', textWrap: 'balance' }}
             >
-              Don&rsquo;t take our word for it.{' '}
-              <span className="text-cobalt-soft">Take the lab&rsquo;s.</span>
+              Proof comes <span className="text-cobalt-soft">standard.</span>
             </h1>
             <p className="lp-rise lp-rise-3 mt-7 max-w-[46ch] text-[17px] lg:text-[19px] leading-[1.5] text-white/80">
               Every batch is tested by an independent laboratory before it is listed, and the
@@ -282,7 +281,7 @@ export default async function ShopLanding() {
               className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95]"
               style={{ fontSize: 'clamp(36px, 5.2vw, 72px)', textWrap: 'balance' }}
             >
-              Most sellers show you a photo. We show you the lab report.
+              The lab report comes with the vial.
             </h2>
             <p className="mt-7 max-w-[48ch] text-[16.5px] leading-[1.6] text-ink-soft">
               This is the newest certificate in our library, as a laboratory that is not ours
@@ -474,7 +473,7 @@ export default async function ShopLanding() {
             className="mt-5 font-display font-extrabold tracking-[-0.04em] leading-[0.95] max-w-[14ch]"
             style={{ fontSize: 'clamp(34px, 4.6vw, 64px)', textWrap: 'balance' }}
           >
-            Three steps. None of them is trust us.
+            Three steps, and you can check every one.
           </h2>
           <ol className="mt-14 lg:mt-20 grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
             {([
