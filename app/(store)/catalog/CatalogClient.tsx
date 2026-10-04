@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/product-types';
@@ -105,6 +105,10 @@ function subscribePrice(p: Product): number {
   return Math.round(p.priceCents * 0.9);
 }
 
+// Layout effect in the browser, plain effect during the server render (where
+// a layout effect does nothing and React warns about it).
+const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
 // ─────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────
@@ -123,6 +127,37 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
   const [addedFlash, setAddedFlash] = useState<{ title: string; cents: number } | null>(null);
 
   const familyPills = useMemo(() => buildPills(products), [products]);
+
+  /* When a buyer changes category from deep in the list, the result set is
+     replaced underneath them. Left alone, two things go wrong: they can land
+     on the footer of a 4-item category, and switching back to All lets the
+     browser's scroll anchoring fling the page thousands of pixels down. So:
+     if the top of the results is above the pinned row, put it directly
+     under that row. Instant and before paint (a layout effect), because a
+     smooth scroll through content that is being swapped out gets cut short
+     by anchoring and stops in the wrong place; that was measured, not
+     guessed. From the top of the page nothing moves. Skipped on first
+     render. */
+  const gridRef = useRef<HTMLDivElement>(null);
+  const pillBarRef = useRef<HTMLDivElement>(null);
+  const familyMounted = useRef(false);
+  useIsoLayoutEffect(() => {
+    if (!familyMounted.current) {
+      familyMounted.current = true;
+      return;
+    }
+    const grid = gridRef.current;
+    const bar = pillBarRef.current;
+    if (!grid || !bar) return;
+    // Measure against where the row sits WHEN PINNED (its sticky top plus
+    // its height), not where it is right now. After a swap to a short
+    // category the page's main area can end near the viewport, which pushes
+    // the sticky row up with it; its live position is then wrong, and a
+    // correction based on it lands short. That was the first version's bug.
+    const pinnedBottom = parseFloat(getComputedStyle(bar).top) + bar.offsetHeight;
+    const target = grid.getBoundingClientRect().top + window.scrollY - pinnedBottom;
+    if (window.scrollY > target) window.scrollTo({ top: target, behavior: 'auto' });
+  }, [selectedFamily]);
 
   const addToCart  = useCart((s) => s.add);
   const openDrawer = useCart((s) => s.openDrawer);
@@ -365,9 +400,16 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
         )}
       </div>
 
-      {/* ═══════════════ STICKY FILTER STRIP ═══════════════ */}
-      <div className="sticky top-0 z-20 bg-cream/95 backdrop-blur-sm border-y border-ink/10">
-        <div className="px-6 lg:px-12 py-4 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 lg:gap-4">
+      {/* ═══════════════ CONTROLS (scroll with the page) ═══════════════
+          Search, subscribe pricing and sort. Only the category row below is
+          pinned. Until 2026-10-04 this whole strip was sticky at top-0: on a
+          390px phone the eight category pills wrapped into four rows and the
+          pinned block measured 349px, 41% of the screen. And because the nav
+          is also sticky at top-0 with a higher z-index, the strip pinned
+          underneath it and the search box sat hidden behind the nav on every
+          width. */}
+      <div className="bg-cream border-t border-ink/10">
+        <div className="px-6 lg:px-12 pt-4 pb-3 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 lg:gap-4">
           {/* Search — 29 SKUs with names people half-remember ("wolverine",
               "BPC", "reta") and chemical codes they may know instead. Leads the
               strip because typing beats scanning seven chips. min-h-[44px]
@@ -400,34 +442,6 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
                 ✕
               </button>
             )}
-          </div>
-
-          {/* Family pills (left) */}
-          <div className="flex flex-wrap items-center gap-2">
-            {familyPills.map((pill) => {
-              const isActive = selectedFamily === pill.id;
-              const count =
-                pill.id === 'all'
-                  ? products.length
-                  : products.filter((p) => p.family === pill.id).length;
-              return (
-                <button
-                  key={pill.id}
-                  type="button"
-                  onClick={() => setSelectedFamily(pill.id)}
-                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 lg:px-4 py-2 rounded-full text-[11px] lg:text-[12px] tracking-[0.05em] font-semibold transition ${
-                    isActive
-                      ? 'bg-ink text-white border-ink'
-                      : 'bg-white text-ink border border-ink/10 hover:border-cobalt/40'
-                  }`}
-                >
-                  {pill.label}
-                  <span className={`text-[10px] ${isActive ? 'text-white/60' : 'text-ink-muted'}`}>
-                    ({count})
-                  </span>
-                </button>
-              );
-            })}
           </div>
 
           {/* Sort + subscribe toggle (right) */}
@@ -490,8 +504,70 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
         </div>
       </div>
 
+      {/* ═══════════════ CATEGORY ROW (pinned) ═══════════════
+          One line at every width. On a phone it scrolls sideways instead of
+          wrapping, so what stays on screen is a single 65px row rather than
+          four. top-[57px] is the sticky nav's height (components/Nav.tsx:
+          py-3.5 around a 28px row, plus a 1px border); pinning at 0 would
+          slide this row under the nav again. The negative margin lets the
+          row run to the screen edge on a phone, so a half-visible pill at the
+          right signals that it scrolls. */}
+      <div
+        ref={pillBarRef}
+        className="sticky top-[57px] z-20 bg-cream/95 backdrop-blur-sm border-b border-ink/10"
+      >
+        <div className="px-6 lg:px-12 max-w-[1400px] mx-auto">
+          <div
+            role="group"
+            aria-label="Filter by category"
+            className="-mx-6 px-6 lg:mx-0 lg:px-0 py-2.5 flex flex-nowrap lg:flex-wrap items-center gap-2 overflow-x-auto lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {familyPills.map((pill) => {
+              const isActive = selectedFamily === pill.id;
+              const count =
+                pill.id === 'all'
+                  ? products.length
+                  : products.filter((p) => p.family === pill.id).length;
+              return (
+                <button
+                  key={pill.id}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={(e) => {
+                    setSelectedFamily(pill.id);
+                    // Bring a pill that was cut off at the edge fully into
+                    // view by scrolling the ROW only. scrollIntoView would
+                    // also drive the window, which fights the results
+                    // correction above.
+                    const row = e.currentTarget.parentElement;
+                    if (!row) return;
+                    const r = e.currentTarget.getBoundingClientRect();
+                    const box = row.getBoundingClientRect();
+                    const pad = 24;
+                    if (r.left < box.left + pad) row.scrollBy({ left: r.left - box.left - pad, behavior: 'smooth' });
+                    else if (r.right > box.right - pad) row.scrollBy({ left: r.right - box.right + pad, behavior: 'smooth' });
+                  }}
+                  className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 min-h-[44px] px-3.5 lg:px-4 py-2 rounded-full text-[11px] lg:text-[12px] tracking-[0.05em] font-semibold transition ${
+                    isActive
+                      ? 'bg-ink text-white border-ink'
+                      : 'bg-white text-ink border border-ink/10 hover:border-cobalt/40'
+                  }`}
+                >
+                  {pill.label}
+                  <span className={`text-[10px] ${isActive ? 'text-white/60' : 'text-ink-muted'}`}>
+                    ({count})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* ═══════════════ MAIN GRID ═══════════════ */}
-      <div className="px-6 lg:px-12 py-6 lg:py-10 max-w-[1400px] mx-auto">
+      {/* overflow-anchor:none keeps the browser from re-anchoring the scroll
+          position on a card when a category swap replaces every card. */}
+      <div ref={gridRef} className="px-6 lg:px-12 py-6 lg:py-10 max-w-[1400px] mx-auto [overflow-anchor:none]">
         {/* Product grid with editorial breaks interspersed */}
         <ProductGridWithBreaks
           products={sorted}
