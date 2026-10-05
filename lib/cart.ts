@@ -85,6 +85,57 @@ export const useCart = create<CartState>()(
       // Only persist `lines` — never persist `isDrawerOpen` (the drawer
       // would pop open on every cold page load otherwise).
       partialize: (s) => ({ lines: s.lines }),
+      // Deferred: hydration from localStorage can finish before `useCart`
+      // is assigned.
+      onRehydrateStorage: () => () => {
+        if (typeof window !== 'undefined') setTimeout(syncRenamedLines, 0);
+      },
     },
   ),
 );
+
+/**
+ * A cart saved before a product was renamed still holds the old handle, name
+ * and thumbnail. Ask the server once per session for the current ones (it owns
+ * the mapping, so no retired name ships in this bundle), then patch the lines,
+ * merging any that now point at the same product and bundle.
+ */
+async function syncRenamedLines() {
+  try {
+    if (sessionStorage.getItem('merit-cart-synced')) return;
+    sessionStorage.setItem('merit-cart-synced', '1');
+  } catch {
+    // Storage blocked: still worth one attempt this page load.
+  }
+  const handles = useCart
+    .getState()
+    .lines.map((l) => l.handle)
+    .filter((h) => !h.startsWith('stack:') && !h.startsWith('supply:'));
+  if (handles.length === 0) return;
+  try {
+    const res = await fetch('/api/cart/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handles }),
+    });
+    if (!res.ok) return;
+    const { renamed } = (await res.json()) as {
+      renamed?: { from: string; handle: string; title: string; imageUrl?: string }[];
+    };
+    if (!renamed?.length) return;
+    const byOld = new Map(renamed.map((r) => [r.from, r]));
+    useCart.setState((s) => {
+      const merged: CartLine[] = [];
+      for (const line of s.lines) {
+        const r = byOld.get(line.handle);
+        const next = r ? { ...line, handle: r.handle, title: r.title, imageUrl: r.imageUrl ?? line.imageUrl } : line;
+        const same = merged.find((m) => m.handle === next.handle && m.bundleLabel === next.bundleLabel);
+        if (same) same.qty += next.qty;
+        else merged.push({ ...next });
+      }
+      return { lines: merged };
+    });
+  } catch {
+    // Offline or a blip: checkout re-derives the name server-side regardless.
+  }
+}

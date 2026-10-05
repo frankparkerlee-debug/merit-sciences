@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { verifyReorderToken } from '@/lib/reorder';
+import { resolveHandles } from '@/lib/handle-aliases';
 import { listProducts } from '@/lib/catalog';
 import { getStack } from '@/lib/catalog-meta';
 import { deriveBundles, productDisplayName, productImage } from '@/lib/product-types';
@@ -45,6 +46,11 @@ export default async function ReorderPage({ params }: Props) {
     products = [];
   }
   const byHandle = new Map(products.map((p) => [p.handle, p]));
+  // Order lines keep the handle they sold under. Follow retired handles to the
+  // current product, or every renamed product silently drops out of reorder.
+  const forward = await resolveHandles(order.lines.map((l) => l.handle)).catch(
+    () => new Map<string, string>(),
+  );
 
   const fresh: CartLine[] = [];
   for (const l of order.lines) {
@@ -68,7 +74,7 @@ export default async function ReorderPage({ params }: Props) {
       continue;
     }
 
-    const p = byHandle.get(l.handle);
+    const p = byHandle.get(forward.get(l.handle) ?? l.handle);
     if (!p) continue; // discontinued / drafted — drop
     // Reprice at the current bundle ladder; unknown legacy labels fall back
     // to a Single at today's price.

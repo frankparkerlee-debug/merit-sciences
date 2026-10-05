@@ -1,5 +1,6 @@
 import 'server-only';
 import { prisma } from './db';
+import { resolveHandles } from './handle-aliases';
 
 /**
  * Commission on orders from a practitioner account that an affiliate
@@ -64,7 +65,11 @@ export type GrossProfitResult = {
 export async function computeGrossProfitCommission(
   lines: CommissionLine[],
 ): Promise<GrossProfitResult> {
-  const handles = [...new Set(lines.map((l) => l.handle).filter(Boolean))];
+  // Lines keep the handle they sold under; cost lives on the current product,
+  // so follow retired handles or a re-run of an older order withholds commission.
+  const forward = await resolveHandles(lines.map((l) => l.handle));
+  const currentHandle = (h: string) => forward.get(h) ?? h;
+  const handles = [...new Set(lines.map((l) => currentHandle(l.handle)).filter(Boolean))];
   const products = handles.length
     ? await prisma.product.findMany({
         where: { handle: { in: handles } },
@@ -79,7 +84,7 @@ export async function computeGrossProfitCommission(
 
   for (const line of lines) {
     revenueCents += line.unitCents * line.qty;
-    const cost = costByHandle.get(line.handle);
+    const cost = costByHandle.get(currentHandle(line.handle));
     if (cost == null || cost <= 0) {
       if (line.handle) uncostedHandles.push(line.handle);
       continue;

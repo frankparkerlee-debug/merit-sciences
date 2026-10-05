@@ -19,6 +19,7 @@ import { getPricingContext, priceFor } from './pricing';
 import { STACK_TEMPLATES } from './catalog-meta';
 import { AD_FUNNEL_CODES } from './welcome-offer';
 import { resolveHandles } from './handle-aliases';
+import { productDisplayName } from './product-types';
 
 export const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300
 export const FLAT_SHIPPING_CENTS = 999; // $9.99
@@ -181,6 +182,7 @@ export async function priceCart(args: {
       ...rawStackMembers,
     ]);
     const current = (h: string) => forward.get(h) ?? h;
+    const renamedLines = lines.filter((l) => forward.has(l.handle));
     for (const line of lines) line.handle = current(line.handle);
 
     const productHandles = [...new Set(
@@ -193,7 +195,7 @@ export async function priceCart(args: {
       productHandles.length + stackMemberHandles.length > 0
         ? prisma.product.findMany({
             where: { handle: { in: [...new Set([...productHandles, ...stackMemberHandles])] } },
-            select: { handle: true, priceCents: true, physicianPriceCents: true, status: true },
+            select: { handle: true, priceCents: true, physicianPriceCents: true, status: true, title: true, vialSize: true, imageUrl: true },
           })
         : Promise.resolve([]),
       supplyHandles.length > 0
@@ -205,6 +207,16 @@ export async function priceCart(args: {
     ]);
     const productMap = new Map(products.map((p) => [p.handle, p]));
     const supplyMap = new Map(supplies.map((p) => [p.handle, p]));
+
+    // A line carried in under a retired handle still has the name and
+    // thumbnail it was added with. When the rename retired that name, it must
+    // not be written into the order, the Stripe line item or the email.
+    for (const line of renamedLines) {
+      const p = productMap.get(line.handle);
+      if (!p) continue;
+      line.title = productDisplayName(p);
+      if (p.imageUrl) line.imageUrl = p.imageUrl;
+    }
 
     /** Per-vial price this buyer is entitled to, via the shared resolver. */
     const perVial = (handle: string): number | null => {

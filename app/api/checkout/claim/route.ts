@@ -21,6 +21,7 @@ import { consumeHandoff, signPractitionerId, PRACTITIONER_COOKIE } from '@/lib/c
 import { ATTR_COOKIE, ATTR_COOKIE_MAX_AGE } from '@/lib/attribution';
 import { prisma } from '@/lib/db';
 import { savedCardFor } from '@/lib/practitioner-card';
+import { refreshRenamedLines } from '@/lib/handle-aliases';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -68,8 +69,17 @@ export async function POST(req: Request) {
     }
   }
 
+  // A handoff built from a cart saved before a product rename still carries
+  // the old handle and name. Show the current ones.
+  let lines = payload.lines;
+  try {
+    lines = await refreshRenamedLines(payload.lines);
+  } catch (err) {
+    console.error('[checkout/claim] renamed-line refresh failed', err);
+  }
+
   const res = NextResponse.json({
-    lines: payload.lines,
+    lines,
     welcomeCode: payload.welcomeCode,
     practitioner,
   });

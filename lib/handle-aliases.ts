@@ -20,6 +20,7 @@ import {
   STACK_TEMPLATES,
 } from './catalog-meta';
 import { COUNTERPARTS } from './approved-counterparts';
+import { productDisplayName, productImage } from './product-types';
 
 export const HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -64,6 +65,31 @@ export async function resolveHandles(handles: string[]): Promise<Map<string, str
     select: { oldHandle: true, newHandle: true },
   });
   return new Map(rows.map((r) => [r.oldHandle, r.newHandle]));
+}
+
+/**
+ * Current handle, name and thumbnail for any cart line still carrying a retired
+ * handle. A browser cart, checkout handoff or snapshot saved before a rename
+ * keeps the title and image it was added under, and when the rename retired a
+ * name, that name must not come back on the cart drawer or the checkout page.
+ * Lines on current handles, stacks and supplies pass through untouched.
+ */
+export async function refreshRenamedLines<L extends { handle: string; title: string; imageUrl?: string | null }>(
+  lines: L[],
+): Promise<L[]> {
+  const forward = await resolveHandles(lines.map((l) => l.handle));
+  if (forward.size === 0) return lines;
+  const products = await prisma.product.findMany({
+    where: { handle: { in: [...new Set(forward.values())] } },
+    select: { handle: true, title: true, vialSize: true, imageUrl: true },
+  });
+  const byHandle = new Map(products.map((p) => [p.handle, p]));
+  return lines.map((l) => {
+    const next = forward.get(l.handle);
+    const p = next ? byHandle.get(next) : undefined;
+    if (!p) return l;
+    return { ...l, handle: p.handle, title: productDisplayName(p), imageUrl: productImage(p.imageUrl) };
+  });
 }
 
 /**
