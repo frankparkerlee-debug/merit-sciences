@@ -163,8 +163,8 @@ const SAMPLE_LINES = [
 ];
 
 const SAMPLE_LINES_ABANDONED = [
-  { title: 'Retatrutide (LY3437943)', bundleLabel: '6-Pack', qty: 1, unitCents: 49500 },
-  { title: 'Tirzepatide (LY3298176)', bundleLabel: '3-Pack', qty: 1, unitCents: 28500 },
+  { title: 'RT3', bundleLabel: '6-Pack', qty: 1, unitCents: 49500 },
+  { title: 'TZ2', bundleLabel: '3-Pack', qty: 1, unitCents: 28500 },
 ];
 
 // Cross-sell sample uses real product handles from the seeded catalog so
@@ -221,7 +221,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
     case 'seq_tirzepatide_2':
     case 'seq_tirzepatide_3':
     case 'seq_tirzepatide_4':
-      return { code: 'WELCOME15', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample', heroImageUrl: '/products/sku-tirzepatide-30mg.webp' };
+      return { code: 'WELCOME15', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample', heroImageUrl: '/products/sku-tz2.webp' };
     case 'seq_sermorelin_2':
       return { code: 'WELCOME15', unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample', heroImageUrl: '/products/sku-sermorelin-acetate-10mg.webp' };
     // Category sequence beats — hero + the roster thumbnails (the "lineup" shot).
@@ -244,16 +244,16 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
     case 'winback':
       return {
         firstName: 'Alex',
-        primaryProductTitle: 'Tirzepatide 30mg',
+        primaryProductTitle: 'TZ2 30mg',
         reorderUrl: 'https://meritsciences.com/reorder/sample.signature',
         unsubscribeUrl: 'https://meritsciences.com/unsubscribe?e=you@example.com&t=sample',
-        productImageUrl: '/products/sku-tirzepatide-30mg.webp',
+        productImageUrl: '/products/sku-tz2.webp',
       };
     case 'lab_report':
       return {
         issueLabel: 'July 2026',
         lots: [
-          { compound: 'Tirzepatide 30mg', lotId: 'MRT-2607-02', purity: '99.6%', testedDate: 'Jul 5, 2026' },
+          { compound: 'TZ2 30mg', lotId: 'MRT-2607-02', purity: '99.6%', testedDate: 'Jul 5, 2026' },
           { compound: 'NAD⁺ 500mg', lotId: 'MRT-2606-08', purity: '99.1%', testedDate: 'Jun 28, 2026' },
           { compound: 'Semaglutide 10mg', lotId: 'MRT-2607-05', purity: '99.4%', testedDate: 'Jul 12, 2026' },
         ],
@@ -266,7 +266,7 @@ export function sampleDataFor(key: TemplateKey): Record<string, any> {
     case 'interest_picker':
       return {
         lanes: [
-          { label: 'Weight & GLP-1s', sub: 'the Ozempic / Mounjaro class', href: 'https://meritsciences.com/enroll?seq=cat-incretin&e=you@example.com&t=sample' },
+          { label: 'Weight & GLP-1s', sub: 'the Ozempic class', href: 'https://meritsciences.com/enroll?seq=cat-incretin&e=you@example.com&t=sample' },
           { label: 'NAD⁺ & longevity', sub: 'cellular-energy pathways', href: 'https://meritsciences.com/enroll?seq=cat-cellular&e=you@example.com&t=sample' },
           { label: 'Growth-hormone axis', sub: 'secretagogues + IGF-1', href: 'https://meritsciences.com/enroll?seq=cat-gh-axis&e=you@example.com&t=sample' },
           { label: 'Tissue repair', sub: 'BPC-157, GHK-Cu & blends', href: 'https://meritsciences.com/enroll?seq=cat-repair&e=you@example.com&t=sample' },

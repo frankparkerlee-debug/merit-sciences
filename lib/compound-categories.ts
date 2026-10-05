@@ -37,11 +37,11 @@ export const COMPOUND_CATEGORIES: Record<string, CompoundCategory> = {
     name: 'GLP-1 & incretin research',
     tagline: 'The incretin receptor class studied for metabolic and body-weight research.',
     classContext: 'This is the receptor class the approved GLP-1 medicines act on.',
-    heroHandle: 'ly3298176',
+    heroHandle: 'tz2',
     members: [
       { handle: 'semaglutide', name: 'Semaglutide' },
-      { handle: 'ly3298176', name: 'Tirzepatide' },
-      { handle: 'ly3437943', name: 'Retatrutide' },
+      { handle: 'tz2', name: 'TZ2' },
+      { handle: 'rt3', name: 'RT3' },
     ],
   },
   'cat-cellular': {

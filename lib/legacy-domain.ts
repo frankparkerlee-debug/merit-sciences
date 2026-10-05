@@ -36,8 +36,6 @@ const PRODUCT_HANDLES = [
   'glutathione-1500mg',
   'semaglutide-20mg',
   'semaglutide-10mg',
-  'retatrutide-10mg',
-  'ly3298176-10mg',
   'tesamorelin-20mg',
   'ipamorelin-10mg',
   'melanotan-ii',
@@ -46,8 +44,6 @@ const PRODUCT_HANDLES = [
   'nad-500mg',
   'igf-1-lr3',
   'sermorelin',
-  'ly3437943',
-  'ly3298176',
   'aod-9604',
   'epitalon',
   'dsip-5mg',
@@ -84,10 +80,6 @@ const HANDLE_ALIASES: Record<string, string> = {
   'cjc-ipamorelin': 'cjc-1295-w-o-dac-10-ipa-10-20mg',
   tesamorelin: 'tesamorelin-20mg',
   'tesamorelin-10mg': 'th9507',
-  // Active SKU, not the 10mg draft: legacy backlinks should land on something buyable.
-  tirzepatide: 'ly3298176',
-  retatrutide: 'retatrutide-10mg',
-  reta: 'retatrutide-10mg',
   semaglutide: 'semaglutide-10mg',
   sema: 'semaglutide-10mg',
   'melanotan-2': 'melanotan-ii',
@@ -163,14 +155,20 @@ function matchProduct(slug: string): string | null {
   return null;
 }
 
+/** RT3 and TZ2's former names, nicknames and development codes. A legacy URL
+ *  carrying any of them gets no forwarding at all, not even to /catalog
+ *  (Parker, 2026-10-05): it 404s, so the old name stays off the record. */
+const RETIRED_NAME = /retatrutide|tirzepatide|ly-?3437943|ly-?3298176|(^|-)(reta|tirz)(-|$)/;
+
 /**
  * Map a legacy meritpeptides.com path to its modern equivalent.
- * Always returns a path (worst case '/'), so every legacy URL 301s to
- * something real rather than dead-ending.
+ * Returns a path (worst case '/') so a legacy URL 301s to something real
+ * rather than dead-ending, or null for a retired name, which must 404.
  */
-export function legacyPathTarget(pathname: string): string {
+export function legacyPathTarget(pathname: string): string | null {
   const path = pathname.replace(/\/+$/, '') || '/';
   if (path === '/') return '/';
+  if (RETIRED_NAME.test(normalizeSlug(path))) return null;
 
   const seg = path.split('/').filter(Boolean);
   const [first, second, third] = seg;

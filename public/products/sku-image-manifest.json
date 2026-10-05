@@ -378,40 +378,40 @@
     "imageUrl": "/products/sku-ptd-dbm-10mg.webp"
   },
   {
-    "sku": "Retatrutide | 10mg",
-    "compound": "Retatrutide",
+    "sku": "RT3 | 10mg",
+    "compound": "RT3",
     "vialSize": "10mg",
-    "slug": "retatrutide-10mg",
+    "slug": "rt3-10mg",
     "family": "glp1",
-    "filename": "sku-retatrutide-10mg.webp",
-    "imageUrl": "/products/sku-retatrutide-10mg.webp"
+    "filename": "sku-rt3-10mg.webp",
+    "imageUrl": "/products/sku-rt3-10mg.webp"
   },
   {
-    "sku": "Retatrutide | 20mg",
-    "compound": "Retatrutide",
+    "sku": "RT3 | 20mg",
+    "compound": "RT3",
     "vialSize": "20mg",
-    "slug": "retatrutide-20mg",
+    "slug": "rt3-20mg",
     "family": "glp1",
-    "filename": "sku-retatrutide-20mg.webp",
-    "imageUrl": "/products/sku-retatrutide-20mg.webp"
+    "filename": "sku-rt3-20mg.webp",
+    "imageUrl": "/products/sku-rt3-20mg.webp"
   },
   {
-    "sku": "Retatrutide | 30mg",
-    "compound": "Retatrutide",
+    "sku": "RT3 | 30mg",
+    "compound": "RT3",
     "vialSize": "30mg",
-    "slug": "retatrutide-30mg",
+    "slug": "rt3",
     "family": "glp1",
-    "filename": "sku-retatrutide-30mg.webp",
-    "imageUrl": "/products/sku-retatrutide-30mg.webp"
+    "filename": "sku-rt3.webp",
+    "imageUrl": "/products/sku-rt3.webp"
   },
   {
-    "sku": "Retatrutide | 60mg",
-    "compound": "Retatrutide",
+    "sku": "RT3 | 60mg",
+    "compound": "RT3",
     "vialSize": "60mg",
-    "slug": "retatrutide-60mg",
+    "slug": "rt3-60mg",
     "family": "glp1",
-    "filename": "sku-retatrutide-60mg.webp",
-    "imageUrl": "/products/sku-retatrutide-60mg.webp"
+    "filename": "sku-rt3-60mg.webp",
+    "imageUrl": "/products/sku-rt3-60mg.webp"
   },
   {
     "sku": "Selank | 10mg",
@@ -549,40 +549,40 @@
     "imageUrl": "/products/sku-thymosin-alpha-1-10mg.webp"
   },
   {
-    "sku": "Tirzepatide | 10mg",
-    "compound": "Tirzepatide",
+    "sku": "TZ2 | 10mg",
+    "compound": "TZ2",
     "vialSize": "10mg",
-    "slug": "tirzepatide-10mg",
+    "slug": "tz2-10mg",
     "family": "glp1",
-    "filename": "sku-tirzepatide-10mg.webp",
-    "imageUrl": "/products/sku-tirzepatide-10mg.webp"
+    "filename": "sku-tz2-10mg.webp",
+    "imageUrl": "/products/sku-tz2-10mg.webp"
   },
   {
-    "sku": "Tirzepatide | 30mg",
-    "compound": "Tirzepatide",
+    "sku": "TZ2 | 30mg",
+    "compound": "TZ2",
     "vialSize": "30mg",
-    "slug": "tirzepatide-30mg",
+    "slug": "tz2",
     "family": "glp1",
-    "filename": "sku-tirzepatide-30mg.webp",
-    "imageUrl": "/products/sku-tirzepatide-30mg.webp"
+    "filename": "sku-tz2.webp",
+    "imageUrl": "/products/sku-tz2.webp"
   },
   {
-    "sku": "Tirzepatide | 60mg",
-    "compound": "Tirzepatide",
+    "sku": "TZ2 | 60mg",
+    "compound": "TZ2",
     "vialSize": "60mg",
-    "slug": "tirzepatide-60mg",
+    "slug": "tz2-60mg",
     "family": "glp1",
-    "filename": "sku-tirzepatide-60mg.webp",
-    "imageUrl": "/products/sku-tirzepatide-60mg.webp"
+    "filename": "sku-tz2-60mg.webp",
+    "imageUrl": "/products/sku-tz2-60mg.webp"
   },
   {
-    "sku": "Tirzepatide | 100mg",
-    "compound": "Tirzepatide",
+    "sku": "TZ2 | 100mg",
+    "compound": "TZ2",
     "vialSize": "100mg",
-    "slug": "tirzepatide-100mg",
+    "slug": "tz2-100mg",
     "family": "glp1",
-    "filename": "sku-tirzepatide-100mg.webp",
-    "imageUrl": "/products/sku-tirzepatide-100mg.webp"
+    "filename": "sku-tz2-100mg.webp",
+    "imageUrl": "/products/sku-tz2-100mg.webp"
   },
   {
     "sku": "VIP | 5mg",

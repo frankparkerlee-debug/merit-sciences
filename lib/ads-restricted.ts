@@ -17,12 +17,12 @@
  * PT-141, which sit among the most-flagged compounds in this category and
  * together did $239 in 90 days, so they cost nothing to withhold.
  *
- * NOT listed: retatrutide and tirzepatide. They are 40.6% and 7.2% of revenue,
- * and they already display site-wide under their development codes, RT3 -
- * LY3437943 and TZ2 - LY3298176. That naming predates this file and applies to
- * every visitor, which is what keeps it a naming convention rather than showing
- * Google something different from the buyer. If that ever stops being true,
- * they belong on this list.
+ * NOT listed: RT3 and TZ2. They are 40.6% and 7.2% of revenue, and site-wide
+ * they display under those product codes only, with no generic name,
+ * development code or brand name anywhere (since 2026-10-05). That naming
+ * applies to every visitor, which is what keeps it a naming convention rather
+ * than showing Google something different from the buyer. If that ever stops
+ * being true, they belong on this list.
  *
  * Excluding all ten candidates instead would remove 55.3% of catalog revenue
  * from the paid path, which would make a paid test unable to prove anything.

@@ -57,7 +57,7 @@ export function CoaUploadForm() {
         </div>
         <div>
           <label className={labelCls}>Product handle (optional)</label>
-          <input name="productHandle" placeholder="ly3437943" className={inputCls} />
+          <input name="productHandle" placeholder="rt3" className={inputCls} />
         </div>
         <div className="sm:col-span-2">
           <label className={labelCls}>Masked report PDF (optional — redact the lab letterhead first)</label>

@@ -71,7 +71,7 @@ export function renderProspectProof(d: ProspectEmailData): Rendered {
       h('Anyone can say 99%. We hand you the receipt.') +
       p('Every Merit batch is tested before it is listed, and its Certificate of Analysis is published: the HPLC trace, the measured purity, the identity check. Because <em>“trust us”</em> is not a standard.') +
       proof(
-        '<strong>Batch MRT-2603-03 · Tirzepatide 30mg</strong><br>HPLC purity: <strong>99.827%</strong> &nbsp;·&nbsp; Identity: conforms<br>Independently tested, published in the COA library',
+        '<strong>Batch MRT-2603-03 · TZ2 30mg</strong><br>HPLC purity: <strong>99.827%</strong> &nbsp;·&nbsp; Identity: conforms<br>Independently tested, published in the COA library',
       ) +
       p(`We even put the whole library online — ${a('every batch we’ve shipped', COA)}, searchable by compound.`) +
       cta('Browse the lab results →', results) +

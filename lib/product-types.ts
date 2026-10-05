@@ -60,7 +60,7 @@ export function money(cents: number): string {
  * (verified): Single 1.0× · 3-Pack 0.95× · 6-Pack 0.90× · Subscribe 0.90×.
  * Replaces the hand-maintained `bundles` JSON, which went stale whenever a
  * price was edited without re-editing the array — the exact cause of the
- * $169.99-pill / $135-body split on Retatrutide 30mg.
+ * $169.99-pill / $135-body split on RT3 30mg.
  */
 export function deriveBundles(perVialCents: number): NonNullable<Product['bundles']> {
   return [
@@ -89,7 +89,7 @@ export function productImage(imageUrl: string | null | undefined): string {
 
 /**
  * Canonical buyer-facing product name = compound + vial size, e.g.
- * "Retatrutide 30 mg". Use EVERYWHERE a product is named (catalog cards,
+ * "RT3 30 mg". Use EVERYWHERE a product is named (catalog cards,
  * PDP, cart, order lines) so a buyer comparing sizes always sees which one
  * they're looking at. `title` holds just the compound; the size lives in
  * `vialSize` — never bake the size into `title` (it double-prints).

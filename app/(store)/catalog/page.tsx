@@ -122,8 +122,8 @@ const PHARMACIST_NOTES: Record<string, string> = {
     'A coenzyme, not a peptide. Stocked because the cellular-pathway literature is deep and reorders are consistent.',
   'bpc157-ghk-cu-50-tb500-kpv-klow-80mg':
     'Multi-pathway blend, co-formulated at our US facility. One vial, four signaling pathways under research.',
-  'retatrutide-10mg':
-    'Triple-agonist — newer than Tirzepatide. Limited literature but increasing research interest.',
+  'rt3-10mg':
+    'Triple agonist, newer than TZ2. Limited literature but increasing research interest.',
   'pt-141':
     'Neuroendocrine pathway research. Stack-level demand higher than catalog-level, often paired with Selank.',
 };
@@ -195,7 +195,7 @@ export default async function CatalogPage({
     centsPerMg: centsPerMg(p),
   }));
 
-  // Best-seller sort: GLP-1 first (Tirzepatide, Semaglutide, Retatrutide),
+  // Best-seller sort: GLP-1 first (TZ2, Semaglutide, RT3),
   // then healing → aesthetic → GH → longevity → neuro → bioregs → niche.
   // Within a family, sort by compound name then by numeric vial size
   // (5mg → 10mg → 30mg) so multi-size families read in ascending order.

@@ -40,8 +40,8 @@ export type Counterpart = {
 };
 
 export const COUNTERPARTS: Record<string, Counterpart> = {
-  'ly3298176': {
-    handle: 'ly3298176',
+  'tz2': {
+    handle: 'tz2',
     compound: 'Tirzepatide',
     aka: 'GLP-1 / GIP dual agonist',
     lane: 'weight',
@@ -78,8 +78,8 @@ export const COUNTERPARTS: Record<string, Counterpart> = {
     meritAngle:
       'The most recognized molecule in the category — the same one, pharmacy-grade and batch-verified, with the receipt on every label.',
   },
-  'ly3437943': {
-    handle: 'ly3437943',
+  'rt3': {
+    handle: 'rt3',
     compound: 'Retatrutide',
     aka: 'triple GLP-1 / GIP / glucagon agonist',
     lane: 'weight',
@@ -164,7 +164,7 @@ export const COUNTERPART_HANDLES = Object.keys(COUNTERPARTS);
 
 // Lane → the hero sequence the self-segmentation picker enrolls into.
 export const LANE_HERO: Record<Counterpart['lane'], string> = {
-  weight: 'ly3298176',      // Tirzepatide (cross-sells semaglutide + retatrutide)
+  weight: 'tz2',            // TZ2 (cross-sells semaglutide + RT3)
   metabolic: 'th9507',      // Tesamorelin
   vitality: 'pt-141',       // PT-141
   gh: 'sermorelin',         // Sermorelin

@@ -132,10 +132,23 @@ export function MonographView({ m }: { m: Mono }) {
           <ol className="space-y-2.5 list-decimal pl-5 marker:text-ink-muted text-[13.5px]">
             {r.references.map((c, i) => (
               <li key={i}>
-                <a href={c.url} target="_blank" rel="noopener noreferrer nofollow" className="text-cobalt hover:underline font-medium">
-                  {c.title}
-                </a>
-                . {c.authors}. <em>{c.journal}</em>{c.year ? `, ${c.year}` : ''}
+                {c.title ? (
+                  <>
+                    <a href={c.url} target="_blank" rel="noopener noreferrer nofollow" className="text-cobalt hover:underline font-medium">
+                      {c.title}
+                    </a>
+                    . {c.authors}.{' '}
+                  </>
+                ) : (
+                  // Untitled on purpose (see Citation.title): the authors carry the link.
+                  <>
+                    <a href={c.url} target="_blank" rel="noopener noreferrer nofollow" className="text-cobalt hover:underline font-medium">
+                      {c.authors.replace(/\.$/, '')}
+                    </a>
+                    .{' '}
+                  </>
+                )}
+                <em>{c.journal}</em>{c.year ? `, ${c.year}` : ''}
                 {c.pubmedId ? ` · PMID ${c.pubmedId}` : c.doi ? ` · doi:${c.doi}` : ''}
               </li>
             ))}

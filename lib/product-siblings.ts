@@ -27,8 +27,8 @@ const cachedSiblingRows = unstable_cache(
 
 /**
  * Sibling = a product that shares the same `compound` as the one being
- * viewed but is sold at a different vialSize (e.g. Retatrutide 10mg vs
- * Retatrutide 30mg). The PDP renders a size selector listing all
+ * viewed but is sold at a different vialSize (e.g. RT3 10mg vs
+ * RT3 30mg). The PDP renders a size selector listing all
  * siblings so a buyer landing on 10mg can switch to 30mg in one click
  * without backtracking to the catalog.
  *

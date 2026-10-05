@@ -32,7 +32,7 @@ export type GameCharacter = {
   unlockCost: number;
   /** RP/sec produced at level 1. Scales linearly with level. */
   baseRate: number;
-  /** Prefix for this hero's unlockable Merit discount codes, e.g. RETA → RETA10. */
+  /** Prefix for this hero's unlockable Merit discount codes, e.g. TESA → TESA10. */
   codePrefix: string;
 };
 
@@ -43,7 +43,7 @@ export type GameCharacter = {
  * NOTE: these codes are surfaced in-game as the reward UI. To make them
  * redeemable, mint matching codes in the checkout backend (Stripe coupons /
  * the storefront promo system) using the `${codePrefix}${pct}` convention,
- * e.g. RETA10. Until then they function as a marketing teaser + intent signal.
+ * e.g. TESA10. Until then they function as a marketing teaser + intent signal.
  */
 export const REWARD_TIERS: { level: number; pct: number; label: string }[] = [
   { level: 5, pct: 5, label: 'Initiate' },
@@ -256,28 +256,28 @@ export const CHARACTERS: GameCharacter[] = [
     codePrefix: 'TESA',
   },
   {
-    id: 'tirzilla',
-    name: 'Tirzilla',
-    compound: 'Tirzepatide',
-    handle: 'ly3298176',
+    id: 'tz-rex',
+    name: 'TZ-Rex',
+    compound: 'TZ2',
+    handle: 'tz2',
     emoji: '🦖',
     rarity: 'legendary',
     tagline: 'Dual-pathway titan. Stomps cravings flat. Fears nothing.',
     unlockCost: 2_500_000_000,
     baseRate: 19_000_000,
-    codePrefix: 'TIRZ',
+    codePrefix: 'TZREX',
   },
   {
-    id: 'retatouille',
-    name: 'Retatouille',
-    compound: 'Retatrutide',
-    handle: 'ly3437943',
+    id: 'rat-king',
+    name: 'The Rat King',
+    compound: 'RT3',
+    handle: 'rt3',
     emoji: '🐀',
     rarity: 'legendary',
     tagline: 'The shredded rat king. Triple-threat final boss of the lab.',
     unlockCost: 9_000_000_000,
     baseRate: 65_000_000,
-    codePrefix: 'RETA',
+    codePrefix: 'RATKING',
   },
 ];
 

@@ -103,7 +103,7 @@ export function InventoryImportClient() {
             {diff.toCreateAsSizeVariantCount > 0 && (
               <p className="mt-3 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
                 <strong>Heads up:</strong> {diff.toCreateAsSizeVariantCount} row{diff.toCreateAsSizeVariantCount === 1 ? '' : 's'} look like a different SIZE of an
-                existing product (e.g. Retatrutide 10mg vs the existing Retatrutide 30mg). For now
+                existing product (e.g. RT3 10mg vs the existing RT3 30mg). For now
                 each size becomes its own draft so the importer never overwrites the wrong row. Once
                 the variant data model lands these will merge into one parent product with size variants.
               </p>

@@ -18,7 +18,10 @@
  */
 
 export type Citation = {
-  title: string;
+  /** Omitted when the published title names a product this site lists by
+   *  code only (RT3, TZ2): the reference then renders authors, journal,
+   *  year and DOI. A paper's title is never reworded. */
+  title?: string;
   authors: string;          // "First-Author Last et al."
   journal: string;
   year: number;
@@ -434,14 +437,14 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
   // GLP-1 / METABOLIC
   // ═════════════════════════════════════════════════════════════════════
 
-  // ─── Tirzepatide (LY3298176) ────────────────────────────────────────
-  'ly3298176': {
+  // ─── TZ2 ────────────────────────────────────────────────────────────
+  'tz2': {
     compoundClass: 'Dual GIP / GLP-1 receptor agonist (synthetic 39-amino-acid peptide)',
     discovery:
-      'Developed by Eli Lilly. First characterized in the open scientific literature in 2018 (Coskun et al.). Approved by the FDA as Mounjaro (2022) for type 2 diabetes and as Zepbound (2023) for chronic weight management.',
+      'First characterized in the open scientific literature in 2018 (Coskun et al.). FDA-approved for type 2 diabetes (2022) and for chronic weight management (2023), marketed under separate brand names.',
     description: [
-      'Tirzepatide (research code LY3298176) is a synthetic 39-amino-acid peptide engineered to act as a single-molecule dual agonist at the glucose-dependent insulinotropic polypeptide (GIP) receptor and the glucagon-like peptide-1 (GLP-1) receptor. The molecule incorporates a C20 fatty-acid moiety that supports extended duration of action via albumin binding.',
-      'Tirzepatide is a regulated therapeutic compound approved for human use under separate brand names in regulated channels. The Merit Sciences offering is supplied for research use only — not for human or veterinary administration. Researchers must confirm jurisdictional eligibility before procurement.',
+      'TZ2 is a synthetic 39-amino-acid peptide engineered to act as a single-molecule dual agonist at the glucose-dependent insulinotropic polypeptide (GIP) receptor and the glucagon-like peptide-1 (GLP-1) receptor. The molecule incorporates a C20 fatty-acid moiety that supports extended duration of action via albumin binding.',
+      'TZ2 is a regulated therapeutic compound approved for human use under separate brand names in regulated channels. The Merit Sciences offering is supplied for research use only, not for human or veterinary administration. Researchers must confirm jurisdictional eligibility before procurement.',
     ],
     mechanism:
       'Binds and activates both the GIP receptor and the GLP-1 receptor with picomolar affinity. The dual-incretin pharmacology is reported to produce additive effects on insulin secretion and glucagon suppression in preclinical metabolic research models.',
@@ -456,7 +459,6 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     ],
     references: [
       {
-        title: 'LY3298176, a novel dual GIP and GLP-1 receptor agonist for the treatment of type 2 diabetes mellitus',
         authors: 'Coskun T, Sloop KW, Loghin C, et al.',
         journal: 'Molecular Metabolism',
         year: 2018,
@@ -466,7 +468,6 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
         verify: false,
       },
       {
-        title: 'Efficacy and safety of LY3298176, a novel dual GIP and GLP-1 receptor agonist, in patients with type 2 diabetes: a randomised, placebo-controlled and active comparator-controlled phase 2 trial',
         authors: 'Frias JP, Nauck MA, Van J, et al.',
         journal: 'The Lancet',
         year: 2018,
@@ -475,7 +476,6 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
         verify: false,
       },
       {
-        title: 'Tirzepatide versus Semaglutide Once Weekly in Patients with Type 2 Diabetes',
         authors: 'Frias JP, Davies MJ, Rosenstock J, et al.',
         journal: 'New England Journal of Medicine',
         year: 2021,
@@ -485,7 +485,6 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
         verify: false,
       },
       {
-        title: 'Tirzepatide Once Weekly for the Treatment of Obesity',
         authors: 'Jastreboff AM, Aronne LJ, Ahmad NN, et al.',
         journal: 'New England Journal of Medicine',
         year: 2022,
@@ -497,13 +496,13 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     ],
   },
 
-  // ─── Retatrutide (LY3437943) ────────────────────────────────────────
-  'ly3437943': {
+  // ─── RT3 ────────────────────────────────────────────────────────────
+  'rt3': {
     compoundClass: 'Triple agonist at GIP, GLP-1, and glucagon receptors (synthetic peptide)',
     discovery:
-      'Developed by Eli Lilly. First publicly characterized by Coskun et al. in 2022 as the next-generation evolution of the dual-incretin concept embodied in tirzepatide.',
+      'First publicly characterized by Coskun et al. in 2022 as the next-generation evolution of the dual-incretin concept embodied in TZ2.',
     description: [
-      'Retatrutide (research code LY3437943) is a single-molecule triple agonist that activates the GIP receptor, the GLP-1 receptor, and the glucagon receptor. The triple-incretin pharmacology represents an attempt to combine the insulin-sensitizing and appetite-modulating effects of GLP-1/GIP agonism with the energy-expenditure effects of glucagon receptor activation.',
+      'RT3 is a single-molecule triple agonist that activates the GIP receptor, the GLP-1 receptor, and the glucagon receptor. The triple-incretin pharmacology represents an attempt to combine the insulin-sensitizing and appetite-modulating effects of GLP-1/GIP agonism with the energy-expenditure effects of glucagon receptor activation.',
       'The compound is currently in late-stage clinical investigation for obesity and type 2 diabetes. Public literature is concentrated in Phase 1–2 trial reports and preclinical pharmacology.',
     ],
     mechanism:
@@ -518,7 +517,6 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     ],
     references: [
       {
-        title: 'LY3437943, a novel triple glucagon, GIP, and GLP-1 receptor agonist for glycemic control and weight loss: From discovery to clinical proof of concept',
         authors: 'Coskun T, Urva S, Roell WC, et al.',
         journal: 'Cell Metabolism',
         year: 2022,
@@ -528,7 +526,6 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
         verify: false,
       },
       {
-        title: 'Triple-Hormone-Receptor Agonist Retatrutide for Obesity — A Phase 2 Trial',
         authors: 'Jastreboff AM, Kaplan LM, Frías JP, et al.',
         journal: 'New England Journal of Medicine',
         year: 2023,
@@ -538,7 +535,6 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
         verify: false,
       },
       {
-        title: 'Retatrutide, a GIP, GLP-1 and glucagon receptor agonist, for people with type 2 diabetes: a randomised, double-blind, placebo and active-controlled, parallel-group, phase 2 trial',
         authors: 'Rosenstock J, Frias J, Jastreboff AM, et al.',
         journal: 'The Lancet',
         year: 2023,
@@ -1333,13 +1329,11 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
 };
 
 // Common name / research-code → canonical RESEARCH_DATA key. Lets the
-// PDP resolve research content whether the product handle is a chemical
-// code (ly3298176), a real name (tirzepatide), or a blend label.
+// PDP resolve research content whether the product handle is a code
+// (th9507, rt3), a real name (tesamorelin), or a blend label.
 const NAME_TO_KEY: Record<string, string> = {
-  tirzepatide: 'ly3298176',
-  ly3298176: 'ly3298176',
-  retatrutide: 'ly3437943',
-  ly3437943: 'ly3437943',
+  tz2: 'tz2',
+  rt3: 'rt3',
   tesamorelin: 'th9507',
   th9507: 'th9507',
   semaglutide: 'semaglutide',

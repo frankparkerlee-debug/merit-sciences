@@ -75,8 +75,8 @@ const LIME = '#B9FF66';
 // current print file for that SKU. If a handle disappears, the card drops
 // out via .filter(Boolean) rather than rendering a broken tile.
 const FEATURED_HANDLES: { handle: string; label: string }[] = [
-  { handle: 'retatrutide-10mg', label: '/brand/labels/retatrutide.webp' },
-  { handle: 'ly3298176-10mg', label: '/brand/labels/tirzepatide.webp' },
+  { handle: 'rt3-10mg', label: '/brand/labels/rt3.webp' },
+  { handle: 'tz2-10mg', label: '/brand/labels/tz2.webp' },
   { handle: 'bpc-10mg-tb-10mg-wolverine-20mg', label: '/brand/labels/wolverine.webp' },
   { handle: 'nad-500mg', label: '/brand/labels/nad.webp' },
 ];

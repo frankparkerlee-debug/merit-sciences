@@ -18,6 +18,24 @@ export type ParsedRow = {
   retailPriceCents: number | null;
 };
 
+/**
+ * The supplier's inventory sheet still uses generic names (and sometimes the
+ * development codes) for the two products this site lists by code only. Read
+ * them as RT3 / TZ2 at parse time, so an import updates those products instead
+ * of matching nothing and proposing a new draft under the old name.
+ */
+const SUPPLIER_NAME_TO_CODE: [RegExp, string][] = [
+  [/retatrutide|ly-?3437943|\breta\b/i, 'RT3'],
+  [/tirzepatide|ly-?3298176|\btirz\b/i, 'TZ2'],
+];
+
+function catalogName(supplierName: string): string {
+  for (const [pattern, code] of SUPPLIER_NAME_TO_CODE) {
+    if (pattern.test(supplierName)) return code;
+  }
+  return supplierName;
+}
+
 export type Diff = {
   rows: Array<{
     row: ParsedRow;
@@ -93,7 +111,7 @@ export async function parseInventoryCsv(_prev: any, formData: FormData): Promise
       if (firstCell.toLowerCase().includes('inventory position')) continue;
 
       const sku = firstCell;
-      const productName = String(row[1] ?? '').trim();
+      const productName = catalogName(String(row[1] ?? '').trim());
       const vialSize = String(row[2] ?? '').trim();
       if (!sku || !productName) continue;
 
@@ -120,7 +138,7 @@ export async function parseInventoryCsv(_prev: any, formData: FormData): Promise
       if (firstCell.toLowerCase().includes('inventory position')) continue;
 
       const sku = firstCell;
-      const productName = (cells[1] ?? '').trim();
+      const productName = catalogName((cells[1] ?? '').trim());
       const vialSize = (cells[2] ?? '').trim();
       if (!sku || !productName) continue;
 
@@ -197,8 +215,8 @@ export async function parseInventoryCsv(_prev: any, formData: FormData): Promise
       handlesInUseAfterImport.add(newHandle);
 
       // Detect "sibling size" — same compound, different vialSize. The
-      // admin should see "Retatrutide 30mg → new SIZE of existing
-      // Retatrutide (60mg)" rather than fearing a duplicate. Once the
+      // admin should see "RT3 30mg → new SIZE of existing
+      // RT3 (60mg)" rather than fearing a duplicate. Once the
       // ProductVariant model lands these collapse into variants of one
       // parent product.
       const sibling = findSizeSibling(row, allProducts);
@@ -438,7 +456,7 @@ function findProductMatch<P extends { handle: string; title: string; compound: s
   //   1. Score products on compound/title/handle overlap.
   //   2. From scored candidates, require an EXACT vial-size match.
   //
-  // The inventory sheet has multiple rows per compound (Retatrutide 10mg,
+  // The inventory sheet has multiple rows per compound (RT3 10mg,
   // 20mg, 30mg, 60mg) — without strict size enforcement, the importer
   // collapses them all onto whichever product wins on compound score and
   // last-write wins on price. That's the bug behind "30mg got 60mg

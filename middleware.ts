@@ -155,7 +155,10 @@ export async function middleware(req: NextRequest) {
     target.protocol = 'https:';
     target.host = 'meritsciences.com';
     target.port = '';
-    target.pathname = legacyPathTarget(req.nextUrl.pathname);
+    const legacyTarget = legacyPathTarget(req.nextUrl.pathname);
+    // null = a retired product name: answer 404 rather than forward it.
+    if (legacyTarget === null) return new NextResponse('Not found', { status: 404 });
+    target.pathname = legacyTarget;
     return NextResponse.redirect(target, 301);
   }
 

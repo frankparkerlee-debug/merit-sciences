@@ -83,18 +83,18 @@ const SNAPSHOT = [
     "imageUrl": null
   },
   {
-    "handle": "retatrutide-10mg",
-    "title": "Retatrutide",
-    "compound": "Retatrutide",
+    "handle": "rt3-10mg",
+    "title": "RT3",
+    "compound": "RT3",
     "vialSize": "10 mg",
     "format": "lyophilized",
     "priceCents": 9999,
     "imageUrl": null
   },
   {
-    "handle": "ly3437943",
-    "title": "Retatrutide",
-    "compound": "Retatrutide",
+    "handle": "rt3",
+    "title": "RT3",
+    "compound": "RT3",
     "vialSize": "30 mg",
     "format": "lyophilized",
     "priceCents": 16999,
@@ -137,18 +137,18 @@ const SNAPSHOT = [
     "imageUrl": null
   },
   {
-    "handle": "ly3298176-10mg",
-    "title": "Tirzepatide",
-    "compound": "Tirzepatide",
+    "handle": "tz2-10mg",
+    "title": "TZ2",
+    "compound": "TZ2",
     "vialSize": "10 mg",
     "format": "lyophilized",
     "priceCents": 7499,
     "imageUrl": null
   },
   {
-    "handle": "ly3298176",
-    "title": "Tirzepatide",
-    "compound": "Tirzepatide",
+    "handle": "tz2",
+    "title": "TZ2",
+    "compound": "TZ2",
     "vialSize": "30 mg",
     "format": "lyophilized",
     "priceCents": 14999,

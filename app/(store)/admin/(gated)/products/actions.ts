@@ -294,7 +294,7 @@ export async function changeProductHandle(_prev: ActionResult | null, formData: 
   if (!oldHandle) return { ok: false, error: 'Missing current handle.' };
   if (newHandle === oldHandle) return { ok: false, error: 'That is already the handle.' };
   if (!HANDLE_PATTERN.test(newHandle) || newHandle.length < 2 || newHandle.length > 60) {
-    return { ok: false, error: 'Use 2 to 60 lowercase letters, numbers and single hyphens, like "ly3298176-30mg".' };
+    return { ok: false, error: 'Use 2 to 60 lowercase letters, numbers and single hyphens, like "tz2-30mg".' };
   }
 
   const [product, clash, priorAlias] = await Promise.all([

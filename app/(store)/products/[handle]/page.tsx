@@ -901,9 +901,12 @@ export default async function ProductPage({ params }: Props) {
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-display text-[14px] lg:text-base font-extrabold text-ink leading-snug mb-1.5">
-                      {ref.title}
-                    </p>
+                    {/* Untitled on purpose for RT3/TZ2 references (see Citation.title). */}
+                    {ref.title && (
+                      <p className="font-display text-[14px] lg:text-base font-extrabold text-ink leading-snug mb-1.5">
+                        {ref.title}
+                      </p>
+                    )}
                     <p className="text-[12px] text-ink-soft leading-snug mb-2.5">
                       {ref.authors} · <span className="italic">{ref.journal}</span> · {ref.year}
                     </p>

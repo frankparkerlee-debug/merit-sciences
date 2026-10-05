@@ -4,7 +4,7 @@
 import type { Product } from '@/lib/product-types';
 
 export type Family =
-  | 'glp1'           // Tirzepatide, Semaglutide, Retatrutide, Cagrilintide — #1 demand
+  | 'glp1'           // TZ2, Semaglutide, RT3, Cagrilintide — #1 demand
   | 'healing'        // BPC-157, TB-500, KPV, Wolverine — recovery / soft tissue
   | 'aesthetic'      // GHK-Cu, GLOW, KLOW, Melanotan-II — skin / cosmetic
   | 'gh'             // CJC, Ipamorelin, Tesamorelin, Sermorelin, IGF-1, AOD — GH axis
@@ -25,8 +25,8 @@ export const FAMILY_BY_HANDLE: Record<string, Family> = {
   'igf-1-lr3':          'peptides',
   'sermorelin':         'peptides',
   'th9507':             'peptides',
-  'ly3298176':          'glp1',
-  'ly3437943':          'glp1',
+  'tz2':                'glp1',
+  'rt3':                'glp1',
   'nad-500mg':          'cofactors',
   'ghk-cu':             'cofactors',
   'mots-c':             'cofactors',
@@ -68,7 +68,7 @@ export function familyByCompound(compound: string): Family {
   // family the peptide market lumps with them: Tesamorelin (GHRH for
   // visceral fat), AOD-9604 (GH lipolytic fragment), 5-Amino-1MQ
   // (NNMT inhibitor). All sold under the "GLPs" header.
-  if (/(retatrutide|tirzepatide|semaglutide|cagrilintide|liraglutide|tesamorelin|aod-?9604|5-amino-?1mq)/.test(c)) return 'glp1';
+  if (/(\brt3\b|\btz2\b|semaglutide|cagrilintide|liraglutide|tesamorelin|aod-?9604|5-amino-?1mq)/.test(c)) return 'glp1';
 
   // ── #2 Healing / recovery (soft tissue, gut, wound) ──────────
   if (/(wolverine|bpc[\s-]*157|bpc.*tb|tb[\s-]*500|kpv|thymosin\s*b)/.test(c)) return 'healing';
@@ -182,8 +182,8 @@ export const PHARMACIST_NOTES: Record<string, string> = {
     'A coenzyme, not a peptide. Stocked because the cellular-pathway literature is deep and reorders are consistent.',
   'klow':
     'Multi-pathway blend, co-formulated at our US facility. One vial, four signaling pathways under research.',
-  'ly3437943':
-    'Triple-agonist — newer than Tirzepatide. Limited literature but increasing research interest.',
+  'rt3':
+    'Triple agonist, newer than TZ2. Limited literature but increasing research interest.',
   'pt-141':
     'Neuroendocrine pathway research. Stack-level demand higher than catalog-level, often paired with Selank.',
 };
@@ -194,7 +194,7 @@ export type RestockSignal = {
 };
 
 export const RESTOCK_SIGNALS: Record<string, RestockSignal> = {
-  'ly3437943':       { status: 'low',        message: 'Current batch ships through July 2026' },
+  'rt3':             { status: 'low',        message: 'Current batch ships through July 2026' },
   'mots-c':          { status: 'fresh',      message: 'New batch — released this week' },
   'sermorelin':      { status: 'restocking', message: 'Next batch releases July 12, 2026' },
 };

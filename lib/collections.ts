@@ -62,16 +62,16 @@ export const COLLECTIONS: Collection[] = [
       'The class covers the GLP-1 and dual and triple agonists that the published literature has grown around, plus smaller metabolic research compounds. Price is per vial, the same for every buyer, with no account tier and no minimum order.',
     ],
     handles: [
-      'retatrutide-10mg',
-      'ly3437943',
-      'ly3298176',
+      'rt3-10mg',
+      'rt3',
+      'tz2',
       'semaglutide-10mg',
       'semaglutide-20mg',
       '5-amino-1mq-50mg',
       'aod-9604',
       'slu-pp-332-injectable-5mg',
     ],
-    monographs: ['retatrutide', 'tirzepatide', 'semaglutide', 'aod-9604', '5-amino-1mq'],
+    monographs: ['rt3', 'tz2', 'semaglutide', 'aod-9604', '5-amino-1mq'],
     faqs: [
       {
         q: 'What does Merit supply in this class?',

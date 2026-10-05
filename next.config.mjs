@@ -42,8 +42,12 @@ const nextConfig = {
   async redirects() {
     // Map built by cross-referencing the old Shopify handles (migration
     // export) against the LIVE catalog. Rule: only redirect an old URL
-    // if it does NOT already exist on the new site — handles like
-    // tirzepatide-10mg / retatrutide-10mg are live and must NOT move.
+    // if it does NOT already exist on the new site.
+    //
+    // RT3 and TZ2 are deliberately absent. Every old URL carrying their former
+    // names or development codes 404s with no forwarding (Parker, 2026-10-05):
+    // a 308 would hand the old name's association straight to the product.
+    // Saved carts still resolve server-side through product_handle_aliases.
     /* next.config redirects run BEFORE middleware, so the two catch-alls
        below would swallow legacy-domain traffic and discard the richer
        per-URL mapping in lib/legacy-domain.ts (e.g. /pages/lab-results
@@ -60,10 +64,6 @@ const nextConfig = {
     const libIndex = (from) => ({ source: `/library/${from}`, destination: '/library', permanent: true });
     return [
       // ── Renamed / re-handled products (old → its live equivalent) ──
-      p('tirzepatide-30mg', 'ly3298176'),      // 30mg now lives at the code handle
-      p('tirzepatide', 'tirzepatide-10mg'),    // bare → the live 10mg
-      p('retatrutide-30mg', 'ly3437943'),
-      p('retatrutide', 'retatrutide-10mg'),
       p('tesamorelin-10mg', 'th9507'),
       p('tesamorelin', 'th9507'),
       p('semaglutide', 'semaglutide-10mg'),
@@ -102,7 +102,6 @@ const nextConfig = {
       gone('oxytocin-10mg-nasal-spray'),
       gone('oxytocin-pt-141-5mg-10mg-nasal-spray'),
       gone('pt-141-oxytocin-tesamorelin-10mg-3mg-10mg-nasal-spray'),
-      gone('retatrutide-semaglutide-25mg-15mg-nasal-spray'),
       gone('semax-selank-15mg-15mg-nasal-spray'),
       gone('semax-selank-day-night-mind'),
       gone('ta-1-kpv-10mg-10mg-nasal-spray'),
@@ -120,8 +119,6 @@ const nextConfig = {
       // were indexed, so they 308 to the matching compound monograph (same
       // compound, same search intent, no procedure) rather than 404ing and
       // dumping their ranking equity. The 4 with no monograph go to /library.
-      lib('tirzepatide-reconstitution-protocol', 'tirzepatide'),
-      lib('ly3437943-reconstitution-protocol', 'retatrutide'),
       lib('tesamorelin-reconstitution-protocol', 'tesamorelin'),
       lib('bpc-157-tb-500-blend-reconstitution-protocol', 'bpc-157-tb-500'),
       lib('bpc-157-reconstitution-protocol', 'bpc-157-tb-500'),

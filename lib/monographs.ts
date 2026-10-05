@@ -28,25 +28,27 @@ export type CompoundMeta = {
 // ── The 25 compounds. ─────────────────────────────────────────────────────
 export const COMPOUND_META: CompoundMeta[] = [
   {
-    key: 'ly3298176', slug: 'tirzepatide', title: 'Tirzepatide',
-    aka: ['LY3298176', 'GIP/GLP-1 receptor agonist', 'dual incretin agonist'],
+    // RT3 and TZ2 are named by product code only, everywhere on the site:
+    // no generic name, development code or brand name (Parker, 2026-10-05).
+    key: 'tz2', slug: 'tz2', title: 'TZ2',
+    aka: ['GIP/GLP-1 receptor agonist', 'dual incretin agonist'],
     tagline: 'The dual GIP/GLP-1 receptor agonist studied in the SURMOUNT and SURPASS programs.',
-    product: { handle: 'ly3298176-10mg', fromPrice: 75, purity: '≥99%', vialSize: '10 mg' },
-    relatedSlugs: ['surmount-1-tirzepatide-obesity-research', 'surpass-2-tirzepatide-vs-semaglutide'],
+    product: { handle: 'tz2-10mg', fromPrice: 75, purity: '≥99%', vialSize: '10 mg' },
+    relatedSlugs: ['surmount-1-tz2-obesity-research', 'surpass-2-tz2-vs-semaglutide'],
   },
   {
-    key: 'ly3437943', slug: 'retatrutide', title: 'Retatrutide',
-    aka: ['LY3437943', 'triple agonist', 'GIP/GLP-1/glucagon agonist'],
+    key: 'rt3', slug: 'rt3', title: 'RT3',
+    aka: ['triple agonist', 'GIP/GLP-1/glucagon agonist'],
     tagline: 'The first triple GIP/GLP-1/glucagon receptor agonist to clear Phase 2 trials.',
-    product: { handle: 'retatrutide-10mg', fromPrice: 100, purity: '≥99%', vialSize: '10 mg' },
-    relatedSlugs: ['ly3437943-triple-1-research-summary'],
+    product: { handle: 'rt3-10mg', fromPrice: 100, purity: '≥99%', vialSize: '10 mg' },
+    relatedSlugs: ['rt3-triple-1-research-summary'],
   },
   {
     key: 'semaglutide', slug: 'semaglutide', title: 'Semaglutide',
     aka: ['GLP-1 receptor agonist'],
-    tagline: 'The acylated GLP-1 receptor agonist benchmarked against tirzepatide in SURPASS-2.',
+    tagline: 'The acylated GLP-1 receptor agonist benchmarked against TZ2 in SURPASS-2.',
     product: { handle: 'semaglutide-10mg', fromPrice: 65, purity: '≥99%', vialSize: '10 mg' },
-    relatedSlugs: ['surpass-2-tirzepatide-vs-semaglutide'],
+    relatedSlugs: ['surpass-2-tz2-vs-semaglutide'],
   },
   {
     key: 'th9507', slug: 'tesamorelin', title: 'Tesamorelin',
@@ -192,18 +194,18 @@ export const COMPOUND_META: CompoundMeta[] = [
 // Everything else falls back to auto-generated FAQs (see autoFaqs). Add entries
 // here to deepen a page; keyFindings power the "What the research shows" block.
 export const MONOGRAPH_EXTRAS: Record<string, { keyFindings?: string[]; faqs?: Faq[] }> = {
-  ly3298176: {
+  tz2: {
     keyFindings: [
-      'In SURMOUNT-1 (NEJM 2022), a 72-week randomized trial in 2,539 adults with obesity, participants in the highest-dose arm saw a mean body-weight reduction of roughly 20.9% from baseline versus about 3.1% on placebo — the largest effect reported for an incretin agent at the time of publication.',
-      'In SURPASS-2 (NEJM 2021), tirzepatide was compared head-to-head against semaglutide 1 mg in type-2-diabetes research; all three tirzepatide doses produced greater reductions in HbA1c and body weight than semaglutide in the study population.',
-      'The dual mechanism — simultaneous agonism at the GIP and GLP-1 receptors — is the design feature most cited in the literature as the basis for its effect size relative to single-incretin GLP-1 agonists.',
-      'Gastrointestinal effects (nausea, diarrhea) were the most frequently reported adverse events across the trial program, generally mild-to-moderate and most common during dose escalation.',
+      'In SURMOUNT-1 (NEJM 2022), a 72-week randomized trial in 2,539 adults with obesity, participants in the highest-dose arm saw a mean body-weight reduction of roughly 20.9% from baseline versus about 3.1% on placebo, the largest effect reported for an incretin agent at the time of publication.',
+      'In SURPASS-2 (NEJM 2021), TZ2 was compared head-to-head against semaglutide 1 mg in type-2-diabetes research; all three TZ2 doses produced greater reductions in HbA1c and body weight than semaglutide in the study population.',
+      'The dual mechanism, simultaneous agonism at the GIP and GLP-1 receptors, is the design feature most cited in the literature as the basis for its effect size relative to single-incretin GLP-1 agonists.',
+      'Gastrointestinal effects (nausea, diarrhea) were the most frequently reported adverse events across the trial program, generally mild to moderate and most common during dose escalation.',
     ],
     faqs: [
-      { q: 'What is tirzepatide?', a: 'Tirzepatide (research code LY3298176) is a synthetic dual agonist that activates both the GIP and GLP-1 receptors. It is the compound studied in the SURMOUNT (obesity) and SURPASS (type-2-diabetes) clinical-trial programs. Merit supplies it as a lyophilized research compound for research use only — not for human or veterinary use.' },
-      { q: 'How does tirzepatide work?', a: 'It is a "dual incretin" — a single peptide engineered to activate two gut-hormone receptors at once (GIP and GLP-1). Published trials attribute its effect size relative to single-receptor GLP-1 agonists to this combined mechanism. Mechanistic descriptions here summarize published findings and are not clinical claims.' },
-      { q: 'What did the tirzepatide trials show?', a: 'In SURMOUNT-1, the highest-dose arm showed a mean body-weight reduction of about 20.9% over 72 weeks versus ~3.1% on placebo. In SURPASS-2, it produced greater HbA1c and weight reductions than semaglutide 1 mg. See the linked SURMOUNT-1 and SURPASS-2 summaries for trial design and full outcomes.' },
-      { q: 'Is Merit tirzepatide for human use?', a: 'No. It is sold strictly for research use only — not for human or veterinary use, and not for diagnostic or therapeutic use. Every batch is tested before it is listed, and its certificate of analysis documenting ≥99% HPLC purity is published in the COA library.' },
+      { q: 'What is TZ2?', a: 'TZ2 is a synthetic dual agonist that activates both the GIP and GLP-1 receptors. It is the compound studied in the SURMOUNT (obesity) and SURPASS (type-2-diabetes) clinical-trial programs. Merit supplies it as a lyophilized research compound for research use only, not for human or veterinary use.' },
+      { q: 'How does TZ2 work?', a: 'It is a "dual incretin": a single peptide engineered to activate two gut-hormone receptors at once (GIP and GLP-1). Published trials attribute its effect size relative to single-receptor GLP-1 agonists to this combined mechanism. Mechanistic descriptions here summarize published findings and are not clinical claims.' },
+      { q: 'What did the TZ2 trials show?', a: 'In SURMOUNT-1, the highest-dose arm showed a mean body-weight reduction of about 20.9% over 72 weeks versus about 3.1% on placebo. In SURPASS-2, it produced greater HbA1c and weight reductions than semaglutide 1 mg. See the linked SURMOUNT-1 and SURPASS-2 summaries for trial design and full outcomes.' },
+      { q: 'Is Merit TZ2 for human use?', a: 'No. It is sold strictly for research use only: not for human or veterinary use, and not for diagnostic or therapeutic use. Every batch is tested before it is listed, and its certificate of analysis documenting ≥99% HPLC purity is published in the COA library.' },
     ],
   },
 };

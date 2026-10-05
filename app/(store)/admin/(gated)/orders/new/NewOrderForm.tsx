@@ -139,7 +139,7 @@ export function NewOrderForm({ products }: { products: ProductOption[] }) {
         id: `${Date.now()}-${Math.random()}`,
         handle: product.handle,
         // Size folded into the line title so the two same-name sizes (e.g.
-        // LY3437943 10mg vs 30mg) stay distinguishable on the order, the
+        // RT3 10mg vs 30mg) stay distinguishable on the order, the
         // packing slip, and the confirmation email.
         title: product.vialSize ? `${product.title} · ${product.vialSize}` : product.title,
         bundleLabel: 'Single',

@@ -70,7 +70,7 @@ export function monographArticleSchema(m: Monograph, dateModified: string) {
     isAccessibleForFree: true,
     citation: (m.research.references ?? []).map((r) => ({
       '@type': 'ScholarlyArticle',
-      name: r.title,
+      ...(r.title ? { name: r.title } : {}),
       ...(r.authors ? { author: r.authors } : {}),
       ...(r.journal ? { isPartOf: { '@type': 'Periodical', name: r.journal } } : {}),
       ...(r.year ? { datePublished: String(r.year) } : {}),

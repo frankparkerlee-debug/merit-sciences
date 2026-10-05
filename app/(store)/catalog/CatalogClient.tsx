@@ -197,8 +197,8 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
 
     // Match across the names a buyer might actually type. Someone looking for
     // "wolverine" or "BPC" shouldn't have to know which family we filed it
-    // under, and someone who knows the chemical code ('ly3437943') shouldn't
-    // have to know we call it Retatrutide. Every token must match somewhere,
+    // under, and someone who knows a product by its code shouldn't have to
+    // know its family either. Every token must match somewhere,
     // so "bpc 10" narrows rather than widening the way an OR would.
     const tokens = q.split(/\s+/);
     return byFamily.filter((ep) => {
@@ -411,7 +411,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
       <div className="bg-cream border-t border-ink/10">
         <div className="px-6 lg:px-12 pt-4 pb-3 max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-3 lg:gap-4">
           {/* Search — 29 SKUs with names people half-remember ("wolverine",
-              "BPC", "reta") and chemical codes they may know instead. Leads the
+              "BPC") and codes they may know instead. Leads the
               strip because typing beats scanning seven chips. min-h-[44px]
               meets the tap-target floor the chips were missing. */}
           <div className="relative w-full lg:w-auto lg:min-w-[280px] order-first">

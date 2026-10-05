@@ -23,12 +23,12 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Peptide Tycoon — the Merit idle game',
   description:
-    'Build a peptide lab, collect 16 absurd hero mascots (meet Retatouille 🐀💪), and level them up to unlock real discounts on Merit compounds. A free browser game — no download.',
+    'Build a peptide lab, collect 16 absurd hero mascots (meet the Rat King 🐀💪), and level them up to unlock real discounts on Merit compounds. A free browser game — no download.',
   alternates: { canonical: '/game' },
   openGraph: {
     title: 'Peptide Tycoon — collect the heroes, unlock the discounts',
     description:
-      'Idle your way to a fully-stocked peptide lab. Collect Retatouille, Tirzilla, Wolverine & more — level them up for real Merit discount codes.',
+      'Idle your way to a fully-stocked peptide lab. Collect the Rat King, TZ-Rex, Wolverine & more — level them up for real Merit discount codes.',
     url: 'https://meritsciences.com/game',
     type: 'website',
   },

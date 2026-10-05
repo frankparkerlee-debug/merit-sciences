@@ -184,7 +184,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
 
       {/* Size variant selector — only renders when this compound has
           multiple sibling sizes. Each pill links to that size's PDP so
-          a buyer can switch from Retatrutide 10mg → 30mg without
+          a buyer can switch from RT3 10mg → 30mg without
           backtracking through the catalog. The active pill is
           highlighted; out-of-stock siblings show a small badge. */}
       {siblings.length > 1 && (

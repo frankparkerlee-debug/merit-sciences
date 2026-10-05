@@ -82,13 +82,13 @@ export function renderTemplate(key: TemplateKey): { subject: string; html: strin
       return renderInterestPicker(data as any);
     // ── Compound sequences (approved-counterpart) — resolve via the registry
     case 'seq_tirzepatide_1':
-      return resolveSequenceBeat('seq-ly3298176', 0, data as any);
+      return resolveSequenceBeat('seq-tz2', 0, data as any);
     case 'seq_tirzepatide_2':
-      return resolveSequenceBeat('seq-ly3298176', 1, data as any);
+      return resolveSequenceBeat('seq-tz2', 1, data as any);
     case 'seq_tirzepatide_3':
-      return resolveSequenceBeat('seq-ly3298176', 2, data as any);
+      return resolveSequenceBeat('seq-tz2', 2, data as any);
     case 'seq_tirzepatide_4':
-      return resolveSequenceBeat('seq-ly3298176', 3, data as any);
+      return resolveSequenceBeat('seq-tz2', 3, data as any);
     case 'seq_sermorelin_2':
       return resolveSequenceBeat('seq-sermorelin', 1, data as any);
     // ── Category (mechanism-class) sequences

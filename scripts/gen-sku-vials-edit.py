@@ -19,7 +19,7 @@ USAGE
   python3 scripts/gen-sku-vials-edit.py --base
 
   # Render the base + ONE example SKU edit (for review)
-  python3 scripts/gen-sku-vials-edit.py --example retatrutide-30mg
+  python3 scripts/gen-sku-vials-edit.py --example rt3
 
   # Render the full batch (~66 edits, ~$2.64 medium)
   python3 scripts/gen-sku-vials-edit.py --all
@@ -28,7 +28,7 @@ USAGE
   python3 scripts/gen-sku-vials-edit.py --all --quality high
 
   # Re-edit a subset if some came out wrong
-  python3 scripts/gen-sku-vials-edit.py --only retatrutide,tirzepatide
+  python3 scripts/gen-sku-vials-edit.py --only rt3,tz2
 
 OUTPUT
 ------
@@ -190,7 +190,7 @@ def make_edit_mask() -> Path:
 # ── Family classifier (mirrors lib/catalog-meta.ts familyByCompound) ───────
 def family_for(compound: str) -> str:
     c = compound.lower()
-    if re.search(r"(retatrutide|tirzepatide|semaglutide|cagrilintide|liraglutide)", c):
+    if re.search(r"(\brt3\b|\btz2\b|semaglutide|cagrilintide|liraglutide)", c):
         return "glp1"
     if re.search(r"(selank|semax|pt-?141|melanotan|kisspeptin|dsip|oxytocin|vip|pe ?22)", c):
         return "neuropeptides"

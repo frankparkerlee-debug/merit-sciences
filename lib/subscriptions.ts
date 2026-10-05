@@ -22,7 +22,7 @@ import type { CartLineIn } from './checkout-pricing';
  * only way to open one. A caller cannot pass a product name because there is
  * no parameter for it. That is deliberate: the failure mode this guards
  * against is not a bug, it is somebody later writing the obvious code and
- * putting "Retatrutide 10 mg" on a Stripe invoice.
+ * putting "RT3 10 mg" on a Stripe invoice.
  *
  * The real contents live in our own `lines` snapshot, which never leaves us.
  */

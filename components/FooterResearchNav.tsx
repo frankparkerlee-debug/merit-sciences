@@ -8,9 +8,9 @@ import { ADS_VIEW_PARAM } from '@/lib/ads-restricted';
  *
  * These exist to push crawl equity site-wide into the highest-intent monograph
  * pages, which is worth doing on every indexed page. `/catalog?ads=1` is
- * noindex, so they earn nothing there, and five of the nine label themselves
- * with prescription drug names (Tirzepatide, Retatrutide, Semaglutide,
- * Tesamorelin, PT-141). That put those words on the exact page paid ads point
+ * noindex, so they earn nothing there, and several of the nine label
+ * themselves with prescription drug names (Semaglutide, Tesamorelin,
+ * PT-141). That put those words on the exact page paid ads point
  * at, which is the one place the whole ads view exists to keep clean.
  *
  * Dropping the nav wholesale beats curating a shorter list: nothing to keep in
@@ -19,7 +19,7 @@ import { ADS_VIEW_PARAM } from '@/lib/ads-restricted';
  */
 
 const LINKS = [
-  ['Tirzepatide', 'tirzepatide'], ['Retatrutide', 'retatrutide'], ['Semaglutide', 'semaglutide'],
+  ['TZ2', 'tz2'], ['RT3', 'rt3'], ['Semaglutide', 'semaglutide'],
   ['Tesamorelin', 'tesamorelin'], ['BPC-157 + TB-500', 'bpc-157-tb-500'], ['GHK-Cu', 'ghk-cu'],
   ['NAD+', 'nad'], ['MOTS-c', 'mots-c'], ['PT-141', 'pt-141'],
 ] as const;

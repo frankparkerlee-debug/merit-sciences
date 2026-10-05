@@ -17,7 +17,7 @@ USAGE
   python3 scripts/gen-sku-vial-images.py --skip-existing
 
   # Only generate a subset (handy for testing)
-  python3 scripts/gen-sku-vial-images.py --only retatrutide,tirzepatide
+  python3 scripts/gen-sku-vial-images.py --only rt3,tz2
 
   # Higher fidelity (~$0.19/img → ~$12.73 for 67)
   python3 scripts/gen-sku-vial-images.py --quality high
@@ -73,7 +73,7 @@ FAMILY_CAP = {
 def family_for(compound: str) -> str:
     """Mirror of familyByCompound() in lib/catalog-meta.ts. Keep in sync."""
     c = compound.lower()
-    if re.search(r"(retatrutide|tirzepatide|semaglutide|cagrilintide|liraglutide)", c):
+    if re.search(r"(\brt3\b|\btz2\b|semaglutide|cagrilintide|liraglutide)", c):
         return "glp1"
     if re.search(r"(selank|semax|pt-?141|melanotan|kisspeptin|dsip|oxytocin|vip|pe ?22)", c):
         return "neuropeptides"

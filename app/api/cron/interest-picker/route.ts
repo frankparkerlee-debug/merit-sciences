@@ -28,7 +28,7 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://meritsciences.com').r
 // are research-framed, never outcomes. Each tap enrolls the recipient in that
 // class's education sequence and lands them on the class hero PDP.
 const LANES: { key: string; label: string; sub: string }[] = [
-  { key: 'cat-incretin', label: 'Weight & GLP-1s', sub: 'the Ozempic / Mounjaro class' },
+  { key: 'cat-incretin', label: 'Weight & GLP-1s', sub: 'the Ozempic class' },
   { key: 'cat-cellular', label: 'NAD⁺ & longevity', sub: 'cellular-energy pathways' },
   { key: 'cat-gh-axis', label: 'Growth-hormone axis', sub: 'secretagogues + IGF-1' },
   { key: 'cat-repair', label: 'Tissue repair', sub: 'BPC-157, GHK-Cu & blends' },
