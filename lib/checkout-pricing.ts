@@ -20,6 +20,7 @@ import { STACK_TEMPLATES } from './catalog-meta';
 import { AD_FUNNEL_CODES } from './welcome-offer';
 import { resolveHandles } from './handle-aliases';
 import { productDisplayName } from './product-types';
+import { normalizeClickGoId } from './clickgo';
 
 export const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300
 export const FLAT_SHIPPING_CENTS = 999; // $9.99
@@ -135,9 +136,19 @@ export async function priceCart(args: {
   discountCodeInput?: string;
   buyerEmail?: string | null;
   shipping?: { line1?: string | null; zip?: string | null } | null;
+  /** Ad vendor's ClickGo click id, when the buyer came from one. */
+  clickGoId?: string | null;
 }): Promise<PricedCart | PriceCartError> {
   const lines = args.lines;
   const discountCodeInput = (args.discountCodeInput ?? '').trim();
+
+  // A sale from the ad vendor's (BHS) click pays their rep a first-order
+  // commission, so it takes no Merit discount and credits no Merit affiliate:
+  // the two offers never stack (Parker, 2026-10-07).
+  const vendorClick = !!normalizeClickGoId(args.clickGoId);
+  if (vendorClick && discountCodeInput) {
+    return { error: "Discount codes can't be used on this order.", field: 'discountCode', status: 400 };
+  }
 
   // ── Authoritative line pricing ─────────────────────────────────────────
   // EVERY line's unit price is re-derived here from the database. The client's
@@ -352,7 +363,7 @@ export async function priceCart(args: {
 
   const adOverride = !!discountCode && AD_FUNNEL_CODES.has(discountCode.toLowerCase());
 
-  if (!affiliateId && !adOverride) {
+  if (!affiliateId && !adOverride && !vendorClick) {
     const cookieSlug = (await cookies()).get('merit_ref')?.value ?? null;
     if (cookieSlug) {
       const aff = await prisma.affiliate.findUnique({

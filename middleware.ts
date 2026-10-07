@@ -15,6 +15,7 @@ import {
   checkoutOrigin,
 } from '@/lib/checkout-domain';
 import { legacyPathTarget } from '@/lib/legacy-domain';
+import { normalizeClickGoId } from '@/lib/clickgo';
 import { WELCOME_CODE, WELCOME_COOKIE, WELCOME_COOKIE_MAX_AGE } from '@/lib/welcome-offer';
 
 /**
@@ -294,8 +295,14 @@ export async function middleware(req: NextRequest) {
     // they click, and the store applies it without them typing anything.
     // Readable by JS on purpose: it is a promo code, not a secret, and the
     // store's client-side capture copies it into the slot checkout reads.
+    // A visitor on the ad vendor's (BHS) click gets no welcome code: their rep
+    // earns a first-order commission and the two offers don't stack.
+    const sp = req.nextUrl.searchParams;
+    const vendorClick =
+      !!req.cookies.get('_cg_click') ||
+      [sp.get('clickid'), sp.get('click_id'), sp.get('uid')].some((v) => !!normalizeClickGoId(v));
     const withWelcome = (res: NextResponse): NextResponse => {
-      if (!req.cookies.get(WELCOME_COOKIE)) {
+      if (!req.cookies.get(WELCOME_COOKIE) && !vendorClick) {
         res.cookies.set(WELCOME_COOKIE, WELCOME_CODE, {
           httpOnly: false,
           secure: process.env.NODE_ENV === 'production',

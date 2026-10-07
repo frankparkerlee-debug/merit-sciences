@@ -17,7 +17,7 @@ import {
 import { useCart, type CartLine } from '@/lib/cart';
 import { track, identify, trackPurchase, trackInitiateCheckout } from '@/lib/analytics';
 import { currentWelcomeCode } from '@/lib/welcome-offer';
-import { rememberCheckoutClickId } from '@/lib/clickgo';
+import { rememberCheckoutClickId, checkoutClickGoId } from '@/lib/clickgo';
 import { US_STATES } from './us-states';
 import { StripeCheckout } from './StripeCheckout';
 
@@ -194,7 +194,7 @@ export function CheckoutClient({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ lines, discountCode: code }),
+        body: JSON.stringify({ lines, discountCode: code, clickGoId: checkoutClickGoId() }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -309,6 +309,8 @@ export function CheckoutClient({
   useEffect(() => {
     if (autoAppliedRef.current || claimPending) return;
     if (!hydrated || lines.length === 0 || appliedCode) return;
+    // A vendor (BHS) click never takes Merit's offer; see lib/clickgo.ts.
+    if (checkoutClickGoId()) return;
     let welcome: string | null = null;
     try { welcome = currentWelcomeCode(localStorage.getItem('merit_welcome_code')); } catch { /* private mode */ }
     if (!welcome) return;
@@ -320,6 +322,7 @@ export function CheckoutClient({
   useEffect(() => {
     if (autoAppliedRef.current) return;
     if (!autoReferralCode || !hydrated || lines.length === 0 || appliedCode) return;
+    if (checkoutClickGoId()) return;
     autoAppliedRef.current = true;
     applyCode(autoReferralCode, { silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps

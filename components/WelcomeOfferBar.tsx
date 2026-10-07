@@ -2,6 +2,7 @@
 import { WELCOME_PCT, currentWelcomeCode } from '@/lib/welcome-offer';
 
 import { useEffect, useState } from 'react';
+import { isVendorVisitor } from '@/lib/clickgo';
 
 const DISMISS_KEY = 'merit_welcome_bar_dismissed';
 
@@ -20,6 +21,8 @@ export function WelcomeOfferBar() {
 
   useEffect(() => {
     try {
+      // No Merit offer for a vendor (BHS) visitor: it doesn't stack.
+      if (isVendorVisitor()) return;
       if (localStorage.getItem(DISMISS_KEY)) return;
       // First-order offer only — once the buyer has checked out, retire it.
       if (localStorage.getItem('merit_welcome_used')) return;

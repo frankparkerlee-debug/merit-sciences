@@ -10,6 +10,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import type { CartLine } from '@/lib/cart';
+import { checkoutClickGoId } from '@/lib/clickgo';
 
 /**
  * Stripe card checkout, embedded on the payment domain.
@@ -208,6 +209,7 @@ function StripeForm({
       body: JSON.stringify({
         lines,
         discountCode,
+        clickGoId: checkoutClickGoId(),
         ruoAttested: true,
         attemptId: attemptIdRef.current,
         buyer: { email: email.trim(), phone: phone.trim(), ...address },
@@ -275,6 +277,7 @@ function StripeForm({
       body: JSON.stringify({
         lines,
         discountCode,
+        clickGoId: checkoutClickGoId(),
         ruoAttested: true,
         attemptId: attemptIdRef.current,
         saveCard: !!isPractitioner && saveCard,

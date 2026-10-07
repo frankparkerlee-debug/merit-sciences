@@ -114,6 +114,23 @@ export function fireClickGoInitiateCheckout(capMs = 1200): Promise<void> {
   ]);
 }
 
+/**
+ * A visitor who arrived on a vendor click. Their rep earns a first-order
+ * commission, so Merit's own offers (welcome code, popup, affiliate codes) are
+ * not shown or applied: the two never stack. Checks the URL too, since the SDK
+ * writes its cookie asynchronously on the landing page.
+ */
+export function isVendorVisitor(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (readClickGoId()) return true;
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    return !!(normalizeClickGoId(sp.get('clickid')) || normalizeClickGoId(sp.get('click_id')) || normalizeClickGoId(sp.get('uid')));
+  } catch {
+    return false;
+  }
+}
+
 /** Checkout origin: keep the id that arrived on the redirect for this tab. */
 export function rememberCheckoutClickId(): void {
   try {
@@ -124,7 +141,8 @@ export function rememberCheckoutClickId(): void {
   }
 }
 
-function checkoutClickId(): string | null {
+/** The ClickGo click id for this checkout tab, if the buyer came from one. */
+export function checkoutClickGoId(): string | null {
   try {
     const stored = normalizeClickGoId(sessionStorage.getItem(CHECKOUT_KEY));
     if (stored) return stored;
@@ -137,7 +155,7 @@ function checkoutClickId(): string | null {
 
 /** Order-success page. Fires only for visitors who arrived with a click id. */
 export async function fireClickGoConversion(p: { orderId: string; orderTotal: number }): Promise<void> {
-  const clickId = checkoutClickId();
+  const clickId = checkoutClickGoId();
   if (!clickId) return;
   try {
     const cg = await loadSdk();

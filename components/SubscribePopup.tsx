@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { track, identify } from '@/lib/analytics';
+import { isVendorVisitor } from '@/lib/clickgo';
 
 /**
  * Subscribe / exit-intent popup → email capture → first-order welcome code.
@@ -84,6 +85,9 @@ export function SubscribePopup() {
     // now and at show time: DiscountCodeCapture strips ?code= and writes the
     // localStorage slot after this effect has already run.
     const holdsCode = (): boolean => {
+      // Vendor (BHS) visitors never see Merit's offer: their rep's commission
+      // and our discount don't stack.
+      if (isVendorVisitor()) return true;
       try {
         const sp = new URLSearchParams(window.location.search);
         if (sp.has('code') || sp.get('ads') === '1') return true;

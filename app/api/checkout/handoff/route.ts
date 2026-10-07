@@ -74,9 +74,9 @@ export async function POST(req: Request) {
   // domain-wide welcome cookie set on landing carries it instead.
   // Either source may hold a retired welcome code; currentWelcomeCode maps it
   // onto the live offer so the checkout domain never sees a dead code.
-  const welcomeCode =
+  const welcomeCode = clickGoId ? null : (
     currentWelcomeCode(typeof body?.welcomeCode === 'string' ? body.welcomeCode.slice(0, 40) : null) ??
-    currentWelcomeCode((jar.get(WELCOME_COOKIE)?.value ?? '').slice(0, 40));
+    currentWelcomeCode((jar.get(WELCOME_COOKIE)?.value ?? '').slice(0, 40)));
 
   // Resolved from the signed-in session on THIS origin, never from the body —
   // the checkout domain cannot see the storefront's auth cookie, so this is

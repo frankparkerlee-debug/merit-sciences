@@ -42,6 +42,7 @@ export async function POST(req: Request) {
   const priced = await priceCart({
     lines,
     discountCodeInput: String(body?.discountCode ?? ''),
+    clickGoId: typeof body?.clickGoId === 'string' ? body.clickGoId.slice(0, 64) : null,
     buyerEmail: typeof body?.buyerEmail === 'string' ? body.buyerEmail.trim().toLowerCase() : null,
   });
   if (isPriceError(priced)) {
