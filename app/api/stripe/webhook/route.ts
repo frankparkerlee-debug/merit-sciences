@@ -10,6 +10,9 @@
  *   payment_intent.succeeded  -> promote the order to PAID and run the full
  *                                fulfilment chain (confirmation email, ad
  *                                conversion, affiliate commission)
+ *   charge.refunded           -> book the refund on the order (covers refunds
+ *                                issued straight from the Stripe dashboard) and,
+ *                                on a full refund, claw back the commission
  *   payment_intent.payment_failed / canceled
  *                             -> leave the order PENDING_PAYMENT and log it,
  *                                matching the PayPal declined-capture path
@@ -30,6 +33,7 @@ import { recordOrderEvent } from '@/lib/orders';
 import { findByStripeId, syncStatus } from '@/lib/subscriptions';
 import { fulfillSubscriptionInvoice } from '@/lib/subscription-fulfillment';
 import { storeCardFromPaymentMethod } from '@/lib/practitioner-card';
+import { syncStripeRefund } from '@/lib/refunds';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -128,6 +132,14 @@ export async function POST(req: Request) {
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         await syncStatus(event.data.object as Stripe.Subscription);
+        break;
+      }
+
+      /* A card refund, from the admin order page or the Stripe dashboard.
+         The admin path books its own refund; this catches the dashboard
+         ones and claws back commission on a full refund. Idempotent. */
+      case 'charge.refunded': {
+        await syncStripeRefund(event.data.object as Stripe.Charge);
         break;
       }
 

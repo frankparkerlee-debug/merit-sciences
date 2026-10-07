@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-session';
 import { normalizeCarrier, trackingUrlFor, issueShipmentEmail, issueOrderConfirmationEmail, issuePaymentRequestEmail, issueAdminOrderNotification, issueRefundEmail, issueCancellationEmail, recordOrderEvent } from '@/lib/orders';
 import { getAccessToken } from '@/lib/paypal';
+import { isStripeOrder, refundViaStripe, clawBackCommission } from '@/lib/refunds';
 import { syncOrderTrackingToPayPal } from '@/lib/paypal-tracking';
 
 export type ActionResult =
@@ -158,7 +159,7 @@ export async function markCanceled(_prev: ActionResult | null, formData: FormDat
   return { ok: true, message: `Canceled.${tail}` };
 }
 
-/* ─── Refund (calls PayPal refund API) ─── */
+/* ─── Refund (Stripe; legacy PayPal captures still go to PayPal) ─── */
 
 export async function refundOrder(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const admin = await requireAdmin();
@@ -170,51 +171,60 @@ export async function refundOrder(_prev: ActionResult | null, formData: FormData
   if (!order) return { ok: false, error: 'Order not found' };
   if (order.status === 'REFUNDED') return { ok: false, error: 'Already refunded' };
 
-  // Call PayPal refund API
-  try {
-    const token = await getAccessToken();
-    const base = (process.env.PAYPAL_ENV ?? 'sandbox') === 'live'
-      ? 'https://api-m.paypal.com'
-      : 'https://api-m.sandbox.paypal.com';
-    const res = await fetch(`${base}/v2/payments/captures/${order.paypalCaptureId}/refund`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'PayPal-Request-Id': `merit-refund-${order.id}`,
-      },
-      body: JSON.stringify({}), // full refund
-      cache: 'no-store',
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      console.error('[admin/refund] PayPal refund failed', res.status, text);
-      return { ok: false, error: `PayPal refund failed (${res.status}): ${text.slice(0, 200)}` };
+  let via: 'Stripe' | 'PayPal' = 'Stripe';
+  if (isStripeOrder(order)) {
+    const refund = await refundViaStripe(order, null, `merit-refund-${order.id}`);
+    if (!refund.ok) return { ok: false, error: refund.error };
+  } else {
+    via = 'PayPal';
+    if (!order.paypalCaptureId) return { ok: false, error: 'No payment on this order to refund (it may still be awaiting payment).' };
+    // Legacy PayPal capture
+    try {
+      const token = await getAccessToken();
+      const base = (process.env.PAYPAL_ENV ?? 'sandbox') === 'live'
+        ? 'https://api-m.paypal.com'
+        : 'https://api-m.sandbox.paypal.com';
+      const res = await fetch(`${base}/v2/payments/captures/${order.paypalCaptureId}/refund`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'PayPal-Request-Id': `merit-refund-${order.id}`,
+        },
+        body: JSON.stringify({}), // full refund
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('[admin/refund] PayPal refund failed', res.status, text);
+        return { ok: false, error: `PayPal refund failed (${res.status}): ${text.slice(0, 200)}` };
+      }
+    } catch (err: any) {
+      console.error('[admin/refund] PayPal API error', err);
+      return { ok: false, error: `Refund request failed: ${err?.message ?? 'unknown'}` };
     }
-  } catch (err: any) {
-    console.error('[admin/refund] PayPal API error', err);
-    return { ok: false, error: `Refund request failed: ${err?.message ?? 'unknown'}` };
   }
 
-  // Mark our Order + claw back affiliate commission immediately
-  // (the webhook also does this on PAYMENT.CAPTURE.REFUNDED but we don't
-  // want to depend on it succeeding — clawback should happen synchronously).
+  // Mark our Order + claw back affiliate commission immediately (the
+  // charge.refunded webhook also does, but clawback must not depend on it).
+  // refundedCents is SET, not incremented: if the webhook booked this refund
+  // first, incrementing would count it twice.
   const refundCents = Number(order.totalCents) - Number(order.refundedCents);
   await prisma.order.update({
     where: { id: orderId },
     data: {
       status: 'REFUNDED',
       refundedAt: new Date(),
-      refundedCents: { increment: BigInt(Math.max(0, refundCents)) },
+      refundedCents: BigInt(Number(order.totalCents)),
     },
   });
-  await clawBackCommission(order.paypalCaptureId!, orderId);
+  if (order.paypalCaptureId) await clawBackCommission(order.paypalCaptureId, orderId, 'Refund issued via admin');
 
   const refundDollars = (refundCents / 100).toFixed(2);
   await recordOrderEvent({
     orderId,
     kind: 'REFUND_FULL',
-    message: `Full refund of $${refundDollars} issued via PayPal.`,
+    message: `Full refund of $${refundDollars} issued via ${via}.`,
     metadata: { amount_cents: refundCents, capture_id: order.paypalCaptureId },
     actorEmail: admin.email,
   });
@@ -252,39 +262,50 @@ export async function refundOrderPartial(_prev: ActionResult | null, formData: F
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) return { ok: false, error: 'Order not found' };
-  if (!order.paypalCaptureId) return { ok: false, error: 'No PayPal capture to refund (order may still be PENDING_PAYMENT)' };
+  if (!order.paypalCaptureId) return { ok: false, error: 'No payment on this order to refund (it may still be awaiting payment).' };
   if (order.status === 'REFUNDED') return { ok: false, error: 'Already fully refunded' };
   const remainingCents = Number(order.totalCents) - Number(order.refundedCents);
   if (amountCents > remainingCents) {
     return { ok: false, error: `Amount exceeds refundable balance ($${(remainingCents / 100).toFixed(2)} left after prior refunds)` };
   }
 
-  // Call PayPal partial refund
-  try {
-    const token = await getAccessToken();
-    const base = (process.env.PAYPAL_ENV ?? 'sandbox') === 'live'
-      ? 'https://api-m.paypal.com'
-      : 'https://api-m.sandbox.paypal.com';
-    const res = await fetch(`${base}/v2/payments/captures/${order.paypalCaptureId}/refund`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'PayPal-Request-Id': `merit-refund-${order.id}-${amountCents}`,
-      },
-      body: JSON.stringify({
-        amount: { value: dollars.toFixed(2), currency_code: 'USD' },
-      }),
-      cache: 'no-store',
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      console.error('[admin/refundPartial] PayPal partial refund failed', res.status, text);
-      return { ok: false, error: `PayPal partial refund failed (${res.status}): ${text.slice(0, 200)}` };
+  let via: 'Stripe' | 'PayPal' = 'Stripe';
+  if (isStripeOrder(order)) {
+    const refund = await refundViaStripe(
+      order,
+      amountCents,
+      `merit-refund-${order.id}-${Number(order.refundedCents)}-${amountCents}`,
+    );
+    if (!refund.ok) return { ok: false, error: refund.error };
+  } else {
+    via = 'PayPal';
+    // Legacy PayPal capture
+    try {
+      const token = await getAccessToken();
+      const base = (process.env.PAYPAL_ENV ?? 'sandbox') === 'live'
+        ? 'https://api-m.paypal.com'
+        : 'https://api-m.sandbox.paypal.com';
+      const res = await fetch(`${base}/v2/payments/captures/${order.paypalCaptureId}/refund`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'PayPal-Request-Id': `merit-refund-${order.id}-${amountCents}`,
+        },
+        body: JSON.stringify({
+          amount: { value: dollars.toFixed(2), currency_code: 'USD' },
+        }),
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('[admin/refundPartial] PayPal partial refund failed', res.status, text);
+        return { ok: false, error: `PayPal partial refund failed (${res.status}): ${text.slice(0, 200)}` };
+      }
+    } catch (err: any) {
+      console.error('[admin/refundPartial] PayPal API error', err);
+      return { ok: false, error: `Partial refund request failed: ${err?.message ?? 'unknown'}` };
     }
-  } catch (err: any) {
-    console.error('[admin/refundPartial] PayPal API error', err);
-    return { ok: false, error: `Partial refund request failed: ${err?.message ?? 'unknown'}` };
   }
 
   // Mark the order + increment refund ledger
@@ -296,19 +317,19 @@ export async function refundOrderPartial(_prev: ActionResult | null, formData: F
     data: {
       status: isFullRefund ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
       refundedAt: isFullRefund ? new Date() : undefined,
-      refundedCents: { increment: BigInt(amountCents) },
+      refundedCents: BigInt(newRefundedCents),
     },
   });
 
   // Claw back commission only on FULL refund (partials leave the commission)
   if (isFullRefund) {
-    await clawBackCommission(order.paypalCaptureId!, orderId);
+    await clawBackCommission(order.paypalCaptureId!, orderId, 'Refund issued via admin');
   }
 
   await recordOrderEvent({
     orderId,
     kind: isFullRefund ? 'REFUND_FULL' : 'REFUND_PARTIAL',
-    message: `${isFullRefund ? 'Full' : 'Partial'} refund of $${dollars.toFixed(2)} issued via PayPal.`,
+    message: `${isFullRefund ? 'Full' : 'Partial'} refund of $${dollars.toFixed(2)} issued via ${via}.`,
     metadata: { amount_cents: amountCents, capture_id: order.paypalCaptureId },
     actorEmail: admin.email,
   });
@@ -329,42 +350,6 @@ export async function refundOrderPartial(_prev: ActionResult | null, formData: F
     ok: true,
     message: `Refunded $${dollars.toFixed(2)}${isFullRefund ? ' (full)' : ' (partial)'}. Funds return to buyer in 5–10 business days.${isFullRefund ? ' Affiliate commission clawed back.' : ''}${tail}`,
   };
-}
-
-/**
- * Claw back the affiliate commission tied to a PayPal capture.
- * Idempotent — webhook calls this same logic; double-call is a no-op.
- */
-async function clawBackCommission(paypalCaptureId: string, orderId: string): Promise<void> {
-  const commission = await prisma.orderCommission.findUnique({
-    where: { paypalCaptureId },
-  });
-  if (!commission || commission.status === 'CLAWED_BACK') return;
-
-  await prisma.$transaction([
-    prisma.orderCommission.update({
-      where: { id: commission.id },
-      data: {
-        status: 'CLAWED_BACK',
-        clawedBackAt: new Date(),
-        clawbackReason: 'Refund issued via admin',
-      },
-    }),
-    prisma.customerAffiliateLink.update({
-      where: { id: commission.customerLinkId },
-      data: {
-        totalOrders: { decrement: 1 },
-        totalCommissionCents: { decrement: commission.commissionCents },
-      },
-    }),
-  ]);
-
-  await recordOrderEvent({
-    orderId,
-    kind: 'COMMISSION_CLAWED_BACK',
-    message: `Affiliate commission of $${(Number(commission.commissionCents) / 100).toFixed(2)} clawed back due to refund.`,
-    metadata: { commission_cents: Number(commission.commissionCents), affiliate_id: commission.affiliateId },
-  });
 }
 
 /* ─── Force-resend customer confirmation email (testing/recovery) ─── */

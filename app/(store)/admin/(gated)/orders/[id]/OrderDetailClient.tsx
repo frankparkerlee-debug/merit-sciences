@@ -122,7 +122,7 @@ function StatusPanel({
           {!isPending && (
             <>
               <PartialRefundForm orderId={orderId} totalCents={totalCents} refundedCents={refundedCents} />
-              <SecondaryAction action={refundOrder} orderId={orderId} label="Issue full refund" destructive confirm="Refund the full amount to the buyer? This calls PayPal's refund API and cannot be undone." />
+              <SecondaryAction action={refundOrder} orderId={orderId} label="Issue full refund" destructive confirm="Refund the full amount to the buyer's card? This cannot be undone." />
             </>
           )}
         </div>
@@ -145,7 +145,7 @@ function PartialRefundForm({ orderId, totalCents, refundedCents }: { orderId: st
       className="space-y-2 border border-cobalt/15 rounded-xl p-3"
       onSubmit={(e) => {
         const amt = (e.currentTarget.elements.namedItem('amount') as HTMLInputElement)?.value;
-        if (!window.confirm(`Issue a partial refund of $${amt}? This calls PayPal's refund API and cannot be undone.`)) {
+        if (!window.confirm(`Issue a partial refund of $${amt} to the buyer's card? This cannot be undone.`)) {
           e.preventDefault();
         }
       }}
