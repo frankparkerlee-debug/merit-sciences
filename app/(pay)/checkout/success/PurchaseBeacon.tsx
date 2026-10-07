@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { identify, trackPurchase } from '@/lib/analytics';
+import { fireClickGoConversion } from '@/lib/clickgo';
 
 type Props = {
   /** Processor id or order id; used as the dedupe key and transaction id. */
@@ -42,6 +43,9 @@ export function PurchaseBeacon({ orderRef, valueUsd, email, itemCount, fire }: P
     trackPurchase({ orderId: orderRef, value: valueUsd, currency: 'USD', item_count: itemCount, surface: 'success_page' }).catch(
       () => {},
     );
+    // Ad vendor's ClickGo conversion (order id + total only; no-op unless the
+    // buyer arrived on a ClickGo click).
+    fireClickGoConversion({ orderId: orderRef, orderTotal: valueUsd }).catch(() => {});
   }, [fire, orderRef, valueUsd, email, itemCount]);
   return null;
 }

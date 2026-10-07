@@ -28,6 +28,7 @@ import { randomBytes } from 'crypto';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { prisma } from './db';
 import { checkoutOrigin } from './checkout-domain';
+import { CLICKGO_PARAM, normalizeClickGoId } from './clickgo';
 
 /** Handoffs are consumed seconds after issue; 30 min is generous slack. */
 const TTL_MS = 30 * 60 * 1000;
@@ -49,6 +50,8 @@ export type HandoffPayload = {
   welcomeCode: string | null;
   /** Approved practitioner id, resolved from the session server-side. */
   practitionerApplicationId?: string | null;
+  /** Ad vendor's ClickGo click id. Rides the redirect only; never stored. */
+  clickGoId?: string | null;
 };
 
 /**
@@ -116,9 +119,15 @@ export async function createHandoff(payload: HandoffPayload): Promise<string> {
     /* attribution is best-effort; never block the handoff on it */
   }
 
-  return gclid
-    ? `${origin}/checkout?c=${token}&gclid=${encodeURIComponent(gclid)}`
-    : `${origin}/checkout?c=${token}`;
+  // The ad vendor's ClickGo click id crosses the same way: its SDK keeps the
+  // id in a cookie on the landing domain, which the checkout origin can never
+  // read, so the success page would have nothing to attribute the sale to.
+  const clickGoId = normalizeClickGoId(payload.clickGoId);
+
+  let url = `${origin}/checkout?c=${token}`;
+  if (gclid) url += `&gclid=${encodeURIComponent(gclid)}`;
+  if (clickGoId) url += `&${CLICKGO_PARAM}=${encodeURIComponent(clickGoId)}`;
+  return url;
 }
 
 /**

@@ -66,6 +66,8 @@ export async function POST(req: Request) {
   const jar = cookies();
   const refSlug = jar.get(REF_COOKIE)?.value ?? null;
   const attr = jar.get(ATTR_COOKIE)?.value ?? null;
+  // Ad vendor's ClickGo click id (first-party cookie its SDK sets on landing).
+  const clickGoId = jar.get('_cg_click')?.value ?? null;
 
   // The client sends the code it stashed in localStorage. If it has none (a
   // visitor who arrived via the ad host and never hit a ?code= link), the
@@ -88,7 +90,7 @@ export async function POST(req: Request) {
 
   try {
     const url = await createHandoff({
-      lines, refSlug, attr, welcomeCode, practitionerApplicationId,
+      lines, refSlug, attr, welcomeCode, practitionerApplicationId, clickGoId,
     });
     return NextResponse.json({ url });
   } catch (err) {

@@ -23,6 +23,9 @@ const TIKTOK = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 // Google channel created and which runs no campaigns. The live account, and the
 // one the labels in lib/analytics now belong to, is AW-18408760902.
 const GOOGLE_ADS = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || 'AW-18408760902';
+// Second Google Ads account (699-437-8305), purchase conversions only. Its tag
+// id is the prefix of its purchase send_to; unset = not configured, no change.
+const GOOGLE_ADS_B = (process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO_B || '').split('/')[0];
 
 export function MarketingPixels() {
   return (
@@ -56,7 +59,7 @@ export function MarketingPixels() {
             id="gads-init"
             strategy="lazyOnload"
             dangerouslySetInnerHTML={{
-              __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GOOGLE_ADS}');`,
+              __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GOOGLE_ADS}');${GOOGLE_ADS_B ? `gtag('config','${GOOGLE_ADS_B}');` : ''}`,
             }}
           />
         </>

@@ -17,6 +17,7 @@ import {
 import { useCart, type CartLine } from '@/lib/cart';
 import { track, identify, trackPurchase, trackInitiateCheckout } from '@/lib/analytics';
 import { currentWelcomeCode } from '@/lib/welcome-offer';
+import { rememberCheckoutClickId } from '@/lib/clickgo';
 import { US_STATES } from './us-states';
 import { StripeCheckout } from './StripeCheckout';
 
@@ -94,6 +95,9 @@ export function CheckoutClient({
 
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
+  // Ad vendor's ClickGo id arrives on the redirect (`cg`); hold it for the
+  // success page in this tab. No third-party script loads on this page.
+  useEffect(() => rememberCheckoutClickId(), []);
 
   // Fire InitiateCheckout once, when the cart hydrates with items — the
   // buyer-intent signal Meta/TikTok optimize toward (value + currency only).

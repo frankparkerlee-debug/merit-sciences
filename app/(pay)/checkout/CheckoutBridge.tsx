@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCart } from '@/lib/cart';
 import { trackBeginCheckoutAds } from '@/lib/analytics';
+import { fireClickGoInitiateCheckout } from '@/lib/clickgo';
 import { currentWelcomeCode } from '@/lib/welcome-offer';
 
 /**
@@ -47,6 +48,11 @@ export function CheckoutBridge() {
       /* never block the handoff on analytics */
     }
 
+    // Ad vendor's Initiate Checkout pixel (no-op without a ClickGo click id).
+    // Started alongside the handoff and awaited before the redirect, capped,
+    // so leaving the page doesn't cancel it.
+    const clickGoPixel = fireClickGoInitiateCheckout();
+
     (async () => {
       try {
         const res = await fetch('/api/checkout/handoff', {
@@ -56,6 +62,7 @@ export function CheckoutBridge() {
         });
         const data = await res.json();
         if (data?.url) {
+          await clickGoPixel;
           // REPLACE, not push. This page is a pass-through — leaving it in
           // history means Back from the checkout domain lands here and gets
           // auto-forwarded again, trapping the buyer with no way back to the

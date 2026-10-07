@@ -4,6 +4,7 @@ import '../globals.css';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import { MarketingPixels } from '@/components/MarketingPixels';
 import { GoogleTagManager } from '@/components/GoogleTagManager';
+import { ClickGoTracker } from '@/components/ClickGoTracker';
 
 /**
  * ROOT LAYOUT FOR PAID-SEARCH LANDING PAGES, a third independent root beside
@@ -40,6 +41,7 @@ export default function LandingRootLayout({ children }: { children: React.ReactN
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrains.variable} ${archivo.variable}`}>
       <body className="font-sans bg-paper text-ink">
         <GoogleTagManager />
+        <ClickGoTracker />
         <MarketingPixels />
         <PostHogProvider>
           <div className="bg-steel text-white text-center py-2 text-[10.5px] font-semibold tracking-[0.12em] uppercase">

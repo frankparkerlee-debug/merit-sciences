@@ -174,6 +174,9 @@ export function trackInitiateCheckout(props: { value: number; currency?: string;
 // is set to the order id so Google de-duplicates repeat page loads.
 const GADS_PURCHASE_SEND_TO =
   process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO || 'AW-18408760902/FqhjCID5__wcEMbM_clE';
+// Second Google Ads account (699-437-8305), so its campaigns can bid on
+// purchases too. Unset = not configured. Fired alongside, never awaited.
+const GADS_PURCHASE_SEND_TO_B = process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO_B || '';
 
 /**
  * How long to let the Google beacon leave the browser before the caller
@@ -224,6 +227,13 @@ export function trackPurchase(props: {
     if (typeof gtag !== 'function') {
       finish(); // nothing to wait for
       return;
+    }
+    if (GADS_PURCHASE_SEND_TO_B) {
+      try {
+        gtag('event', 'conversion', { send_to: GADS_PURCHASE_SEND_TO_B, value, currency, transaction_id: orderId });
+      } catch {
+        /* the primary account's hit below still goes */
+      }
     }
     try {
       gtag('event', 'conversion', {

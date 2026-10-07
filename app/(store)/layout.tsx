@@ -10,6 +10,7 @@ import { WelcomeOfferBar } from '@/components/WelcomeOfferBar';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import { MarketingPixels } from '@/components/MarketingPixels';
 import { GoogleTagManager } from '@/components/GoogleTagManager';
+import { ClickGoTracker } from '@/components/ClickGoTracker';
 import { DiscountCodeCapture } from '@/components/DiscountCodeCapture';
 import { getStoreSettings } from '@/lib/store-settings';
 
@@ -248,6 +249,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="font-sans">
         {/* GTM: loader + noscript. Must be first inside <body>. */}
         <GoogleTagManager />
+        <ClickGoTracker />
         {/* Site-wide Organization + WebSite JSON-LD (entity + sitelinks search).
             Suppressed on the split checkout domain: it embeds meritsciences.com
             URLs, which would be a live machine-readable link from the payment
