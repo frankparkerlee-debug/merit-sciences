@@ -24,8 +24,10 @@ const TIKTOK = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 // one the labels in lib/analytics now belong to, is AW-18408760902.
 const GOOGLE_ADS = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || 'AW-18408760902';
 // Second Google Ads account (699-437-8305), purchase conversions only. Its tag
-// id is the prefix of its purchase send_to; unset = not configured, no change.
-const GOOGLE_ADS_B = (process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO_B || '').split('/')[0];
+// id is the prefix of its purchase send_to.
+const GOOGLE_ADS_B = (
+  process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO_B || 'AW-16705928231/l96QCLvz3JQdEKf4gJ4-'
+).split('/')[0];
 
 export function MarketingPixels() {
   return (

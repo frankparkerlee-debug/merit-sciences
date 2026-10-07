@@ -175,8 +175,10 @@ export function trackInitiateCheckout(props: { value: number; currency?: string;
 const GADS_PURCHASE_SEND_TO =
   process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO || 'AW-18408760902/FqhjCID5__wcEMbM_clE';
 // Second Google Ads account (699-437-8305), so its campaigns can bid on
-// purchases too. Unset = not configured. Fired alongside, never awaited.
-const GADS_PURCHASE_SEND_TO_B = process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO_B || '';
+// purchases too (its "Purchase" action, created 2026-10-07). Fired
+// alongside 618's, never awaited.
+const GADS_PURCHASE_SEND_TO_B =
+  process.env.NEXT_PUBLIC_GADS_PURCHASE_SEND_TO_B || 'AW-16705928231/l96QCLvz3JQdEKf4gJ4-';
 
 /**
  * How long to let the Google beacon leave the browser before the caller
