@@ -19,6 +19,14 @@ const SDK_SRC = `${API_BASE}/sdk.js`;
 const PIXEL_ID = 'f85b6a8a5370NjIzOA';
 const COOKIE = '_cg_click';
 const CHECKOUT_KEY = 'merit_cg_click';
+/**
+ * Codes for the vendor's end-to-end link tests (100% off product, shipping
+ * still charged so Stripe has a real amount). The only codes allowed on a
+ * vendor click, and refused WITHOUT one, so they can't leak as free product.
+ * Lowercase. The discount row itself caps uses and sets the expiry.
+ */
+export const VENDOR_TEST_CODES: ReadonlySet<string> = new Set(['bhstest']);
+
 /** Query parameter that carries the click id onto the checkout origin. */
 export const CLICKGO_PARAM = 'cg';
 

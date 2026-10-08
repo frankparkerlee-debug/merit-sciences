@@ -20,7 +20,7 @@ import { STACK_TEMPLATES } from './catalog-meta';
 import { AD_FUNNEL_CODES } from './welcome-offer';
 import { resolveHandles } from './handle-aliases';
 import { productDisplayName } from './product-types';
-import { normalizeClickGoId } from './clickgo';
+import { normalizeClickGoId, VENDOR_TEST_CODES } from './clickgo';
 
 export const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300
 export const FLAT_SHIPPING_CENTS = 999; // $9.99
@@ -146,8 +146,13 @@ export async function priceCart(args: {
   // commission, so it takes no Merit discount and credits no Merit affiliate:
   // the two offers never stack (Parker, 2026-10-07).
   const vendorClick = !!normalizeClickGoId(args.clickGoId);
-  if (vendorClick && discountCodeInput) {
+  const vendorTestCode = VENDOR_TEST_CODES.has(discountCodeInput.toLowerCase());
+  if (vendorClick && discountCodeInput && !vendorTestCode) {
     return { error: "Discount codes can't be used on this order.", field: 'discountCode', status: 400 };
+  }
+  // The vendor's test code only works on a vendor click.
+  if (vendorTestCode && !vendorClick) {
+    return { error: "This code isn't valid.", field: 'discountCode', status: 400 };
   }
 
   // ── Authoritative line pricing ─────────────────────────────────────────
