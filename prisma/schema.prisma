@@ -398,6 +398,12 @@ model OrderAttribution {
   clickId       String?
   referrer      String?
   landing       String?
+  /// Buyer's own answer on the confirmation page ("How did you first hear
+  /// about Merit?"). Self-reported, so it only decides the channel when no
+  /// affiliate, code, click or referrer does. Values in lib/heard-from.ts.
+  heardFrom       String?
+  heardFromDetail String?
+  heardFromAt     DateTime?
   createdAt     DateTime @default(now())
 
   @@index([source])

@@ -9,23 +9,28 @@
  *   2. BHS            a vendor click; their rep is paid on it
  *   3. Paid ads       an ad click id or a cpc/paid UTM (Google, Meta, ...)
  *   4. Private code   a non-public code (friends & family, a team code)
- *   5. Email, AI assistants, organic search, social, other referral sites
- *   6. Returning      no signal on this order: inherit the customer's first
- *   7. Unknown        a first order that arrived with no signal at all
- *                     (typed URL, a text from a friend, an app's browser)
+ *   5. Practitioner   ordered through an approved practitioner account
+ *   6. The Assay, email, AI assistants, organic search, social (including an
+ *                     app's in-app browser), other referral sites
+ *   7. Said           the buyer's own answer on the confirmation page
+ *   8. Returning      no signal on this order: inherit the customer's first
+ *   9. Unknown        a first order with no signal and no answer
  */
+import { heardFromChannel } from './heard-from';
 
 export type ChannelInput = {
   createdAt: Date;
   customerEmail: string;
   affiliateId: string | null;
   discountCode: string | null;
+  practitionerApplicationId?: string | null;
   attr: {
     source: string | null;
     medium: string | null;
     campaign: string | null;
     clickId: string | null;
     referrer: string | null;
+    heardFrom?: string | null;
   } | null;
 };
 
@@ -37,6 +42,17 @@ const SEARCH: [RegExp, string][] = [
   [/(^|\.)google\.[a-z.]+$|^com\.google\.android/i, 'Google organic'],
   [/(^|\.)(bing\.com|duckduckgo\.com|yahoo\.com|search\.brave\.com|ecosia\.org)$/i, 'Other search'],
 ];
+const IN_APP: Record<string, string> = {
+  'google-app': 'Google organic',
+  instagram: 'Social: Instagram',
+  facebook: 'Social: Facebook',
+  tiktok: 'Social: TikTok',
+  snapchat: 'Social: Snapchat',
+  linkedin: 'Social: LinkedIn',
+  pinterest: 'Social: Pinterest',
+  x: 'Social: X',
+};
+const ASSAY = /(^|\.)theassay\.co$|^theassay$|^assay$/i;
 const SOCIAL = /(^|\.)(instagram\.com|facebook\.com|fb\.com|reddit\.com|tiktok\.com|youtube\.com|x\.com|t\.co|threads\.net|linkedin\.com)$/i;
 
 const PAID_SOURCE: Record<string, string> = {
@@ -64,6 +80,10 @@ function signalChannel(o: ChannelInput): string | null {
   const code = o.discountCode?.trim();
   if (code && !PUBLIC_CODE.test(code)) return `Code: ${code.toUpperCase()}`;
 
+  if (o.practitionerApplicationId) return 'Practitioner';
+
+  if (ASSAY.test(src) || ASSAY.test(ref)) return 'The Assay';
+  if (med === 'in-app') return IN_APP[src] ?? 'Social (unpaid)';
   if (src === 'email' || med === 'email' || med === 'transactional') return 'Email';
   if (AI_HOSTS.test(src) || AI_HOSTS.test(ref)) return 'ChatGPT and AI';
   if (src && PAID_SOURCE[src]) return PAID_SOURCE[src];
@@ -71,7 +91,7 @@ function signalChannel(o: ChannelInput): string | null {
   if (SOCIAL.test(ref)) return 'Social (unpaid)';
   if (src) return `Tagged: ${src}`;
   if (ref) return `Referral: ${ref}`;
-  return null;
+  return heardFromChannel(a?.heardFrom);
 }
 
 /**

@@ -4,8 +4,10 @@ import {
   ATTR_COOKIE,
   ATTR_COOKIE_MAX_AGE,
   buildAttribution,
+  buildInAppAttribution,
   encodeAttrCookie,
   hasAttributionParams,
+  inAppSource,
   isExternalReferrer,
 } from '@/lib/attribution';
 import {
@@ -266,11 +268,19 @@ export async function middleware(req: NextRequest) {
   // only paid clicks were ever attributed, and Merit's converting channels
   // (organic + AI assistants) carry no UTMs — 172 of the first 175 paid
   // orders had no attribution row.
-  const attrValue =
-    !req.cookies.get(ATTR_COOKIE) &&
-    (hasAttributionParams(searchParams) || isExternalReferrer(req.headers.get('referer')))
-      ? encodeAttrCookie(buildAttribution(searchParams, req.headers.get('referer'), pathname, Date.now()))
-      : null;
+  //
+  // No params and no referrer: if an app's built-in browser opened the page
+  // (Instagram, TikTok, the Google app…) its user agent still names the app.
+  const hasAttrCookie = !!req.cookies.get(ATTR_COOKIE);
+  const referer = req.headers.get('referer');
+  const inApp = !referer ? inAppSource(req.headers.get('user-agent')) : null;
+  const attrValue = hasAttrCookie
+    ? null
+    : hasAttributionParams(searchParams) || isExternalReferrer(referer)
+      ? encodeAttrCookie(buildAttribution(searchParams, referer, pathname, Date.now()))
+      : inApp
+        ? encodeAttrCookie(buildInAppAttribution(inApp, pathname, Date.now()))
+        : null;
   const withAttr = (res: NextResponse): NextResponse => {
     if (attrValue) {
       res.cookies.set(ATTR_COOKIE, attrValue, {

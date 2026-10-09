@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { money } from '@/lib/catalog';
 import { ClearCartOnMount } from './ClearCartOnMount';
 import { PurchaseBeacon } from './PurchaseBeacon';
+import { HeardFrom } from './HeardFrom';
 import { headers } from 'next/headers';
 import { isCheckoutHostname, supportEmailFor } from '@/lib/checkout-domain';
 
@@ -135,6 +136,9 @@ export default async function CheckoutSuccessPage({
       </section>
 
       <section className="max-w-[640px] mx-auto px-5 sm:px-6 lg:px-8 py-12">
+        {/* Optional; feeds the channel report when nothing else says where the buyer came from. */}
+        {order && orderRef && paymentConfirmed && <HeardFrom orderRef={orderRef} />}
+
         {order && order.lines.length > 0 && (
           <div className="bg-white border border-cobalt/10 rounded-2xl p-6 lg:p-8 mb-6">
             <div className="flex items-center justify-between mb-4">

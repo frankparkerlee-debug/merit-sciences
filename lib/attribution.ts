@@ -60,6 +60,30 @@ export function isExternalReferrer(referer: string | null): boolean {
   }
 }
 
+/**
+ * The app whose built-in browser opened the page, from its user agent.
+ * In-app browsers send no referrer, so a tap on a link in an Instagram bio, a
+ * TikTok comment or the Google app used to land as a black hole. Only apps
+ * that announce themselves in the UA are listed; Reddit, Gmail and Messages
+ * open links in a plain Safari/Chrome view and stay undetectable.
+ */
+export function inAppSource(ua: string | null): string | null {
+  if (!ua) return null;
+  if (/Instagram/i.test(ua)) return 'instagram';
+  if (/FBAN|FBAV|FB_IAB|FBIOS|\[FB/i.test(ua)) return 'facebook';
+  if (/musical_ly|BytedanceWebview|TikTok/i.test(ua)) return 'tiktok';
+  if (/Snapchat/i.test(ua)) return 'snapchat';
+  if (/LinkedInApp/i.test(ua)) return 'linkedin';
+  if (/Pinterest/i.test(ua)) return 'pinterest';
+  if (/Twitter/i.test(ua)) return 'x';
+  if (/\bGSA\/\d/.test(ua)) return 'google-app';
+  return null;
+}
+
+export function buildInAppAttribution(app: string, pathname: string, nowMs: number): Attribution {
+  return { source: app, medium: 'in-app', landing: clip(pathname, 200), ts: nowMs };
+}
+
 function clip(v: string | null, n = 120): string | null {
   if (!v) return null;
   const s = v.trim();

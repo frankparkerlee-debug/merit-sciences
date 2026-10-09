@@ -40,6 +40,7 @@ export default async function AttributionPage({
         customerEmail: true,
         affiliateId: true,
         discountCode: true,
+        practitionerApplicationId: true,
       },
     }),
     posthogReadConfigured ? paidFunnel(days) : Promise.resolve(null),
@@ -55,10 +56,11 @@ export default async function AttributionPage({
     campaign: string | null;
     clickId: string | null;
     referrer: string | null;
+    heardFrom: string | null;
   }[] = [];
   try {
     attrs = await prisma.orderAttribution.findMany({
-      select: { paypalOrderId: true, source: true, medium: true, campaign: true, clickId: true, referrer: true },
+      select: { paypalOrderId: true, source: true, medium: true, campaign: true, clickId: true, referrer: true, heardFrom: true },
     });
   } catch {
     attrs = [];
@@ -150,10 +152,11 @@ export default async function AttributionPage({
           <summary className="cursor-pointer">How to read this</summary>
           <p className="mt-1">
             Each order gets one channel, strongest signal first: affiliate credited, BHS vendor click, ad click
-            (Google, Meta, Reddit…), private discount code, then email, ChatGPT and other AI assistants, organic
-            search, social, and other referring sites. An order with none of these takes the channel of the
-            customer&rsquo;s first order (<em>Returning</em>). <em>Unknown</em> is a first order with no signal: a typed
-            URL, a link texted by a friend, or an in-app browser that hides the referrer. Revenue is gross, before refunds.
+            (Google, Meta, Reddit…), private discount code, practitioner account, then The Assay, email, ChatGPT and
+            other AI assistants, organic search, social (including Instagram and TikTok in-app browsers), and other
+            referring sites. Rows marked <em>(said)</em> are the buyer&rsquo;s own answer on the confirmation page, used
+            only when nothing else identifies the source. An order with none of these takes the channel of the
+            customer&rsquo;s first order (<em>Returning</em>). <em>Unknown</em> is a first order with no signal and no answer. Revenue is gross, before refunds.
           </p>
         </details>
       </Section>
