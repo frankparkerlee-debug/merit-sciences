@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
+import { classifyOrders } from '@/lib/order-channel';
 import { posthogReadConfigured } from '@/lib/posthog-query';
 import {
   FUNNEL_RANGES,
@@ -28,10 +29,18 @@ export default async function AttributionPage({
   searchParams?: { days?: string | string[] };
 }) {
   const days = clampDays(searchParams?.days);
+  const since = new Date(Date.now() - days * 86_400_000);
   const [orders, funnelRows, funnelOrders] = await Promise.all([
     prisma.order.findMany({
       where: { status: { in: REVENUE_STATUSES as any } },
-      select: { paypalOrderId: true, totalCents: true },
+      select: {
+        paypalOrderId: true,
+        totalCents: true,
+        createdAt: true,
+        customerEmail: true,
+        affiliateId: true,
+        discountCode: true,
+      },
     }),
     posthogReadConfigured ? paidFunnel(days) : Promise.resolve(null),
     paidOrdersByCampaign(days),
@@ -39,73 +48,66 @@ export default async function AttributionPage({
 
   // Resilient: if the order_attributions table isn't created yet, treat all
   // orders as untagged rather than 500.
-  let attrs: { paypalOrderId: string; source: string | null; campaign: string | null }[] = [];
+  let attrs: {
+    paypalOrderId: string;
+    source: string | null;
+    medium: string | null;
+    campaign: string | null;
+    clickId: string | null;
+    referrer: string | null;
+  }[] = [];
   try {
     attrs = await prisma.orderAttribution.findMany({
-      select: { paypalOrderId: true, source: true, campaign: true },
+      select: { paypalOrderId: true, source: true, medium: true, campaign: true, clickId: true, referrer: true },
     });
   } catch {
     attrs = [];
   }
   const attrMap = new Map(attrs.map((a) => [a.paypalOrderId, a]));
 
-  const bySource = new Map<string, Agg>();
+  // Classify across the full history so returning customers inherit the
+  // channel of their first order, then keep only the window.
+  const withAttr = orders.map((o) => ({ ...o, attr: attrMap.get(o.paypalOrderId) ?? null }));
+  const channels = classifyOrders(withAttr);
+  const inWindow = withAttr.filter((o) => o.createdAt >= since);
+
+  const byChannel = new Map<string, Agg>();
   const byCampaign = new Map<string, { source: string; orders: number; revenue: number }>();
-  let attributedOrders = 0;
+  let unknownOrders = 0;
   let totalRevenue = 0;
 
-  for (const o of orders) {
+  for (const o of inWindow) {
     const cents = Number(o.totalCents);
     totalRevenue += cents;
-    const a = o.paypalOrderId ? attrMap.get(o.paypalOrderId) : undefined;
-    const tagged = !!(a && a.source);
-    const src = tagged ? a!.source!.trim() : 'direct / organic';
-    const s = bySource.get(src) ?? { orders: 0, revenue: 0 };
-    s.orders++;
-    s.revenue += cents;
-    bySource.set(src, s);
-    if (tagged) attributedOrders++;
+    const channel = channels.get(o) ?? 'Unknown';
+    if (channel === 'Unknown' || channel === 'Returning: Unknown') unknownOrders++;
+    const c = byChannel.get(channel) ?? { orders: 0, revenue: 0 };
+    c.orders++;
+    c.revenue += cents;
+    byChannel.set(channel, c);
+    const a = o.attr;
     if (a?.campaign) {
-      const c = byCampaign.get(a.campaign) ?? { source: a.source ?? '—', orders: 0, revenue: 0 };
-      c.orders++;
-      c.revenue += cents;
-      byCampaign.set(a.campaign, c);
+      const k = byCampaign.get(a.campaign) ?? { source: a.source ?? '—', orders: 0, revenue: 0 };
+      k.orders++;
+      k.revenue += cents;
+      byCampaign.set(a.campaign, k);
     }
   }
 
-  const sourceRows = [...bySource.entries()]
-    .map(([source, v]) => ({ source, ...v }))
+  const channelRows = [...byChannel.entries()]
+    .map(([channel, v]) => ({ channel, ...v }))
     .sort((x, y) => y.revenue - x.revenue);
   const campaignRows = [...byCampaign.entries()]
     .map(([campaign, v]) => ({ campaign, ...v }))
     .sort((x, y) => y.revenue - x.revenue);
 
-  const attributedPct = orders.length ? Math.round((attributedOrders / orders.length) * 100) : 0;
+  const knownPct = inWindow.length ? Math.round(((inWindow.length - unknownOrders) / inWindow.length) * 100) : 0;
 
   return (
     <main className="px-5 sm:px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
-      <h1 className="text-2xl font-black tracking-tight text-ink mb-1">Attribution &amp; ROAS</h1>
-      <p className="text-sm text-ink-soft mb-6 max-w-2xl">
-        Revenue grouped by the source that <strong>acquired</strong> each customer (first-touch).
-        Pair each row&rsquo;s revenue with your ad spend on that channel to get ROAS.
-        {attrs.length === 0 && (
-          <span className="text-amber-700"> &nbsp;Tracking starts once the <code>order_attributions</code> table is created — see setup below.</span>
-        )}
-      </p>
-
-      {/* KPI band */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        <Kpi label="Total revenue" value={money(totalRevenue)} />
-        <Kpi label="Orders" value={String(orders.length)} />
-        <Kpi label="Tagged to a source" value={`${attributedPct}%`} sub={`${attributedOrders} orders`} />
-        <Kpi label="Sources" value={String(sourceRows.filter((r) => r.source !== 'direct / organic').length)} />
-      </div>
-
-      {/* Paid traffic funnel: how far ad visitors get, from Merit's own data.
-          The isolated Google Ads account carries no conversion tag by design,
-          so this table is the only place these steps exist. */}
-      <Section title={`Paid traffic funnel · last ${days} days`}>
-        <div className="flex items-center gap-2 mb-3 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="text-2xl font-black tracking-tight text-ink">Attribution &amp; ROAS</h1>
+        <div className="flex items-center gap-2 text-xs">
           {FUNNEL_RANGES.map((d) => (
             <Link
               key={d}
@@ -118,8 +120,49 @@ export default async function AttributionPage({
               {d} days
             </Link>
           ))}
-          <span className="text-ink-muted ml-2">Visitors whose first page carried a utm_campaign or an ad click id.</span>
         </div>
+      </div>
+
+      {/* KPI band */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <Kpi label="Revenue" value={money(totalRevenue)} />
+        <Kpi label="Orders" value={String(inWindow.length)} />
+        <Kpi label="Channel known" value={`${knownPct}%`} sub={`${inWindow.length - unknownOrders} orders`} />
+        <Kpi label="Unknown" value={String(unknownOrders)} sub="no affiliate, code, click or referrer" />
+      </div>
+
+      <Section title={`By channel · last ${days} days`}>
+        <Table head={['Channel', 'Orders', 'Revenue', 'Avg order']}>
+          {channelRows.length === 0 ? (
+            <EmptyRow cols={4} />
+          ) : (
+            channelRows.map((r) => (
+              <tr key={r.channel} className="border-t border-cobalt/8">
+                <td className="px-4 py-2.5 font-semibold text-ink">{r.channel}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{r.orders}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums font-bold text-ink">{money(r.revenue)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{money(Math.round(r.revenue / r.orders))}</td>
+              </tr>
+            ))
+          )}
+        </Table>
+        <details className="mt-2 text-[11px] text-ink-muted leading-relaxed">
+          <summary className="cursor-pointer">How to read this</summary>
+          <p className="mt-1">
+            Each order gets one channel, strongest signal first: affiliate credited, BHS vendor click, ad click
+            (Google, Meta, Reddit…), private discount code, then email, ChatGPT and other AI assistants, organic
+            search, social, and other referring sites. An order with none of these takes the channel of the
+            customer&rsquo;s first order (<em>Returning</em>). <em>Unknown</em> is a first order with no signal: a typed
+            URL, a link texted by a friend, or an in-app browser that hides the referrer. Revenue is gross, before refunds.
+          </p>
+        </details>
+      </Section>
+
+      {/* Paid traffic funnel: how far ad visitors get, from Merit's own data.
+          The isolated Google Ads account carries no conversion tag by design,
+          so this table is the only place these steps exist. */}
+      <Section title={`Paid traffic funnel · last ${days} days`}>
+        <p className="text-xs text-ink-muted mb-3">Visitors whose first page carried a utm_campaign or an ad click id.</p>
         {funnelRows === null ? (
           <div className="rounded-xl border border-cobalt/12 bg-white px-4 py-8 text-center text-sm text-ink-muted">
             {posthogReadConfigured
@@ -135,24 +178,6 @@ export default async function AttributionPage({
           attribution, not from the ad platform. <em>Search partners</em> is Google&rsquo;s syndicated network (parked domains, in-app search),
           not google.com results.
         </p>
-      </Section>
-
-      {/* By source */}
-      <Section title="By source">
-        <Table head={['Source', 'Orders', 'Revenue', 'Avg order']}>
-          {sourceRows.length === 0 ? (
-            <EmptyRow cols={4} />
-          ) : (
-            sourceRows.map((r) => (
-              <tr key={r.source} className="border-t border-cobalt/8">
-                <td className="px-4 py-2.5 font-semibold text-ink">{r.source}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{r.orders}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums font-bold text-ink">{money(r.revenue)}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{money(Math.round(r.revenue / r.orders))}</td>
-              </tr>
-            ))
-          )}
-        </Table>
       </Section>
 
       {/* By campaign */}
@@ -173,10 +198,6 @@ export default async function AttributionPage({
         </Table>
       </Section>
 
-      <p className="text-[11px] text-ink-muted mt-6 leading-relaxed">
-        First-touch attribution: the ad/source that first brought the visitor in (UTMs or fbclid/ttclid/gclid),
-        carried through the email gate to purchase. Revenue is gross (before refunds). All-time.
-      </p>
     </main>
   );
 }

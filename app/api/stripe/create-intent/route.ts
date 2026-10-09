@@ -26,7 +26,8 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
 import { preCreateOrder } from '@/lib/orders';
 import { sanitizeCartLines, priceCart, isPriceError } from '@/lib/checkout-pricing';
-import { ATTR_COOKIE, decodeAttrCookie } from '@/lib/attribution';
+import { ATTR_COOKIE, decodeAttrCookie, orderAttributionFields } from '@/lib/attribution';
+import { normalizeClickGoId } from '@/lib/clickgo';
 import { ensureStripeCustomer } from '@/lib/practitioner-card';
 
 export const runtime = 'nodejs';
@@ -204,21 +205,14 @@ export async function POST(req: Request) {
     //     report had nothing to say. Keyed by the processor id, same as the
     //     order row. Non-fatal: a checkout must never fail over analytics.
     try {
-      const attr = decodeAttrCookie(cookies().get(ATTR_COOKIE)?.value);
-      if (attr && (attr.source || attr.referrer || attr.clickId)) {
+      const fields = orderAttributionFields(
+        decodeAttrCookie(cookies().get(ATTR_COOKIE)?.value),
+        normalizeClickGoId(typeof body?.clickGoId === 'string' ? body.clickGoId : null),
+      );
+      if (fields) {
         await prisma.orderAttribution.upsert({
           where: { paypalOrderId: pi.id },
-          create: {
-            paypalOrderId: pi.id,
-            source: attr.source ?? null,
-            medium: attr.medium ?? null,
-            campaign: attr.campaign ?? null,
-            content: attr.content ?? null,
-            term: attr.term ?? null,
-            clickId: attr.clickId ?? null,
-            referrer: attr.referrer ?? null,
-            landing: attr.landing ?? null,
-          },
+          create: { paypalOrderId: pi.id, ...fields },
           update: {},
         });
       }

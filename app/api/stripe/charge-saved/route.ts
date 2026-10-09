@@ -24,7 +24,8 @@ import { prisma } from '@/lib/db';
 import { stripeEnabled, STRIPE_MIN_CHARGE_CENTS } from '@/lib/stripe';
 import { preCreateOrder } from '@/lib/orders';
 import { sanitizeCartLines, priceCart, isPriceError } from '@/lib/checkout-pricing';
-import { ATTR_COOKIE, decodeAttrCookie } from '@/lib/attribution';
+import { ATTR_COOKIE, decodeAttrCookie, orderAttributionFields } from '@/lib/attribution';
+import { normalizeClickGoId } from '@/lib/clickgo';
 import { PRACTITIONER_COOKIE, verifyPractitionerCookie } from '@/lib/checkout-handoff';
 import { savedCardFor, chargeSavedCard } from '@/lib/practitioner-card';
 
@@ -185,21 +186,14 @@ export async function POST(req: Request) {
 
     // Attribution, keyed by the processor id the order now carries. Non-fatal.
     try {
-      const attr = decodeAttrCookie(cookies().get(ATTR_COOKIE)?.value);
-      if (attr && (attr.source || attr.referrer || attr.clickId)) {
+      const fields = orderAttributionFields(
+        decodeAttrCookie(cookies().get(ATTR_COOKIE)?.value),
+        normalizeClickGoId(typeof body?.clickGoId === 'string' ? body.clickGoId : null),
+      );
+      if (fields) {
         await prisma.orderAttribution.upsert({
           where: { paypalOrderId: charge.paymentIntentId },
-          create: {
-            paypalOrderId: charge.paymentIntentId,
-            source: attr.source ?? null,
-            medium: attr.medium ?? null,
-            campaign: attr.campaign ?? null,
-            content: attr.content ?? null,
-            term: attr.term ?? null,
-            clickId: attr.clickId ?? null,
-            referrer: attr.referrer ?? null,
-            landing: attr.landing ?? null,
-          },
+          create: { paypalOrderId: charge.paymentIntentId, ...fields },
           update: {},
         });
       }

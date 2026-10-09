@@ -34,6 +34,10 @@ export function hasAttributionParams(sp: URLSearchParams): boolean {
 
 // Own properties — a hop between these is navigation, not acquisition.
 const INTERNAL_HOSTS = /(^|\.)meritsciences\.com$|(^|\.)meritcheckout\.com$|(^|\.)onrender\.com$|(^|\.)trymerit\.co$|^localhost$/i;
+// Tools that bounce people back to the site without being how they found it:
+// Stripe Connect onboarding returns affiliates to /affiliate/dashboard, and
+// Google Tag Assistant is us testing tags. Both were stamping first touch.
+const NON_ACQUISITION_HOSTS = /(^|\.)stripe\.com$|^tagassistant\.google\.com$/i;
 
 /**
  * True when the request arrived from somewhere that tells us something —
@@ -50,7 +54,7 @@ export function isExternalReferrer(referer: string | null): boolean {
   if (!referer) return false;
   try {
     const host = new URL(referer).hostname;
-    return !!host && !INTERNAL_HOSTS.test(host);
+    return !!host && !INTERNAL_HOSTS.test(host) && !NON_ACQUISITION_HOSTS.test(host);
   } catch {
     return false;
   }
@@ -97,6 +101,38 @@ export function buildAttribution(
     referrer: refererHost(referer),
     landing: clip(pathname, 200),
     ts: nowMs,
+  };
+}
+
+/**
+ * The OrderAttribution fields for an order, or null when there is nothing to
+ * record. A vendor (ClickGo/BHS) click is the order's source outright: the
+ * vendor's rep is paid on it, so it outranks whatever first touch the cookie
+ * holds.
+ */
+export function orderAttributionFields(attr: Attribution | null, clickGoId: string | null) {
+  if (clickGoId) {
+    return {
+      source: 'bhs',
+      medium: 'vendor',
+      campaign: attr?.campaign ?? null,
+      content: attr?.content ?? null,
+      term: attr?.term ?? null,
+      clickId: clickGoId,
+      referrer: attr?.referrer ?? null,
+      landing: attr?.landing ?? null,
+    };
+  }
+  if (!attr || !(attr.source || attr.referrer || attr.clickId)) return null;
+  return {
+    source: attr.source ?? null,
+    medium: attr.medium ?? null,
+    campaign: attr.campaign ?? null,
+    content: attr.content ?? null,
+    term: attr.term ?? null,
+    clickId: attr.clickId ?? null,
+    referrer: attr.referrer ?? null,
+    landing: attr.landing ?? null,
   };
 }
 

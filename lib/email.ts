@@ -112,6 +112,35 @@ function listHeaders(unsubscribeUrl?: string): Record<string, string> {
   };
 }
 
+/**
+ * Tag every storefront link in an email with UTMs, so a reader who clicks
+ * through on a device with no `merit_attr` cookie is credited to email rather
+ * than landing as "direct". First touch still wins: the middleware never
+ * overwrites an existing cookie. Links that already carry a utm_source, and
+ * unsubscribe links, are left alone.
+ */
+function tagEmailLinks(html: string, stream: MailStream, campaign: string): string {
+  return html.replace(/href="(https?:\/\/(?:[a-z0-9-]+\.)*meritsciences\.com[^"]*)"/gi, (whole, raw: string) => {
+    const href = raw.replace(/&amp;/g, '&');
+    if (/[?&]utm_source=/i.test(href) || /unsubscribe/i.test(href)) return whole;
+    try {
+      const u = new URL(href);
+      u.searchParams.set('utm_source', 'email');
+      u.searchParams.set('utm_medium', stream === 'marketing' ? 'email' : 'transactional');
+      u.searchParams.set('utm_campaign', campaign);
+      return `href="${u.toString().replace(/&/g, '&amp;')}"`;
+    } catch {
+      return whole;
+    }
+  });
+}
+
+function emailCampaign(payload: EmailPayload): string {
+  const tag = payload.tags?.find((t) => t.name === 'type' || t.name === 'category')?.value;
+  const base = tag || payload.subject;
+  return base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'email';
+}
+
 export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
   const c = client();
   if (!c) {
@@ -133,7 +162,7 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
       from: stream === 'marketing' ? EMAIL_MARKETING_FROM : EMAIL_FROM,
       to: payload.to,
       subject: payload.subject,
-      html: payload.html,
+      html: tagEmailLinks(payload.html, stream, emailCampaign(payload)),
       text: payload.text,
       replyTo: payload.replyTo ?? EMAIL_REPLY_TO,
       tags: payload.tags,
