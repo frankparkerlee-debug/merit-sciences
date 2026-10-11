@@ -136,10 +136,11 @@ export default async function ProductPage({ params }: Props) {
   if (!raw) {
     // A renamed product: 308 so links, emails and AI citations to the old
     // handle land here and engines transfer what they'd attributed to it.
-    // An ORPHANED handle (null) 404s instead: forwarding it would transfer
-    // exactly the association the rename was meant to drop.
+    // An ORPHANED handle (null) goes to the catalog instead: forwarding it to
+    // the product would transfer exactly the association the rename dropped.
     const current = await resolvePublicHandle(params.handle);
     if (current && current !== params.handle) permanentRedirect(`/products/${current}`);
+    if (current === null) permanentRedirect('/catalog');
     return notFound();
   }
   // Everything below needs only `raw`, so it runs as one round of parallel

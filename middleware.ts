@@ -16,7 +16,7 @@ import {
   isSupplyPath,
   checkoutOrigin,
 } from '@/lib/checkout-domain';
-import { legacyPathTarget } from '@/lib/legacy-domain';
+import { isRetiredNamePath, legacyPathTarget } from '@/lib/legacy-domain';
 import { normalizeClickGoId } from '@/lib/clickgo';
 import { WELCOME_CODE, WELCOME_COOKIE, WELCOME_COOKIE_MAX_AGE } from '@/lib/welcome-offer';
 
@@ -158,10 +158,7 @@ export async function middleware(req: NextRequest) {
     target.protocol = 'https:';
     target.host = 'meritsciences.com';
     target.port = '';
-    const legacyTarget = legacyPathTarget(req.nextUrl.pathname);
-    // null = a retired product name: answer 404 rather than forward it.
-    if (legacyTarget === null) return new NextResponse('Not found', { status: 404 });
-    target.pathname = legacyTarget;
+    target.pathname = legacyPathTarget(req.nextUrl.pathname);
     return NextResponse.redirect(target, 301);
   }
 
@@ -257,6 +254,15 @@ export async function middleware(req: NextRequest) {
   }
 
   const { searchParams, pathname } = req.nextUrl;
+
+  // ── Retired product names → /catalog ───────────────────────────────────
+  // Old RT3/TZ2 URLs are still linked and still cited by AI assistants. They
+  // go to the catalog, query string intact so the visit is still attributed.
+  if (isRetiredNamePath(pathname)) {
+    const catalog = req.nextUrl.clone();
+    catalog.pathname = '/catalog';
+    return NextResponse.redirect(catalog, 308);
+  }
 
   // ── First-touch traffic attribution → merit_attr cookie ────────────────
   // If this landing carries UTMs / a paid-click id OR arrived from an

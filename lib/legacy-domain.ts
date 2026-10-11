@@ -155,20 +155,35 @@ function matchProduct(slug: string): string | null {
   return null;
 }
 
-/** RT3 and TZ2's former names, nicknames and development codes. A legacy URL
- *  carrying any of them gets no forwarding at all, not even to /catalog
- *  (Parker, 2026-10-05): it 404s, so the old name stays off the record. */
+/** RT3 and TZ2's former names, nicknames and development codes. A URL
+ *  carrying any of them goes to /catalog (Parker, 2026-10-11): links and AI
+ *  citations to the old pages stop dead-ending, and it lands on the catalog
+ *  rather than the renamed product so the old name is not handed to it.
+ *  From 2026-10-05 to 10-11 these 404'd. */
 const RETIRED_NAME = /retatrutide|tirzepatide|ly-?3437943|ly-?3298176|(^|-)(reta|tirz)(-|$)/;
+
+/** Public content sections where a retired name can appear in a URL. */
+const RETIRED_SECTIONS = /^\/(products|library|catalog|stacks|collections|pages|blogs)\//;
+
+/** True for a storefront URL that still carries one of the retired names. */
+export function isRetiredNamePath(pathname: string): boolean {
+  if (!RETIRED_SECTIONS.test(pathname)) return false;
+  try {
+    return RETIRED_NAME.test(normalizeSlug(pathname));
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Map a legacy meritpeptides.com path to its modern equivalent.
  * Returns a path (worst case '/') so a legacy URL 301s to something real
- * rather than dead-ending, or null for a retired name, which must 404.
+ * rather than dead-ending. A retired name goes to /catalog.
  */
-export function legacyPathTarget(pathname: string): string | null {
+export function legacyPathTarget(pathname: string): string {
   const path = pathname.replace(/\/+$/, '') || '/';
   if (path === '/') return '/';
-  if (RETIRED_NAME.test(normalizeSlug(path))) return null;
+  if (RETIRED_NAME.test(normalizeSlug(path))) return '/catalog';
 
   const seg = path.split('/').filter(Boolean);
   const [first, second, third] = seg;
