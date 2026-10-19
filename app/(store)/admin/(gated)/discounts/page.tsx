@@ -125,23 +125,25 @@ export default async function AdminDiscountsPage({
   }
 
   // Authoritative usage (across both sources) — one groupBy on Order.
-  // Orders persist discountCode UPPERCASED (see create-order route +
-  // webhook), so we MUST query + key by uppercase or every count is 0.
-  // r.code is already uppercased when the rows are built above.
+  // Order rows hold both cases (PayPal stored UPPERCASE, Stripe stores
+  // lowercase since 2026-07-31), so query both spellings and merge by
+  // uppercase. r.code is already uppercased when the rows are built above.
   const codesUpper = allRows.map((r) => r.code);
   const usageMap = new Map<string, { count: number; revenueCents: number }>();
   if (codesUpper.length > 0) {
     const usage = await prisma.order.groupBy({
       by: ['discountCode'],
-      where: { discountCode: { in: codesUpper }, status: { not: 'PENDING_PAYMENT' } },
+      where: { discountCode: { in: [...codesUpper, ...codesUpper.map((c) => c.toLowerCase())] }, status: { not: 'PENDING_PAYMENT' } },
       _count: { _all: true },
       _sum: { totalCents: true },
     });
     for (const u of usage) {
       if (u.discountCode) {
-        usageMap.set(u.discountCode.toUpperCase(), {
-          count: u._count._all,
-          revenueCents: Number(u._sum.totalCents ?? 0),
+        const key = u.discountCode.toUpperCase();
+        const prev = usageMap.get(key) ?? { count: 0, revenueCents: 0 };
+        usageMap.set(key, {
+          count: prev.count + u._count._all,
+          revenueCents: prev.revenueCents + Number(u._sum.totalCents ?? 0),
         });
       }
     }

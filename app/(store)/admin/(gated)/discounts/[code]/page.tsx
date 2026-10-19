@@ -34,18 +34,19 @@ export default async function DiscountDetailPage({ params }: { params: Promise<{
   const discount = await prisma.discount.findUnique({ where: { code } });
   if (!discount) notFound();
 
-  // Orders store discountCode UPPERCASED (create-order route + webhook both
-  // call .toUpperCase() before persisting). Must match case or count = 0.
-  const codeUpper = code.toUpperCase();
+  // Order rows hold both cases: the retired PayPal path stored codes
+  // UPPERCASE, the Stripe path (since 2026-07-31) stores them lowercase. An
+  // exact uppercase match stopped counting every Stripe order.
+  const codeMatch = { equals: code, mode: 'insensitive' as const };
   // Pull usage + recent orders that used this code
   const [usage, recentOrders] = await Promise.all([
     prisma.order.aggregate({
-      where: { discountCode: codeUpper, status: { not: 'PENDING_PAYMENT' } },
+      where: { discountCode: codeMatch, status: { not: 'PENDING_PAYMENT' } },
       _count: { _all: true },
       _sum: { totalCents: true, discountCents: true },
     }),
     prisma.order.findMany({
-      where: { discountCode: codeUpper, status: { not: 'PENDING_PAYMENT' } },
+      where: { discountCode: codeMatch, status: { not: 'PENDING_PAYMENT' } },
       orderBy: { createdAt: 'desc' },
       take: 20,
       select: {
