@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { notFound, permanentRedirect } from 'next/navigation';
+import { notFound, permanentRedirect, redirect } from 'next/navigation';
 import { resolvePublicHandle } from '@/lib/handle-aliases';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -143,6 +143,9 @@ export default async function ProductPage({ params }: Props) {
     if (current === null) permanentRedirect('/catalog');
     return notFound();
   }
+  // A Draft product is not for sale: checkout refuses it, so its page must not
+  // offer Add to cart. Temporary redirect, since drafts often come back.
+  if (raw.status !== 'active') redirect('/catalog');
   // Everything below needs only `raw`, so it runs as one round of parallel
   // work instead of the five sequential awaits this page used to make
   // (pricing, referral, siblings, bac water, related products), each paying

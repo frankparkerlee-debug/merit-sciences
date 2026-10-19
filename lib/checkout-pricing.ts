@@ -282,7 +282,7 @@ export async function priceCart(args: {
         // Fail closed. A line we cannot price from our own records is not a
         // line we should quietly charge the client's number for.
         return {
-          error: 'One or more items are no longer available. Refresh your cart and try again.',
+          error: `${line.title} is no longer available. Remove it from your cart to continue.`,
           field: 'lines',
           status: 400,
         };
