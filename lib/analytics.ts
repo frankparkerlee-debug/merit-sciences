@@ -33,12 +33,12 @@ export function track(event: string, props?: Record<string, unknown>): void {
 export function trackLead(props?: Record<string, unknown>): void {
   track('lead', props);
   try {
-    (window as any).fbq?.('track', 'Lead', props);
+    whenPixel('fbq', (fbq) => fbq('track', 'Lead', props));
   } catch {
     /* pixel not loaded — ignore */
   }
   try {
-    (window as any).ttq?.track?.('SubmitForm', props);
+    whenPixel('ttq', (ttq) => ttq.track('SubmitForm', props));
   } catch {
     /* pixel not loaded — ignore */
   }
@@ -58,12 +58,12 @@ export function trackViewContent(props: { value: number; currency?: string; [k: 
   const { value, currency = 'USD', ...rest } = props;
   track('product_viewed', { value_usd: value, currency, ...rest });
   try {
-    (window as any).fbq?.('track', 'ViewContent', { value, currency });
+    whenPixel('fbq', (fbq) => fbq('track', 'ViewContent', { value, currency }));
   } catch {
     /* pixel not loaded — ignore */
   }
   try {
-    (window as any).ttq?.track?.('ViewContent', { value, currency });
+    whenPixel('ttq', (ttq) => ttq.track('ViewContent', { value, currency }));
   } catch {
     /* pixel not loaded — ignore */
   }
@@ -122,12 +122,12 @@ export function trackAddToCart(props: { value: number; currency?: string; [k: st
   const { value, currency = 'USD', ...rest } = props;
   track('add_to_cart', { value_usd: value, currency, ...rest });
   try {
-    (window as any).fbq?.('track', 'AddToCart', { value, currency });
+    whenPixel('fbq', (fbq) => fbq('track', 'AddToCart', { value, currency }));
   } catch {
     /* pixel not loaded — ignore */
   }
   try {
-    (window as any).ttq?.track?.('AddToCart', { value, currency });
+    whenPixel('ttq', (ttq) => ttq.track('AddToCart', { value, currency }));
   } catch {
     /* pixel not loaded — ignore */
   }
@@ -148,12 +148,12 @@ export function trackInitiateCheckout(props: { value: number; currency?: string;
   const { value, currency = 'USD', ...rest } = props;
   track('begin_checkout', { value_usd: value, currency, ...rest });
   try {
-    (window as any).fbq?.('track', 'InitiateCheckout', { value, currency });
+    whenPixel('fbq', (fbq) => fbq('track', 'InitiateCheckout', { value, currency }));
   } catch {
     /* pixel not loaded — ignore */
   }
   try {
-    (window as any).ttq?.track?.('InitiateCheckout', { value, currency });
+    whenPixel('ttq', (ttq) => ttq.track('InitiateCheckout', { value, currency }));
   } catch {
     /* pixel not loaded — ignore */
   }
@@ -205,12 +205,12 @@ export function trackPurchase(props: {
   const { value, orderId, currency = 'USD', ...rest } = props;
   track('purchase', { order_id: orderId, value_usd: value, currency, ...rest });
   try {
-    (window as any).fbq?.('track', 'Purchase', { value, currency }, { eventID: orderId });
+    whenPixel('fbq', (fbq) => fbq('track', 'Purchase', { value, currency }, { eventID: orderId }));
   } catch {
     /* pixel not loaded — ignore */
   }
   try {
-    (window as any).ttq?.track?.('CompletePayment', { value, currency }, { event_id: orderId });
+    whenPixel('ttq', (ttq) => ttq.track('CompletePayment', { value, currency }, { event_id: orderId }));
   } catch {
     /* pixel not loaded — ignore */
   }
@@ -309,4 +309,26 @@ function gtagQueue(): (...args: unknown[]) => void {
     for (const id of ids) w.gtag('config', id);
   }
   return w.gtag;
+}
+
+/**
+ * Run `fn` with the Meta (fbq) or TikTok (ttq) pixel once it exists. Both load
+ * lazily, after the page is idle, so an event fired on first render (the
+ * success page's Purchase) used to find no pixel and be dropped. Their own
+ * snippets bail out if the global already exists, so a stub cannot be
+ * installed ahead of them; poll briefly instead.
+ */
+function whenPixel(name: 'fbq' | 'ttq', fn: (pixel: any) => void, waitedMs = 0): void {
+  const w = window as any;
+  const pixel = w[name];
+  if (pixel && (name !== 'ttq' || typeof pixel.track === 'function')) {
+    try {
+      fn(pixel);
+    } catch {
+      /* pixel errors must never break the page */
+    }
+    return;
+  }
+  if (waitedMs >= 10_000) return;
+  setTimeout(() => whenPixel(name, fn, waitedMs + 250), 250);
 }
