@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useCart } from '@/lib/cart';
-import { trackBeginCheckoutAds } from '@/lib/analytics';
+import { decorateCheckoutUrl, trackBeginCheckoutAds } from '@/lib/analytics';
 import { fireClickGoInitiateCheckout } from '@/lib/clickgo';
 import { currentWelcomeCode } from '@/lib/welcome-offer';
 
@@ -72,7 +72,8 @@ export function CheckoutBridge() {
           // The Referer is suppressed by a `Referrer-Policy: no-referrer`
           // response header set on this route in middleware.ts — so the
           // checkout domain still learns nothing about where they came from.
-          window.location.replace(data.url);
+          // Carry PostHog, Google and Meta visitor ids across the domain jump.
+          window.location.replace(decorateCheckoutUrl(data.url));
           return;
         }
         setFailed(true);

@@ -37,7 +37,10 @@ export function MarketingPixels() {
           id="meta-pixel"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
-            __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${META}');fbq('track','PageView');`,
+            // First: adopt Meta's browser/click ids handed over from the
+            // storefront (?fbp= / ?fbc=) so the checkout domain's pixel is the
+            // same browser to Meta. Only fills cookies that are absent.
+            __html: `(function(){try{var q=new URLSearchParams(location.search);[['fbp','_fbp'],['fbc','_fbc']].forEach(function(p){var v=q.get(p[0]);if(v&&/^fb\\.[0-9]\\.[0-9]+\\.[\\w.-]+$/.test(v)&&document.cookie.indexOf(p[1]+'=')<0){document.cookie=p[1]+'='+v+';path=/;max-age=7776000;SameSite=Lax;Secure';}});}catch(e){}})();!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${META}');fbq('track','PageView');`,
           }}
         />
       )}
@@ -63,7 +66,7 @@ export function MarketingPixels() {
             dangerouslySetInnerHTML={{
               // Idempotent with lib/analytics gtagQueue(), which may already have
               // queued js/config plus a conversion before this runs.
-              __html: `window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments);};if(!window.__meritGtagInit){window.__meritGtagInit=true;gtag('js',new Date());gtag('config','${GOOGLE_ADS}');${GOOGLE_ADS_B ? `gtag('config','${GOOGLE_ADS_B}');` : ''}}`,
+              __html: `window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments);};if(!window.__meritGtagInit){window.__meritGtagInit=true;gtag('set','linker',{accept_incoming:true,domains:['meritsciences.com','meritcheckout.com']});gtag('js',new Date());gtag('config','${GOOGLE_ADS}');${GOOGLE_ADS_B ? `gtag('config','${GOOGLE_ADS_B}');` : ''}}`,
             }}
           />
         </>

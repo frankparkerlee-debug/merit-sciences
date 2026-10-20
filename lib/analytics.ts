@@ -302,6 +302,7 @@ function gtagQueue(): (...args: unknown[]) => void {
   }
   if (!w.__meritGtagInit) {
     w.__meritGtagInit = true;
+    w.gtag('set', 'linker', { accept_incoming: true, domains: ['meritsciences.com', 'meritcheckout.com'] });
     w.gtag('js', new Date());
     const ids = new Set(
       [GADS_PURCHASE_SEND_TO, GADS_PURCHASE_SEND_TO_B].filter(Boolean).map((s) => String(s).split('/')[0]),
@@ -331,4 +332,70 @@ function whenPixel(name: 'fbq' | 'ttq', fn: (pixel: any) => void, waitedMs = 0):
   }
   if (waitedMs >= 10_000) return;
   setTimeout(() => whenPixel(name, fn, waitedMs + 250), 250);
+}
+
+/**
+ * Carry the visitor's tracking identities from the storefront to the checkout
+ * domain. Every tool here keys a visitor by a first-party cookie, and
+ * meritsciences.com cookies never reach meritcheckout.com, so without this
+ * each tool saw an ad visitor and a buyer as two different people.
+ *
+ *   ph / phi   PostHog distinct id (+ whether it is an identified one);
+ *              PostHogProvider bootstraps with it on the checkout domain.
+ *   _gl        Google's own cross-domain linker: GA4 client and session plus
+ *              the Google Ads click cookies (_gcl_aw/_gcl_au). The Google tag
+ *              on the checkout domain reads it on load. JS redirects are not
+ *              auto-decorated, hence generating it here.
+ *   fbp / fbc  Meta's browser and click cookies; MarketingPixels writes them
+ *              on the checkout domain before the Meta pixel loads.
+ *
+ * gclid and the ClickGo id already ride the URL (lib/checkout-handoff).
+ */
+export function decorateCheckoutUrl(raw: string): string {
+  let url: URL;
+  try {
+    url = new URL(raw, window.location.href);
+  } catch {
+    return raw;
+  }
+  const cookie = (name: string): string | null => {
+    const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${name.replace(/[$.*+?^()[\]{}|\\]/g, '\\$&')}=([^;]+)`));
+    return m ? decodeURIComponent(m[1]) : null;
+  };
+
+  try {
+    if (ready()) {
+      const id = posthog.get_distinct_id();
+      if (id) {
+        url.searchParams.set('ph', id);
+        if (posthog.get_property('$user_state') === 'identified') url.searchParams.set('phi', '1');
+      }
+    }
+  } catch {
+    /* identity is best-effort */
+  }
+
+  try {
+    const bridge = (window as any).google_tag_data?.glBridge;
+    if (bridge && typeof bridge.generate === 'function') {
+      const ids: Record<string, string> = {};
+      for (const part of document.cookie.split(';')) {
+        const [k, ...v] = part.trim().split('=');
+        if (/^_ga(_[A-Z0-9]+)?$|^_gcl_(aw|au|gb|dc)$/.test(k)) ids[k] = decodeURIComponent(v.join('='));
+      }
+      if (Object.keys(ids).length) {
+        const gl = bridge.generate(ids);
+        if (gl) url.searchParams.set('_gl', gl);
+      }
+    }
+  } catch {
+    /* identity is best-effort */
+  }
+
+  const fbp = cookie('_fbp');
+  const fbc = cookie('_fbc');
+  if (fbp) url.searchParams.set('fbp', fbp);
+  if (fbc) url.searchParams.set('fbc', fbc);
+
+  return url.toString();
 }

@@ -10,8 +10,26 @@ import { PostHogProvider as PHProvider } from 'posthog-js/react';
 const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
 
+/**
+ * The storefront hands the visitor's distinct id to the checkout domain as
+ * ?ph= (lib/analytics decorateCheckoutUrl). Bootstrapping with it makes the ad
+ * visit and the purchase one PostHog person instead of two.
+ */
+function crossDomainBootstrap(): { distinctID: string; isIdentifiedID: boolean } | undefined {
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    const id = sp.get('ph');
+    if (!id || id.length > 200 || !/^[\w.@+-]+$/.test(id)) return undefined;
+    return { distinctID: id, isIdentifiedID: sp.get('phi') === '1' };
+  } catch {
+    return undefined;
+  }
+}
+
 if (typeof window !== 'undefined' && KEY) {
+  const bootstrap = crossDomainBootstrap();
   posthog.init(KEY, {
+    ...(bootstrap ? { bootstrap } : {}),
     api_host: HOST,
     capture_pageview: false, // captured manually below (App Router SPA nav)
     capture_pageleave: true,
