@@ -351,7 +351,19 @@ function whenPixel(name: 'fbq' | 'ttq', fn: (pixel: any) => void, waitedMs = 0):
  *
  * gclid and the ClickGo id already ride the URL (lib/checkout-handoff).
  */
-export function decorateCheckoutUrl(raw: string): string {
+export async function decorateCheckoutUrl(raw: string, waitMs = 1500): Promise<string> {
+  // The store's /checkout page redirects within a second of loading, often
+  // before gtag.js has installed the linker; give it a moment.
+  const started = Date.now();
+  const googleReady = () =>
+    Object.keys((window as any).google_tag_manager || {}).some((k) => /^(AW|G)-/.test(k));
+  while (!googleReady() && Date.now() - started < waitMs) {
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return decorateCheckoutUrlNow(raw);
+}
+
+function decorateCheckoutUrlNow(raw: string): string {
   let url: URL;
   try {
     url = new URL(raw, window.location.href);
@@ -375,19 +387,20 @@ export function decorateCheckoutUrl(raw: string): string {
     /* identity is best-effort */
   }
 
+  // Google's linker: with linker domains set (MarketingPixels / gtagQueue),
+  // gtag decorates a link to a listed domain with _gl on mousedown. A JS
+  // redirect is never decorated, so let gtag decorate a detached-in-place
+  // anchor and take its href. Unchanged href = gtag not loaded; carry on.
   try {
-    const bridge = (window as any).google_tag_data?.glBridge;
-    if (bridge && typeof bridge.generate === 'function') {
-      const ids: Record<string, string> = {};
-      for (const part of document.cookie.split(';')) {
-        const [k, ...v] = part.trim().split('=');
-        if (/^_ga(_[A-Z0-9]+)?$|^_gcl_(aw|au|gb|dc)$/.test(k)) ids[k] = decodeURIComponent(v.join('='));
-      }
-      if (Object.keys(ids).length) {
-        const gl = bridge.generate(ids);
-        if (gl) url.searchParams.set('_gl', gl);
-      }
-    }
+    const a = document.createElement('a');
+    a.href = url.toString();
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    const decorated = new URL(a.href);
+    a.remove();
+    const gl = decorated.searchParams.get('_gl');
+    if (gl) url.searchParams.set('_gl', gl);
   } catch {
     /* identity is best-effort */
   }

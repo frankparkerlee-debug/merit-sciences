@@ -39,8 +39,9 @@ export function MarketingPixels() {
           dangerouslySetInnerHTML={{
             // First: adopt Meta's browser/click ids handed over from the
             // storefront (?fbp= / ?fbc=) so the checkout domain's pixel is the
-            // same browser to Meta. Only fills cookies that are absent.
-            __html: `(function(){try{var q=new URLSearchParams(location.search);[['fbp','_fbp'],['fbc','_fbc']].forEach(function(p){var v=q.get(p[0]);if(v&&/^fb\\.[0-9]\\.[0-9]+\\.[\\w.-]+$/.test(v)&&document.cookie.indexOf(p[1]+'=')<0){document.cookie=p[1]+'='+v+';path=/;max-age=7776000;SameSite=Lax;Secure';}});}catch(e){}})();!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${META}');fbq('track','PageView');`,
+            // same browser to Meta. Overwrites: the storefront's ids belong to
+            // this journey (the ad click), a stale checkout-domain one does not.
+            __html: `(function(){try{var q=new URLSearchParams(location.search);[['fbp','_fbp'],['fbc','_fbc']].forEach(function(p){var v=q.get(p[0]);if(v&&/^fb\\.[0-9]\\.[0-9]+\\.[\\w.-]+$/.test(v)){document.cookie=p[1]+'='+v+';path=/;max-age=7776000;SameSite=Lax;Secure';}});}catch(e){}})();!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${META}');fbq('track','PageView');`,
           }}
         />
       )}

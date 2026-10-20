@@ -73,7 +73,7 @@ export function CheckoutBridge() {
           // response header set on this route in middleware.ts — so the
           // checkout domain still learns nothing about where they came from.
           // Carry PostHog, Google and Meta visitor ids across the domain jump.
-          window.location.replace(decorateCheckoutUrl(data.url));
+          window.location.replace(await decorateCheckoutUrl(data.url));
           return;
         }
         setFailed(true);
