@@ -54,14 +54,16 @@ export function MarketingPixels() {
         <>
           <Script
             id="gads-lib"
-            strategy="lazyOnload"
+            strategy="afterInteractive"
             src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS}`}
           />
           <Script
             id="gads-init"
-            strategy="lazyOnload"
+            strategy="afterInteractive"
             dangerouslySetInnerHTML={{
-              __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GOOGLE_ADS}');${GOOGLE_ADS_B ? `gtag('config','${GOOGLE_ADS_B}');` : ''}`,
+              // Idempotent with lib/analytics gtagQueue(), which may already have
+              // queued js/config plus a conversion before this runs.
+              __html: `window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments);};if(!window.__meritGtagInit){window.__meritGtagInit=true;gtag('js',new Date());gtag('config','${GOOGLE_ADS}');${GOOGLE_ADS_B ? `gtag('config','${GOOGLE_ADS_B}');` : ''}}`,
             }}
           />
         </>

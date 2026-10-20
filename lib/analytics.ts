@@ -101,7 +101,7 @@ export function trackBeginCheckoutAds(props: { value: number; currency?: string 
   const { value, currency = 'USD' } = props;
   try {
     if (GADS_BEGIN_CHECKOUT_SEND_TO) {
-      (window as any).gtag?.('event', 'conversion', {
+      gtagQueue()('event', 'conversion', {
         send_to: GADS_BEGIN_CHECKOUT_SEND_TO,
         value,
         currency,
@@ -133,7 +133,7 @@ export function trackAddToCart(props: { value: number; currency?: string; [k: st
   }
   try {
     if (GADS_ADD_TO_CART_SEND_TO) {
-      (window as any).gtag?.('event', 'conversion', {
+      gtagQueue()('event', 'conversion', {
         send_to: GADS_ADD_TO_CART_SEND_TO,
         value,
         currency,
@@ -225,11 +225,11 @@ export function trackPurchase(props: {
     };
     const timer = setTimeout(finish, GADS_BEACON_TIMEOUT_MS);
 
-    const gtag = (window as any).gtag;
-    if (typeof gtag !== 'function') {
-      finish(); // nothing to wait for
-      return;
-    }
+    // Queued, never skipped: the purchase fires on the success page's first
+    // render, before the lazily loaded gtag library exists. Until 2026-10-20
+    // this returned early when gtag was missing, so no Stripe purchase ever
+    // reached Google (the tag read "inactive" from 9/24).
+    const gtag = gtagQueue();
     if (GADS_PURCHASE_SEND_TO_B) {
       try {
         gtag('event', 'conversion', { send_to: GADS_PURCHASE_SEND_TO_B, value, currency, transaction_id: orderId });
@@ -269,7 +269,7 @@ const GADS_PRACTITIONER_SEND_TO =
 export function trackPractitionerLead(props?: Record<string, unknown>): void {
   track('practitioner_lead', props);
   try {
-    (window as any).gtag?.('event', 'conversion', { send_to: GADS_PRACTITIONER_SEND_TO });
+    gtagQueue()('event', 'conversion', { send_to: GADS_PRACTITIONER_SEND_TO });
   } catch {
     /* gtag not loaded — ignore */
   }
@@ -282,4 +282,31 @@ export function identify(email: string, props?: Record<string, unknown>): void {
   } catch {
     /* ignore */
   }
+}
+
+/**
+ * window.gtag, installed as the standard dataLayer queue if the library has not
+ * loaded yet. gtag.js replays the queue when it arrives, so an event fired on
+ * first render is delivered instead of dropped. Also issues the js/config
+ * commands once (MarketingPixels skips them if this ran first), because a
+ * conversion queued ahead of its account's config is not attributed.
+ */
+function gtagQueue(): (...args: unknown[]) => void {
+  const w = window as any;
+  w.dataLayer = w.dataLayer || [];
+  if (typeof w.gtag !== 'function') {
+    w.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      w.dataLayer.push(arguments);
+    };
+  }
+  if (!w.__meritGtagInit) {
+    w.__meritGtagInit = true;
+    w.gtag('js', new Date());
+    const ids = new Set(
+      [GADS_PURCHASE_SEND_TO, GADS_PURCHASE_SEND_TO_B].filter(Boolean).map((s) => String(s).split('/')[0]),
+    );
+    for (const id of ids) w.gtag('config', id);
+  }
+  return w.gtag;
 }
