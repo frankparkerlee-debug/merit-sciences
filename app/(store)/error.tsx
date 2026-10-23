@@ -69,10 +69,10 @@ export default function RootError({
         <p className="text-center text-[12px] text-ink-muted mt-6">
           Questions? Email{' '}
           <a
-            href="mailto:rx@meritsciences.com"
+            href="mailto:support@meritsciences.com"
             className="text-cobalt font-bold underline-offset-2 hover:underline"
           >
-            rx@meritsciences.com
+            support@meritsciences.com
           </a>
         </p>
       </div>

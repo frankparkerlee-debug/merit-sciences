@@ -654,7 +654,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
             Free Shipping Over $300
           </p>
           <Link
-            href="mailto:rx@meritsciences.com"
+            href="mailto:support@meritsciences.com"
             className="hidden sm:inline-block text-cobalt-soft hover:text-white font-semibold tracking-[0.15em] uppercase text-[10px] whitespace-nowrap"
           >
             Talk to a Pharmacologist →
@@ -1135,7 +1135,7 @@ function SupportBreak() {
           </p>
         </div>
         <a
-          href="mailto:rx@meritsciences.com"
+          href="mailto:support@meritsciences.com"
           className="bg-white text-ink px-5 py-2.5 rounded-none font-bold text-sm hover:opacity-90 transition whitespace-nowrap"
         >
           Email the team →

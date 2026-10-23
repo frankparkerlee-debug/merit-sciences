@@ -82,7 +82,7 @@ export function wrapPractitionerEmail(args: PractitionerEmailShell): string {
         <!-- Footer band -->
         <tr><td style="padding:18px 32px;background:${CREAM};border-top:1px solid ${CREAM_EDGE};font-size:11px;line-height:18px;color:${INK_SOFT};">
           ${footerNote}<br>
-          <a href="mailto:info@meritpeptides.com" style="color:${INK_SOFT};text-decoration:underline;">Reply directly</a>
+          <a href="mailto:support@meritsciences.com" style="color:${INK_SOFT};text-decoration:underline;">Reply directly</a>
           ${unsubscribeUrl ? ` &middot; <a href="${escapeHtml(unsubscribeUrl)}" style="color:${INK_SOFT};text-decoration:underline;">Unsubscribe</a>` : ''}
         </td></tr>
       </table>

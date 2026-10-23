@@ -120,7 +120,7 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
               </p>
               <p style="margin:4px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};font-style:italic;">Same stack. Better source.</p>
               <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">
-                San Antonio, TX &middot; <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;">info@meritsciences.com</a>
+                San Antonio, TX &middot; <a href="mailto:support@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;">support@meritsciences.com</a>
               </p>
               <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">
                 <a href="${SITE_URL}/catalog" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Catalog</a>
@@ -696,7 +696,7 @@ export function renderRefundIssued(d: RefundData): { subject: string; html: stri
     ${ctaButton('View order details', d.lookupUrl)}
 
     <p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
-      Questions? Reply to this email or write us at <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">info@meritsciences.com</a>.
+      Questions? Reply to this email or write us at <a href="mailto:support@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">support@meritsciences.com</a>.
     </p>
   `;
 
@@ -712,7 +712,7 @@ Money returns to your original payment method in 5-10 business days.
 
 Order details: ${d.lookupUrl}
 
-Questions? info@meritsciences.com
+Questions? support@meritsciences.com
 
 — Merit Sciences`;
 
@@ -767,7 +767,7 @@ export function renderOrderCanceled(d: CancellationData): { subject: string; htm
     ${ctaButton('Browse the catalog', '${SITE_URL}/catalog')}
 
     <p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:${COLOR_TEXT_SOFT};">
-      If this cancellation was unexpected or you&rsquo;d like to place a new order, reply to this email or write us at <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">info@meritsciences.com</a> &mdash; we&rsquo;re happy to help.
+      If this cancellation was unexpected or you&rsquo;d like to place a new order, reply to this email or write us at <a href="mailto:support@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;font-weight:700;">support@meritsciences.com</a> &mdash; we&rsquo;re happy to help.
     </p>
   `;
 
@@ -780,7 +780,7 @@ ${d.wasPaid ? 'A full refund will arrive in 5-10 business days to your original 
 ${d.reason ? `Reason: ${d.reason}\n` : ''}
 Browse the catalog: ${SITE_URL}/catalog
 
-Questions? info@meritsciences.com
+Questions? support@meritsciences.com
 
 — Merit Sciences`;
 

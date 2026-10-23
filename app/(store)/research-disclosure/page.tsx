@@ -128,7 +128,7 @@ export default function ResearchDisclosurePage() {
         For questions regarding this disclosure, the regulatory status
         of a specific compound, or COA access for any batch, contact our
         team at{' '}
-        <a href="mailto:rx@meritsciences.com">rx@meritsciences.com</a>.
+        <a href="mailto:support@meritsciences.com">support@meritsciences.com</a>.
       </p>
 
       <p style={{ marginTop: '2rem', fontSize: '12px', color: 'rgb(11 15 25 / 0.55)' }}>

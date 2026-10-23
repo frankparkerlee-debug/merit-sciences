@@ -22,7 +22,7 @@ export type SubmitResult =
   | { ok: true; message: string }
   | { ok: false; error: string };
 
-const ADMIN_EMAIL = 'info@meritpeptides.com';
+const ADMIN_EMAIL = 'support@meritsciences.com';
 
 /**
  * Submit a Practitioner Program application. Stores nothing to DB yet —
@@ -124,7 +124,7 @@ export async function submitPractitionerApplication(
     // If both DB AND admin email failed, surface the error so the user
     // knows to reach out directly.
     if (!appId) {
-      return { ok: false, error: 'Could not submit application. Please email info@meritpeptides.com directly.' };
+      return { ok: false, error: 'Could not submit application. Please email support@meritsciences.com directly.' };
     }
   }
 

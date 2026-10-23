@@ -554,7 +554,7 @@ export default async function ShopLanding() {
             <p className="font-display font-bold text-ink text-[16px]">Merit Sciences LLC</p>
             <p>San Antonio, Texas</p>
             <p>
-              <a href="mailto:info@meritpeptides.com" className="underline-offset-4 hover:underline hover:text-ink">info@meritpeptides.com</a>
+              <a href="mailto:support@meritsciences.com" className="underline-offset-4 hover:underline hover:text-ink">support@meritsciences.com</a>
             </p>
             <p className="mt-2">
               <Link href={`${STORE}/practitioners`} className="underline-offset-4 hover:underline hover:text-ink">Practitioner Program</Link>

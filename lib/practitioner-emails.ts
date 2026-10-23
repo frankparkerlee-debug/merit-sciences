@@ -69,7 +69,7 @@ export function renderEmail(def: EmailDefinition, ctx: EmailContext): string {
         <tr><td style="padding:18px 32px;border-top:1px solid #EBE6D7;font-size:11px;line-height:18px;color:${INK_SOFT};">
           Merit Sciences &middot; Licensed US facility &middot; Ships from San Antonio, TX<br>
           <a href="${ctx.unsubscribeUrl}" style="color:${INK_SOFT};text-decoration:underline;">Unsubscribe</a> &middot;
-          <a href="mailto:info@meritpeptides.com" style="color:${INK_SOFT};text-decoration:underline;">Reply directly</a>
+          <a href="mailto:support@meritsciences.com" style="color:${INK_SOFT};text-decoration:underline;">Reply directly</a>
         </td></tr>
       </table>
     </td></tr>

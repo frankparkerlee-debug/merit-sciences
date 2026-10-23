@@ -239,8 +239,8 @@ export default async function PractitionerPortalPage() {
           <PortalCard
             tag="Support"
             title="Reach the Merit team"
-            body="Email info@meritpeptides.com — replies go to the same humans who packed your order."
-            href="mailto:info@meritpeptides.com"
+            body="Email support@meritsciences.com — replies go to the same humans who packed your order."
+            href="mailto:support@meritsciences.com"
             cta="Email support →"
           />
         </div>
@@ -274,7 +274,7 @@ export default async function PractitionerPortalPage() {
           </dl>
           <p className="text-[11px] text-ink-soft mt-5">
             To update your account or request a custom pricing tier, reply to your approval email
-            or contact info@meritpeptides.com.
+            or contact support@meritsciences.com.
           </p>
         </section>
       </div>

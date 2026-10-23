@@ -54,10 +54,10 @@ export function PolicyLayout({ title, subtitle, lastUpdated, children }: Props) 
           <div className="mt-12 pt-8 border-t border-cobalt/10 text-[12px] text-ink-muted">
             Questions about this policy? Email{' '}
             <a
-              href="mailto:info@meritpeptides.com"
+              href="mailto:support@meritsciences.com"
               className="text-cobalt font-bold underline-offset-2 hover:underline"
             >
-              info@meritpeptides.com
+              support@meritsciences.com
             </a>
             .
           </div>

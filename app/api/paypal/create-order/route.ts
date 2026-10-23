@@ -354,7 +354,7 @@ export async function POST(req: Request) {
       if (recentPaid) {
         return NextResponse.json(
           {
-            error: `It looks like your payment already went through a moment ago — your receipt is on its way to ${payerEmail}. Please don't pay again. Questions? Email rx@meritsciences.com and we'll verify your order right away.`,
+            error: `It looks like your payment already went through a moment ago — your receipt is on its way to ${payerEmail}. Please don't pay again. Questions? Email support@meritsciences.com and we'll verify your order right away.`,
           },
           { status: 409 },
         );

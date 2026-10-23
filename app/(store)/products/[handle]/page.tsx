@@ -427,10 +427,10 @@ export default async function ProductPage({ params }: Props) {
                     record for this compound. For detailed mechanism,
                     research applications, or citation requests, email{' '}
                     <a
-                      href={`mailto:rx@meritsciences.com?subject=Research data: ${product.title}`}
+                      href={`mailto:support@meritsciences.com?subject=Research data: ${product.title}`}
                       className="text-cobalt font-bold underline-offset-2 hover:underline"
                     >
-                      rx@meritsciences.com
+                      support@meritsciences.com
                     </a>
                     .
                   </p>
@@ -585,10 +585,10 @@ export default async function ProductPage({ params }: Props) {
                 <p className="text-[12px] text-ink-muted">
                   Need the COA for a specific batch? Email{' '}
                   <a
-                    href={`mailto:rx@meritsciences.com?subject=COA request: batch ${product.lot.id}`}
+                    href={`mailto:support@meritsciences.com?subject=COA request: batch ${product.lot.id}`}
                     className="text-cobalt font-bold underline-offset-2 hover:underline"
                   >
-                    rx@meritsciences.com
+                    support@meritsciences.com
                   </a>{' '}
                   with your order number.
                 </p>
@@ -899,10 +899,10 @@ export default async function ProductPage({ params }: Props) {
           <p className="text-[11px] text-ink-muted italic mt-10 lg:mt-12 max-w-2xl">
             Every step above can be verified for any specific batch by emailing{' '}
             <a
-              href="mailto:rx@meritsciences.com"
+              href="mailto:support@meritsciences.com"
               className="text-cobalt font-bold not-italic underline-offset-2 hover:underline"
             >
-              rx@meritsciences.com
+              support@meritsciences.com
             </a>{' '}
             with your order number.
           </p>
@@ -1227,7 +1227,7 @@ export default async function ProductPage({ params }: Props) {
               business day. No bots, no tickets.
             </p>
             <a
-              href={`mailto:rx@meritsciences.com?subject=Question about ${product.title}`}
+              href={`mailto:support@meritsciences.com?subject=Question about ${product.title}`}
               className="inline-flex items-center justify-center bg-white text-ink px-5 py-3 rounded-lg font-bold text-sm hover:opacity-90 transition"
             >
               Email the team →

@@ -151,7 +151,7 @@ export function PackingSlipDoc({ d }: { d: SlipData }) {
       <p className="thanks">
         We spend on the lab, not the logo — orders like yours keep every lot independently
         assayed and published. Genuinely: thank you. Questions? Reply to your confirmation
-        email or write <strong>info@meritpeptides.com</strong> — you reach the team that packed this box.
+        email or write <strong>support@meritsciences.com</strong> — you reach the team that packed this box.
       </p>
 
       <div className="ruo">

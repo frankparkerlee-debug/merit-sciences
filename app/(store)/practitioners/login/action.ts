@@ -66,7 +66,7 @@ export async function requestPractitionerMagicLink(
     });
   } catch (err) {
     console.error('[practitioner-login] sign-in email failed', err);
-    return { ok: false, error: 'Sign-in link generated but email failed to send. Try again or contact info@meritpeptides.com.' };
+    return { ok: false, error: 'Sign-in link generated but email failed to send. Try again or contact support@meritsciences.com.' };
   }
 
   return {

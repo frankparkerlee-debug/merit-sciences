@@ -32,7 +32,7 @@ export type LabReportData = {
   unsubscribeUrl: string;
 };
 
-const VOTE_TO = 'rx@meritsciences.com';
+const VOTE_TO = 'support@meritsciences.com';
 
 function lotRows(lots: LabReportLot[]): string {
   return lots

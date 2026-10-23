@@ -72,7 +72,7 @@ export function PaymentShellFooter() {
   const email =
     process.env.CHECKOUT_SUPPORT_EMAIL?.trim() ||
     process.env.SUPPORT_EMAIL?.trim() ||
-    'rx@meritsciences.com';
+    'support@meritsciences.com';
 
   return (
     <footer className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 mt-12 pt-6 border-t border-cobalt/10">

@@ -146,7 +146,7 @@ export default async function KitPage() {
               Want the full pack — logo files, cobalt backgrounds, and ready-to-post story templates? We&rsquo;ll send it over.
             </p>
             <a
-              href={`mailto:info@meritpeptides.com?subject=${encodeURIComponent(`Asset pack for ${code}`)}`}
+              href={`mailto:support@meritsciences.com?subject=${encodeURIComponent(`Asset pack for ${code}`)}`}
               className="inline-flex flex-none items-center gap-2 bg-cobalt text-white px-5 py-3 rounded-xl text-sm font-bold hover:opacity-90 transition"
             >
               Request your asset pack →

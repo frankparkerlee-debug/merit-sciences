@@ -67,8 +67,8 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
             Something hiccuped on our end. If you were completing an order and saw
             PayPal confirm, <strong>your payment went through</strong> — check your
             inbox for a receipt before paying again, or email{' '}
-            <a href="mailto:rx@meritsciences.com" style={{ color: '#2E4DDB', fontWeight: 700 }}>
-              rx@meritsciences.com
+            <a href="mailto:support@meritsciences.com" style={{ color: '#2E4DDB', fontWeight: 700 }}>
+              support@meritsciences.com
             </a>{' '}
             and we&apos;ll verify your order.
           </p>

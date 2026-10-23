@@ -14,10 +14,10 @@ export function Footer() {
             Research compounds from a licensed US facility, shipped from San Antonio.
           </p>
           <a
-            href="mailto:rx@meritsciences.com"
+            href="mailto:support@meritsciences.com"
             className="inline-block mt-3 text-[11px] text-cobalt-soft hover:text-white transition"
           >
-            rx@meritsciences.com
+            support@meritsciences.com
           </a>
         </div>
 

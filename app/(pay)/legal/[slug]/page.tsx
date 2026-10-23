@@ -24,7 +24,7 @@ function contactEmail(): string {
   return (
     process.env.CHECKOUT_SUPPORT_EMAIL?.trim() ||
     process.env.SUPPORT_EMAIL?.trim() ||
-    'rx@meritsciences.com'
+    'support@meritsciences.com'
   );
 }
 

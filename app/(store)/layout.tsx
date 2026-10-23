@@ -77,7 +77,7 @@ const SITE_SCHEMA = {
       url: SITE,
       logo: `${SITE}/icon.png`,
       image: `${SITE}/og-image.jpg`,
-      email: 'rx@meritsciences.com',
+      email: 'support@meritsciences.com',
       description:
         'Lab-verified research compounds from a licensed US facility: ≥99% HPLC purity, certificate published for every batch. Ships 48h from San Antonio. For research use only.',
       address: {
@@ -113,7 +113,7 @@ const SITE_SCHEMA = {
         {
           '@type': 'ContactPoint',
           contactType: 'customer support',
-          email: 'rx@meritsciences.com',
+          email: 'support@meritsciences.com',
           areaServed: 'US',
           availableLanguage: 'English',
         },

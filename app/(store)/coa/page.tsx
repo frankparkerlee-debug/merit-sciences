@@ -329,7 +329,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                 <>Certificates are being published. In the meantime, </>
               )}
               <a
-                href="mailto:rx@meritsciences.com"
+                href="mailto:support@meritsciences.com"
                 className="text-cobalt font-semibold hover:underline"
               >
                 email us
