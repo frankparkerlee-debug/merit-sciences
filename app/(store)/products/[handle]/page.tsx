@@ -118,6 +118,17 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
+/** Draft handles that are old duplicates of a product now on sale (same
+ *  compound or blend, not a different strength). Bing and Copilot still cite
+ *  several of them (/products/klow had 23 Copilot citations by 2026-10-19). */
+const DRAFT_SUCCESSORS: Record<string, string> = {
+  klow: 'bpc157-ghk-cu-50-tb500-kpv-klow-80mg',
+  semax: 'semax-30mg',
+  'aod-9604-10mg': 'aod-9604',
+  'epitalon-20mg': 'epitalon',
+  'bpc-157-tb-500': 'bpc-10mg-tb-10mg-wolverine-20mg',
+};
+
 export default async function ProductPage({ params }: Props) {
   const raw = await getProduct(params.handle);
   if (!raw) {
@@ -131,8 +142,14 @@ export default async function ProductPage({ params }: Props) {
     return notFound();
   }
   // A Draft product is not for sale: checkout refuses it, so its page must not
-  // offer Add to cart. Temporary redirect, since drafts often come back.
-  if (raw.status !== 'active') redirect('/catalog');
+  // offer Add to cart. A draft that is an old duplicate of a product now on
+  // sale 308s to it, so Bing/Copilot citations of the old URL move over.
+  // Anything else: temporary redirect, since drafts often come back.
+  if (raw.status !== 'active') {
+    const successor = DRAFT_SUCCESSORS[params.handle];
+    if (successor) permanentRedirect(`/products/${successor}`);
+    redirect('/catalog');
+  }
   // Everything below needs only `raw`, so it runs as one round of parallel
   // work instead of the five sequential awaits this page used to make
   // (pricing, referral, siblings, bac water, related products), each paying
