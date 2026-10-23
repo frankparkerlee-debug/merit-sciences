@@ -214,7 +214,7 @@ export async function POST(req: Request) {
         subject: `Your ${WELCOME_PCT}% code: ${WELCOME_CODE}`,
         eyebrow: `Welcome · ${WELCOME_PCT}% off`,
         bodyHtml,
-        footerNote: 'Merit Sciences &middot; Dallas, TX',
+        footerNote: 'Merit Sciences &middot; San Antonio, TX',
       }),
       stream: 'marketing',
       unsubscribeUrl: unsubUrl(email),

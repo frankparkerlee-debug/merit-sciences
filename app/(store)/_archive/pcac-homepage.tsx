@@ -444,7 +444,7 @@ export default async function HomePage() {
 
             <div className="mt-6 lg:mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-ink/10 px-6 lg:px-8 py-5">
               <p className="font-mono text-[11px] lg:text-[12px] tracking-[0.08em] uppercase text-ink-soft">
-                Free shipping over $300 · 48hr dispatch from Dallas, TX
+                Free shipping over $300 · 48hr dispatch from San Antonio, TX
               </p>
               <Link
                 href="/catalog"

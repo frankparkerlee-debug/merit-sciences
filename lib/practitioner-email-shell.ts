@@ -46,7 +46,7 @@ export function wrapPractitionerEmail(args: PractitionerEmailShell): string {
     subject,
     eyebrow,
     bodyHtml,
-    footerNote = 'Merit Sciences &middot; Dallas, TX',
+    footerNote = 'Merit Sciences &middot; San Antonio, TX',
     unsubscribeUrl,
   } = args;
 

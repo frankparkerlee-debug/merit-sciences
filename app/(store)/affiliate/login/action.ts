@@ -80,7 +80,7 @@ export async function requestAffiliateMagicLink(
         subject: 'Your Merit Sciences affiliate sign-in link',
         eyebrow: 'Affiliate Program · Sign in',
         bodyHtml: body,
-        footerNote: 'Merit Sciences &middot; Affiliate Program &middot; Dallas, TX',
+        footerNote: 'Merit Sciences &middot; Affiliate Program &middot; San Antonio, TX',
       }),
     });
   } catch (err) {

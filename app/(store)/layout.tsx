@@ -79,7 +79,7 @@ const SITE_SCHEMA = {
       image: `${SITE}/og-image.jpg`,
       email: 'rx@meritsciences.com',
       description:
-        'Lab-verified research compounds — ≥99% HPLC purity, certificate published for every batch, ISO-certified US facility. Ships 48h from San Antonio. For research use only.',
+        'Lab-verified research compounds from a licensed US facility: ≥99% HPLC purity, certificate published for every batch. Ships 48h from San Antonio. For research use only.',
       address: {
         '@type': 'PostalAddress',
         addressLocality: 'San Antonio',
@@ -163,18 +163,6 @@ export const metadata: Metadata = {
   // on every page incl. the /access ad gate, and a paid-platform crawler must
   // never see a compound there. Compound-level SEO lives on the per-product
   // pages + page content (which Google/AI index directly).
-  keywords: [
-    'lab-verified compounds',
-    'ISO-certified facility compounds',
-    'batch-tested compounds',
-    'HPLC tested compounds',
-    'sealed sterile compounds',
-    'COA',
-    'HPLC verified',
-    'bacteriostatic water',
-    'Merit Sciences',
-    'research use only',
-  ],
   authors: [{ name: 'Merit Sciences' }],
   creator: 'Merit Sciences',
   publisher: 'Merit Sciences',
@@ -203,7 +191,7 @@ export const metadata: Metadata = {
     // /access ad gate's <head>, so a paid-platform crawler can't surface a
     // compound. Per-product OG (on the product pages) carries the specifics.
     description:
-      'Lab-verified compounds from an ISO-certified US facility. Sealed sterile vials, certificate published for every batch, third-party tested. Ships 48hr from San Antonio.',
+      'Lab-verified compounds from a licensed US facility. Sealed sterile vials, certificate published for every batch, third-party tested. Ships 48hr from San Antonio.',
     images: [
       {
         url: '/og-image.jpg',
@@ -218,7 +206,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Merit Sciences · Lab-verified compounds',
-    // Twitter description — ~140 chars. ISO-certified channel framing.
+    // Twitter description, ~140 chars.
     description:
       'Lab-verified compounds from a US facility. Sealed sterile vials, certificate per batch, ≥99% HPLC purity. Ships 48hr from San Antonio.',
     images: ['/og-image.jpg'],

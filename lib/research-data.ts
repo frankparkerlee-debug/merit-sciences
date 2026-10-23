@@ -774,7 +774,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
       'Selank is one of two Russian-developed heptapeptides commonly co-studied in the neuropeptide literature; the other (Semax) is structurally distinct but is often cited alongside Selank in research on neurotrophic and behavioral endpoints.',
     ],
     mechanism:
-      'Reported effects on GABAergic and serotonergic neurotransmission in preclinical research. Modulates BDNF and NGF expression in some rodent models. Acts intranasally or peripherally with reported CNS bioavailability.',
+      'Reported effects on GABAergic and serotonergic neurotransmission in preclinical research. Modulates BDNF and NGF expression in some rodent models. CNS effects reported in rodent models.',
     halfLife: 'Short circulating half-life; CNS effects reported well beyond serum-detectable window in research models.',
     solubility: 'Water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
@@ -818,7 +818,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     ],
     mechanism:
       'Modulates BDNF and NGF expression in cultured glial cells and rodent brain tissue. Affects dopaminergic and serotonergic neurotransmission in preclinical models. Specific receptor targets continue to be characterized.',
-    halfLife: 'Short circulating half-life; intranasal administration is the primary route in research protocols.',
+    halfLife: 'Short circulating half-life in published research models.',
     solubility: 'Highly water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Neurotrophic factor research (BDNF, NGF)',
@@ -872,7 +872,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Non-selective melanocortin receptor agonist with preferential activity at MC3R and MC4R in hypothalamic neuronal populations. Activation modulates downstream neuroendocrine pathways implicated in sexual response in preclinical models.',
     halfLife: '~2.7 hr (clinical pharmacokinetic data).',
-    solubility: 'Reconstitutes in bacteriostatic water; clear solution.',
+    solubility: 'Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Melanocortin receptor pharmacology',
       'Central neuroendocrine signaling',
@@ -924,7 +924,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Pan-melanocortin receptor agonist. MC1R activation drives melanogenesis in dermal melanocyte research. MC3R and MC4R activation in hypothalamic populations modulates appetite, energy expenditure, and sexual response in preclinical models.',
     halfLife: '~1 hr (preclinical and early-clinical reports).',
-    solubility: 'Reconstitutes in bacteriostatic water.',
+    solubility: 'Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Melanogenesis research',
       'Melanocortin receptor pharmacology',

@@ -29,7 +29,7 @@ export const revalidate = 900; // fresh prices/lots every 15 min, static-fast ot
 export const metadata = {
   title: 'Merit Sciences — Pharmacy-grade research peptides, shipped in 48 hours',
   description:
-    'Research compounds produced in an ISO-certified US facility, HPLC-verified ≥99%, lot-documented with published COAs, dispatched from Dallas within 48 hours.',
+    'Research compounds produced in a licensed US facility, HPLC-verified ≥99%, lot-documented with published COAs, dispatched from San Antonio within 48 hours.',
   robots: { index: false, follow: false }, // preview route — flip when promoted to /
 };
 
@@ -133,7 +133,7 @@ export default async function HomeV2() {
   const faqs = [
     {
       q: 'How fast do orders ship?',
-      a: `Orders dispatch within 48 hours from our facility in Dallas, TX — tracked and insured, with free shipping over ${freeShip}. You get a tracking number the moment it leaves.`,
+      a: `Orders dispatch within 48 hours from our facility in San Antonio, TX, tracked and insured, with free shipping over ${freeShip}. You get a tracking number the moment it leaves.`,
     },
     {
       q: 'How do I verify purity?',
@@ -141,7 +141,7 @@ export default async function HomeV2() {
     },
     {
       q: 'How are Merit compounds produced?',
-      a: 'Compounds are produced in an ISO-certified US facility under sterile compounding practices, sealed and lot-labeled, and released against an independent laboratory assay.',
+      a: 'Compounds are produced in a licensed US facility under sterile compounding practices, sealed and lot-labeled, and released against an independent laboratory assay.',
     },
     {
       q: 'Who can purchase?',
@@ -171,12 +171,12 @@ export default async function HomeV2() {
         {/* text */}
         <div className="order-2 lg:order-1 flex items-center bg-gradient-to-br from-cream via-cream to-[#E3E7F4]">
           <div className="max-w-[40rem] px-6 lg:px-16 py-14 lg:py-20">
-            <p className="eyebrow text-cobalt mb-5">Pharmacy-grade research peptides · Dallas, TX</p>
+            <p className="eyebrow text-cobalt mb-5">Pharmacy-grade research peptides · San Antonio, TX</p>
             <h1 className="font-display font-black text-ink tracking-[-0.04em] leading-[0.94]" style={{ fontSize: 'clamp(42px,4.4vw,76px)' }}>
               Pharmacy-grade peptides, shipped in 48 hours.
             </h1>
             <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-[30rem]">
-              Compounded in an ISO-certified US facility, verified per lot, and labeled to
+              Compounded in a licensed US facility, verified per lot, and labeled to
               clinical standard — at your door in two days.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -204,7 +204,7 @@ export default async function HomeV2() {
         <div className="max-w-[1300px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
           <div className="py-7 text-center">
             <p className="font-display font-black text-cobalt-soft leading-none" style={{ fontSize: 'clamp(26px,2.8vw,38px)' }}>48h</p>
-            <p className="mt-1.5 text-[13px] text-white/60">dispatch from Dallas</p>
+            <p className="mt-1.5 text-[13px] text-white/60">dispatch from San Antonio</p>
           </div>
           <Link href="/coa" className="py-7 text-center group">
             <p className="font-display font-black text-cobalt-soft leading-none" style={{ fontSize: 'clamp(26px,2.8vw,38px)' }}>{coaLots ?? '50+'}</p>
@@ -236,8 +236,8 @@ export default async function HomeV2() {
           </p>
           <ul className="mt-7 space-y-4">
             {[
-              ['In your hands in 48 hours', 'Cold-chain and tracked from Dallas — not two weeks from overseas.'],
-              ['Made in a sterile US facility', 'ISO-certified cleanroom, released against an independent laboratory assay.'],
+              ['In your hands in 48 hours', 'Cold-chain and tracked from San Antonio, not two weeks from overseas.'],
+              ['Made in a sterile US facility', 'Licensed US cleanroom, released against an independent laboratory assay.'],
               ['Labeled to clinical standard', 'Compound, dose, lot, and handling on every vial. No unmarked grey-market glass.'],
               ['Verified ≥99% purity', 'Independently HPLC-tested, COA a QR-scan away on every label, acetate salt — never TFA.'],
             ].map(([t, b]) => (

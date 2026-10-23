@@ -94,12 +94,12 @@ export function renderProspectTelegram(d: ProspectEmailData): Rendered {
         ['Testing', "“trust me bro”", 'HPLC COA, every batch'],
         ['Identity', 'who knows', "confirmed or it doesn't ship"],
         ['If it’s wrong', 'you find out', 'we find out first'],
-        ['Ships from', 'a crypto wallet', 'an ISO-certified US facility'],
+        ['Ships from', 'a crypto wallet', 'a licensed US facility'],
       ]) +
       p('Not hypothetical: last month we held back a whole Semax batch because it came back as the <em>wrong molecule</em>. The group chat would’ve shipped it to you with a fire emoji.') +
       cta('Buy like a grown-up →', shop) +
       quiet(`${WELCOME_PCT}% off your first tested, traceable order — <strong>${d.code}</strong> is baked into the button.`),
-    `That guy in the group chat is not a lab. No COA, no batch record, no idea what's in the vial. Merit: HPLC COA on every batch, identity confirmed or it doesn't ship, from an ISO-certified US facility.\nBuy like a grown-up (${d.code} applies automatically): ${shop}`,
+    `That guy in the group chat is not a lab. No COA, no batch record, no idea what's in the vial. Merit: HPLC COA on every batch, identity confirmed or it doesn't ship, from a licensed US facility.\nBuy like a grown-up (${d.code} applies automatically): ${shop}`,
     d,
   );
 }
@@ -112,10 +112,10 @@ export function renderProspectSourcing(d: ProspectEmailData): Rendered {
     'Where it comes from',
     h('Where your compounds actually come from.') +
       p('Most of what’s sold online is bulk-imported, repackaged in someone’s spare room, and sold on a guess.') +
-      p('Merit is compounded in an ISO-certified US facility and released against an independent laboratory assay, with a COA on every batch. The difference is the part you can’t see in a product photo — so we document it instead of asking you to assume it.') +
+      p('Merit is compounded in a licensed US facility and released against an independent laboratory assay, with a COA on every batch. The difference is the part you can’t see in a product photo — so we document it instead of asking you to assume it.') +
       stat('48 hrs', 'sealed, tested, and shipped from San Antonio') +
       cta('See how a Merit batch is made →', shop),
-    `Most online compounds are bulk-imported and sold on a guess. Merit is compounded in an ISO-certified US facility, independently assayed, COA on every batch, shipped from San Antonio in 48 hours.\n${shop}`,
+    `Most online compounds are bulk-imported and sold on a guess. Merit is compounded in a licensed US facility, independently assayed, COA on every batch, shipped from San Antonio in 48 hours.\n${shop}`,
     d,
   );
 }

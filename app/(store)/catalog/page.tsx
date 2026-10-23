@@ -125,7 +125,7 @@ const PHARMACIST_NOTES: Record<string, string> = {
   'rt3-10mg':
     'Triple agonist, newer than TZ2. Limited literature but increasing research interest.',
   'pt-141':
-    'Neuroendocrine pathway research. Stack-level demand higher than catalog-level, often paired with Selank.',
+    'Neuroendocrine pathway research, centered on MC3R and MC4R melanocortin receptor pharmacology.',
 };
 
 // Restock signals used to live here as hand-written static data — the

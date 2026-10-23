@@ -57,7 +57,6 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     return {
       title: `${mono.title}: Mechanism, Research & Storage`,
       description: desc,
-      keywords: [mono.title, ...mono.aka, `${mono.title} mechanism`, `${mono.title} research`, `${mono.title} studies`, `what is ${mono.title}`],
       alternates: { canonical: url },
       openGraph: { title: `${mono.title}: Research Monograph`, description: mono.tagline, type: 'article', url },
     };

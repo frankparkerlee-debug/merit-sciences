@@ -132,7 +132,7 @@ export default function ResearchDisclosurePage() {
       </p>
 
       <p style={{ marginTop: '2rem', fontSize: '12px', color: 'rgb(11 15 25 / 0.55)' }}>
-        Effective Jun 2026 · Merit Sciences LLC · Dallas, TX, USA
+        Effective Jun 2026 · Merit Sciences LLC · San Antonio, TX, USA
       </p>
     </PolicyLayout>
   );

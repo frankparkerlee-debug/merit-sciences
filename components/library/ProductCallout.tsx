@@ -11,7 +11,7 @@ export function ProductCallout({ title, product }: { title: string; product: Pro
   const proof = [
     `${product.purity} HPLC purity`,
     'Third-party COA on every batch',
-    'ISO-certified US facility',
+    'Licensed US facility',
     'Ships 48h from San Antonio',
   ];
   return (

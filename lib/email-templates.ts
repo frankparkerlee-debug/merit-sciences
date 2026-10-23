@@ -120,7 +120,7 @@ function shell({ preheader, eyebrow, body }: ShellArgs): string {
               </p>
               <p style="margin:4px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};font-style:italic;">Same stack. Better source.</p>
               <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">
-                Dallas, TX &middot; <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;">info@meritsciences.com</a>
+                San Antonio, TX &middot; <a href="mailto:info@meritsciences.com" style="color:${COLOR_COBALT};text-decoration:none;">info@meritsciences.com</a>
               </p>
               <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:${COLOR_TEXT_SOFT};">
                 <a href="${SITE_URL}/catalog" style="color:${COLOR_TEXT_SOFT};text-decoration:underline;">Catalog</a>
@@ -867,7 +867,7 @@ export function renderAbandonedCart(d: AbandonedCartData): { subject: string; ht
       <tr>
         <td style="padding:18px;font-size:12px;line-height:18px;color:${COLOR_TEXT_SOFT};">
           <p style="margin:0 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:${COLOR_INK};">— Why Merit</p>
-          &ge;99% HPLC-verified purity &middot; ISO-certified US facility &middot; Batch-documented &middot; Ships 48hr from San Antonio
+          &ge;99% HPLC-verified purity &middot; Licensed US facility &middot; Batch-documented &middot; Ships 48hr from San Antonio
         </td>
       </tr>
     </table>
@@ -932,7 +932,7 @@ export function renderWelcome(d: WelcomeData): { subject: string; html: string; 
   const body = `
     ${headline(`Welcome, ${name}`)}
     <p style="margin:0 0 22px 0;font-size:15px;line-height:23px;color:${COLOR_TEXT_SOFT};">
-      You&rsquo;re in. Merit is built on a simple premise: lab-verified research compounds shouldn&rsquo;t cost pharmacy prices. Every batch we ship is HPLC-verified to &ge;99% purity, compounded in an ISO-certified US facility, and released against an independent laboratory assay.
+      You&rsquo;re in. Merit is built on a simple premise: lab-verified research compounds shouldn&rsquo;t cost pharmacy prices. Every batch we ship is HPLC-verified to &ge;99% purity, compounded in a licensed US facility, and released against an independent laboratory assay.
     </p>
 
     ${incentive}
@@ -966,7 +966,7 @@ You're in. Merit is built on a simple premise: lab-verified research compounds s
 
 Every batch we ship:
   · HPLC-verified ≥99% purity
-  · Compounded in an ISO-certified US facility
+  · Compounded in a licensed US facility
   · Released against an independent laboratory assay
   · Ships 48hr from San Antonio
 

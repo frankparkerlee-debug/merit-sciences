@@ -66,7 +66,7 @@ export function wrapMarketingEmail({ subject, eyebrow, bodyHtml, unsubscribeUrl 
 
         <!-- footer -->
         <tr><td style="padding:22px 36px;background:${CREAM};border-top:1px solid ${CREAM_EDGE};">
-          <p style="margin:0 0 6px;font-size:12px;line-height:19px;color:${INK_SOFT};font-weight:700;">Merit Sciences &middot; Dallas, TX</p>
+          <p style="margin:0 0 6px;font-size:12px;line-height:19px;color:${INK_SOFT};font-weight:700;">Merit Sciences &middot; San Antonio, TX</p>
           <p style="margin:0;font-size:11px;line-height:18px;color:${INK_MUTE};">
             <a href="mailto:info@meritpeptides.com" style="color:${INK_MUTE};text-decoration:underline;">Reply anytime</a>${
               unsubscribeUrl ? ` &nbsp;&middot;&nbsp; <a href="${esc(unsubscribeUrl)}" style="color:${INK_MUTE};text-decoration:underline;">Unsubscribe</a>` : ''

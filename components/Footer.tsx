@@ -11,7 +11,7 @@ export function Footer() {
             Merit<span className="text-cobalt-soft">.</span>
           </div>
           <p className="mt-2 text-[11px] text-white/45 leading-relaxed max-w-[200px]">
-            Research compounds from an ISO-certified US facility, shipped from San Antonio.
+            Research compounds from a licensed US facility, shipped from San Antonio.
           </p>
           <a
             href="mailto:rx@meritsciences.com"
@@ -91,7 +91,7 @@ export function Footer() {
         laboratory analysis, or other lawful scientific use.
       </p>
       <p className="max-w-container mx-auto mt-3 text-[10.5px] text-white/40">
-        © {new Date().getFullYear()} Merit Sciences LLC · Dallas, TX
+        © {new Date().getFullYear()} Merit Sciences LLC · San Antonio, TX
       </p>
     </footer>
   );

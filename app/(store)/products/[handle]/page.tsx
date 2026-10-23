@@ -52,10 +52,6 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
     a: "Every batch is tested by a laboratory independent of the facility that made it, and the certificate is published before the batch is listed. You read the same identity and purity figures we do — that's what separates Merit from a reseller catalog.",
   },
   {
-    q: 'Will my bank flag this purchase?',
-    a: 'Statements show as Merit Sciences LLC. Standard merchant descriptor — does not trigger category-code flags. All major cards and PayPal accepted at checkout.',
-  },
-  {
     q: 'How fast does it ship?',
     a: '48 hours from order to dispatch, Monday through Thursday. UPS Ground, tracked + insured. From San Antonio, TX, most US addresses receive within 3-5 business days.',
   },
@@ -117,18 +113,6 @@ export async function generateMetadata({ params }: Props) {
     title,
     description,
     alternates: { canonical: url },
-    keywords: [
-      name,
-      `${name} ${p.vialSize}`,
-      `buy ${name}`,
-      `${name} for sale`,
-      `${name} COA`,
-      `${name} research`,
-      ...(cls ? [cls] : []),
-      'research compound',
-      'HPLC tested',
-      'Merit Sciences',
-    ],
     openGraph: {
       type: 'website',
       url,
@@ -342,7 +326,7 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
-              Independently Assayed · ISO-Certified
+              Independently Assayed · Licensed US Facility
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
@@ -626,7 +610,7 @@ export default async function ProductPage({ params }: Props) {
             </div>
             <div className="bg-cobalt/15 px-3 sm:px-5 py-3 sm:py-4 text-center">
               <span className="font-display font-black text-white block leading-none">Merit</span>
-              <span className="text-[9px] text-cobalt-soft tracking-[0.12em] uppercase font-bold">ISO-certified</span>
+              <span className="text-[9px] text-cobalt-soft tracking-[0.12em] uppercase font-bold">Licensed US facility</span>
             </div>
             <div className="bg-ink/80 px-3 sm:px-5 py-3 sm:py-4 text-center">
               <span className="font-bold text-white/85 block leading-none">Online Resellers</span>
@@ -658,7 +642,7 @@ export default async function ProductPage({ params }: Props) {
                 compounding: 'yes',
               },
               {
-                criterion: 'Ships from an ISO-certified US facility',
+                criterion: 'Ships from a licensed US facility',
                 merit: 'yes',
                 resellers: 'no',
                 compounding: 'varies',
@@ -757,8 +741,8 @@ export default async function ProductPage({ params }: Props) {
                 description:
                   'Lyophilized in a cleanroom at our US facility. The powder format gives ≥24 months sealed stability — no cold-chain shipping required.',
                 facts: [
-                  'ISO-certified US facility',
-                  'ISO-certified manufacturing process',
+                  'Licensed US facility',
+                  'Lot-documented manufacturing process',
                   'Lyophilized powder for transit stability',
                 ],
                 icon: (
@@ -1019,7 +1003,7 @@ export default async function ProductPage({ params }: Props) {
                       Merit Sciences Lab Team
                     </p>
                     <p className="text-[11px] sm:text-[12px] text-ink-soft mt-0.5">
-                      Independently assayed · ISO-certified US facility · Ships from San Antonio, TX
+                      Independently assayed · Licensed US facility · Ships from San Antonio, TX
                     </p>
                   </div>
                   {/* Verified seal — top-right of signature block */}

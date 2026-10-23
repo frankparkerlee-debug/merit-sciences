@@ -85,7 +85,7 @@ export default function HeroesComparePage() {
                   Made for You<span style={{ color: '#2E4DDB' }}>.</span>
                 </h2>
                 <p className="mt-2.5 text-[13px] md:text-[14px] text-ink-soft max-w-[420px] text-left">
-                  Pharmacy-grade peptides, verified per lot. Shipped from Dallas in
+                  Pharmacy-grade peptides, verified per lot. Shipped from San Antonio in
                   48 hours.
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function HeroesComparePage() {
                   Made for You<span style={{ color: '#2E4DDB' }}>.</span>
                 </h2>
                 <p className="mt-2.5 text-[13px] md:text-[14px] text-ink-soft max-w-[420px] text-left">
-                  Pharmacy-grade peptides, verified per lot. Shipped from Dallas in
+                  Pharmacy-grade peptides, verified per lot. Shipped from San Antonio in
                   48 hours.
                 </p>
               </div>
