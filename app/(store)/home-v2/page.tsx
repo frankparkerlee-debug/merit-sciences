@@ -29,7 +29,7 @@ export const revalidate = 900; // fresh prices/lots every 15 min, static-fast ot
 export const metadata = {
   title: 'Merit Sciences — Pharmacy-grade research peptides, shipped in 48 hours',
   description:
-    'Research compounds produced in a licensed US facility, HPLC-verified ≥99%, lot-documented with published COAs, dispatched from San Antonio within 48 hours.',
+    'Research compounds produced in a licensed US facility, HPLC-verified ≥99%, batch-documented with published COAs, dispatched from San Antonio within 48 hours.',
   robots: { index: false, follow: false }, // preview route — flip when promoted to /
 };
 
@@ -137,7 +137,7 @@ export default async function HomeV2() {
     },
     {
       q: 'How do I verify purity?',
-      a: 'Every lot is independently HPLC-tested to a ≥99% purity standard, and every certificate of analysis is published in our COA library. The lot ID printed on your vial matches its certificate.',
+      a: 'Every lot is independently HPLC-tested to a ≥99% purity standard, and every certificate of analysis is published in our COA library. Each certificate is named by its batch date, and the QR code on your vial opens the library.',
     },
     {
       q: 'How are Merit compounds produced?',
@@ -224,7 +224,7 @@ export default async function HomeV2() {
       {/* ══ WHY — approved image-led feature (cobalt vial pattern) ══ */}
       <section id="why" className="max-w-[1400px] mx-auto px-6 lg:px-12 py-20 lg:py-28 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         <div className="relative aspect-[4/3] rounded-[28px] overflow-hidden shadow-[0_40px_90px_-40px_rgba(11,15,25,0.4)]">
-          <Image src="/brand/scene-pattern-cobalt.webp" alt="A wall of sealed Merit research-compound vials, each lot-numbered and independently assayed" fill sizes="(max-width:1024px) 100vw, 620px" className="object-cover" />
+          <Image src="/brand/scene-pattern-cobalt.webp" alt="A wall of sealed Merit research-compound vials, each batch independently assayed" fill sizes="(max-width:1024px) 100vw, 620px" className="object-cover" />
         </div>
         <div>
           <p className="eyebrow text-cobalt mb-3">— Why Merit</p>

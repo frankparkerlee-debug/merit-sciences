@@ -795,7 +795,7 @@ export default async function ProductPage({ params }: Props) {
                   'Lyophilized in a cleanroom at our US facility. The powder format gives ≥24 months sealed stability — no cold-chain shipping required.',
                 facts: [
                   'Licensed US facility',
-                  'Lot-documented manufacturing process',
+                  'Batch-documented manufacturing process',
                   'Lyophilized powder for transit stability',
                 ],
                 icon: (

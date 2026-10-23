@@ -191,7 +191,7 @@ export default function AboutPage() {
             <Step n="01" title="Synthesis" body="Manufactured under controlled conditions — the starting material is identified, not assumed." />
             <Step n="02" title="Characterization" body="HPLC purity plus the USP panel: sterility, endotoxin, particulate. Pass or it doesn't ship." />
             <Step n="03" title="Independent release" body="A laboratory independent of the facility that made the batch returns its identity and purity results, and the batch is released against them." />
-            <Step n="04" title="Documented" body="A Certificate of Analysis is generated for the lot and a lot number is printed on every vial." />
+            <Step n="04" title="Documented" body="A Certificate of Analysis is published for the batch, named by its batch date, and the QR code on every vial opens it." />
             <Step n="05" title="Shipped" body="Sealed and dispatched from San Antonio within 48 hours. The certificate is in the COA library, behind the QR on the label." />
           </div>
         </div>

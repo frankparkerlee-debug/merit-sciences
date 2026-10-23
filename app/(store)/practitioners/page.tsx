@@ -128,7 +128,7 @@ export default async function PractitionersPage() {
           />
           <div className="absolute bottom-6 right-6 bg-white/95 backdrop-blur-sm px-4 py-3 ring-1 ring-ink/10">
             <p className="font-mono text-[9.5px] tracking-[0.14em] uppercase text-ink-muted">
-              Batch LOT2026-06-0001 · ILS Laboratories
+              July 2026 batch · ILS Laboratories
             </p>
             <p className="font-poster font-black text-[20px] tracking-[-0.02em] text-ink mt-0.5">
               99.13% <span className="text-[11px] font-mono font-bold text-cobalt align-middle">HPLC</span>
@@ -185,7 +185,7 @@ export default async function PractitionersPage() {
             />
             <div className="absolute bottom-4 left-6 bg-white/95 backdrop-blur-sm px-3.5 py-2.5 ring-1 ring-ink/10">
               <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-ink-muted">
-                Batch LOT2026-06-0001 · ILS Laboratories
+                July 2026 batch · ILS Laboratories
               </p>
               <p className="font-poster font-black text-[17px] tracking-[-0.02em] text-ink">
                 99.13% <span className="text-[10px] font-mono font-bold text-cobalt align-middle">HPLC</span>
@@ -281,12 +281,12 @@ export default async function PractitionersPage() {
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center border border-ink/12 bg-cream px-6 py-5">
             <div>
               <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-muted mb-1.5">
-                {lot ? `Most recent published lot · ${lot.lotId}` : 'Most recent published lot'}
+                Most recent published certificate
               </p>
               <p className="text-[14.5px] text-ink-soft">
                 {lot ? (
                   <>
-                    <b className="text-ink">{lot.compound}</b> — purity{' '}
+                    <b className="text-ink">{lot.compound}</b>: purity{' '}
                     <b className="text-ink">{lot.purity}</b> by HPLC
                     {lot.testedDate ? `, tested ${lot.testedDate}` : ''}. Full certificate, including
                     the chromatogram and heavy-metals panel, is public.

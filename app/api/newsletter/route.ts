@@ -206,7 +206,7 @@ export async function POST(req: Request) {
       p(`Here’s <strong>${WELCOME_PCT}% off your first order</strong>. Use this code at checkout:`) +
       p(codeChip) +
       btn('Shop the catalog →', `${SITE_URL}/catalog`) +
-      note('Every lot is HPLC-tested to ≥99% purity and ships with its Certificate of Analysis. For research use only.');
+      note('Every batch is HPLC-tested to ≥99% purity and ships with its Certificate of Analysis. For research use only.');
     sendEmail({
       to: email,
       subject: `Your ${WELCOME_PCT}% code: ${WELCOME_CODE}`,

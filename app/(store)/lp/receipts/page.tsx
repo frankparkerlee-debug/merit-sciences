@@ -60,7 +60,7 @@ export default function ReceiptsPage() {
             <LpEmailCapture source="lp-receipts" label="See the full lab library →" />
           </div>
           <p className="text-cream/30 text-[11px] mt-4 max-w-md leading-relaxed">
-            We&rsquo;ll send you the full library — every lot, every COA — plus 10% off your first order.
+            We&rsquo;ll send you the full library — every batch, every COA — plus 10% off your first order.
           </p>
         </div>
       </section>

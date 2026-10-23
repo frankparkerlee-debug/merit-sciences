@@ -48,7 +48,7 @@ export default async function AdminCoaPage() {
         <div className="text-sm text-ink-soft">
           <p className="font-bold text-ink">Points to {coaUrl}</p>
           <p className="mt-1 leading-relaxed">
-            One static code for every bottle — buyers scan it, then search their lot number.
+            One static code for every bottle — buyers scan it, then search by compound or lab reference.
             Right-click the image to save it for the label, or{' '}
             <a href={`${qrSrc}&download=1`} target="_blank" className="font-bold text-cobalt hover:underline">download a 600&times;600 PNG</a>.
             Need it bigger for print? Bump <code className="text-xs">size=600x600</code> in the URL.

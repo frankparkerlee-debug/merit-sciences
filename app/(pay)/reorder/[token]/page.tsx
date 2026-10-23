@@ -99,8 +99,8 @@ export default async function ReorderPage({ params }: Props) {
             That lineup has changed<span className="text-cobalt">.</span>
           </h1>
           <p className="text-sm text-ink-soft leading-relaxed mb-6">
-            The items from that order aren&rsquo;t in the current catalog. The good news: every lot in
-            the catalog today ships with the same per-lot COA and ≥99% HPLC verification.
+            The items from that order aren&rsquo;t in the current catalog. The good news: every product in
+            the catalog today has a published certificate for its current batch.
           </p>
           <Link
             href="/catalog"
