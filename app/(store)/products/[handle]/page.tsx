@@ -24,16 +24,12 @@ import { ProductBuyBox } from './ProductBuyBox';
 import { PdpStackAddButton } from './PdpStackAddButton';
 import { JsonLd } from '@/components/JsonLd';
 import { productJsonLd, faqJsonLd, breadcrumbJsonLd, abs } from '@/lib/seo';
+import { getCompoundStatus, fdaStatusFaq } from '@/lib/compound-status';
+import { assayArticlesFor, assayUrl } from '@/lib/assay-articles';
+import { currentCertificate, coaSearchTerm } from '@/lib/product-coa';
+import { pdpMetaDescription, pdpName, pdpSummary, pdpTitle } from '@/lib/pdp-seo';
 
 type Props = { params: { handle: string } };
-
-/** Trim to at most `max` characters, cutting at a word boundary. */
-function capAtWord(text: string, max: number): string {
-  if (text.length <= max) return text;
-  const cut = text.slice(0, max - 1);
-  const at = cut.lastIndexOf(' ');
-  return `${(at > 0 ? cut.slice(0, at) : cut).replace(/[\s,.;:]+$/, '')}…`;
-}
 
 // Generic PDP FAQs — rendered as the accordion AND emitted as FAQPage
 // JSON-LD (AI answer-engines extract this format most reliably).
@@ -44,12 +40,8 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
     a: 'Lyophilized (freeze-dried) material is stable in sealed storage: ≥24 months at -20°C. Peptides held in solution degrade far faster, so every compound ships as a dry powder in a sealed vial.',
   },
   {
-    q: 'How do I check the certificate for my batch?',
-    a: 'The QR code on every vial opens our COA library. Search by compound to find the certificate for the batch currently shipping. No account and no request form, and the library keeps every certificate we have released.',
-  },
-  {
     q: 'What does "independently assayed" actually mean?',
-    a: "Every batch is tested by a laboratory independent of the facility that made it, and the certificate is published before the batch is listed. You read the same identity and purity figures we do — that's what separates Merit from a reseller catalog.",
+    a: "Every batch is tested by a laboratory independent of the facility that made it, and the certificate is published before the batch is listed. You read the same identity and purity figures we do, which is what separates Merit from a reseller catalog.",
   },
   {
     q: 'How fast does it ship?',
@@ -87,9 +79,7 @@ export async function generateMetadata({ params }: Props) {
   // so both Google and AI answer-engines map this page to the entity and
   // cite it. Real names are correct here (organic SEO ≠ ad review — just
   // don't point paid ads at PDPs).
-  const research = getResearchData(p.handle, p.compound);
-  const name = p.title;
-  const cls = research?.compoundClass;
+  const name = pdpName(p);
   const url = abs(`/products/${p.handle}`);
   const image = abs(productImage(p.imageUrl));
 
@@ -97,17 +87,13 @@ export async function generateMetadata({ params }: Props) {
   // "· Merit Sciences" (doubling it produced "… | Merit Sciences · Merit Sciences").
   // Bacteriostatic water is released on sterility + preservative testing, not
   // an HPLC purity assay, so it must not carry the ≥99% HPLC claim.
+  // Titles stay within 60 characters before the suffix (lib/pdp-seo); the
+  // meta description is built per product to 140 to 160 characters.
   const isWater = p.handle === 'bacteriostatic-water';
-  const title = isWater
-    ? `${name} ${p.vialSize}: Scan-to-Verify COA`
-    : `${name} ${p.vialSize}: ≥99% HPLC, Scan-to-Verify COA`;
-  const entity = cls ? `${name}: ${cls.charAt(0).toLowerCase()}${cls.slice(1)}. ` : '';
-  const description = capAtWord(
-    isWater
-      ? `${name} ${p.vialSize}, lot-documented with a scan-to-verify COA on every label. Ships 48hr from San Antonio. Research use only, not for human or veterinary use.`
-      : `${entity}${name} ${p.vialSize} research compound, HPLC-tested ≥99% purity, scan-to-verify COA on every label, ships 48hr from San Antonio. Research use only, not for human or veterinary use.`,
-    160,
-  );
+  const title = pdpTitle(p, isWater);
+  // Claim a published certificate in the meta only when one is matched.
+  const hasCertificate = Boolean(await currentCertificate(p));
+  const description = pdpMetaDescription(p, getMonographForHandle(p.handle), isWater, hasCertificate);
 
   return {
     title,
@@ -157,18 +143,26 @@ export default async function ProductPage({ params }: Props) {
   //     strikethrough when the visitor arrived via an active ?ref= link.
   //   getSiblings: other Product rows sharing this compound, for the size
   //     selector pills in the buybox ([] if this is the only size).
-  const [product, referral, siblings, bacWaterRow, allProducts] = await Promise.all([
+  const [product, referral, siblings, bacWaterRow, allProducts, certificate] = await Promise.all([
     withPricing(raw),
     getActiveReferral(),
     getSiblings(raw.compound, raw.handle),
     getProduct('bacteriostatic-water'),
     listProducts({ status: 'active' }),
+    // The certificate page for the batch currently on sale (null: no match,
+    // and the page links the /coa search instead).
+    currentCertificate(raw),
   ]);
   const isPractitionerPricing = product.isPractitionerPricing;
   // Reference layer + category page for this product. Both are pure lookups
   // against authored data, so they cost nothing at render time.
   const monograph = getMonographForHandle(raw.handle);
   const collection = collectionForHandle(raw.handle);
+  const displayName = pdpName(raw);
+  const status = monograph ? getCompoundStatus(monograph.slug) : null;
+  const summary = pdpSummary(raw, monograph, status);
+  const assay = assayArticlesFor(monograph?.slug).map((a) => ({ ...a, url: assayUrl(a.slug, 'pdp') }));
+  const coaHref = certificate?.path ?? `/coa?q=${encodeURIComponent(coaSearchTerm(raw))}`;
 
   const family = getFamily(product.handle);
   const pharmacistNote = PHARMACIST_NOTES[product.handle] ?? null;
@@ -179,7 +173,8 @@ export default async function ProductPage({ params }: Props) {
   // Uses `raw` (undecorated) so the Offer always shows PUBLIC retail
   // price, never the practitioner-tier price.
   const seoDescription =
-    research?.description?.[0]
+    summary
+    || research?.description?.[0]
     || raw.oneLiner
     || `${raw.title} ${raw.vialSize}: research compound, HPLC-tested to ≥99% purity, batch-tested, with the certificate published in the COA library.`;
   const productSchema = productJsonLd({
@@ -188,12 +183,21 @@ export default async function ProductPage({ params }: Props) {
     description: seoDescription,
     image: abs(productImage(raw.imageUrl)),
     inStock: raw.status === 'active',
-    monographSlug: getMonographForHandle(raw.handle)?.slug,
+    monographSlug: monograph?.slug,
   });
+  // Home > Catalog > category > product. The category is the /catalog/<slug>
+  // page when the product is in one, else the family filter.
+  const familyForCrumb = getFamily(raw.handle);
+  const categoryCrumb = collection
+    ? { name: collection.name, path: `/catalog/${collection.slug}` }
+    : familyForCrumb
+      ? { name: familyLabel(familyForCrumb), path: `/catalog?family=${familyForCrumb}` }
+      : null;
   const breadcrumbSchema = breadcrumbJsonLd([
     { name: 'Home', path: '/' },
     { name: 'Catalog', path: '/catalog' },
-    { name: raw.title, path: `/products/${raw.handle}` },
+    ...(categoryCrumb ? [categoryCrumb] : []),
+    { name: `${displayName} ${raw.vialSize}`, path: `/products/${raw.handle}` },
   ]);
   // Compound-specific Q&A, derived from the research data. These rank
   // for long-tail question queries ("what is X", "how does X work",
@@ -202,21 +206,41 @@ export default async function ProductPage({ params }: Props) {
   // duplication). They lead; the shared logistics FAQs follow.
   const compoundFaqs: { q: string; a: string }[] = [];
   if (research?.description?.[0]) {
-    compoundFaqs.push({ q: `What is ${product.title}?`, a: research.description[0] });
+    compoundFaqs.push({ q: `What is ${displayName}?`, a: research.description[0] });
   }
   if (research?.mechanism) {
-    compoundFaqs.push({ q: `How does ${product.title} work?`, a: research.mechanism });
+    compoundFaqs.push({ q: `How does ${displayName} work?`, a: research.mechanism });
   }
   if (research?.compoundClass) {
     compoundFaqs.push({
-      q: `What class of compound is ${product.title}?`,
-      a: `${product.title} is classified as ${research.compoundClass.charAt(0).toLowerCase()}${research.compoundClass.slice(1)}.`,
+      q: `What class of compound is ${displayName}?`,
+      a: `${displayName} is classified as ${research.compoundClass.charAt(0).toLowerCase()}${research.compoundClass.slice(1)}.`,
     });
   }
   if (research?.halfLife) {
-    compoundFaqs.push({ q: `What is the reported half-life of ${product.title}?`, a: research.halfLife });
+    compoundFaqs.push({ q: `What is the reported half-life of ${displayName}?`, a: research.halfLife });
   }
-  const faqItems = [...compoundFaqs, ...FAQ_ITEMS];
+  // Regulatory status, batch testing and the research record. One array
+  // feeds the visible accordion and FAQPage JSON-LD, so they cannot differ.
+  // (No legality question on the store, by policy.)
+  const answerFaqs: { q: string; a: string; link?: { href: string; label: string } }[] = [];
+  if (monograph) answerFaqs.push(fdaStatusFaq(displayName, monograph.slug));
+  answerFaqs.push({
+    q: `How is each batch of ${displayName} tested?`,
+    a: certificate
+      ? `Every batch is tested by an independent laboratory for identity and HPLC purity before it is listed. Merit identifies batches by date: the current certificate for ${displayName} ${raw.vialSize} is the ${certificate.batchLabel}${certificate.purity ? `, ${certificate.purity} purity by HPLC` : ''}, published at meritsciences.com${certificate.path}. The QR code on each vial opens the same page.`
+      : `Every batch is tested by an independent laboratory for identity and HPLC purity before it is listed, and Merit identifies batches by date rather than by lot number. Published certificates are in the COA library at meritsciences.com/coa, searchable by compound; the QR code on each vial opens its certificate.`,
+    link: { href: coaHref, label: certificate ? `Open the ${certificate.batchLabel} certificate` : 'Search the COA library' },
+  });
+  if (monograph) {
+    const review = assay[0];
+    answerFaqs.push({
+      q: `What does the published research on ${displayName} show?`,
+      a: `${monograph.researchSummary} The ${monograph.title} monograph at meritsciences.com/library/${monograph.slug} lists the references${review ? `, and The Assay, Merit's editorial publication, reviews the evidence at theassay.co/articles/${review.slug}` : ''}.`,
+      link: { href: `/library/${monograph.slug}`, label: `Read the ${monograph.title} monograph` },
+    });
+  }
+  const faqItems: { q: string; a: string; link?: { href: string; label: string } }[] = [...answerFaqs, ...compoundFaqs, ...FAQ_ITEMS];
   const faqSchema = faqJsonLd(faqItems);
 
   /* Bacteriostatic water for the reconstitution add-on, resolved from the
@@ -282,15 +306,15 @@ export default async function ProductPage({ params }: Props) {
         {' · '}
         <Link href="/catalog" className="hover:text-ink transition">Catalog</Link>
         {' · '}
-        {family && (
+        {categoryCrumb && (
           <>
-            <Link href={`/catalog?family=${family}`} className="hover:text-ink transition">
-              {familyLabel(family)}
+            <Link href={categoryCrumb.path} className="hover:text-ink transition">
+              {categoryCrumb.name}
             </Link>
             {' · '}
           </>
         )}
-        <span className="text-ink">{product.title}</span>
+        <span className="text-ink">{displayName} {product.vialSize}</span>
       </div>
 
       {/* ═══════════════ HERO — image + buybox ═══════════════ */}
@@ -308,8 +332,21 @@ export default async function ProductPage({ params }: Props) {
             siblings={siblings}
             referralPct={referral?.discountPct ?? 0}
             bacWater={bacWater}
+            displayTitle={displayName}
           />
         </div>
+
+        {/* Answer-first summary: what it is, research context, FDA status,
+            research use only. Server-rendered, 40 to 60 words, directly under
+            the buy area so it is the first prose on the page. */}
+        {summary && (
+          <div className="mt-8 lg:mt-10 max-w-[78ch] border-l-2 border-cobalt/40 pl-4 lg:pl-5">
+            <h2 className="text-[11px] tracking-[0.22em] uppercase text-cobalt font-bold mb-2">
+              {displayName} in brief
+            </h2>
+            <p className="text-[15px] lg:text-base text-ink leading-relaxed">{summary}</p>
+          </div>
+        )}
       </section>
 
       {/* ═══════════════ TRUST STRIP ═══════════════ */}
@@ -358,7 +395,7 @@ export default async function ProductPage({ params }: Props) {
                 className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95] mb-5"
                 style={{ fontSize: 'clamp(24px, 3.5vw, 44px)' }}
               >
-                {product.title}<span className="text-cobalt">.</span>
+                {displayName}<span className="text-cobalt">.</span>
               </h2>
               {research?.compoundClass && (
                 <p className="text-[11px] tracking-[0.18em] uppercase text-cobalt font-bold mb-3 leading-snug">
@@ -507,15 +544,14 @@ export default async function ProductPage({ params }: Props) {
             search stays correct forever and surfaces every lot of this
             compound, which is the more useful answer anyway. */}
         <p className="mt-4 text-[13px] text-ink-soft">
-          <Link
-            href={`/coa?q=${encodeURIComponent(product.title)}`}
-            className="text-cobalt font-bold underline-offset-2 hover:underline"
-          >
-            View lab results for {product.title} →
+          <Link href={coaHref} className="text-cobalt font-bold underline-offset-2 hover:underline">
+            {certificate
+              ? `View the ${certificate.batchLabel} certificate for ${displayName} ${product.vialSize} →`
+              : `View lab results for ${displayName} →`}
           </Link>{' '}
-          <span className="text-ink-muted">
-            or search by compound.
-          </span>
+          <Link href="/coa" className="text-ink-muted hover:text-cobalt">
+            or browse every certificate.
+          </Link>
         </p>
       </section>
 
@@ -598,7 +634,7 @@ export default async function ProductPage({ params }: Props) {
             </h2>
             <p className="mt-3 text-[13px] text-white/70 leading-relaxed max-w-xl">
               How Merit compares to the two alternatives most research
-              buyers consider for {product.title}.
+              buyers consider for {displayName}.
             </p>
           </div>
 
@@ -1115,6 +1151,19 @@ export default async function ProductPage({ params }: Props) {
               )}
             </div>
           </div>
+          {/* The Assay is Merit's own publication; the label says so. */}
+          {assay.length > 0 && (
+            <div className="max-w-[1400px] mx-auto px-5 sm:px-6 lg:px-12 pb-8 lg:pb-10 -mt-2">
+              {assay.map((a) => (
+                <p key={a.slug} className="text-[13.5px] text-ink-soft">
+                  Research review on The Assay, Merit&rsquo;s editorial publication:{' '}
+                  <a href={a.url} className="text-cobalt font-semibold hover:underline">
+                    {a.title}
+                  </a>
+                </p>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -1147,6 +1196,14 @@ export default async function ProductPage({ params }: Props) {
                 </summary>
                 <p className="px-5 lg:px-6 pb-5 lg:pb-6 text-sm text-ink-soft leading-relaxed">
                   {item.a}
+                  {item.link && (
+                    <>
+                      {' '}
+                      <Link href={item.link.href} className="text-cobalt font-semibold hover:underline">
+                        {item.link.label} →
+                      </Link>
+                    </>
+                  )}
                 </p>
               </details>
             ))}
@@ -1166,8 +1223,8 @@ export default async function ProductPage({ params }: Props) {
               Question we didn&apos;t answer?
             </h3>
             <p className="text-[13px] text-white/80 mb-5 leading-relaxed flex-1">
-              Our team answers compound questions, batch questions, and
-              protocol questions — same business day. No bots, no tickets.
+              Our team answers compound and batch questions the same
+              business day. No bots, no tickets.
             </p>
             <a
               href={`mailto:rx@meritsciences.com?subject=Question about ${product.title}`}

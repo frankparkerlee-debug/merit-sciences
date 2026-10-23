@@ -1,7 +1,24 @@
 import Link from 'next/link';
-import type { Monograph as Mono } from '@/lib/monographs';
+import type { Faq, Monograph as Mono } from '@/lib/monographs';
+import type { CompoundStatus } from '@/lib/compound-status';
+import type { CurrentCertificate } from '@/lib/product-coa';
 import { getArticle } from '@/lib/library';
 import { ProductCallout } from './ProductCallout';
+
+/** One active product size for this compound, with its current certificate
+ *  (null when none is matched; the page links the /coa search instead). */
+export type MonographProductLink = {
+  handle: string;
+  label: string;
+  certificate: CurrentCertificate | null;
+};
+
+function formatDate(iso: string): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
 
 function Section({ id, heading, children }: { id: string; heading: string; children: React.ReactNode }) {
   return (
@@ -24,7 +41,24 @@ function Fact({ label, value }: { label: string; value?: string }) {
   );
 }
 
-export function MonographView({ m }: { m: Mono }) {
+export function MonographView({
+  m,
+  faqs,
+  products,
+  assay,
+  updated,
+  status,
+}: {
+  m: Mono;
+  /** The page's full FAQ (the monograph's own plus the FDA-status and batch
+   *  questions). The same array feeds FAQPage JSON-LD. */
+  faqs: Faq[];
+  products: MonographProductLink[];
+  assay: { slug: string; title: string; url: string }[];
+  /** ISO date of the last material change, shown as "Updated". */
+  updated: string;
+  status: CompoundStatus;
+}) {
   const r = m.research;
   const related = [
     ...(m.relatedSlugs ?? []).map((slug) => ({ slug, kind: 'Research' as const })),
@@ -54,6 +88,9 @@ export function MonographView({ m }: { m: Mono }) {
         </div>
       )}
       <p className="mt-4 text-lg text-ink-soft leading-relaxed">{m.tagline}</p>
+      <p className="mt-3 text-[12px] text-ink-muted">
+        Updated <time dateTime={updated}>{formatDate(updated)}</time>
+      </p>
 
       {/* quick facts */}
       {(r.compoundClass || r.halfLife || r.solubility || r.discovery) && (
@@ -103,6 +140,43 @@ export function MonographView({ m }: { m: Mono }) {
       {/* productization — mid-article, after value is established */}
       {m.product && <ProductCallout title={m.title} product={m.product} />}
 
+      {/* Every active size, each with its current certificate, plus the
+          editorial review. Sizes and certificates come from the database at
+          render (the page regenerates in the background). */}
+      {(products.length > 0 || assay.length > 0) && (
+        <Section id="sources" heading={`${m.title} at Merit`}>
+          {products.length > 0 && (
+            <ul className="divide-y divide-cobalt/10 border-y border-cobalt/10 list-none pl-0">
+              {products.map((p) => (
+                <li key={p.handle} className="py-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                  <Link href={`/products/${p.handle}`} className="font-display font-bold text-ink hover:text-cobalt">
+                    {p.label}
+                  </Link>
+                  {p.certificate ? (
+                    <Link href={p.certificate.path} className="text-[13.5px] text-cobalt hover:underline">
+                      Current certificate: {p.certificate.batchLabel}
+                      {p.certificate.purity ? `, ${p.certificate.purity} purity` : ''}
+                    </Link>
+                  ) : (
+                    <Link href={`/coa?q=${encodeURIComponent(m.title)}`} className="text-[13.5px] text-cobalt hover:underline">
+                      Search certificates
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {assay.map((a) => (
+            <p key={a.slug} className="text-[14px]">
+              Research review on The Assay, Merit&rsquo;s editorial publication:{' '}
+              <a href={a.url} className="text-cobalt font-semibold hover:underline">
+                {a.title}
+              </a>
+            </p>
+          ))}
+        </Section>
+      )}
+
       {/* storage — preparation procedures are deliberately not published */}
       <Section id="handling" heading="Form & storage">
         <p>
@@ -113,16 +187,30 @@ export function MonographView({ m }: { m: Mono }) {
       </Section>
 
       {/* FAQ */}
-      {m.faqs.length > 0 && (
+      {faqs.length > 0 && (
         <Section id="faq" heading="Frequently asked questions">
           <div className="divide-y divide-cobalt/10 border-t border-cobalt/10">
-            {m.faqs.map((f, i) => (
+            {faqs.map((f, i) => (
               <div key={i} className="py-4">
                 <h3 className="font-display font-bold text-ink text-[15.5px] leading-snug">{f.q}</h3>
                 <p className="mt-1.5">{f.a}</p>
               </div>
             ))}
           </div>
+          {status.sources.length > 0 && (
+            <p className="text-[12px] text-ink-muted">
+              Regulatory status checked {formatDate(updated)} against:{' '}
+              {status.sources.map((u, i) => (
+                <span key={u}>
+                  {i > 0 && ', '}
+                  <a href={u} target="_blank" rel="noopener noreferrer nofollow" className="text-cobalt hover:underline">
+                    {sourceLabel(u)}
+                  </a>
+                </span>
+              ))}
+              .
+            </p>
+          )}
         </Section>
       )}
 
@@ -158,8 +246,8 @@ export function MonographView({ m }: { m: Mono }) {
 
       {/* RUO footer */}
       <p className="mt-10 pt-5 border-t border-cobalt/10 text-[12px] leading-relaxed text-ink-muted">
-        For research use only. Not for human or veterinary use. Not FDA-approved. Reference information
-        summarized from published literature — not medical or dosing advice.
+        For research use only. Not for human or veterinary use. Reference information summarized from
+        published literature, not medical advice.
       </p>
 
       {/* related */}
@@ -178,4 +266,16 @@ export function MonographView({ m }: { m: Mono }) {
       )}
     </article>
   );
+}
+
+function sourceLabel(url: string): string {
+  if (url.includes('healio.com')) return 'committee vote report (Healio)';
+  if (url.includes('advisory-committee')) return 'FDA advisory committee meeting';
+  if (url.includes('govinfo.gov')) return 'Federal Register';
+  if (url.includes('wada-ama.org')) return 'WADA Prohibited List';
+  if (url.includes('accessdata.fda.gov')) return 'Drugs@FDA';
+  if (url.includes('media/94155')) return 'FDA 503A categories list';
+  if (url.includes('significant-safety-risks')) return 'FDA Category 2 list';
+  if (url.includes('fda.gov')) return 'FDA';
+  return new URL(url).hostname;
 }

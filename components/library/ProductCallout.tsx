@@ -47,7 +47,7 @@ export function ProductCallout({ title, product }: { title: string; product: Pro
         </div>
       </div>
       <p className="px-5 sm:px-6 py-2.5 border-t border-cobalt/8 bg-cream/50 text-[11px] leading-relaxed text-ink-muted">
-        Sold for research use only — not for human or veterinary use. Pricing shown is retail;
+        Sold for research use only, not for human or veterinary use. Pricing shown is retail;
         practitioner pricing is available through the Practitioner Program.
       </p>
     </aside>

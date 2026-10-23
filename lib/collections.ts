@@ -71,7 +71,7 @@ export const COLLECTIONS: Collection[] = [
       'aod-9604',
       'slu-pp-332-injectable-5mg',
     ],
-    monographs: ['rt3', 'tz2', 'semaglutide', 'aod-9604', '5-amino-1mq'],
+    monographs: ['rt3', 'tz2', 'semaglutide', 'aod-9604', '5-amino-1mq', 'slu-pp-332'],
     faqs: [
       {
         q: 'What does Merit supply in this class?',
@@ -109,7 +109,7 @@ export const COLLECTIONS: Collection[] = [
       'bpc157-ghk-cu-50-tb500-glow-70mg',
       'bpc157-ghk-cu-50-tb500-kpv-klow-80mg',
     ],
-    monographs: ['bpc-157', 'tb-500', 'bpc-157-tb-500', 'glow-blend', 'klow-blend'],
+    monographs: ['bpc-157', 'tb-500', 'bpc-157-tb-500', 'glow-blend', 'klow-blend', 'kpv'],
     faqs: [
       {
         q: 'What is the difference between the single compounds and the blends?',
@@ -237,7 +237,7 @@ export const COLLECTIONS: Collection[] = [
       'Much of the clinical literature behind these compounds was published outside the United States, which is one reason the evidence picture is uneven. Our editorial property covers that honestly. What Merit guarantees is narrower and checkable: the identity and purity of what is in the vial.',
     ],
     handles: ['semax-30mg', 'selank', 'dsip-5mg'],
-    monographs: ['semax', 'selank'],
+    monographs: ['semax', 'selank', 'dsip'],
     faqs: [
       {
         q: 'Are these approved for anything?',

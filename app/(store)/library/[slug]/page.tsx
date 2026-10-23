@@ -2,12 +2,52 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ARTICLES, getArticle, CATEGORY_META } from '@/lib/library';
-import { getMonograph, MONOGRAPHS } from '@/lib/monographs';
+import { getMonograph, handlesForMonograph, MONOGRAPHS, MONOGRAPH_UPDATED, type Monograph } from '@/lib/monographs';
 import { monographSchemas } from '@/lib/library-schema';
-import { MonographView } from '@/components/library/Monograph';
+import { MonographView, type MonographProductLink } from '@/components/library/Monograph';
+import { listProducts } from '@/lib/catalog';
+import { currentCertificates } from '@/lib/product-coa';
+import { fdaStatusFaq, getCompoundStatus } from '@/lib/compound-status';
+import { assayArticlesFor, assayUrl } from '@/lib/assay-articles';
+import { pdpName, normSize } from '@/lib/pdp-seo';
 
-export const dynamic = 'error'; // fully static
+export const dynamic = 'error'; // static, regenerated in the background (ISR)
+/* Monographs list the sizes on sale and link each one's current certificate,
+   both read from the database, so a static page would go stale when a batch
+   or a size changes. This is the ceiling; the cached product and certificate
+   reads (5 minutes) set the effective interval, and admin edits bust those
+   tags immediately. */
+export const revalidate = 3600;
+// Migrated library articles. Monographs carry their own date (MONOGRAPH_UPDATED
+// or the compound's `updated`).
 const MODIFIED = '2026-07-02';
+
+/** Active products for a monograph, each with its current certificate. Never
+ *  throws: a database failure renders the page without the size list and with
+ *  the /coa search fallback. */
+async function monographProducts(m: Monograph): Promise<MonographProductLink[]> {
+  const handles = handlesForMonograph(m.slug);
+  if (!handles.length) return [];
+  const active = (await listProducts({ status: 'active' })).filter((p) => handles.includes(p.handle));
+  active.sort((a, b) => handles.indexOf(a.handle) - handles.indexOf(b.handle));
+  const certs = await currentCertificates(active);
+  return active.map((p) => ({
+    handle: p.handle,
+    label: `${pdpName(p)} ${normSize(p.vialSize)}`,
+    certificate: certs.get(p.handle) ?? null,
+  }));
+}
+
+function batchFaq(m: Monograph, products: MonographProductLink[]): { q: string; a: string } {
+  const lead = 'Every Merit batch is tested by an independent laboratory for identity and HPLC purity before it is listed, and Merit identifies batches by date rather than by lot number.';
+  const withCert = products.filter((p) => p.certificate);
+  const a = withCert.length
+    ? `${lead} Current certificates: ${withCert
+        .map((p) => `${p.label}, ${p.certificate!.batchLabel}${p.certificate!.purity ? `, ${p.certificate!.purity} purity` : ''} (meritsciences.com${p.certificate!.path})`)
+        .join('; ')}.`
+    : `${lead} Published certificates are in the COA library at meritsciences.com/coa, searchable by compound.`;
+  return { q: `How is each batch of ${m.title} tested?`, a };
+}
 
 /**
  * Pull an article's FAQ out of its own body HTML so FAQPage markup is derived
@@ -52,7 +92,7 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
   const mono = getMonograph(params.slug);
   if (mono) {
-    const desc = `${mono.tagline} What ${mono.title} is, how it works, and what the published research shows, with peer-reviewed references. For research use only.`.slice(0, 300);
+    const desc = `${mono.tagline} What ${mono.title} is, how it works, its FDA status and what the published research shows, with peer-reviewed references. For research use only.`.slice(0, 300);
     const url = `https://meritsciences.com/library/${mono.slug}`;
     return {
       title: `${mono.title}: Mechanism, Research & Storage`,
@@ -74,17 +114,29 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function LibraryEntryPage({ params }: { params: { slug: string } }) {
+export default async function LibraryEntryPage({ params }: { params: { slug: string } }) {
   // ── Research monograph (structured, SEO/AEO-optimized) ──
   const mono = getMonograph(params.slug);
   if (mono) {
-    const schemas = monographSchemas(mono, MODIFIED);
+    const products = await monographProducts(mono);
+    const updated = mono.updated && mono.updated > MONOGRAPH_UPDATED ? mono.updated : MONOGRAPH_UPDATED;
+    // One FAQ array feeds both the visible section and FAQPage JSON-LD.
+    const faqs = [...mono.faqs, fdaStatusFaq(mono.title, mono.slug), batchFaq(mono, products)];
+    const assay = assayArticlesFor(mono.slug).map((a) => ({ ...a, url: assayUrl(a.slug, 'monograph') }));
+    const schemas = monographSchemas({ ...mono, faqs }, updated);
     return (
       <main className="bg-cream min-h-screen">
         {schemas.map((s, i) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
         ))}
-        <MonographView m={mono} />
+        <MonographView
+          m={mono}
+          faqs={faqs}
+          products={products}
+          assay={assay}
+          updated={updated}
+          status={getCompoundStatus(mono.slug)}
+        />
       </main>
     );
   }

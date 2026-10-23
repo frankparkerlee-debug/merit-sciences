@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { listProducts } from '@/lib/catalog';
 import { STACK_TEMPLATES } from '@/lib/catalog-meta';
 import { ARTICLES } from '@/lib/library';
-import { MONOGRAPHS } from '@/lib/monographs';
+import { MONOGRAPHS, MONOGRAPH_UPDATED } from '@/lib/monographs';
 import { COLLECTION_SLUGS } from '@/lib/collections';
 import { listCoaRecords } from '@/lib/coa-cache';
 import { certificatePath, classifyCoas, countLots } from '@/lib/coa-batch';
@@ -142,6 +142,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // mechanism + cited research). Higher priority than guide articles.
   const monographRoutes: MetadataRoute.Sitemap = MONOGRAPHS.map((m) => ({
     url: `${BASE}/library/${m.slug}`,
+    // Same date the page shows as "Updated" and emits as dateModified.
+    lastModified: m.updated && m.updated > MONOGRAPH_UPDATED ? m.updated : MONOGRAPH_UPDATED,
     changeFrequency: 'monthly',
     priority: 0.8,
   }));

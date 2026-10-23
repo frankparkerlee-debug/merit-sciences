@@ -1326,6 +1326,236 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     ],
   },
 
+  // ── DSIP (delta sleep-inducing peptide, emideltide). Added 2026-10-22. ──
+  // Every reference below was checked against its PubMed record (NCBI
+  // E-utilities) on 2026-10-22. No half-life is stated: none was found in a
+  // primary source checked for this entry.
+  dsip: {
+    compoundClass:
+      'Nonapeptide (Trp-Ala-Gly-Gly-Asp-Ala-Ser-Gly-Glu) with no identified gene, precursor protein or receptor',
+    discovery:
+      'Isolated from rabbits and sequenced in 1977 by Schoenenberger and Monnier in Basel, who named it for the delta (slow-wave) EEG activity it was reported to induce.',
+    description: [
+      'Delta sleep-inducing peptide (DSIP, also listed as emideltide) is a nine-amino-acid peptide, Trp-Ala-Gly-Gly-Asp-Ala-Ser-Gly-Glu. Schoenenberger and Monnier reported it in 1977 after isolating it from rabbits. In double-blind infusions into the brain ventricles of rabbits, synthetic DSIP enhanced delta and spindle EEG patterns, while the fragments and analogs tested alongside it did not (PNAS 1977).',
+      'Nearly five decades later its biology remains unsettled. A 1986 review in Peptides described its physiological functions and mechanism of action as still to be established, and a 2006 review in the Journal of Neurochemistry noted that no DSIP gene, precursor protein or receptor had been isolated and that the link between DSIP and sleep had never been established.',
+      'The human literature is small and dated. A double-blind, matched-pairs study in 16 adults with chronic insomnia (Neuropsychobiology 1992) reported changes in sleep measures that its authors judged weak, and concluded that DSIP was unlikely to be of major benefit. These findings are reported as literature only. Merit Sciences supplies DSIP strictly for laboratory research use, not for human or veterinary use.',
+    ],
+    mechanism:
+      'No mechanism has been established. Because no receptor or gene has been identified, proposed actions rest on indirect evidence. Early rabbit work reported increased cortical delta activity and reduced motor activity for several hours after peripheral administration, which its authors read as passage across the blood-brain barrier (Experientia 1977). A 2006 review proposed that an unidentified DSIP-like peptide accounts for the DSIP immunoreactivity reported in many tissues, and noted that certain synthetic analogs, but not DSIP itself, promoted slow-wave sleep in the authors\' own rabbit and rat studies.',
+    researchApplications: [
+      'Sleep and EEG neurophysiology in animal models',
+      'Neuropeptide structure-activity studies',
+      'Blood-brain barrier peptide transport',
+      'History and methods of sleep-factor research',
+    ],
+    references: [
+      {
+        title: 'Characterization of a delta-electroencephalogram (-sleep)-inducing peptide',
+        authors: 'Schoenenberger GA, Monnier M',
+        journal: 'Proceedings of the National Academy of Sciences of the United States of America',
+        year: 1977,
+        pubmedId: '265572',
+        doi: '10.1073/pnas.74.3.1282',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/265572/',
+      },
+      {
+        title: 'Transport of the synthetic peptide DSIP through the blood-brain barrier in rabbit',
+        authors: 'Monnier M, Dudler L, Gachter R, Schoenenberger GA',
+        journal: 'Experientia',
+        year: 1977,
+        pubmedId: '590449',
+        doi: '10.1007/BF01934026',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/590449/',
+      },
+      {
+        title: 'Delta-sleep-inducing peptide (DSIP): an update',
+        authors: 'Graf MV, Kastin AJ',
+        journal: 'Peptides',
+        year: 1986,
+        pubmedId: '3550726',
+        doi: '10.1016/0196-9781(86)90148-8',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/3550726/',
+      },
+      {
+        title: 'Effects of delta sleep-inducing peptide on sleep of chronic insomniac patients. A double-blind study',
+        authors: 'Bes F, Hofman W, Schuur J, Van Boxtel C',
+        journal: 'Neuropsychobiology',
+        year: 1992,
+        pubmedId: '1299794',
+        doi: '10.1159/000118919',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/1299794/',
+      },
+      {
+        title: 'Delta sleep-inducing peptide (DSIP): a still unresolved riddle',
+        authors: 'Kovalzon VM, Strekalova TV',
+        journal: 'Journal of Neurochemistry',
+        year: 2006,
+        pubmedId: '16539679',
+        doi: '10.1111/j.1471-4159.2006.03693.x',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/16539679/',
+      },
+    ],
+  },
+
+  // ── KPV (Lys-Pro-Val, alpha-MSH 11-13). Added 2026-10-22. ──
+  // References checked against PubMed (NCBI E-utilities) on 2026-10-22.
+  kpv: {
+    compoundClass:
+      'Tripeptide (Lys-Pro-Val), the C-terminal residues 11 to 13 of alpha-melanocyte-stimulating hormone',
+    discovery:
+      'A fragment of alpha-MSH, the 13-residue hormone derived from proopiomelanocortin; studied as the part of alpha-MSH that keeps its anti-inflammatory activity without its pigmentary action (Endocrine Reviews 2008).',
+    description: [
+      'KPV is the tripeptide lysine-proline-valine, the last three amino acids of alpha-melanocyte-stimulating hormone (alpha-MSH). Research interest comes from the observation, reviewed by Brzoska and colleagues in Endocrine Reviews (2008), that this C-terminal fragment retains the anti-inflammatory activity of alpha-MSH in experimental models without its effect on pigmentation.',
+      'Most of the published work concerns intestinal inflammation. Dalmasso and colleagues (Gastroenterology 2008) reported that KPV enters intestinal epithelial cells and T cells through the PepT1 transporter, reduced inflammatory signaling and cytokine release in those cell lines, and reduced inflammation in two chemically induced mouse colitis models. Kannengiesser and colleagues (Inflammatory Bowel Diseases 2008) reported reduced inflammation in mouse colitis models, including in mice without a functional MC1R receptor.',
+      'Later work in mice focused on delivery, including colon-targeted nanoparticles (Gastroenterology 2010; Molecular Therapy 2017), and on a model of colitis-associated cancer in which the reported effect depended on PepT1 (Cellular and Molecular Gastroenterology and Hepatology 2016). No randomized human trial of KPV has been published. Merit Sciences supplies KPV as a component of the KLOW blend, for laboratory research use only.',
+    ],
+    mechanism:
+      'KPV is reported to act inside cells after uptake through PepT1, the intestinal di- and tripeptide transporter, where it reduced NF-kappaB and MAP kinase activation and inflammatory cytokine secretion in intestinal epithelial and T cell lines (Dalmasso, Gastroenterology 2008). Mouse colitis data suggest the effect is at least partly independent of the melanocortin 1 receptor (Kannengiesser, Inflammatory Bowel Diseases 2008), which distinguishes it from the parent hormone.',
+    researchApplications: [
+      'Intestinal epithelial inflammation models',
+      'PepT1 transporter biology',
+      'Melanocortin-derived peptide pharmacology',
+      'Colon-targeted nanoparticle delivery research',
+      'Mouse colitis models',
+    ],
+    references: [
+      {
+        title: 'PepT1-mediated tripeptide KPV uptake reduces intestinal inflammation',
+        authors: 'Dalmasso G, Charrier-Hisamuddin L, Nguyen HT, Yan Y, Sitaraman S, Merlin D',
+        journal: 'Gastroenterology',
+        year: 2008,
+        pubmedId: '18061177',
+        doi: '10.1053/j.gastro.2007.10.026',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/18061177/',
+      },
+      {
+        title: 'Melanocortin-derived tripeptide KPV has anti-inflammatory potential in murine models of inflammatory bowel disease',
+        authors: 'Kannengiesser K, Maaser C, Heidemann J, Luegering A, Ross M, Brzoska T, et al.',
+        journal: 'Inflammatory Bowel Diseases',
+        year: 2008,
+        pubmedId: '18092346',
+        doi: '10.1002/ibd.20334',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/18092346/',
+      },
+      {
+        title: 'Alpha-melanocyte-stimulating hormone and related tripeptides: biochemistry, antiinflammatory and protective effects in vitro and in vivo, and future perspectives for the treatment of immune-mediated inflammatory diseases',
+        authors: 'Brzoska T, Luger TA, Maaser C, Abels C, Bohm M',
+        journal: 'Endocrine Reviews',
+        year: 2008,
+        pubmedId: '18612139',
+        doi: '10.1210/er.2007-0027',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/18612139/',
+      },
+      {
+        title: 'Drug-loaded nanoparticles targeted to the colon with polysaccharide hydrogel reduce colitis in a mouse model',
+        authors: 'Laroui H, Dalmasso G, Nguyen HT, Yan Y, Sitaraman SV, Merlin D',
+        journal: 'Gastroenterology',
+        year: 2010,
+        pubmedId: '19909746',
+        doi: '10.1053/j.gastro.2009.11.003',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/19909746/',
+      },
+      {
+        title: 'Critical role of PepT1 in promoting colitis-associated cancer and therapeutic benefits of the anti-inflammatory PepT1-mediated tripeptide KPV in a murine model',
+        authors: 'Viennois E, Ingersoll SA, Ayyadurai S, Zhao Y, Wang L, Zhang M, et al.',
+        journal: 'Cellular and Molecular Gastroenterology and Hepatology',
+        year: 2016,
+        pubmedId: '27458604',
+        doi: '10.1016/j.jcmgh.2016.01.006',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/27458604/',
+      },
+      {
+        title: 'Orally Targeted Delivery of Tripeptide KPV via Hyaluronic Acid-Functionalized Nanoparticles Efficiently Alleviates Ulcerative Colitis',
+        authors: 'Xiao B, Xu Z, Viennois E, Zhang Y, Zhang Z, Zhang M, et al.',
+        journal: 'Molecular Therapy',
+        year: 2017,
+        pubmedId: '28143741',
+        doi: '10.1016/j.ymthe.2016.11.020',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/28143741/',
+      },
+    ],
+  },
+
+  // ── SLU-PP-332 (pan-ERR agonist). Added 2026-10-22. ──
+  // References checked against PubMed (NCBI E-utilities) on 2026-10-22.
+  // Small molecule, not a peptide. No half-life or solubility is stated: none
+  // was found in a primary source checked for this entry.
+  'slu-pp-332': {
+    compoundClass:
+      'Synthetic small molecule (not a peptide); pan agonist of the estrogen-related receptors ERRα, ERRβ and ERRγ',
+    discovery:
+      'First reported in 2023 by Billon, Burris, Walker and colleagues (Saint Louis University, with Salk Institute collaborators) as a pan-ERR agonist with highest potency at ERRα.',
+    description: [
+      'SLU-PP-332 is a synthetic small-molecule agonist of the three estrogen-related receptors (ERRα, ERRβ and ERRγ), orphan nuclear receptors that regulate mitochondrial and oxidative-metabolism genes. Billon and colleagues introduced it in 2023 (ACS Chemical Biology), reporting increased mitochondrial function and respiration in a skeletal muscle cell line and, in mice, more oxidative type IIa muscle fibers and longer treadmill endurance. That result is why it is described as a candidate exercise mimetic.',
+      'The follow-up literature is in mice and cells. The same group reported higher energy expenditure and fatty acid oxidation, less fat mass accumulation and improved insulin sensitivity in two obese mouse models (JPET 2024). Xu and colleagues reported improved ejection fraction, less fibrosis and better survival in a mouse pressure-overload heart failure model, mediated mainly by ERRγ (Circulation 2024). Wang and colleagues reported reversal of age-related kidney changes in 21-month-old mice (American Journal of Pathology 2023).',
+      'No human trial has been published. The only human-derived work is laboratory work on cells, such as myoblasts cultured from muscle biopsies of inactive women (Frontiers in Physiology 2025, a pilot study). A 2026 paper from the originating group describes a chemically distinct successor compound, SLU-PP-915 (JPET 2026). Merit Sciences supplies SLU-PP-332 strictly for laboratory research use, not for human or veterinary use.',
+    ],
+    mechanism:
+      'SLU-PP-332 is described as activating all three estrogen-related receptors, with highest potency at ERRα, and inducing an ERRα-dependent gene program associated with acute aerobic exercise in mouse muscle (Billon, ACS Chemical Biology 2023). ERRs are orphan nuclear receptors, transcription factors with no established endogenous ligand, that regulate genes for mitochondrial function and fatty acid oxidation. In the mouse heart failure model, genetic experiments identified ERRγ rather than ERRα as the main mediator (Xu, Circulation 2024).',
+    researchApplications: [
+      'Estrogen-related receptor pharmacology',
+      'Skeletal muscle mitochondrial function models',
+      'Exercise-mimetic research in mice',
+      'Cardiac metabolism and heart failure models',
+      'Aging kidney models',
+    ],
+    references: [
+      {
+        title: 'Synthetic ERRα/β/γ Agonist Induces an ERRα-Dependent Acute Aerobic Exercise Response and Enhances Exercise Capacity',
+        authors: 'Billon C, Sitaula S, Banerjee S, Welch R, Elgendy B, Hegazy L, et al.',
+        journal: 'ACS Chemical Biology',
+        year: 2023,
+        pubmedId: '36988910',
+        doi: '10.1021/acschembio.2c00720',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/36988910/',
+      },
+      {
+        title: 'A Synthetic ERR Agonist Alleviates Metabolic Syndrome',
+        authors: 'Billon C, Schoepke E, Avdagic A, Chatterjee A, Butler AA, Elgendy B, Walker JK, Burris TP',
+        journal: 'The Journal of Pharmacology and Experimental Therapeutics',
+        year: 2024,
+        pubmedId: '37739806',
+        doi: '10.1124/jpet.123.001733',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/37739806/',
+      },
+      {
+        title: 'Novel Pan-ERR Agonists Ameliorate Heart Failure Through Enhancing Cardiac Fatty Acid Metabolism and Mitochondrial Function',
+        authors: 'Xu W, Billon C, Li H, Wilderman A, Qi L, Graves A, et al.',
+        journal: 'Circulation',
+        year: 2024,
+        pubmedId: '37961903',
+        doi: '10.1161/CIRCULATIONAHA.123.066542',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/37961903/',
+      },
+      {
+        title: 'Estrogen-Related Receptor Agonism Reverses Mitochondrial Dysfunction and Inflammation in the Aging Kidney',
+        authors: 'Wang XX, Myakala K, Libby AE, Krawczyk E, Panov J, Jones BA, et al.',
+        journal: 'The American Journal of Pathology',
+        year: 2023,
+        pubmedId: '37717940',
+        doi: '10.1016/j.ajpath.2023.07.008',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/37717940/',
+      },
+      {
+        title: 'Targeting ERRs to counteract age-related muscle atrophy associated with physical inactivity: a pilot study',
+        authors: "Bonanni R, Falvino A, Matticari A, Rinaldi AM, D'Arcangelo G, Cifelli P, et al.",
+        journal: 'Frontiers in Physiology',
+        year: 2025,
+        pubmedId: '40692696',
+        doi: '10.3389/fphys.2025.1616693',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/40692696/',
+      },
+      {
+        title: 'An orally active estrogen receptor-related receptor agonist, SLU-PP-915, enhances aerobic exercise capacity',
+        authors: 'Billon C, Appourchaux K, Cote I, Burris TP',
+        journal: 'The Journal of Pharmacology and Experimental Therapeutics',
+        year: 2026,
+        pubmedId: '41421047',
+        doi: '10.1016/j.jpet.2025.103787',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/41421047/',
+      },
+    ],
+  },
 };
 
 // Common name / research-code → canonical RESEARCH_DATA key. Lets the
@@ -1344,6 +1574,11 @@ const NAME_TO_KEY: Record<string, string> = {
   glow: 'glow',
   klow: 'klow',
   wolverine: 'bpc-157-tb-500',
+  dsip: 'dsip',
+  'dsip-5mg': 'dsip',
+  'slu-pp-332': 'slu-pp-332',
+  'slu-pp-332-injectable-5mg': 'slu-pp-332',
+  'slu-pp-332-injectable': 'slu-pp-332',
 };
 
 // Blend tokens that may appear anywhere in a handle or compound label.

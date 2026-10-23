@@ -29,9 +29,12 @@ type Props = {
   /** Bacteriostatic water, resolved from the DB by the page. Null hides the
    *  add-on rather than adding a line checkout cannot price. */
   bacWater?: { handle: string; title: string; unitCents: number } | null;
+  /** H1 name when it differs from the catalog title (Melanotan II's catalog
+   *  title is the code "MT-II"). Cart lines keep the catalog title. */
+  displayTitle?: string;
 };
 
-export function ProductBuyBox({ product, family, pharmacistNote, restock, siblings, referralPct = 0, bacWater = null }: Props) {
+export function ProductBuyBox({ product, family, pharmacistNote, restock, siblings, referralPct = 0, bacWater = null, displayTitle }: Props) {
   const bundles = product.bundles ?? [
     { label: 'Single', vials: 1, priceCents: product.priceCents },
   ];
@@ -174,7 +177,7 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
           className="font-display font-black text-ink tracking-[-0.035em] leading-[0.95]"
           style={{ fontSize: 'clamp(26px, 4.5vw, 60px)' }}
         >
-          {product.title} <span className="text-ink-soft">{product.vialSize}</span>
+          {displayTitle ?? product.title} <span className="text-ink-soft">{product.vialSize}</span>
         </h1>
         <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-ink-soft">
           {product.format === 'lyophilized' ? 'Lyophilized vial' : 'Reconstituted vial'}
@@ -266,14 +269,15 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
         ))}
       </div>
 
-      {/* Description box — hidden on mobile (eats fold space; reappears
-          as a section below). Visible on tablet+. */}
-      <div className="hidden sm:block bg-cobalt/5 border border-cobalt/10 rounded-xl p-4">
-        <p className="text-sm text-ink leading-relaxed">
-          {product.oneLiner ||
-            `${product.title} — independently assayed, batch-tested, and shipped from our fulfillment facility in San Antonio. Released only after an independent laboratory returns its results for the batch.`}
-        </p>
-      </div>
+      {/* Description box: only for a product with its own one-liner. The old
+          boilerplate fallback ("Name, independently assayed…") is gone; the
+          page's server-rendered "in brief" summary under the buy area is the
+          compound description now. Hidden on mobile (fold space). */}
+      {product.oneLiner && (
+        <div className="hidden sm:block bg-cobalt/5 border border-cobalt/10 rounded-xl p-4">
+          <p className="text-sm text-ink leading-relaxed">{product.oneLiner}</p>
+        </div>
+      )}
 
       {/* Lot data — compact single-line on mobile, full card on tablet+. */}
       {product.lot.id !== 'TBD' && (
