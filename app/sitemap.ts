@@ -5,6 +5,8 @@ import { STACK_TEMPLATES } from '@/lib/catalog-meta';
 import { ARTICLES } from '@/lib/library';
 import { MONOGRAPHS } from '@/lib/monographs';
 import { COLLECTION_SLUGS } from '@/lib/collections';
+import { listCoaRecords } from '@/lib/coa-cache';
+import { certificatePath, classifyCoas, countLots } from '@/lib/coa-batch';
 
 const BASE = 'https://meritsciences.com';
 
@@ -77,35 +79,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /* keep static + stack routes even if product enumeration fails */
   }
 
-  // Per-lot COA pages (/coa/[lot]) — the primary-source surface for
-  // "{compound} lot {id} COA" queries and the QR-verify deep links.
-  // Resilient: a DB blip just omits them.
+  // Certificate pages (/coa/[lot]): the primary-source surface for batch
+  // purity queries and the QR-verify deep links. Only each compound's CURRENT
+  // batch is listed (lib/coa-batch). Earlier batches and retired legacy
+  // certificates stay reachable but are noindex and left out here. A lab
+  // reference shared by several current certificates also lists its index
+  // page. Resilient: a DB blip just omits them.
   let coaRoutes: MetadataRoute.Sitemap = [];
   try {
-    const lots = await prisma.coa.findMany({
-      // Retired legacy certificates stay reachable but leave the sitemap —
-      // superseded testing should not be advertised as current.
-      where: { retiredAt: null },
-      select: { lotId: true, createdAt: true },
-      orderBy: { createdAt: 'desc' },
-      take: 500,
-    });
+    const records = await listCoaRecords();
+    const { byId } = classifyCoas(records);
+    const lotCounts = countLots(records);
     const seen = new Set<string>();
-    coaRoutes = lots
-      .filter((l) => {
-        const key = l.lotId.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .map((l) => ({
-        url: `${BASE}/coa/${encodeURIComponent(l.lotId)}`,
-        lastModified: l.createdAt,
+    const add = (path: string, lastModified: Date | string) => {
+      const key = path.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      coaRoutes.push({
+        url: `${BASE}${path}`,
+        lastModified: new Date(lastModified),
         changeFrequency: 'yearly' as const,
         priority: 0.5,
-      }));
+      });
+    };
+    for (const r of records) {
+      if (byId.get(r.id)?.status !== 'current') continue;
+      add(certificatePath(r, lotCounts), r.createdAt);
+      if ((lotCounts.get(r.lotId.toLowerCase()) ?? 0) > 1) {
+        add(`/coa/${encodeURIComponent(r.lotId)}`, r.createdAt);
+      }
+    }
   } catch {
-    /* omit lot pages if the DB is unreachable */
+    coaRoutes = [];
   }
 
   // Stacks are only listed when every member product is actually purchasable.

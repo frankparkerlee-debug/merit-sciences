@@ -82,7 +82,7 @@ export const listRecentCoas = unstable_cache(
   { revalidate: REVALIDATE_SECONDS, tags: [COAS_TAG] },
 );
 
-/** /coa/[lot]: rows matching a certificate number or a batch reference.
+/** /coa/[lot]: rows matching a certificate number or a lab (lot) reference.
  *  Wrapped in React cache() as well, because generateMetadata and the page
  *  both call it in the same request and used to run the query twice. */
 export const findCoasByKey = cache(
@@ -100,10 +100,29 @@ export const findCoasByKey = cache(
         select: {
           id: true, compound: true, productHandle: true, lotId: true, coaNumber: true,
           purity: true, identity: true, appearance: true, testedDate: true, fileUrl: true,
-          retiredAt: true, supersededBy: true,
+          createdAt: true, retiredAt: true, supersededBy: true,
         },
       }),
     ['coa-by-key'],
     { revalidate: REVALIDATE_SECONDS, tags: [COAS_TAG] },
   ),
+);
+
+/** Every certificate, retired ones included, with the fields the batch
+ *  classifier needs (lib/coa-batch). One cached read serves /coa, every
+ *  /coa/[lot] page, the sitemap and llms.txt: which batch is current for a
+ *  compound depends on all of its certificates, not just the one on screen. */
+export const listCoaRecords = unstable_cache(
+  async () =>
+    prisma.coa.findMany({
+      orderBy: [{ createdAt: 'desc' }, { compound: 'asc' }],
+      take: 1000,
+      select: {
+        id: true, compound: true, productHandle: true, lotId: true, coaNumber: true,
+        purity: true, identity: true, appearance: true, testedDate: true, fileUrl: true,
+        createdAt: true, retiredAt: true, supersededBy: true,
+      },
+    }),
+  ['coa-records'],
+  { revalidate: REVALIDATE_SECONDS, tags: [COAS_TAG] },
 );

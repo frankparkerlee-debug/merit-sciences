@@ -1,13 +1,19 @@
 import Link from 'next/link';
-import { prisma } from '@/lib/db';
-import { listPublicCoas } from '@/lib/coa-cache';
+import { listCoaRecords } from '@/lib/coa-cache';
+import {
+  batchLabelOf,
+  certificatePath,
+  classifyCoas,
+  compoundKey,
+  countLots,
+  labReference,
+} from '@/lib/coa-batch';
 import { JsonLd } from '@/components/JsonLd';
 import { Chromatogram } from './Chromatogram';
 
-/* 60 cards per page. The page used to render all ~150 published
-   certificates at once, each with a 5 KB inline chromatogram serialized
-   twice (markup plus the RSC payload), which made this a 1.6 MB document. */
-const PAGE_SIZE = 60;
+/* One card per compound (its current batch), so the page stays small without
+   pagination: it used to render all ~150 certificates at once, each with a
+   5 KB inline chromatogram, which made this a 1.6 MB document. */
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +23,7 @@ export const metadata = {
   // Root template appends "· Merit Sciences" — don't duplicate it here.
   title: 'Lab results: per-batch certificates of analysis',
   description:
-    'Every Merit batch is independently HPLC-verified before it is listed. Search by compound or certificate number to see purity, identity, and appearance: the same library the QR code on every label and box opens. Research use only.',
+    'Every Merit batch is independently HPLC-verified before it is listed. See the current batch certificate for each compound (purity, identity, and appearance) in the same library the QR code on every label and box opens. Research use only.',
   alternates: { canonical: `${SITE}/coa` },
 };
 
@@ -35,11 +41,11 @@ const FAQ = [
   },
   {
     q: 'How do I find the certificate of analysis for my batch?',
-    a: 'Scan the QR code printed on your vial label or on the box, which opens this library directly. Search by compound to find the certificate for the batch currently shipping, or by certificate number if you have one. Every certificate has a permanent page that requires no account and no request form.',
+    a: 'Scan the QR code printed on your vial label or on the box, which opens this library directly. Search by compound to find the certificate for the batch currently shipping, or by the lab reference printed on your certificate. Every certificate has a permanent page that requires no account and no request form.',
   },
   {
     q: 'What does the purity percentage on a Merit COA mean?',
-    a: 'It is the area percentage of the main peak in the HPLC chromatogram — the proportion of the material that is the stated compound, as measured by the testing laboratory. A result of 99.3% means the main peak accounted for 99.3% of the total peak area for that lot.',
+    a: 'It is the area percentage of the main peak in the HPLC chromatogram: the proportion of the material that is the stated compound, as measured by the testing laboratory. A result of 99.3% means the main peak accounted for 99.3% of the total peak area for that batch.',
   },
   {
     q: 'Why are some Merit certificates redacted?',
@@ -47,7 +53,7 @@ const FAQ = [
   },
   {
     q: 'Are Merit Sciences compounds FDA approved?',
-    a: 'No. Merit compounds are sold for research use only and are not FDA approved, not for human or veterinary use, and not for diagnostic or therapeutic use. Independent lab verification is a statement about what is in the vial — it is not a statement about safety or efficacy, and it is not an approval of any kind.',
+    a: 'No. Merit compounds are sold for research use only and are not FDA approved, not for human or veterinary use, and not for diagnostic or therapeutic use. Independent lab verification is a statement about what is in the vial. It is not a statement about safety or efficacy, and it is not an approval of any kind.',
   },
 ];
 
@@ -58,7 +64,7 @@ const PANEL = [
   },
   {
     title: 'Identity confirmation',
-    body: 'Each batch is confirmed against a reference standard — the compound is what the label says it is, with no substitutions.',
+    body: 'Each batch is confirmed against a reference standard: the compound is what the label says it is, with no substitutions.',
   },
   {
     title: 'Heavy metals + endotoxin',
@@ -66,13 +72,14 @@ const PANEL = [
   },
   {
     title: 'Fentanyl screen',
-    body: 'Every batch on the current panel is screened for fentanyl by immunoassay — reported on the certificate itself.',
+    body: 'Every batch on the current panel is screened for fentanyl by immunoassay, reported on the certificate itself.',
   },
 ];
 
 type CoaRow = {
   id: string;
   compound: string;
+  productHandle: string | null;
   lotId: string;
   coaNumber: string | null;
   purity: string;
@@ -80,6 +87,8 @@ type CoaRow = {
   appearance: string | null;
   testedDate: string | null;
   fileUrl: string | null;
+  createdAt: Date | string;
+  retiredAt: Date | string | null;
 };
 
 function fmtDate(s: string | null): string | null {
@@ -105,100 +114,103 @@ function parsePurity(s: string): number {
   return isFinite(n) ? n : 99;
 }
 
+function matches(c: CoaRow, needle: string): boolean {
+  return [c.compound, c.lotId, c.coaNumber, c.identity]
+    .some((v) => (v ?? '').toLowerCase().includes(needle));
+}
+
 export default async function LabResultsPage({ searchParams }: { searchParams: { q?: string; page?: string } }) {
   const q = (searchParams.q ?? '').trim();
-  const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1);
-  /* Retired lots are excluded from the public index. These are legacy
-     third-party certificates whose material is covered by newer
-     Merit-branded testing (see `supersededBy`). They are NOT deleted —
-     their lot pages still resolve so a customer holding an older vial can
-     still verify it; they simply no longer represent current release
-     testing in the browsable index or the sitemap. */
-  let all: CoaRow[] = [];
+
+  /* One cached read of every certificate (lib/coa-cache), classified by batch
+     (lib/coa-batch). The index lists only each compound's current batch;
+     earlier batches sit behind a quiet disclosure on the same card, and their
+     pages stay live so an older vial's QR code still resolves. Retired legacy
+     certificates are left out of the index entirely, as before. */
+  let records: CoaRow[] = [];
   try {
-    all = q
-      ? // A search is rare and specific: run it live.
-        await prisma.coa.findMany({
-          where: {
-            retiredAt: null,
-            OR: [
-              { compound: { contains: q, mode: 'insensitive' } },
-              { lotId: { contains: q, mode: 'insensitive' } },
-              { coaNumber: { contains: q, mode: 'insensitive' } },
-              { identity: { contains: q, mode: 'insensitive' } },
-            ],
-          },
-          orderBy: [{ createdAt: 'desc' }, { compound: 'asc' }],
-          take: 500,
-          select: {
-            id: true, compound: true, lotId: true, coaNumber: true, purity: true,
-            identity: true, appearance: true, testedDate: true, fileUrl: true,
-          },
-        })
-      : // The index itself is served from the data cache (lib/coa-cache).
-        await listPublicCoas();
+    records = (await listCoaRecords()) as unknown as CoaRow[];
   } catch {
-    all = [];
+    records = [];
   }
+  const { groups } = classifyCoas(records);
+  const lotCounts = countLots(records);
+  const certPath = (c: CoaRow) => certificatePath(c, lotCounts);
 
-  const total = all.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const coas = q ? all : all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const compounds = Array.from(new Set(all.map((c) => c.compound))).sort();
-
-  /* Link each certificate to its lot page, the canonical URL. Certificate-number
-     aliases 308 there when the lot holds one certificate, so linking the alias
-     left every lot page reachable only through a redirect. A lot shared by
-     several certificates renders an index at its own URL, so those keep the
-     certificate number as their permalink. */
-  const lotCounts = new Map<string, number>();
-  for (const c of all) lotCounts.set(c.lotId.toLowerCase(), (lotCounts.get(c.lotId.toLowerCase()) ?? 0) + 1);
-  const certPath = (c: CoaRow) =>
-    `/coa/${encodeURIComponent(c.coaNumber && (lotCounts.get(c.lotId.toLowerCase()) ?? 0) > 1 ? c.coaNumber : c.lotId)}`;
+  /* Search runs over the same cached rows. A compound, a lab reference from
+     an older certificate, or a product title from the PDP link all land on
+     the right card; a hit on an earlier batch opens that card's disclosure. */
+  const needle = q.toLowerCase();
+  // Product titles carry the blend's parts in parentheses, e.g.
+  // "Wolverine (BPC-157 10mg + TB-500 10mg)": try the name and the parts.
+  const qBases = q
+    ? [q, ...Array.from(q.matchAll(/\(([^)]*)\)/g), (m) => m[1])]
+        .map((s) => compoundKey(s).base)
+        .filter(Boolean)
+    : [];
+  const visible = groups
+    .filter((g) => g.current.length > 0)
+    .map((g) => {
+      if (!q) return { g, archivedHit: false };
+      const baseHit = qBases.includes(compoundKey(g.name).base);
+      const currentHit = baseHit || g.current.some((c) => matches(c, needle));
+      const archivedMatch = g.archived.some((c) => matches(c, needle));
+      // Open the disclosure only when the search named an earlier batch's lab
+      // reference, not when it merely named the compound.
+      const archivedHit = g.archived.some((c) =>
+        [c.lotId, c.coaNumber].some((v) => (v ?? '').toLowerCase().includes(needle)),
+      );
+      return currentHit || archivedMatch ? { g, archivedHit } : null;
+    })
+    .filter((x): x is { g: (typeof groups)[number]; archivedHit: boolean } => x !== null);
 
   /* ── Structured data ────────────────────────────────────────────────────
      Three graphs, each doing a distinct job:
 
-     · CollectionPage + ItemList — tells a crawler this URL IS the index of
-       Merit's lot certificates, and enumerates them. Without it the page is
-       just prose with links; with it, each lot is a first-class entity that
-       can be resolved and cited individually.
-     · FAQPage — the literal question/answer pairs an assistant needs to
+     · CollectionPage + ItemList: this URL is the index of Merit's current
+       batch certificates, and enumerates them. Earlier batches are not
+       listed; their pages are noindex.
+     · FAQPage: the literal question/answer pairs an assistant needs to
        answer "is this tested" without inferring from marketing copy.
-     · BreadcrumbList — places /coa in the site hierarchy.
+     · BreadcrumbList: places /coa in the site hierarchy.
 
-     Only rendered when there are lots to describe. Emitting an empty
+     Only rendered when there are certificates to describe. Emitting an empty
      ItemList would assert "Merit publishes zero certificates", which is
      worse than emitting nothing at all. */
-  const itemList = coas.map((c, i) => ({
-    '@type': 'ListItem',
-    position: (page - 1) * PAGE_SIZE + i + 1,
-    item: {
-      '@type': 'Dataset',
-      '@id': `${SITE}${certPath(c)}#dataset`,
-      name: `${c.compound}: batch ${c.coaNumber ?? c.lotId} certificate of analysis`,
-      description: `Independent laboratory analysis of a ${c.compound} batch (${c.coaNumber ?? c.lotId}): ${c.purity} purity by HPLC${c.identity ? `, identity confirmed (${c.identity})` : ''}.`,
-      url: `${SITE}${certPath(c)}`,
-      identifier: c.coaNumber ?? c.lotId,
-      ...(isoDate(c.testedDate) ? { datePublished: isoDate(c.testedDate) } : {}),
-      measurementTechnique: 'High-performance liquid chromatography (HPLC)',
-      variableMeasured: [
-        { '@type': 'PropertyValue', name: 'Purity (HPLC)', value: c.purity },
-        ...(c.identity ? [{ '@type': 'PropertyValue', name: 'Identity', value: c.identity }] : []),
-        ...(c.appearance ? [{ '@type': 'PropertyValue', name: 'Appearance', value: c.appearance }] : []),
-      ],
-      creator: { '@id': `${SITE}/#organization` },
-      ...(c.fileUrl
-        ? {
-            distribution: {
-              '@type': 'DataDownload',
-              encodingFormat: 'application/pdf',
-              contentUrl: c.fileUrl,
-            },
-          }
-        : {}),
-    },
-  }));
+  const currentRows = visible.flatMap((v) => v.g.current);
+  const itemList = currentRows.map((c, i) => {
+    const label = batchLabelOf(c);
+    return {
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Dataset',
+        '@id': `${SITE}${certPath(c)}#dataset`,
+        name: `${c.compound}, ${label}: certificate of analysis`,
+        description: `Independent laboratory analysis of the ${label} of ${c.compound}: ${c.purity} purity by HPLC${c.identity ? `, identity confirmed (${c.identity})` : ''}.`,
+        url: `${SITE}${certPath(c)}`,
+        identifier: c.coaNumber ?? c.lotId,
+        ...(isoDate(c.testedDate) ? { datePublished: isoDate(c.testedDate) } : {}),
+        measurementTechnique: 'High-performance liquid chromatography (HPLC)',
+        variableMeasured: [
+          { '@type': 'PropertyValue', name: 'Purity (HPLC)', value: c.purity },
+          ...(c.identity ? [{ '@type': 'PropertyValue', name: 'Identity', value: c.identity }] : []),
+          ...(c.appearance ? [{ '@type': 'PropertyValue', name: 'Appearance', value: c.appearance }] : []),
+          { '@type': 'PropertyValue', name: 'Batch', value: label },
+        ],
+        creator: { '@id': `${SITE}/#organization` },
+        ...(c.fileUrl
+          ? {
+              distribution: {
+                '@type': 'DataDownload',
+                encodingFormat: 'application/pdf',
+                contentUrl: c.fileUrl,
+              },
+            }
+          : {}),
+      },
+    };
+  });
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -214,7 +226,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
         '@type': 'CollectionPage',
         '@id': `${SITE}/coa#page`,
         url: `${SITE}/coa`,
-        name: 'Merit Sciences lab results: per-batch certificates of analysis',
+        name: 'Merit Sciences lab results: certificates of analysis by batch',
         description: metadata.description,
         isPartOf: { '@id': `${SITE}/#website` },
         publisher: { '@id': `${SITE}/#organization` },
@@ -222,8 +234,8 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           ? {
               mainEntity: {
                 '@type': 'ItemList',
-                name: 'Published batch certificates of analysis',
-                numberOfItems: coas.length,
+                name: 'Current batch certificates of analysis',
+                numberOfItems: itemList.length,
                 itemListElement: itemList,
               },
             }
@@ -261,7 +273,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           {/* The citable paragraph. An assistant asked "is Merit third-party
               tested" should be able to lift this verbatim and be correct. */}
           <p className="mt-7 max-w-[68ch] text-[15px] lg:text-[16px] leading-[1.65] text-ink-soft">
-            Every Merit batch is assayed by an independent laboratory before it is listed — purity by HPLC,
+            Every Merit batch is assayed by an independent laboratory before it is listed: purity by HPLC,
             identity against a reference standard. The certificate is published here before the batch
             ships, and every vial label and box carries a QR code that opens this library. No account,
             no request form.
@@ -269,14 +281,14 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
 
           <form method="GET" className="mt-8 flex flex-col sm:flex-row max-w-[520px]">
             <label htmlFor="coa-q" className="sr-only">
-              Search by compound or certificate number
+              Search by compound or lab reference
             </label>
             <input
               id="coa-q"
               type="search"
               name="q"
               defaultValue={q}
-              placeholder="COMPOUND OR CERTIFICATE NUMBER"
+              placeholder="COMPOUND OR LAB REFERENCE"
               className="flex-1 bg-white border border-ink/25 sm:border-r-0 px-4 py-3.5 font-mono text-[12px] tracking-[0.06em] text-ink placeholder-ink-muted outline-none focus:border-cobalt transition"
             />
             <button
@@ -289,25 +301,24 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
 
           {q && (
             <p className="mt-4 font-mono text-[11px] tracking-[0.08em] uppercase text-ink-muted">
-              {coas.length} {coas.length === 1 ? 'result' : 'results'} for “{q}” ·{' '}
+              {visible.length} {visible.length === 1 ? 'result' : 'results'} for “{q}” ·{' '}
               <Link href="/coa" className="text-cobalt hover:underline">
                 clear
               </Link>
             </p>
           )}
-          {!q && total > 0 && (
+          {!q && visible.length > 0 && (
             <p className="mt-4 font-mono text-[11px] tracking-[0.08em] uppercase text-ink-muted">
-              {total} published {total === 1 ? 'certificate' : 'certificates'} ·{' '}
-              {compounds.length} {compounds.length === 1 ? 'compound' : 'compounds'}
-              {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}
+              Current batch certificates · {visible.length}{' '}
+              {visible.length === 1 ? 'compound' : 'compounds'}
             </p>
           )}
         </div>
       </section>
 
-      {/* ── Lot grid ──────────────────────────────────────────────────── */}
+      {/* ── Certificate grid: one card per compound, current batch ────── */}
       <section className="max-w-[1200px] mx-auto px-6 lg:px-12 py-12 lg:py-16">
-        {coas.length === 0 ? (
+        {visible.length === 0 ? (
           <div className="border border-dashed border-ink/20 px-6 py-16 text-center">
             <p className="text-[15px] text-ink-soft max-w-[60ch] mx-auto leading-relaxed">
               {q ? (
@@ -328,17 +339,25 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-ink/10 border border-ink/10">
-            {coas.map((c) => {
+            {visible.map(({ g, archivedHit }) => {
+              const c = g.current[0];
+              const alsoCurrent = g.current.slice(1);
               // Bacteriostatic water is released on a USP sterility + preservative
-              // assay, not HPLC — show a sterility panel instead of a chromatogram.
+              // assay, not HPLC: show a sterility panel instead of a chromatogram.
               const isWater = /bacteriostatic|sterile water/i.test(c.compound);
               const href = certPath(c);
+              const tested = fmtDate(c.testedDate);
               return (
-                <article key={c.id} className="bg-white p-6 lg:p-7">
+                <article key={g.key} className="bg-white p-6 lg:p-7">
                   <div className="flex items-start justify-between gap-4">
-                    <h2 className="font-poster font-black text-[20px] lg:text-[24px] tracking-[-0.03em] leading-tight">
-                      {c.compound}
-                    </h2>
+                    <div className="min-w-0">
+                      <h2 className="font-poster font-black text-[20px] lg:text-[24px] tracking-[-0.03em] leading-tight">
+                        {c.compound}
+                      </h2>
+                      <p className="mt-1 font-mono text-[11px] font-bold tracking-[0.08em] uppercase text-cobalt">
+                        {batchLabelOf(c)}
+                      </p>
+                    </div>
                     <span className="flex-none font-mono text-[11px] font-bold tabular-nums text-success border border-success/40 px-2.5 py-1 whitespace-nowrap">
                       {isWater ? 'USP · STERILE' : `${c.purity} HPLC`}
                     </span>
@@ -352,7 +371,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                     </figure>
                   ) : (
                     <figure className="mt-4 border border-ink/10 px-3 pt-2 pb-1">
-                      <Chromatogram purity={parsePurity(c.purity)} seed={c.lotId} />
+                      <Chromatogram purity={parsePurity(c.purity)} seed={c.coaNumber ?? c.lotId} />
                       <figcaption className="pb-1 text-center font-mono text-[9.5px] tracking-[0.06em] uppercase text-ink-muted">
                         Representative HPLC profile · main peak {c.purity}
                       </figcaption>
@@ -360,14 +379,13 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                   )}
 
                   <dl className="mt-4 space-y-2">
-                    {/* Library reference, not a number printed on any vial.
-                        Merit tests and lists batches; it does not run numbered
-                        lots (Parker, 2026-09-13 and 2026-10-02). */}
-                    <Row label="Batch ref">{c.lotId}</Row>
-                    {c.coaNumber && <Row label="COA #">{c.coaNumber}</Row>}
                     {c.identity && <Row label="Identity">{c.identity}</Row>}
                     {c.appearance && <Row label="Appearance">{c.appearance}</Row>}
-                    {fmtDate(c.testedDate) && <Row label="Tested">{fmtDate(c.testedDate)}</Row>}
+                    {tested && <Row label="Tested">{tested}</Row>}
+                    {/* The lab's identifiers, printed on the signed PDF. Merit
+                        names releases by batch date, not lot number (Parker,
+                        2026-10-22), so these stay secondary. */}
+                    <Row label="Lab reference" muted>{labReference(c)}</Row>
                   </dl>
 
                   <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-4">
@@ -386,7 +404,6 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                           Certificate PDF →
                         </a>
                       )}
-                      {/* Stable permalink: the lot page (see certPath above). */}
                       <Link
                         href={href}
                         className="font-mono text-[11px] font-bold text-ink hover:text-cobalt hover:underline"
@@ -395,26 +412,43 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                       </Link>
                     </div>
                   </div>
+
+                  {alsoCurrent.length > 0 && (
+                    <p className="mt-3 font-mono text-[10.5px] tracking-[0.04em] text-ink-muted">
+                      Also in this batch:{' '}
+                      {alsoCurrent.map((a, i) => (
+                        <span key={a.id}>
+                          {i > 0 && ', '}
+                          <Link href={certPath(a)} className="underline underline-offset-2 hover:text-cobalt">
+                            {a.coaNumber ?? a.lotId}
+                          </Link>
+                        </span>
+                      ))}
+                    </p>
+                  )}
+
+                  {g.archived.length > 0 && (
+                    <details className="group mt-3" open={archivedHit}>
+                      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden font-mono text-[10.5px] tracking-[0.08em] uppercase text-ink-muted hover:text-ink">
+                        Earlier batches ({g.archived.length})
+                        <span aria-hidden="true" className="ml-1 inline-block transition-transform group-open:rotate-90">›</span>
+                      </summary>
+                      <ul className="mt-2 space-y-1">
+                        {g.archived.map((a) => (
+                          <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-x-3 font-mono text-[11px]">
+                            <Link href={certPath(a)} className="text-ink-soft hover:text-cobalt hover:underline">
+                              {batchLabelOf(a)}
+                            </Link>
+                            <span className="text-ink-muted tabular-nums">{a.coaNumber ?? a.lotId}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                 </article>
               );
             })}
           </div>
-        )}
-
-        {!q && totalPages > 1 && (
-          <nav aria-label="Certificate pages" className="mt-8 flex items-center justify-between font-mono text-[11px] tracking-[0.08em] uppercase">
-            {page > 1 ? (
-              <Link href={page === 2 ? '/coa' : `/coa?page=${page - 1}`} className="text-cobalt hover:underline">
-                ← Newer
-              </Link>
-            ) : <span />}
-            <span className="text-ink-muted">Page {page} of {totalPages}</span>
-            {page < totalPages ? (
-              <Link href={`/coa?page=${page + 1}`} className="text-cobalt hover:underline">
-                Older →
-              </Link>
-            ) : <span />}
-          </nav>
         )}
       </section>
 
@@ -442,7 +476,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
           </div>
           <p className="mt-8 max-w-[76ch] text-[14px] leading-[1.7] text-ink-soft">
             <strong className="text-white font-semibold">A note on what&rsquo;s shown.</strong> Batches
-            released with a full certificate carry the complete PDF — accredited lab named, signed by
+            released with a full certificate carry the complete PDF: accredited lab named, signed by
             the lab director, with an access code you can verify at the lab&rsquo;s own portal. On
             older batches, manufacturer and laboratory identifiers are redacted to protect supply-chain
             integrity; the data never is. Purity, identity, and batch are reported exactly as measured.
@@ -494,13 +528,15 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({ label, children, muted }: { label: string; children: React.ReactNode; muted?: boolean }) {
   return (
     <div className="flex gap-3">
       <dt className="w-24 flex-none font-mono text-[10.5px] tracking-[0.08em] uppercase text-ink-muted pt-0.5">
         {label}
       </dt>
-      <dd className="font-mono text-[12.5px] text-ink">{children}</dd>
+      <dd className={muted ? 'font-mono text-[11px] text-ink-muted break-all' : 'font-mono text-[12.5px] text-ink'}>
+        {children}
+      </dd>
     </div>
   );
 }
