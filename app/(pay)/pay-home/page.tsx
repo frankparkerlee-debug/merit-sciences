@@ -18,7 +18,7 @@ import { PaymentShellHeader } from '@/components/PaymentShell';
  */
 
 export const metadata = {
-  title: { absolute: 'Merit — Secure Payments' },
+  title: { absolute: 'Merit · Secure Payments' },
   description: null,
   robots: { index: false, follow: false, nocache: true },
   alternates: { canonical: null },

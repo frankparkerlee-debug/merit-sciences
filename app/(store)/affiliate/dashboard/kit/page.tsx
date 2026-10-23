@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getCurrentAffiliate } from '@/lib/affiliate-session';
 import { CopyBlock } from './CopyBlock';
 
-export const metadata = { title: 'Promotion Kit — Merit Sciences Affiliate' };
+export const metadata = { title: 'Promotion Kit · Merit Sciences Affiliate' };
 export const dynamic = 'force-dynamic';
 
 export default async function KitPage() {

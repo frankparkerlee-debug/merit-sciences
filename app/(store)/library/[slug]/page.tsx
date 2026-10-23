@@ -52,20 +52,20 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
   const mono = getMonograph(params.slug);
   if (mono) {
-    const desc = `${mono.tagline} What ${mono.title} is, how it works, and what the published research shows — with peer-reviewed references. For research use only.`.slice(0, 300);
+    const desc = `${mono.tagline} What ${mono.title} is, how it works, and what the published research shows, with peer-reviewed references. For research use only.`.slice(0, 300);
     const url = `https://meritsciences.com/library/${mono.slug}`;
     return {
-      title: `${mono.title}: Mechanism, Research & Handling`,
+      title: `${mono.title}: Mechanism, Research & Storage`,
       description: desc,
       keywords: [mono.title, ...mono.aka, `${mono.title} mechanism`, `${mono.title} research`, `${mono.title} studies`, `what is ${mono.title}`],
       alternates: { canonical: url },
-      openGraph: { title: `${mono.title} — Research Monograph`, description: mono.tagline, type: 'article', url },
+      openGraph: { title: `${mono.title}: Research Monograph`, description: mono.tagline, type: 'article', url },
     };
   }
 
   const a = getArticle(params.slug);
   if (!a) return { title: 'Not found' };
-  const desc = a.excerpt || `${a.title} — Merit Sciences Research Library.`;
+  const desc = a.excerpt || `${a.title} · Merit Sciences Research Library.`;
   return {
     // Root template appends "· Merit Sciences" — don't duplicate it here.
     title: a.title,

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 
-export const metadata = { title: 'Your order — Merit Sciences' };
+export const metadata = { title: 'Your order · Merit Sciences' };
 export const dynamic = 'force-dynamic';
 
 function fmtMoney(cents: bigint | number): string {

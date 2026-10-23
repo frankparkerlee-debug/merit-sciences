@@ -15,7 +15,7 @@ const SITE = 'https://meritsciences.com';
 
 export const metadata = {
   // Root template appends "· Merit Sciences" — don't duplicate it here.
-  title: 'Lab results — per-batch certificates of analysis',
+  title: 'Lab results: per-batch certificates of analysis',
   description:
     'Every Merit batch is independently HPLC-verified before it is listed. Search by compound or certificate number to see purity, identity, and appearance: the same library the QR code on every label and box opens. Research use only.',
   alternates: { canonical: `${SITE}/coa` },
@@ -146,6 +146,16 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
   const coas = q ? all : all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const compounds = Array.from(new Set(all.map((c) => c.compound))).sort();
 
+  /* Link each certificate to its lot page, the canonical URL. Certificate-number
+     aliases 308 there when the lot holds one certificate, so linking the alias
+     left every lot page reachable only through a redirect. A lot shared by
+     several certificates renders an index at its own URL, so those keep the
+     certificate number as their permalink. */
+  const lotCounts = new Map<string, number>();
+  for (const c of all) lotCounts.set(c.lotId.toLowerCase(), (lotCounts.get(c.lotId.toLowerCase()) ?? 0) + 1);
+  const certPath = (c: CoaRow) =>
+    `/coa/${encodeURIComponent(c.coaNumber && (lotCounts.get(c.lotId.toLowerCase()) ?? 0) > 1 ? c.coaNumber : c.lotId)}`;
+
   /* ── Structured data ────────────────────────────────────────────────────
      Three graphs, each doing a distinct job:
 
@@ -165,10 +175,10 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
     position: (page - 1) * PAGE_SIZE + i + 1,
     item: {
       '@type': 'Dataset',
-      '@id': `${SITE}/coa/${encodeURIComponent(c.coaNumber ?? c.lotId)}#dataset`,
-      name: `${c.compound} — batch ${c.coaNumber ?? c.lotId} certificate of analysis`,
+      '@id': `${SITE}${certPath(c)}#dataset`,
+      name: `${c.compound}: batch ${c.coaNumber ?? c.lotId} certificate of analysis`,
       description: `Independent laboratory analysis of a ${c.compound} batch (${c.coaNumber ?? c.lotId}): ${c.purity} purity by HPLC${c.identity ? `, identity confirmed (${c.identity})` : ''}.`,
-      url: `${SITE}/coa/${encodeURIComponent(c.coaNumber ?? c.lotId)}`,
+      url: `${SITE}${certPath(c)}`,
       identifier: c.coaNumber ?? c.lotId,
       ...(isoDate(c.testedDate) ? { datePublished: isoDate(c.testedDate) } : {}),
       measurementTechnique: 'High-performance liquid chromatography (HPLC)',
@@ -204,7 +214,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
         '@type': 'CollectionPage',
         '@id': `${SITE}/coa#page`,
         url: `${SITE}/coa`,
-        name: 'Merit Sciences lab results — per-batch certificates of analysis',
+        name: 'Merit Sciences lab results: per-batch certificates of analysis',
         description: metadata.description,
         isPartOf: { '@id': `${SITE}/#website` },
         publisher: { '@id': `${SITE}/#organization` },
@@ -322,7 +332,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
               // Bacteriostatic water is released on a USP sterility + preservative
               // assay, not HPLC — show a sterility panel instead of a chromatogram.
               const isWater = /bacteriostatic|sterile water/i.test(c.compound);
-              const href = `/coa/${encodeURIComponent(c.coaNumber ?? c.lotId)}`;
+              const href = certPath(c);
               return (
                 <article key={c.id} className="bg-white p-6 lg:p-7">
                   <div className="flex items-start justify-between gap-4">
@@ -376,8 +386,7 @@ export default async function LabResultsPage({ searchParams }: { searchParams: {
                           Certificate PDF →
                         </a>
                       )}
-                      {/* Stable permalink — the URL the label QR resolves to. One lot
-                          can cover several SKUs, so the COA number keys it when present. */}
+                      {/* Stable permalink: the lot page (see certPath above). */}
                       <Link
                         href={href}
                         className="font-mono text-[11px] font-bold text-ink hover:text-cobalt hover:underline"

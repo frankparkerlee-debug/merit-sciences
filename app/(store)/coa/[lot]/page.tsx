@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { findCoasByKey } from '@/lib/coa-cache';
 import { JsonLd } from '@/components/JsonLd';
 import { Chromatogram } from '../Chromatogram';
@@ -94,7 +94,7 @@ export async function generateMetadata({ params }: Props) {
   if (!coa) {
     if (rows.length > 1) {
       return {
-        title: `Lot ${rows[0].lotId} — certificates of analysis`,
+        title: `Lot ${rows[0].lotId}: certificates of analysis`,
         description: `Certificates of analysis for every compound released under lot ${rows[0].lotId}: purity by HPLC, identity confirmation, and the full QC panel. Research use only.`,
         alternates: { canonical: `https://meritsciences.com/coa/${encodeURIComponent(rows[0].lotId)}` },
       };
@@ -102,10 +102,17 @@ export async function generateMetadata({ params }: Props) {
     return { title: 'COA not found' };
   }
   // Root template appends "· Merit Sciences".
-  const title = `${coa.compound} COA — Lot ${coa.lotId} (${coa.purity} HPLC)`;
+  // Water is released on sterility + preservative testing; its purity column
+  // is not an HPLC figure and must not be presented as one.
+  const isWater = /bacteriostatic|sterile water/i.test(coa.compound);
+  const title = isWater
+    ? `${coa.compound} COA: Lot ${coa.lotId}`
+    : `${coa.compound} COA: Lot ${coa.lotId} (${coa.purity} HPLC)`;
   return {
     title,
-    description: `Certificate of analysis for ${coa.compound} lot ${coa.lotId}: ${coa.purity} purity by HPLC${coa.identity ? `, identity confirmed (${coa.identity})` : ''}${coa.testedDate ? `, tested ${coa.testedDate}` : ''}. Independently verified before release. Research use only.`,
+    description: isWater
+      ? `Certificate of analysis for ${coa.compound} lot ${coa.lotId}: USP sterility and content verified${coa.testedDate ? `, tested ${coa.testedDate}` : ''}. Independently verified before release. Research use only.`
+      : `Certificate of analysis for ${coa.compound} lot ${coa.lotId}: ${coa.purity} purity by HPLC${coa.identity ? `, identity confirmed (${coa.identity})` : ''}${coa.testedDate ? `, tested ${coa.testedDate}` : ''}. Independently verified before release. Research use only.`,
     alternates: { canonical: `https://meritsciences.com/coa/${encodeURIComponent(coa.lotId)}` },
     // A superseded legacy certificate stays reachable for anyone holding an
     // older vial, but must not be indexed as current release testing.
@@ -120,6 +127,19 @@ export default async function CoaLotPage({ params }: Props) {
   if (!coa) {
     if (rows.length > 1) return <LotIndex rows={rows} />;
     return notFound();
+  }
+
+  /* A certificate-number alias (/coa/COA-2026-…) served the same page as the
+     lot URL: a duplicate. When the lot resolves to this certificate alone, 308
+     to the lot page so links, QR scans and engines consolidate on one URL.
+     A lot covering several certificates renders an index at its own URL, so
+     the certificate number stays the permalink there. */
+  if (
+    coa.coaNumber?.toLowerCase() === key.toLowerCase() &&
+    coa.lotId.toLowerCase() !== key.toLowerCase()
+  ) {
+    const lotRows = await getLot(encodeURIComponent(coa.lotId));
+    if (lotRows.length === 1) permanentRedirect(`/coa/${encodeURIComponent(coa.lotId)}`);
   }
 
   const isWater = /bacteriostatic|sterile water/i.test(coa.compound);
@@ -153,7 +173,7 @@ export default async function CoaLotPage({ params }: Props) {
         // primary source for "{compound} lot {id}" purity claims.
         '@type': 'Dataset',
         '@id': datasetId,
-        name: `${coa.compound} — Lot ${coa.lotId} certificate of analysis`,
+        name: `${coa.compound}: Lot ${coa.lotId} certificate of analysis`,
         description: `Independent quality-control results for ${coa.compound} research compound, lot ${coa.lotId}: purity by HPLC${coa.identity ? ', identity confirmation' : ''}${coa.appearance ? ', appearance' : ''}. For research use only.`,
         url,
         identifier: coa.coaNumber ?? coa.lotId,
@@ -177,7 +197,7 @@ export default async function CoaLotPage({ params }: Props) {
                 '@type': 'DataDownload',
                 encodingFormat: 'application/pdf',
                 contentUrl: coa.fileUrl,
-                name: `${coa.compound} lot ${coa.lotId} — signed certificate of analysis`,
+                name: `${coa.compound} lot ${coa.lotId}: signed certificate of analysis`,
               },
             }
           : {}),
@@ -190,7 +210,7 @@ export default async function CoaLotPage({ params }: Props) {
             {
               '@type': 'Certification',
               '@id': `${url}#certification`,
-              name: `Certificate of analysis — ${coa.compound} lot ${coa.lotId}`,
+              name: `Certificate of analysis: ${coa.compound} lot ${coa.lotId}`,
               certificationIdentification: coa.coaNumber ?? coa.lotId,
               certificationStatus: 'CertificationActive',
               url,
@@ -426,7 +446,7 @@ function LotIndex({ rows }: { rows: CoaRow[] }) {
       {
         '@type': 'CollectionPage',
         '@id': `${url}#page`,
-        name: `${lotLabel} — certificates of analysis`,
+        name: `${lotLabel}: certificates of analysis`,
         description: `Quality-control results for the ${rows.length} research compounds released under lot ${lotId}. For research use only.`,
         url,
         isPartOf: { '@id': `${SITE}/coa#page` },
@@ -440,7 +460,7 @@ function LotIndex({ rows }: { rows: CoaRow[] }) {
             position: i + 1,
             item: {
               '@type': 'Dataset',
-              name: `${r.compound} — lot ${r.lotId} certificate of analysis`,
+              name: `${r.compound}: lot ${r.lotId} certificate of analysis`,
               url: `${SITE}/coa/${encodeURIComponent(r.coaNumber ?? r.lotId)}`,
               identifier: r.coaNumber ?? r.lotId,
               creator: { '@id': `${SITE}/#organization` },

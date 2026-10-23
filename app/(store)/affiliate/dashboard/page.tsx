@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import { tierForOrderCount, AFFILIATE_PROGRAM, hasSplitPlan } from '@/lib/affiliate';
 
 export const metadata = {
-  title: 'Dashboard — Merit Sciences Affiliate',
+  title: 'Dashboard · Merit Sciences Affiliate',
 };
 
 export const dynamic = 'force-dynamic';

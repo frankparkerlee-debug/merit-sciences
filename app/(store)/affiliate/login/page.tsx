@@ -5,7 +5,7 @@ import { getCurrentAffiliate } from '@/lib/affiliate-session';
 import { LoginForm } from './LoginForm';
 
 export const metadata = {
-  title: 'Affiliate sign-in — Merit Sciences',
+  title: 'Affiliate sign-in · Merit Sciences',
   description: 'Sign in to your Merit Sciences affiliate dashboard.',
 };
 

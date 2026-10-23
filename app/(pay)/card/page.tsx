@@ -1,7 +1,7 @@
 import { CardSetup } from './CardSetup';
 
 export const metadata = {
-  title: { absolute: 'Save a card — Merit Sciences' },
+  title: { absolute: 'Save a card · Merit Sciences' },
   robots: { index: false, follow: false, nocache: true },
 };
 export const dynamic = 'force-dynamic';

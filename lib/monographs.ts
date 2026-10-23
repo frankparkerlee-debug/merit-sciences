@@ -122,7 +122,7 @@ export const COMPOUND_META: CompoundMeta[] = [
     key: 'semax', slug: 'semax', title: 'Semax',
     aka: ['ACTH(4-10) analog', 'Met-Glu-His-Phe-Pro-Gly-Pro'],
     tagline: 'A synthetic ACTH(4-10) analog studied in neuroprotection and BDNF models.',
-    product: { handle: 'semax', fromPrice: 56, purity: '≥99%', vialSize: '10 mg' },
+    product: { handle: 'semax-30mg', fromPrice: 111, purity: '≥99%', vialSize: '30 mg' },
   },
   {
     key: 'pt-141', slug: 'pt-141', title: 'PT-141',
@@ -152,7 +152,7 @@ export const COMPOUND_META: CompoundMeta[] = [
     key: 'klow', slug: 'klow-blend', title: 'KLOW Blend (BPC-157 · GHK-Cu · TB-500 · KPV)',
     aka: ['KLOW', 'four-peptide blend'],
     tagline: 'A four-peptide repair blend adding the KPV tripeptide to the GLOW base.',
-    product: { handle: 'klow', fromPrice: 175, purity: '≥99%', vialSize: '80 mg' },
+    product: { handle: 'bpc157-ghk-cu-50-tb500-kpv-klow-80mg', fromPrice: 175, purity: '≥99%', vialSize: '80 mg' },
   },
   {
     key: 'bpc-157', slug: 'bpc-157', title: 'BPC-157',
@@ -179,7 +179,7 @@ export const COMPOUND_META: CompoundMeta[] = [
     key: 'ipamorelin', slug: 'ipamorelin', title: 'Ipamorelin',
     aka: ['GHS-R1a agonist', 'selective growth hormone secretagogue'],
     tagline: 'The pentapeptide secretagogue reported to raise growth hormone without a matching cortisol rise.',
-    product: { handle: 'ipamorelin-10mg', fromPrice: 60, purity: '≥99%', vialSize: '10 mg' },
+    // No product: the standalone ipamorelin SKU is not active (2026-10-22).
     relatedSlugs: ['growth-hormone-secretagogue-class-overview', 'cjc-1295'],
   },
   {

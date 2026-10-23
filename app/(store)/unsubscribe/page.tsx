@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { unsubscribeNewsletter } from '@/lib/prospect-journey';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Unsubscribe — Merit Sciences' };
+export const metadata = { title: 'Unsubscribe · Merit Sciences' };
 
 export default async function UnsubscribePage({
   searchParams,

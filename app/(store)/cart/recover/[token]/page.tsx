@@ -5,7 +5,7 @@ import type { CartLine } from '@/lib/cart';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
-  title: 'Restoring your cart… — Merit Sciences',
+  title: 'Restoring your cart… · Merit Sciences',
   robots: { index: false, follow: false },
 };
 

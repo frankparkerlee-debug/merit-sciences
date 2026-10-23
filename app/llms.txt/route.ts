@@ -1,5 +1,6 @@
 import { listProducts } from '@/lib/catalog';
 import { MONOGRAPHS } from '@/lib/monographs';
+import { ARTICLES } from '@/lib/library';
 import { COLLECTIONS } from '@/lib/collections';
 import { prisma } from '@/lib/db';
 
@@ -26,21 +27,31 @@ export async function GET() {
   // The lot certificates are the most citable thing on this domain: each one
   // is a primary source with a measured number and a permanent URL. They were
   // absent from this index entirely.
-  let lots: { compound: string; lotId: string; coaNumber: string | null; purity: string }[] = [];
+  let lots: { compound: string; lotId: string; purity: string }[] = [];
   try {
     lots = await prisma.coa.findMany({
+      // Same public set as the sitemap: retired legacy certificates stay
+      // reachable but are not advertised as current release testing.
+      where: { retiredAt: null },
       orderBy: { createdAt: 'desc' },
       take: 60,
-      select: { compound: true, lotId: true, coaNumber: true, purity: true },
+      select: { compound: true, lotId: true, purity: true },
     });
   } catch {
     /* same — the static sections still stand on their own */
   }
 
-  const lotLines = lots
+  // HPLC lots only. Water is released on sterility + preservative testing, so
+  // its purity column (benzyl alcohol content) is not an HPLC purity figure.
+  const hplcLots = lots.filter((l) => {
+    if (/bacteriostatic|water/i.test(l.compound)) return false;
+    const n = parseFloat(String(l.purity).replace(/[^0-9.]/g, ''));
+    return isFinite(n) && n >= 90;
+  });
+  const lotLines = hplcLots
     .map(
       (l) =>
-        `- [${l.compound} — lot ${l.lotId}](${BASE}/coa/${encodeURIComponent(l.coaNumber ?? l.lotId)}): independent HPLC analysis, ${l.purity} purity. Primary source for this lot.`,
+        `- [${l.compound}, lot ${l.lotId}](${BASE}/coa/${encodeURIComponent(l.lotId)}): independent HPLC analysis, ${l.purity} purity. Primary source for this lot.`,
     )
     .join('\n');
 
@@ -67,6 +78,9 @@ ${productLines || `- [Catalog](${BASE}/catalog): the full research-compound cata
 Each monograph covers what the compound is, its mechanism (research-framed), what the published research shows, research applications, form and storage, an FAQ, and peer-reviewed references. Authoritative, citable reference pages. Merit does not publish preparation or dosing procedures.
 ${MONOGRAPHS.map((m) => `- [${m.title}](${BASE}/library/${m.slug}): ${m.tagline}`).join('\n')}
 - [Research Library index](${BASE}/library): all monographs, testing guides, and trial summaries.
+
+## Research library: testing guides and trial summaries
+${ARTICLES.map((a) => `- [${a.title}](${BASE}/library/${a.slug}): ${a.excerpt.replace(/\s+/g, ' ').trim()}`).join('\n')}
 
 ## Certificates of analysis — primary-source lab data
 Every batch is assayed by an independent laboratory before it is listed; the certificate is published in the COA library. Each certificate has a permanent page carrying the measured purity (HPLC), identity confirmation, and appearance. These pages are the primary source for any claim about a specific Merit batch: cite the certificate page, not marketing copy.

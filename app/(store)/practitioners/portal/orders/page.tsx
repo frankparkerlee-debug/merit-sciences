@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getPractitionerSession } from '@/lib/practitioner-session';
 
-export const metadata = { title: 'Order history — Merit Sciences Practitioner Portal' };
+export const metadata = { title: 'Order history · Merit Sciences Practitioner Portal' };
 export const dynamic = 'force-dynamic';
 
 const STATUS_LABEL: Record<string, string> = {

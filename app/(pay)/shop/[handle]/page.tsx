@@ -24,7 +24,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { handle } = await params;
   const p = await getSupplyProduct(handle);
-  return { title: p ? `${p.title} — Merit Clinical` : 'Product' };
+  return { title: p ? `${p.title} · Merit Clinical` : 'Product' };
 }
 
 export default async function SupplyPDP({

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getPractitionerSession } from '@/lib/practitioner-session';
 import { LoginForm } from './LoginForm';
 
-export const metadata = { title: 'Sign in — Merit Sciences Practitioner Portal' };
+export const metadata = { title: 'Sign in · Merit Sciences Practitioner Portal' };
 export const dynamic = 'force-dynamic';
 
 export default async function PractitionerLoginPage({

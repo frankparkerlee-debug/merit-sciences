@@ -7,12 +7,12 @@ import { LeadCaptureForm } from './LeadCaptureForm';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: { absolute: 'Practitioner Program — Merit Sciences' },
+  title: { absolute: 'Practitioner Program · Merit Sciences' },
   description:
     'Account pricing for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate published on every batch. No minimums.',
   alternates: { canonical: '/practitioners' },
   openGraph: {
-    title: 'Merit Sciences Practitioner Program — sourcing your practice can stand behind',
+    title: 'Merit Sciences Practitioner Program: sourcing your practice can stand behind',
     description:
       'Verified-account access for licensed practitioners. Compounded in a licensed US facility, independently assayed, certificate published on every batch. No minimums, no contracts.',
     url: 'https://meritsciences.com/practitioners',

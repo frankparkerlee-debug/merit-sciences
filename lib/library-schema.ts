@@ -45,7 +45,7 @@ export function monographArticleSchema(m: Monograph, dateModified: string) {
     '@context': 'https://schema.org',
     '@type': 'ScholarlyArticle',
     '@id': `${url}#article`,
-    headline: `${m.title}: mechanism, research & handling`,
+    headline: `${m.title}: mechanism, research & storage`,
     description: m.tagline,
     /* The canonical node for this substance across the whole estate. The
        category pages at /catalog/<slug> and the topic hubs on theassay.co

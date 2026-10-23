@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import { getPricingContext, priceFor } from '@/lib/pricing';
 import { CardOnFile } from './CardOnFile';
 
-export const metadata = { title: { absolute: 'Practitioner Portal — Merit Sciences' } };
+export const metadata = { title: { absolute: 'Practitioner Portal · Merit Sciences' } };
 export const dynamic = 'force-dynamic';
 
 export default async function PractitionerPortalPage() {

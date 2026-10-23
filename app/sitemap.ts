@@ -19,25 +19,29 @@ const BASE = 'https://meritsciences.com';
  * are excluded here and disallowed in robots.ts.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
+  // lastModified is only emitted where a real date exists (product updatedAt,
+  // lot publication date). Stamping every URL with the request time told
+  // crawlers the whole site changed on every fetch, which teaches them to
+  // ignore the field.
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
-    { url: `${BASE}/catalog`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${BASE}/stacks`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE}/practitioners`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE}/coa`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${BASE}/library`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${BASE}/shipping`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${BASE}/returns`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${BASE}/research-disclosure`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${BASE}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
-    { url: `${BASE}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${BASE}/`, changeFrequency: 'weekly', priority: 1 },
+    { url: `${BASE}/catalog`, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE}/stacks`, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE}/about`, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/affiliate`, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${BASE}/practitioners`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/coa`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE}/library`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE}/shipping`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE}/returns`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE}/research-disclosure`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE}/terms`, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${BASE}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
     // Category landing pages (lib/collections.ts). Authored, not DB-derived,
     // so they are safe to list unconditionally.
     ...COLLECTION_SLUGS.map((slug) => ({
       url: `${BASE}/catalog/${slug}`,
-      lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.85,
     })),
@@ -51,9 +55,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const products = await listProducts({ status: 'active', channel: 'rua' });
     activeHandles = new Set(products.map((p) => p.handle));
+    // The Product shape carries no timestamp, so read updatedAt directly.
+    // A failure here only drops lastModified, never the URLs.
+    const updated = new Map<string, Date>();
+    try {
+      const rows = await prisma.product.findMany({
+        where: { handle: { in: Array.from(activeHandles) } },
+        select: { handle: true, updatedAt: true },
+      });
+      for (const r of rows) updated.set(r.handle, r.updatedAt);
+    } catch {
+      /* omit lastModified rather than fake it */
+    }
     productRoutes = products.map((p) => ({
       url: `${BASE}/products/${p.handle}`,
-      lastModified: now,
+      ...(updated.has(p.handle) ? { lastModified: updated.get(p.handle) } : {}),
       changeFrequency: 'weekly',
       priority: 0.9,
     }));
@@ -105,7 +121,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     (s) => !activeHandles || s.handles.every((h) => activeHandles!.has(h)),
   ).map((s) => ({
     url: `${BASE}/stacks/${s.slug}`,
-    lastModified: now,
     changeFrequency: 'monthly',
     priority: 0.7,
   }));
@@ -114,7 +129,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // guides, trial summaries). Real molecule names live here → strong SEO surface.
   const libraryRoutes: MetadataRoute.Sitemap = ARTICLES.map((a) => ({
     url: `${BASE}/library/${a.slug}`,
-    lastModified: now,
     changeFrequency: 'monthly',
     priority: 0.6,
   }));
@@ -123,7 +137,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // mechanism + cited research). Higher priority than guide articles.
   const monographRoutes: MetadataRoute.Sitemap = MONOGRAPHS.map((m) => ({
     url: `${BASE}/library/${m.slug}`,
-    lastModified: now,
     changeFrequency: 'monthly',
     priority: 0.8,
   }));

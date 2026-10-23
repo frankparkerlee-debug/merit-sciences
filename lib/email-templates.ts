@@ -1023,9 +1023,6 @@ export function renderPostDeliveryFollowUp(d: PostDeliveryData): { subject: stri
           <p style="margin:0 0 8px 0;">
             &middot; Re-share the <strong>Certificate of Analysis</strong> for this batch &mdash; reply with "CoA" and we&rsquo;ll send the PDF.
           </p>
-          <p style="margin:0 0 8px 0;">
-            &middot; Help with <strong>reconstitution math</strong> if you&rsquo;re working through it &mdash; reply with your vial size + target.
-          </p>
           <p style="margin:0;">
             &middot; Anything looking off? Reply and we&rsquo;ll make it right.
           </p>
@@ -1057,7 +1054,6 @@ Your ${d.primaryProductTitle} shipment should have arrived. Checking in.
 
 If you need:
   · The Certificate of Analysis (CoA) re-sent — reply "CoA"
-  · Help with reconstitution math — reply with vial size + target
   · Anything looking off — reply and we'll make it right
 
 We don't do dosing advice or human-outcome claims. We just ship clean batches.
@@ -1072,7 +1068,7 @@ Browse related: ${d.catalogUrl}
   return {
     subject: `How's your ${d.primaryProductTitle} batch?`,
     html: shell({
-      preheader: `Quick check-in on your ${d.primaryProductTitle} order. Reply if you need CoA, reconstitution help, or anything else.`,
+      preheader: `Quick check-in on your ${d.primaryProductTitle} order. Reply if you need the CoA or anything else.`,
       eyebrow: 'Follow-up',
       body,
     }),

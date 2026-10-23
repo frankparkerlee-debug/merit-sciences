@@ -32,8 +32,13 @@ export function productJsonLd(opts: {
   description: string;
   image: string;
   inStock: boolean;
+  /** Monograph slug for this product (lib/monographs.ts), when one exists. */
+  monographSlug?: string;
 }) {
-  const { product: p, retailCents, description, image, inStock } = opts;
+  const { product: p, retailCents, description, image, inStock, monographSlug } = opts;
+  const url = abs(`/products/${p.handle}`);
+  // 'TBD' is a placeholder lot id, not a manufacturer part number.
+  const mpn = p.lot?.id?.trim();
 
   const props: PropVal[] = [];
   const add = (name: string, value?: string | number | null) => {
@@ -52,21 +57,24 @@ export function productJsonLd(opts: {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
+    '@id': `${url}#product`,
     name: `${p.title} ${p.vialSize}`.trim(),
     description,
     sku: p.handle,
-    ...(p.lot?.id ? { mpn: p.lot.id } : {}),
+    ...(mpn && mpn.toUpperCase() !== 'TBD' ? { mpn } : {}),
     category: 'Research compound',
     brand: { '@type': 'Brand', name: 'Merit Sciences' },
     image: image ? [image] : undefined,
     ...(props.length ? { additionalProperty: props } : {}),
+    // Ties the product to the compound entity its monograph emits.
+    ...(monographSlug ? { subjectOf: { '@id': `https://meritsciences.com/library/${monographSlug}#substance` } } : {}),
     offers: {
       '@type': 'Offer',
-      url: abs(`/products/${p.handle}`),
+      url,
       priceCurrency: 'USD',
       price: (retailCents / 100).toFixed(2),
       availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      seller: { '@type': 'Organization', name: 'Merit Sciences' },
+      seller: { '@id': 'https://meritsciences.com/#organization' },
     },
   };
 }

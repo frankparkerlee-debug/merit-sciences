@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { LookupForm } from './LookupForm';
 
 export const metadata = {
-  title: 'Look up your order — Merit Sciences',
+  title: 'Look up your order · Merit Sciences',
   description: 'Enter your email + order number to receive a one-time link to view your order.',
 };
 

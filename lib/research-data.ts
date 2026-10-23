@@ -37,7 +37,7 @@ export type ResearchData = {
   discovery?: string;                  // 1-line origin
   mechanism?: string;                  // proposed mechanism, RUO-framed
   halfLife?: string;                   // preclinical / research-context only
-  solubility?: string;                 // research handling guidance
+  solubility?: string;                 // physicochemical context only, never preparation guidance
   researchApplications?: string[];     // 3-5 short bullets
   references: Citation[];
 };
@@ -152,7 +152,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'BPC-157 has been investigated in preclinical models for effects on angiogenesis (VEGF/VEGFR2 axis modulation), nitric oxide system regulation, growth hormone receptor expression, and dopaminergic / serotonergic system interactions. TB-500 functions primarily as an actin-sequestering protein involved in cell motility, organogenesis, and the regulation of actin polymerization in research models. Both peptides remain under active investigation; mechanisms described above reflect preclinical findings, not clinical conclusions.',
     halfLife: 'BPC-157: ~4 hr (preclinical, rat). TB-500: not well-characterized in the public literature.',
-    solubility: 'Both peptides reconstitute readily in bacteriostatic water at 2–5 mg/mL.',
+    solubility: 'Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Tissue-repair pathway investigation',
       'Tendon and ligament healing models',
@@ -205,7 +205,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Toll-like receptor 9 (TLR9) and MyD88-dependent signaling pathway activation has been reported as the dominant proximal mechanism. Downstream effects include dendritic-cell maturation, enhanced Th1 cytokine production, and modulation of regulatory T-cell populations in preclinical models.',
     halfLife: '~2 hr (subcutaneous administration, preclinical models).',
-    solubility: 'Highly water-soluble; stable in bacteriostatic water.',
+    solubility: 'Highly water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Immunomodulation research',
       'Antiviral pathway investigation',
@@ -248,7 +248,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Reported to stimulate lipolysis and inhibit lipogenesis in adipocyte models. The mechanism is proposed to be independent of the canonical GH receptor pathway; specific receptor targets remain incompletely characterized in the public literature.',
     halfLife: '~3 hr (preclinical pharmacokinetic data).',
-    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    solubility: 'Water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Lipolysis pathway research',
       'GH-fragment pharmacology',
@@ -299,7 +299,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'IGF-1 receptor agonist with potency comparable to native IGF-1 at the receptor itself. The pharmacological distinction lies in the LR3 variant\'s reduced affinity for IGFBPs (particularly IGFBP-3), which extends free hormone availability in circulation and at target tissues.',
     halfLife: '~5–6 hr (vs ~10–15 min for native IGF-1 in preclinical models).',
-    solubility: 'Reconstitutes in dilute acetic acid (preferred for solubility) or bacteriostatic water.',
+    solubility: 'Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'IGF-1 receptor pharmacology',
       'Cell-culture anabolic research',
@@ -340,7 +340,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Selective agonist at the GHRH receptor on anterior pituitary somatotrophs. Receptor activation triggers cAMP-mediated calcium influx and stimulates pulsatile growth hormone release from pituitary stores.',
     halfLife: '~10–20 min (rapid serum clearance is characteristic of GHRH analogs).',
-    solubility: 'Highly soluble in bacteriostatic water; stable for ~30 days refrigerated after reconstitution.',
+    solubility: 'Highly water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'GH / IGF-1 axis research',
       'Pituitary somatotroph function',
@@ -392,7 +392,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Selective agonist at pituitary GHRH receptors. The trans-hexenoic acid modification confers DPP-IV resistance, producing longer duration of GHRH-receptor activation per dose. Downstream effects are mediated by pulsatile GH release and consequent IGF-1 generation.',
     halfLife: '~25–40 min (subcutaneous administration in clinical studies).',
-    solubility: 'Reconstitutes in sterile water; stable refrigerated after reconstitution.',
+    solubility: 'Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'GHRH receptor pharmacology',
       'HIV-lipodystrophy research',
@@ -449,7 +449,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Binds and activates both the GIP receptor and the GLP-1 receptor with picomolar affinity. The dual-incretin pharmacology is reported to produce additive effects on insulin secretion and glucagon suppression in preclinical metabolic research models.',
     halfLife: '~5 days (preclinical and clinical).',
-    solubility: 'Reconstitutes in bacteriostatic water; clear solution.',
+    solubility: 'Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Incretin signaling research',
       'Glucose homeostasis models',
@@ -508,7 +508,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Picomolar-affinity agonist at GIP, GLP-1, and glucagon receptors. The balanced triple-agonist profile is hypothesized to combine glycemic control (GLP-1/GIP) with increased energy expenditure (glucagon) in metabolic research models.',
     halfLife: '~6 days (early clinical pharmacokinetic reports).',
-    solubility: 'Reconstitutes in bacteriostatic water.',
+    solubility: 'Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Triple-incretin pharmacology',
       'Energy expenditure research',
@@ -562,7 +562,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Redox cofactor in catabolic and biosynthetic pathways (NAD+/NADH cycling). Substrate for sirtuin deacetylase activity. Substrate for PARP-mediated DNA damage signaling. Central to mitochondrial electron-transport-chain function.',
     halfLife: 'Variable by route; intracellular NAD+ pools are continuously cycled.',
-    solubility: 'Highly water-soluble. Reconstitute in bacteriostatic water.',
+    solubility: 'Highly water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Sirtuin biology research',
       'Mitochondrial bioenergetics',
@@ -624,7 +624,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Modulates gene expression in cultured fibroblasts (downregulation of TGF-β and upregulation of decorin reported in dermal research models). Facilitates copper transport across cell membranes. Has been associated with anti-inflammatory cytokine profiles and fibroblast activation in preclinical work.',
     halfLife: 'Short serum half-life (minutes) reported in preclinical pharmacokinetic studies.',
-    solubility: 'Highly soluble in bacteriostatic water; presents a distinctive blue color in solution from the Cu²⁺ chelate.',
+    solubility: 'Highly water-soluble; presents a distinctive blue color in solution from the Cu²⁺ chelate. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Dermal fibroblast research',
       'Hair follicle biology',
@@ -677,7 +677,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Translocates from the mitochondria to the nucleus under metabolic stress (glucose restriction, exercise). In the nucleus it regulates transcription of stress-responsive genes. Also activates AMPK signaling and modulates the folate-methionine cycle in cultured cells.',
     halfLife: 'Not well-characterized in the public literature.',
-    solubility: 'Soluble in bacteriostatic water.',
+    solubility: 'Water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Mitochondrial signaling research',
       'AMPK pathway investigation',
@@ -729,7 +729,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Reported telomerase induction and telomere elongation in cultured human somatic cells. Modulation of circadian rhythm gene expression and melatonin signaling in preclinical models. Specific receptor or transcription-factor targets remain incompletely characterized in the public literature.',
     halfLife: 'Short circulating half-life characteristic of short peptides.',
-    solubility: 'Highly water-soluble; reconstitutes readily in bacteriostatic water.',
+    solubility: 'Highly water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Telomerase activity research',
       'Circadian rhythm investigation',
@@ -776,7 +776,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Reported effects on GABAergic and serotonergic neurotransmission in preclinical research. Modulates BDNF and NGF expression in some rodent models. Acts intranasally or peripherally with reported CNS bioavailability.',
     halfLife: 'Short circulating half-life; CNS effects reported well beyond serum-detectable window in research models.',
-    solubility: 'Soluble in bacteriostatic water; sublingual / intranasal formulations are common in the research literature.',
+    solubility: 'Water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Anxiolytic-pathway research',
       'BDNF / NGF expression studies',
@@ -819,7 +819,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Modulates BDNF and NGF expression in cultured glial cells and rodent brain tissue. Affects dopaminergic and serotonergic neurotransmission in preclinical models. Specific receptor targets continue to be characterized.',
     halfLife: 'Short circulating half-life; intranasal administration is the primary route in research protocols.',
-    solubility: 'Highly water-soluble; commonly formulated as an intranasal solution.',
+    solubility: 'Highly water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Neurotrophic factor research (BDNF, NGF)',
       'Monoamine neurotransmission studies',
@@ -975,7 +975,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Selective agonism at the GLP-1 receptor, a class B G-protein-coupled receptor. Receptor engagement modulates glucose-dependent insulin secretion, glucagon release, and central pathways implicated in satiety in preclinical models.',
     halfLife: '~7 days (engineered albumin binding; pharmacokinetic literature).',
-    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    solubility: 'Water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'GLP-1 receptor signaling research',
       'Incretin and islet-biology models',
@@ -1016,7 +1016,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Competitive inhibition of NNMT, reducing enzymatic methylation of nicotinamide. Proposed downstream effects in the literature include preservation of nicotinamide for NAD+ salvage and modulation of the cellular SAM/SAH methylation balance in adipocyte models.',
     halfLife: 'Not well-characterized in the public literature; small-molecule pharmacokinetics differ from the catalog peptides.',
-    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    solubility: 'Water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'NNMT enzyme-inhibition research',
       'NAD+ salvage-pathway studies',
@@ -1048,7 +1048,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Component-level: BPC-157 is studied for cytoprotective and angiogenic signaling; GHK-Cu for copper-dependent modulation of extracellular-matrix and remodeling genes; TB-500 for actin sequestration and cell-migration pathways. No combined mechanism is established for the blend.',
     halfLife: 'Component-dependent (see the individual BPC-157, GHK-Cu, and TB-500 records).',
-    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    solubility: 'Water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Tissue-repair pathway research (component-based)',
       'Extracellular-matrix and collagen models',
@@ -1089,7 +1089,7 @@ export const RESEARCH_DATA: Record<string, ResearchData> = {
     mechanism:
       'Component-level: BPC-157 (cytoprotection / angiogenesis), GHK-Cu (matrix remodeling), TB-500 (actin / cell migration), and KPV (NF-κB-pathway modulation in inflammation models). No combined mechanism is established for the blend.',
     halfLife: 'Component-dependent (see the individual component records).',
-    solubility: 'Water-soluble; reconstitutes in bacteriostatic water.',
+    solubility: 'Water-soluble. Physicochemical context only. Merit Sciences publishes no reconstitution or preparation procedures.',
     researchApplications: [
       'Tissue-repair and remodeling research (component-based)',
       'Inflammation-pathway models (KPV)',

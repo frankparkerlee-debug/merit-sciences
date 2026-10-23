@@ -27,13 +27,21 @@ import { productJsonLd, faqJsonLd, breadcrumbJsonLd, abs } from '@/lib/seo';
 
 type Props = { params: { handle: string } };
 
+/** Trim to at most `max` characters, cutting at a word boundary. */
+function capAtWord(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  const at = cut.lastIndexOf(' ');
+  return `${(at > 0 ? cut.slice(0, at) : cut).replace(/[\s,.;:]+$/, '')}…`;
+}
+
 // Generic PDP FAQs — rendered as the accordion AND emitted as FAQPage
 // JSON-LD (AI answer-engines extract this format most reliably).
 // Compound-specific Q&A is layered on per target in the content phase.
 const FAQ_ITEMS: { q: string; a: string }[] = [
   {
     q: 'Why does Merit ship lyophilized?',
-    a: 'Lyophilized format gives ≥24 months sealed stability at -20°C — significantly longer than pre-reconstituted, which has a 30-day shelf life once in solution. You reconstitute at the moment of use, when potency is at its peak.',
+    a: 'Lyophilized (freeze-dried) material is stable in sealed storage: ≥24 months at -20°C. Peptides held in solution degrade far faster, so every compound ships as a dry powder in a sealed vial.',
   },
   {
     q: 'How do I check the certificate for my batch?',
@@ -91,10 +99,19 @@ export async function generateMetadata({ params }: Props) {
 
   // No "| Merit Sciences" here — the root layout's title template appends
   // "· Merit Sciences" (doubling it produced "… | Merit Sciences · Merit Sciences").
-  const title = `${name} ${p.vialSize} — ≥99% HPLC, Scan-to-Verify COA`;
+  // Bacteriostatic water is released on sterility + preservative testing, not
+  // an HPLC purity assay, so it must not carry the ≥99% HPLC claim.
+  const isWater = p.handle === 'bacteriostatic-water';
+  const title = isWater
+    ? `${name} ${p.vialSize}: Scan-to-Verify COA`
+    : `${name} ${p.vialSize}: ≥99% HPLC, Scan-to-Verify COA`;
   const entity = cls ? `${name}: ${cls.charAt(0).toLowerCase()}${cls.slice(1)}. ` : '';
-  const description =
-    `${entity}${name} ${p.vialSize} research compound — HPLC-tested ≥99% purity, scan-to-verify COA on every label, ships 48hr from San Antonio. Research use only — not for human or veterinary use.`;
+  const description = capAtWord(
+    isWater
+      ? `${name} ${p.vialSize}, lot-documented with a scan-to-verify COA on every label. Ships 48hr from San Antonio. Research use only, not for human or veterinary use.`
+      : `${entity}${name} ${p.vialSize} research compound, HPLC-tested ≥99% purity, scan-to-verify COA on every label, ships 48hr from San Antonio. Research use only, not for human or veterinary use.`,
+    160,
+  );
 
   return {
     title,
@@ -119,7 +136,7 @@ export async function generateMetadata({ params }: Props) {
       title: `${name} ${p.vialSize} · Merit Sciences`,
       description,
       images: [
-        { url: image, width: 1200, height: 1200, alt: `${name} ${p.vialSize} research vial — Merit Sciences` },
+        { url: image, width: 1200, height: 1200, alt: `${name} ${p.vialSize} research vial · Merit Sciences` },
       ],
     },
     twitter: {
@@ -180,13 +197,14 @@ export default async function ProductPage({ params }: Props) {
   const seoDescription =
     research?.description?.[0]
     || raw.oneLiner
-    || `${raw.title} ${raw.vialSize} — research compound, HPLC-tested to ≥99% purity, batch-tested, with the certificate published in the COA library.`;
+    || `${raw.title} ${raw.vialSize}: research compound, HPLC-tested to ≥99% purity, batch-tested, with the certificate published in the COA library.`;
   const productSchema = productJsonLd({
     product: raw,
     retailCents: raw.priceCents,
     description: seoDescription,
     image: abs(productImage(raw.imageUrl)),
     inStock: raw.status === 'active',
+    monographSlug: getMonographForHandle(raw.handle)?.slug,
   });
   const breadcrumbSchema = breadcrumbJsonLd([
     { name: 'Home', path: '/' },

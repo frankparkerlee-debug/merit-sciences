@@ -16,7 +16,7 @@ function sizeWeight(s: string): number {
 import { CatalogClient } from './CatalogClient';
 
 const CATALOG_DESCRIPTION =
-  'The full Merit Sciences catalog — lab-verified research compounds, HPLC-tested ≥99% per batch, with a QR on every label that opens the COA library. Browse by pathway family or build a stack. Ships 48hr from San Antonio.';
+  'The full Merit Sciences catalog: lab-verified research compounds, HPLC-tested ≥99% per batch, with a QR on every label that opens the COA library. Browse by pathway family or build a stack. Ships 48hr from San Antonio.';
 
 /**
  * The paid-traffic view is noindex: it is a partial copy of this same catalog,

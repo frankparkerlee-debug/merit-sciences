@@ -134,6 +134,11 @@ const nextConfig = {
       libIndex('cjc-1295-ipamorelin-reconstitution-protocol'),
       libIndex('glutathione-reconstitution-protocol'),
       libIndex('kpv-reconstitution-protocol'),
+
+      // ── Retired preparation guides (removed 2026-10-22) ──────────────
+      libIndex('choosing-syringe-and-needle'),
+      libIndex('aliquoting-a-peptide-vial-safely'),
+      libIndex('bacteriostatic-water-vs-sterile-water'),
     ];
   },
 };

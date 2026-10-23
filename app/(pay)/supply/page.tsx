@@ -19,7 +19,7 @@ import PayHomePage from '../pay-home/page';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Merit Clinical — advanced wound care & supply',
+  title: 'Merit Clinical · advanced wound care & supply',
 };
 
 export default async function SupplyHome() {

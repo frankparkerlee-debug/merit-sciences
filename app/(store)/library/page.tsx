@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   // Root template appends "· Merit Sciences" — don't duplicate it here.
   title: 'Research Library',
   description:
-    'Compound monographs with mechanism of action and published research, trial summaries, and COA/HPLC/mass-spec explainers — the reference library for the research community. For research use only.',
+    'Compound monographs with mechanism of action and published research, trial summaries, and COA/HPLC/mass-spec explainers: the reference library for the research community. For research use only.',
   alternates: { canonical: 'https://meritsciences.com/library' },
 };
 

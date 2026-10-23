@@ -6,7 +6,7 @@ import { SettingsForms } from './SettingsForms';
 import { startStripeOnboarding } from './actions';
 
 export const metadata = {
-  title: 'Settings — Merit Sciences Affiliate',
+  title: 'Settings · Merit Sciences Affiliate',
 };
 
 export const dynamic = 'force-dynamic';
