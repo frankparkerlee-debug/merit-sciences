@@ -23,7 +23,7 @@
  * resurrect a stale cart).
  */
 import 'server-only';
-import { decodeAttrCookie } from './attribution';
+import { decodeAttrCookie, googleClickParam } from './attribution';
 import { randomBytes } from 'crypto';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { prisma } from './db';
@@ -111,10 +111,9 @@ export async function createHandoff(payload: HandoffPayload): Promise<string> {
    *
    * Gated on source='google' so no other network's click id is ever handed
    * to Google. */
-  let gclid: string | null = null;
+  let google: ReturnType<typeof googleClickParam> = null;
   try {
-    const a = decodeAttrCookie(payload.attr);
-    if (a?.clickId && (a.source ?? '').toLowerCase() === 'google') gclid = a.clickId;
+    google = googleClickParam(decodeAttrCookie(payload.attr));
   } catch {
     /* attribution is best-effort; never block the handoff on it */
   }
@@ -125,7 +124,7 @@ export async function createHandoff(payload: HandoffPayload): Promise<string> {
   const clickGoId = normalizeClickGoId(payload.clickGoId);
 
   let url = `${origin}/checkout?c=${token}`;
-  if (gclid) url += `&gclid=${encodeURIComponent(gclid)}`;
+  if (google) url += `&${google.key}=${encodeURIComponent(google.value)}`;
   if (clickGoId) url += `&${CLICKGO_PARAM}=${encodeURIComponent(clickGoId)}`;
   return url;
 }

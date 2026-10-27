@@ -20,6 +20,7 @@ export type Attribution = {
   content?: string | null; // utm_content — ad / creative id
   term?: string | null; // utm_term
   clickId?: string | null; // fbclid / ttclid / gclid (platform click id)
+  clickIdKey?: string | null; // the param it arrived on: gclid, gbraid, wbraid…
   referrer?: string | null; // referring host at first touch
   landing?: string | null; // first landing path
   ts?: number; // first-touch timestamp (ms)
@@ -105,7 +106,8 @@ export function buildAttribution(
   pathname: string,
   nowMs: number,
 ): Attribution {
-  const clickId = CLICK_ID_KEYS.map((k) => sp.get(k)).find(Boolean) ?? null;
+  const clickIdKey = CLICK_ID_KEYS.find((k) => sp.get(k)) ?? null;
+  const clickId = clickIdKey ? sp.get(clickIdKey) : null;
   // Infer source from the click id when utm_source is absent (a raw fbclid
   // with no UTMs still tells us it's a Meta click).
   let source = clip(sp.get('utm_source'));
@@ -122,6 +124,7 @@ export function buildAttribution(
     content: clip(sp.get('utm_content')),
     term: clip(sp.get('utm_term')),
     clickId: clip(clickId, 255),
+    clickIdKey,
     referrer: refererHost(referer),
     landing: clip(pathname, 200),
     ts: nowMs,
@@ -158,6 +161,22 @@ export function orderAttributionFields(attr: Attribution | null, clickGoId: stri
     referrer: attr.referrer ?? null,
     landing: attr.landing ?? null,
   };
+}
+
+/**
+ * The Google click id and the parameter it must travel under. Google matches
+ * a sale to an ad click only when the id comes back under its own name:
+ * iPhone traffic arrives with `gbraid`/`wbraid`, not `gclid`, and a gbraid
+ * handed over as `gclid=` matches nothing (the 2026-10-21 cmpd-test-b order
+ * was lost that way). Cookies written before clickIdKey existed are inferred
+ * from the value: gbraid/wbraid ids start "0AAAAA", gclids never do.
+ */
+export function googleClickParam(a: Attribution | null): { key: 'gclid' | 'gbraid' | 'wbraid'; value: string } | null {
+  if (!a?.clickId || (a.source ?? '').toLowerCase() !== 'google') return null;
+  const k = a.clickIdKey;
+  if (k === 'gclid' || k === 'gbraid' || k === 'wbraid') return { key: k, value: a.clickId };
+  if (k) return null; // a non-Google id on a google-sourced visit: never hand it to Google
+  return { key: a.clickId.startsWith('0AAAAA') ? 'gbraid' : 'gclid', value: a.clickId };
 }
 
 export function encodeAttrCookie(a: Attribution): string {
