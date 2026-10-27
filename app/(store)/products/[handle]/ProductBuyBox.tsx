@@ -6,6 +6,7 @@ import type { Product } from '@/lib/product-types';
 import { money, productDisplayName } from '@/lib/product-types';
 import { useCart } from '@/lib/cart';
 import { track, trackViewContent, trackAddToCart } from '@/lib/analytics';
+import { pushStape } from '@/lib/stape';
 import { familyLabel, type Family, type RestockSignal } from '@/lib/catalog-meta';
 import { DeliveryPromise } from './DeliveryPromise';
 
@@ -92,6 +93,20 @@ export function ProductBuyBox({ product, family, pharmacistNote, restock, siblin
       handle: product.handle,
       name: product.title,
       family: family ?? undefined,
+    });
+    const price = product.priceCents / 100;
+    pushStape('view_item', {
+      value: price,
+      items: [
+        {
+          item_id: product.handle,
+          item_name: productDisplayName(product),
+          item_brand: 'Merit',
+          item_category: family ? familyLabel(family) : undefined,
+          price,
+          quantity: 1,
+        },
+      ],
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.handle]);

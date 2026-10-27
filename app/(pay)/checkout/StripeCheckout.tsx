@@ -11,6 +11,7 @@ import {
 } from '@stripe/react-stripe-js';
 import type { CartLine } from '@/lib/cart';
 import { checkoutClickGoId } from '@/lib/clickgo';
+import { pushStape, stapeItems } from '@/lib/stape';
 
 /**
  * Stripe card checkout, embedded on the payment domain.
@@ -202,6 +203,9 @@ function StripeForm({
       onError('Please complete your shipping address.');
       return;
     }
+    const stapeLines = stapeItems(lines);
+    pushStape('add_shipping_info', { value: amountCents / 100, items: stapeLines });
+    pushStape('add_payment_info', { value: amountCents / 100, items: stapeLines, payment_type: 'saved_card' });
     const res = await fetch('/api/stripe/charge-saved', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -268,6 +272,11 @@ function StripeForm({
       onError('Please complete your shipping address.');
       return;
     }
+
+    // Ad vendor's funnel steps: address done, card details submitted.
+    const stapeLines = stapeItems(lines);
+    pushStape('add_shipping_info', { value: amountCents / 100, items: stapeLines });
+    pushStape('add_payment_info', { value: amountCents / 100, items: stapeLines, payment_type: 'card' });
 
     // 3. Server prices the cart, persists the order, and opens the intent.
     const res = await fetch('/api/stripe/create-intent', {

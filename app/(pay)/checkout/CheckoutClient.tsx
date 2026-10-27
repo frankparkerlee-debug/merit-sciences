@@ -17,6 +17,7 @@ import {
 import { useCart, type CartLine } from '@/lib/cart';
 import { track, identify, trackPurchase, trackInitiateCheckout } from '@/lib/analytics';
 import { currentWelcomeCode } from '@/lib/welcome-offer';
+import { pushStape, stapeItems, itemsValue } from '@/lib/stape';
 import { rememberCheckoutClickId, checkoutClickGoId } from '@/lib/clickgo';
 import { US_STATES } from './us-states';
 import { StripeCheckout } from './StripeCheckout';
@@ -109,6 +110,8 @@ export function CheckoutClient({
       value: subtotalCents / 100,
       item_count: lines.reduce((n, l) => n + l.qty, 0),
     });
+    const items = stapeItems(lines);
+    pushStape('begin_checkout', { value: itemsValue(items), items });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, lines.length]);
 
@@ -273,6 +276,8 @@ export function CheckoutClient({
                 componentHandles: (l as any).componentHandles,
               } as Omit<CartLine, 'qty'>,
               l.qty,
+              // Rebuilding the storefront cart on this domain, not a new add.
+              { silent: true },
             );
           }
         }

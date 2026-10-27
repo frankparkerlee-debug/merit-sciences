@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { identify, trackPurchase } from '@/lib/analytics';
 import { fireClickGoConversion } from '@/lib/clickgo';
+import { pushStape, stapeItems, splitName } from '@/lib/stape';
 
 type Props = {
   /** Processor id or order id; used as the dedupe key and transaction id. */
@@ -13,6 +14,17 @@ type Props = {
   /** Only fire once the payment is known good (order promoted, or Stripe
    *  returned redirect_status=succeeded). A hand-loaded URL fires nothing. */
   fire: boolean;
+  /** Order detail for the ad vendor's server-side purchase event. */
+  stape?: {
+    shippingUsd: number;
+    lines: Array<{ handle: string; title: string; bundleLabel: string; qty: number; unitCents: number }>;
+    phone: string | null;
+    fullName: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
 };
 
 /**
@@ -25,7 +37,7 @@ type Props = {
  * conversion or a PostHog purchase event. Deduped per order in localStorage
  * so a refresh of this page does not double count.
  */
-export function PurchaseBeacon({ orderRef, valueUsd, email, itemCount, fire }: Props) {
+export function PurchaseBeacon({ orderRef, valueUsd, email, itemCount, fire, stape }: Props) {
   useEffect(() => {
     if (!fire || !orderRef) return;
     const key = `merit_purchase_fired_${orderRef}`;
@@ -46,6 +58,35 @@ export function PurchaseBeacon({ orderRef, valueUsd, email, itemCount, fire }: P
     // Ad vendor's ClickGo conversion (order id + total only; no-op unless the
     // buyer arrived on a ClickGo click).
     fireClickGoConversion({ orderId: orderRef, orderTotal: valueUsd }).catch(() => {});
+    // Ad vendor's server-side container (Stape). event_id is keyed to the
+    // order so their browser and server copies deduplicate.
+    if (stape) {
+      pushStape(
+        'purchase',
+        {
+          transaction_id: orderRef,
+          value: valueUsd,
+          tax: 0,
+          shipping: stape.shippingUsd,
+          items: stapeItems(stape.lines),
+        },
+        {
+          eventId: `${orderRef}_purchase`,
+          userData: {
+            email: email?.toLowerCase() || undefined,
+            phone: stape.phone || undefined,
+            address: {
+              ...splitName(stape.fullName),
+              city: stape.city,
+              state: stape.state,
+              postal_code: stape.zip,
+              country: stape.country,
+            },
+          },
+        },
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fire, orderRef, valueUsd, email, itemCount]);
   return null;
 }

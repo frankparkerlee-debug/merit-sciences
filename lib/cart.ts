@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { pushStape, stapeItem, stapeItems, itemsValue } from './stape';
 
 export type CartLine = {
   handle: string;          // for stacks: 'stack:recovery-stack'
@@ -21,7 +22,8 @@ type CartState = {
   // NOT persisted (would auto-open on every page load). Bottom of the
   // persist `partialize` config excludes it.
   isDrawerOpen: boolean;
-  add: (line: Omit<CartLine, 'qty'>, qty?: number) => void;
+  /** `silent` skips the analytics event (used when rebuilding a cart, not adding to it). */
+  add: (line: Omit<CartLine, 'qty'>, qty?: number, opts?: { silent?: boolean }) => void;
   setQty: (handle: string, bundleLabel: string, qty: number) => void;
   remove: (handle: string, bundleLabel: string) => void;
   clear: () => void;
@@ -40,7 +42,7 @@ export const useCart = create<CartState>()(
       // chooses whether to flash a toast (single add) or open the drawer
       // explicitly (bulk add / checkout flow). This avoids the "every
       // add interrupts my browse with a drawer pop-in" UX.
-      add: (line, qty = 1) =>
+      add: (line, qty = 1, opts) => {
         set((s) => {
           const existing = s.lines.findIndex(
             (l) => l.handle === line.handle && l.bundleLabel === line.bundleLabel,
@@ -51,8 +53,16 @@ export const useCart = create<CartState>()(
             return { lines: next };
           }
           return { lines: [...s.lines, { ...line, qty }] };
-        }),
-      setQty: (handle, bundleLabel, qty) =>
+        });
+        // Every add button in the store funnels through here, so this is the
+        // one place the vendor's add_to_cart event needs to fire.
+        if (qty > 0 && !opts?.silent) {
+          const item = stapeItem({ ...line, qty }, qty);
+          pushStape('add_to_cart', { value: itemsValue([item]), items: [item] });
+        }
+      },
+      setQty: (handle, bundleLabel, qty) => {
+        const before = get().lines.find((l) => l.handle === handle && l.bundleLabel === bundleLabel);
         set((s) => {
           if (qty <= 0) {
             return {
@@ -68,13 +78,35 @@ export const useCart = create<CartState>()(
                 : l,
             ),
           };
-        }),
-      remove: (handle, bundleLabel) =>
+        });
+        if (before) {
+          const delta = Math.max(qty, 0) - before.qty;
+          if (delta !== 0) {
+            const item = stapeItem(before, Math.abs(delta));
+            pushStape(delta > 0 ? 'add_to_cart' : 'remove_from_cart', { value: itemsValue([item]), items: [item] });
+          }
+        }
+      },
+      remove: (handle, bundleLabel) => {
+        const before = get().lines.find((l) => l.handle === handle && l.bundleLabel === bundleLabel);
         set((s) => ({
           lines: s.lines.filter((l) => !(l.handle === handle && l.bundleLabel === bundleLabel)),
-        })),
+        }));
+        if (before) {
+          const item = stapeItem(before);
+          pushStape('remove_from_cart', { value: itemsValue([item]), items: [item] });
+        }
+      },
       clear: () => set({ lines: [] }),
-      openDrawer: () => set({ isDrawerOpen: true }),
+      openDrawer: () => {
+        const wasOpen = get().isDrawerOpen;
+        set({ isDrawerOpen: true });
+        const lines = get().lines;
+        if (!wasOpen && lines.length > 0) {
+          const items = stapeItems(lines);
+          pushStape('view_cart', { value: itemsValue(items), items });
+        }
+      },
       closeDrawer: () => set({ isDrawerOpen: false }),
       totalCents: () =>
         get().lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0),

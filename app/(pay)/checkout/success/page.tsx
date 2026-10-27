@@ -22,7 +22,13 @@ type OrderSummary = {
   shippingCents: bigint;
   discountCents: bigint;
   totalCents: bigint;
-  lines: Array<{ title: string; bundleLabel: string; qty: number; unitCents: bigint }>;
+  shippingFullName: string;
+  shippingPhone: string | null;
+  shippingCity: string;
+  shippingState: string;
+  shippingZip: string;
+  shippingCountry: string;
+  lines: Array<{ handle: string; title: string; bundleLabel: string; qty: number; unitCents: bigint }>;
 };
 
 /**
@@ -46,7 +52,13 @@ async function getOrder(ref: string | undefined): Promise<OrderSummary | null> {
         shippingCents: true,
         discountCents: true,
         totalCents: true,
-        lines: { select: { title: true, bundleLabel: true, qty: true, unitCents: true } },
+        shippingFullName: true,
+        shippingPhone: true,
+        shippingCity: true,
+        shippingState: true,
+        shippingZip: true,
+        shippingCountry: true,
+        lines: { select: { handle: true, title: true, bundleLabel: true, qty: true, unitCents: true } },
       },
     });
   } catch {
@@ -84,6 +96,22 @@ export default async function CheckoutSuccessPage({
           email={order.customerEmail}
           itemCount={order.lines.reduce((n, l) => n + l.qty, 0)}
           fire={paymentConfirmed}
+          stape={{
+            shippingUsd: Number(order.shippingCents) / 100,
+            lines: order.lines.map((l) => ({
+              handle: l.handle,
+              title: l.title,
+              bundleLabel: l.bundleLabel,
+              qty: l.qty,
+              unitCents: Number(l.unitCents),
+            })),
+            phone: order.shippingPhone,
+            fullName: order.shippingFullName,
+            city: order.shippingCity,
+            state: order.shippingState,
+            zip: order.shippingZip,
+            country: order.shippingCountry,
+          }}
         />
       )}
 
@@ -198,9 +226,9 @@ export default async function CheckoutSuccessPage({
             48hr dispatch from San Antonio<span className="text-cobalt">.</span>
           </h2>
           <p className="text-[13px] text-ink-soft leading-relaxed">
-            Lyophilized vial, sealed, labeled with lot ID. UPS Ground
-            tracked + insured. Released only after an independent
-            laboratory returns its results for the lot.
+            Lyophilized vial, sealed, with a QR code to its certificate.
+            UPS Ground tracked + insured. Released only after an independent
+            laboratory returns its results for the batch.
           </p>
         </div>
 
