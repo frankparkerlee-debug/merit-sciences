@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getCurrentAffiliate } from '@/lib/affiliate-session';
 import { prisma } from '@/lib/db';
 import { tierForOrderCount, AFFILIATE_PROGRAM, hasSplitPlan } from '@/lib/affiliate';
+import { transfersReady } from '@/lib/stripe-connect';
 
 export const metadata = {
   title: 'Dashboard · Merit Sciences Affiliate',
@@ -26,6 +27,12 @@ function fmtDate(d: Date): string {
 export default async function AffiliateDashboardPage() {
   const affiliate = await getCurrentAffiliate();
   if (!affiliate) redirect('/affiliate/login?next=/affiliate/dashboard');
+
+  // Same check as the settings page: no Stripe account, or one that can't
+  // receive transfers yet, means payout runs skip this affiliate.
+  const payoutsReady = affiliate.stripeAccountId
+    ? await transfersReady(affiliate.stripeAccountId).catch(() => true)
+    : false;
 
   // ── Pull the data we need for the dashboard ──────────────────────
   const [
@@ -167,6 +174,25 @@ export default async function AffiliateDashboardPage() {
             <p className="text-sm text-rose-900">
               <strong>Your account is suspended.</strong> You can still view your stats but won&rsquo;t earn commission on new orders. Contact support if you think this is a mistake.
             </p>
+          </div>
+        </div>
+      )}
+
+      {!payoutsReady && affiliate.status !== 'SUSPENDED' && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-[1100px] mx-auto px-5 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+            <p className="text-sm text-amber-950 flex-1">
+              <strong>Connect direct deposit to get paid.</strong>{' '}
+              {Number(lifetimePending) + Number(lifetimePayable) > 0
+                ? `You have ${fmtMoney(Number(lifetimePending) + Number(lifetimePayable))} in commission, and payouts are on hold until your bank is connected through Stripe.`
+                : 'Payouts are on hold until your bank is connected through Stripe. It takes about two minutes.'}
+            </p>
+            <Link
+              href="/affiliate/dashboard/settings"
+              className="inline-flex items-center justify-center bg-ink text-white font-bold tracking-[0.16em] uppercase text-xs px-5 py-2.5 rounded-lg hover:bg-cobalt transition-colors whitespace-nowrap"
+            >
+              Connect Stripe
+            </Link>
           </div>
         </div>
       )}

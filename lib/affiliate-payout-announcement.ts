@@ -46,7 +46,7 @@ export function payoutSetupStepsHtml(): string {
     ${step(1, `Sign in to your affiliate dashboard at <a href="${SITE}/affiliate/login" style="color:#2D6BE4;">${SITE.replace('https://', '')}/affiliate/login</a>`)}
     ${step(2, 'Open <strong>Settings</strong> from the dashboard menu')}
     ${step(3, 'Click <strong>Set up direct deposit</strong>')}
-    ${step(4, 'Complete the secure form — it asks for your identity details and the bank account you want paid into. This is handled by Stripe, our payments provider; Merit never sees your bank details.')}
+    ${step(4, 'Complete the secure form. It asks for your identity details and the bank account you want paid into. This is handled by Stripe, our payments provider; Merit never sees your bank details.')}
     ${step(5, 'You’re done when your settings page shows <strong>✓ Direct deposit connected</strong>')}
   </table>`;
 }
@@ -65,24 +65,29 @@ export function buildPayoutAnnouncement(args: {
     : 'Action needed: set up direct deposit for your commissions';
 
   const bodyHtml = [
-    h('Merit affiliate payouts are moving to direct deposit'),
+    h('Connect direct deposit to get paid'),
 
     hasMoney
       ? p(
-          `Hi ${firstName} — you've earned <strong>${money(owedCents)}</strong> in commission so far. ` +
-            `To receive it, you now need to connect direct deposit to your affiliate account. ` +
-            `It takes about two minutes and only has to be done once.`,
+          `Hi ${firstName}, you've earned <strong>${money(owedCents)}</strong> in commission, ` +
+            `but direct deposit isn't connected on your affiliate account yet, so we have nowhere to send it. ` +
+            `Connecting takes about two minutes and only has to be done once.`,
         )
       : p(
-          `Hi ${firstName} — a quick change to how Merit pays affiliate commissions. ` +
-            `Payouts now go by direct deposit to your bank, and you'll need to connect ` +
-            `your account once so we have somewhere to send them. It takes about two minutes.`,
+          `Hi ${firstName}, direct deposit isn't connected on your affiliate account yet, ` +
+            `so when your commissions come due we'll have nowhere to send them. ` +
+            `Connecting takes about two minutes and only has to be done once.`,
         ),
+
+    p(
+      `<strong>Good news:</strong> commissions now clear ${AFFILIATE_PROGRAM.payoutHoldDays} days after each sale instead of 30, ` +
+        `so once you're connected you get paid sooner.`,
+    ),
 
     hadPaypal
       ? p(
           `<strong>Note:</strong> PayPal payouts have been discontinued. The PayPal email on ` +
-            `your account will no longer receive payments, so this step is required even if ` +
+            `your account no longer receives payments, so this step is required even if ` +
             `you had one on file.`,
         )
       : '',
@@ -94,13 +99,13 @@ export function buildPayoutAnnouncement(args: {
 
     p(
       `<strong>What happens to what you've already earned:</strong> nothing is lost. ` +
-        `Commissions keep accruing whether or not you've connected — they simply can't be sent ` +
+        `Commissions keep accruing whether or not you've connected; they simply can't be sent ` +
         `until you do. Once connected, your balance goes out on the next payout run.`,
     ),
 
     quiet(
       `Payouts run after a ${AFFILIATE_PROGRAM.payoutHoldDays}-day hold on each sale (covering the refund window) with a $${AFFILIATE_PROGRAM.payoutMinUsd} ` +
-        `minimum balance. Questions about your account or your balance — just reply to this email.`,
+        `minimum balance. Questions about your account or your balance? Just reply to this email.`,
     ),
   ].join('');
 
