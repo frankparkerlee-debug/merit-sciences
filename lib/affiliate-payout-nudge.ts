@@ -101,7 +101,7 @@ function buildEmail(args: { firstName: string; touch: number; owedCents: number;
     ),
     cta('Add payout details', settingsUrl),
     quiet(
-      `Payouts run after a 30-day hold with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum — details in your dashboard. ` +
+      `Payouts run after a ${AFFILIATE_PROGRAM.payoutHoldDays}-day hold with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum — details in your dashboard. ` +
         `Already added them? Then you're all set and this is the last note about it.`,
     ),
   ].join('');

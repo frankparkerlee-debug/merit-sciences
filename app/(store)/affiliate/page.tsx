@@ -325,7 +325,7 @@ export default function AffiliateLandingPage() {
             />
             <Faq
               q="When and how do I get paid?"
-              a={`Monthly, by bank direct deposit through Stripe, once you clear a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum. Each commission clears a 30-day refund window first, then it's payable.`}
+              a={`Monthly, by bank direct deposit through Stripe, once you clear a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum. Each commission clears a ${AFFILIATE_PROGRAM.payoutHoldDays}-day refund window first, then it's payable.`}
             />
             <Faq
               q="What am I allowed to say?"

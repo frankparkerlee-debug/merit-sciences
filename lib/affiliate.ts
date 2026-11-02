@@ -90,6 +90,10 @@ export const AFFILIATE_PROGRAM = {
   // Payout minimum. $75 since 2026-10-02 (Parker), was $50. The env var
   // PAYOUT_MIN_USD on Render overrides this at runtime (lib/affiliate-payouts).
   payoutMinUsd: 75,
+  // Days a commission waits before it is payable (refund window). 10 since
+  // 2026-11-02 (Parker), was 30. COMMISSION_HOLD_DAYS in lib/affiliate-payouts
+  // reads this, and every email and page quotes it.
+  payoutHoldDays: 10,
 } as const;
 
 /**

@@ -71,7 +71,7 @@ export async function notifyAffiliateOfSale(
     cta('Share your link — line up the next one', kitUrl) +
     quiet(
       `Your code <strong>${esc(code)}</strong> gives your people ${AFFILIATE_PROGRAM.buyerDiscountPct}% off. ` +
-        `See every sale on your ${a('dashboard', dashUrl)}. Commissions clear about 30 days after the ` +
+        `See every sale on your ${a('dashboard', dashUrl)}. Commissions clear about ${AFFILIATE_PROGRAM.payoutHoldDays} days after the ` +
         `sale, then they're payable.`,
     );
 

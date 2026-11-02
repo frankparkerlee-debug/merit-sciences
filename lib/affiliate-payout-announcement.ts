@@ -99,7 +99,7 @@ export function buildPayoutAnnouncement(args: {
     ),
 
     quiet(
-      `Payouts run after a 30-day hold on each sale (covering the refund window) with a $${AFFILIATE_PROGRAM.payoutMinUsd} ` +
+      `Payouts run after a ${AFFILIATE_PROGRAM.payoutHoldDays}-day hold on each sale (covering the refund window) with a $${AFFILIATE_PROGRAM.payoutMinUsd} ` +
         `minimum balance. Questions about your account or your balance — just reply to this email.`,
     ),
   ].join('');

@@ -36,7 +36,7 @@ export async function sendPayoutPaidEmail(args: {
     ),
     cta('View your dashboard', `${SITE}/affiliate/dashboard`),
     quiet(
-      `Payouts run after a 30-day hold on each sale with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum balance. ` +
+      `Payouts run after a ${AFFILIATE_PROGRAM.payoutHoldDays}-day hold on each sale with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum balance. ` +
         `Questions about this payout — just reply to this email.`,
     ),
   ].join('');

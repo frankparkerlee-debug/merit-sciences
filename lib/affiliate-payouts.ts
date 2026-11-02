@@ -34,7 +34,7 @@ import { sendPayoutPaidEmail } from '@/lib/affiliate-payout-paid-email';
 
 // Hold window before a commission can be paid — covers the refund /
 // chargeback period so we don't pay out money we may claw back.
-export const COMMISSION_HOLD_DAYS = 30;
+export const COMMISSION_HOLD_DAYS = AFFILIATE_PROGRAM.payoutHoldDays;
 
 /** Payout minimum. Normally $75 since 2026-10-02 (AFFILIATE_PROGRAM.payoutMinUsd) — the
  *  threshold that keeps transfer fees from eating small balances. Overridable
@@ -67,7 +67,7 @@ export type AffiliatePayoutPreview = {
   method: 'stripe' | null;
   /** matured (past the hold) commission total — payable now */
   eligibleCents: number;
-  /** earned but still inside the 30-day refund hold — not payable yet */
+  /** earned but still inside the refund hold — not payable yet */
   heldCents: number;
   /** when the earliest held commission clears the hold (null if none held) */
   earliestMatureAt: Date | null;

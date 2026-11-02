@@ -263,7 +263,7 @@ export async function inviteAffiliate(
       ),
       payoutSetupStepsHtml(),
       quiet(
-        `Payouts run after a 30-day hold on each sale with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum balance. ` +
+        `Payouts run after a ${AFFILIATE_PROGRAM.payoutHoldDays}-day hold on each sale with a $${AFFILIATE_PROGRAM.payoutMinUsd} minimum balance. ` +
           `Commissions accrue from your first sale either way — they just can't be sent ` +
           `until direct deposit is connected.`,
       ),
