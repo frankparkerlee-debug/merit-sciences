@@ -59,7 +59,7 @@ export default async function ShopPage({
         <ShopClient products={products} heading={heading} />
 
         <p className="mt-12 border-t border-line pt-6 text-[11.5px] leading-relaxed text-ink-muted">
-          Priced per box · free shipping over $100 · US shipping only
+          Priced per box · free shipping over $300 · US shipping only
         </p>
       </div>
 

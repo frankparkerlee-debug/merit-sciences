@@ -69,7 +69,7 @@ async function getHomeData(): Promise<{
 }> {
   let products: Product[] = [];
   let coaLots: number | null = null;
-  let freeShipCents = 10_000;
+  let freeShipCents = 30_000;
 
   try {
     products = await listProducts();

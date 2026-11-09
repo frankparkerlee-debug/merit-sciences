@@ -80,7 +80,7 @@ export default async function SupplyHome() {
             ['Catalog', `${products.length} SKUs`],
             ['Pricing', `From ${money(cheapest)} per box`],
             ['Coding', 'HCPCS listed per item'],
-            ['Shipping', 'Free over $100 · US only'],
+            ['Shipping', 'Free over $300 · US only'],
           ].map(([label, value]) => (
             <div key={label} className="px-6 py-6">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted">

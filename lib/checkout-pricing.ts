@@ -22,7 +22,7 @@ import { resolveHandles } from './handle-aliases';
 import { productDisplayName } from './product-types';
 import { normalizeClickGoId, VENDOR_TEST_CODES } from './clickgo';
 
-export const FREE_SHIPPING_CENTS_THRESHOLD = 10_000; // $100 (was $300 until 2026-11-09)
+export const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300
 export const FLAT_SHIPPING_CENTS = 999; // $9.99
 
 // Ad-funnel codes live in lib/welcome-offer.ts, with the offer they belong to.

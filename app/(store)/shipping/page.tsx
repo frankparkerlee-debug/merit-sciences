@@ -17,7 +17,7 @@ export default function ShippingPage() {
     <PolicyLayout
       title="Shipping"
       subtitle="How orders move from our fulfillment facility in San Antonio to your lab."
-      lastUpdated="June 17, 2026"
+      lastUpdated="November 9, 2026"
     >
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </PolicyLayout>

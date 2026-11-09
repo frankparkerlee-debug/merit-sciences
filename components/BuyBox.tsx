@@ -95,7 +95,7 @@ export function BuyBox({ product }: { product: Product }) {
               </>
             )}
           </div>
-          <p className="text-xs text-ink-muted mt-1">Free shipping over $100</p>
+          <p className="text-xs text-ink-muted mt-1">Free shipping over $300</p>
         </div>
 
         {/* Bundle picker */}
