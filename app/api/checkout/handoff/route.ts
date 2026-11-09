@@ -74,7 +74,9 @@ export async function POST(req: Request) {
   // domain-wide welcome cookie set on landing carries it instead.
   // Either source may hold a retired welcome code; currentWelcomeCode maps it
   // onto the live offer so the checkout domain never sees a dead code.
-  const welcomeCode = clickGoId ? null : (
+  // An affiliate visitor (merit_ref) gets the affiliate's code at checkout,
+  // never the welcome offer, so it isn't carried across.
+  const welcomeCode = clickGoId || refSlug ? null : (
     currentWelcomeCode(typeof body?.welcomeCode === 'string' ? body.welcomeCode.slice(0, 40) : null) ??
     currentWelcomeCode((jar.get(WELCOME_COOKIE)?.value ?? '').slice(0, 40)));
 

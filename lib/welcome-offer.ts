@@ -51,3 +51,24 @@ export function currentWelcomeCode(code: string | null | undefined): string | nu
   if (!c) return null;
   return RETIRED_WELCOME_CODES.has(c.toLowerCase()) ? WELCOME_CODE : c;
 }
+
+/**
+ * Readable twin of the HttpOnly `merit_ref` affiliate cookie. Middleware sets
+ * it whenever `merit_ref` is set (and backfills it for visitors who already
+ * carry `merit_ref`), so client code can tell an affiliate-referred visitor
+ * apart without exposing the slug. It holds only "1".
+ *
+ * An affiliate visitor gets the affiliate's code, never the welcome offer:
+ * no welcome bar, no subscribe popup, no welcome code at checkout.
+ */
+export const REFERRED_COOKIE = 'merit_referred';
+
+/** Client-side: true when this browser arrived through an affiliate link. */
+export function isReferredVisitor(): boolean {
+  if (typeof document === 'undefined') return false;
+  try {
+    return document.cookie.split('; ').some((c) => c.startsWith(`${REFERRED_COOKIE}=`));
+  } catch {
+    return false;
+  }
+}

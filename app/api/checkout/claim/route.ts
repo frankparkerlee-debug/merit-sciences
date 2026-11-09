@@ -78,9 +78,27 @@ export async function POST(req: Request) {
     console.error('[checkout/claim] renamed-line refresh failed', err);
   }
 
+  // The referring affiliate's code. The merit_ref cookie set below only
+  // reaches the server on the NEXT request, so the checkout page rendered
+  // before this claim could not resolve it; hand it to the client directly.
+  // A referred buyer never gets the welcome code alongside it.
+  let referralCode: string | null = null;
+  if (payload.refSlug) {
+    try {
+      const aff = await prisma.affiliate.findUnique({
+        where: { slug: payload.refSlug },
+        select: { status: true, discountCode: true },
+      });
+      if (aff?.status === 'ACTIVE' && aff.discountCode) referralCode = aff.discountCode.toUpperCase();
+    } catch (err) {
+      console.error('[checkout/claim] referral lookup failed', err);
+    }
+  }
+
   const res = NextResponse.json({
     lines,
-    welcomeCode: payload.welcomeCode,
+    welcomeCode: payload.refSlug ? null : payload.welcomeCode,
+    referralCode,
     practitioner,
   });
 

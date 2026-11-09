@@ -1,5 +1,5 @@
 'use client';
-import { WELCOME_CODE, WELCOME_PCT } from '@/lib/welcome-offer';
+import { WELCOME_CODE, WELCOME_PCT, isReferredVisitor } from '@/lib/welcome-offer';
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
@@ -88,6 +88,8 @@ export function SubscribePopup() {
       // Vendor (BHS) visitors never see Merit's offer: their rep's commission
       // and our discount don't stack.
       if (isVendorVisitor()) return true;
+      // Affiliate visitors get their affiliate's code, not the welcome offer.
+      if (isReferredVisitor()) return true;
       try {
         const sp = new URLSearchParams(window.location.search);
         if (sp.has('code') || sp.get('ads') === '1') return true;

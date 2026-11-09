@@ -18,7 +18,7 @@ import {
 } from '@/lib/checkout-domain';
 import { isRetiredNamePath, legacyPathTarget } from '@/lib/legacy-domain';
 import { normalizeClickGoId } from '@/lib/clickgo';
-import { WELCOME_CODE, WELCOME_COOKIE, WELCOME_COOKIE_MAX_AGE } from '@/lib/welcome-offer';
+import { WELCOME_CODE, WELCOME_COOKIE, WELCOME_COOKIE_MAX_AGE, REFERRED_COOKIE } from '@/lib/welcome-offer';
 
 /**
  * Affiliate click tracking.
@@ -83,6 +83,18 @@ const COOKIE_PARENT = 'meritsciences.com';
 function sharedCookieDomain(host: string): string | undefined {
   const h = host.toLowerCase().split(':')[0];
   return h === COOKIE_PARENT || h.endsWith(`.${COOKIE_PARENT}`) ? `.${COOKIE_PARENT}` : undefined;
+}
+
+// Readable "1" alongside the HttpOnly merit_ref, same lifetime and domain.
+function setReferredFlag(res: NextResponse, host: string): void {
+  res.cookies.set(REFERRED_COOKIE, '1', {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: COOKIE_MAX_AGE_SECONDS,
+    domain: sharedCookieDomain(host),
+  });
 }
 
 function isGateHost(host: string): boolean {
@@ -288,6 +300,11 @@ export async function middleware(req: NextRequest) {
         ? encodeAttrCookie(buildInAppAttribution(inApp, pathname, Date.now()))
         : null;
   const withAttr = (res: NextResponse): NextResponse => {
+    // Backfill the readable referral flag for visitors who got merit_ref
+    // before the flag existed, so the welcome offer hides for them too.
+    if (req.cookies.get(COOKIE_NAME) && !req.cookies.get(REFERRED_COOKIE)) {
+      setReferredFlag(res, reqHost);
+    }
     if (attrValue) {
       res.cookies.set(ATTR_COOKIE, attrValue, {
         httpOnly: true,
@@ -318,7 +335,9 @@ export async function middleware(req: NextRequest) {
       !!req.cookies.get('_cg_click') ||
       [sp.get('clickid'), sp.get('click_id'), sp.get('uid')].some((v) => !!normalizeClickGoId(v));
     const withWelcome = (res: NextResponse): NextResponse => {
-      if (!req.cookies.get(WELCOME_COOKIE) && !vendorClick) {
+      // Same for an affiliate visitor: they get the affiliate's code instead.
+      const referred = !!req.cookies.get(COOKIE_NAME);
+      if (!req.cookies.get(WELCOME_COOKIE) && !vendorClick && !referred) {
         res.cookies.set(WELCOME_COOKIE, WELCOME_CODE, {
           httpOnly: false,
           secure: process.env.NODE_ENV === 'production',
@@ -409,6 +428,8 @@ export async function middleware(req: NextRequest) {
     maxAge: COOKIE_MAX_AGE_SECONDS,
     domain: sharedCookieDomain(reqHost),
   });
+
+  setReferredFlag(response, reqHost);
 
   // Fire-and-forget click log. We never await this — if it fails, the
   // user still gets their redirect with the cookie set. Cookie = source

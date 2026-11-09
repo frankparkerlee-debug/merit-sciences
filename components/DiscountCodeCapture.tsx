@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { WELCOME_COOKIE, currentWelcomeCode } from '@/lib/welcome-offer';
+import { WELCOME_COOKIE, currentWelcomeCode, isReferredVisitor } from '@/lib/welcome-offer';
 
 /**
  * Site-wide `?code=` capture — the low-friction bridge from email links to
@@ -41,7 +41,9 @@ export function DiscountCodeCapture() {
         if (live && live !== stored) localStorage.setItem('merit_welcome_code', live);
         return;
       }
-      // Nothing stored. If the visitor came through the ad host, middleware
+      // Nothing stored. An affiliate visitor never adopts the welcome code.
+      if (isReferredVisitor()) return;
+      // If the visitor came through the ad host, middleware
       // left the welcome code in a domain-wide cookie; adopt it so the offer
       // applies whatever link they took from the lander.
       const m = document.cookie.match(new RegExp('(?:^|; )' + WELCOME_COOKIE + '=([^;]*)'));

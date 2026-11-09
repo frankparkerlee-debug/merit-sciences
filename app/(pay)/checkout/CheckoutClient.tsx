@@ -233,6 +233,11 @@ export function CheckoutClient({
   // buyer hasn't already applied a code. Populates the discount box so the
   // 10% shows AND the code is visible — the buyer can still remove it.
   const autoAppliedRef = useRef(false);
+  // Affiliate code reported by the handoff claim (checkout domain). The page
+  // rendered before the claim restored merit_ref, so autoReferralCode is
+  // empty on that first visit.
+  const [claimedReferralCode, setClaimedReferralCode] = useState<string | null>(null);
+  const referralCode = autoReferralCode ?? claimedReferralCode;
 
   // ── Cross-domain handoff redemption ──────────────────────────────────────
   // On the split checkout domain the buyer arrives with NOTHING: cart, promo
@@ -281,7 +286,9 @@ export function CheckoutClient({
             );
           }
         }
-        if (data?.welcomeCode) {
+        if (typeof data?.referralCode === 'string' && data.referralCode) {
+          setClaimedReferralCode(data.referralCode);
+        } else if (data?.welcomeCode) {
           try { localStorage.setItem('merit_welcome_code', data.welcomeCode); } catch { /* private mode */ }
         }
         if (data?.practitioner && typeof data.practitioner === 'object') {
@@ -316,22 +323,24 @@ export function CheckoutClient({
     if (!hydrated || lines.length === 0 || appliedCode) return;
     // A vendor (BHS) click never takes Merit's offer; see lib/clickgo.ts.
     if (checkoutClickGoId()) return;
+    // An affiliate visitor gets the affiliate's code, never the welcome offer.
+    if (referralCode) return;
     let welcome: string | null = null;
     try { welcome = currentWelcomeCode(localStorage.getItem('merit_welcome_code')); } catch { /* private mode */ }
     if (!welcome) return;
     autoAppliedRef.current = true;
     applyCode(welcome, { silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, lines.length, appliedCode, claimPending]);
+  }, [hydrated, lines.length, appliedCode, claimPending, referralCode]);
 
   useEffect(() => {
     if (autoAppliedRef.current) return;
-    if (!autoReferralCode || !hydrated || lines.length === 0 || appliedCode) return;
+    if (!referralCode || !hydrated || lines.length === 0 || appliedCode) return;
     if (checkoutClickGoId()) return;
     autoAppliedRef.current = true;
-    applyCode(autoReferralCode, { silent: true });
+    applyCode(referralCode, { silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoReferralCode, hydrated, lines.length, appliedCode]);
+  }, [referralCode, hydrated, lines.length, appliedCode]);
 
   // Re-validate an applied code whenever the cart subtotal changes (qty edit
   // or remove at checkout) so the shown discount + total stay accurate. The
