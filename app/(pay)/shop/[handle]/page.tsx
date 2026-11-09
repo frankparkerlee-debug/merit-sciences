@@ -131,7 +131,7 @@ export default async function SupplyPDP({
               </div>
 
               <p className="mt-4 text-[11.5px] leading-relaxed text-ink-muted">
-                Free shipping over $300 · $9.99 flat otherwise · US shipping only
+                Free shipping over $100 · $9.99 flat otherwise · US shipping only
               </p>
             </div>
 

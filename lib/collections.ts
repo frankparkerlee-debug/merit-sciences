@@ -79,7 +79,7 @@ export const COLLECTIONS: Collection[] = [
       },
       {
         q: 'How much do they cost?',
-        a: 'The price on each listing is the price. There is no account tier, no minimum order, and no volume gate. Orders over $300 ship free.',
+        a: 'The price on each listing is the price. There is no account tier, no minimum order, and no volume gate. Orders over $100 ship free.',
       },
       {
         q: 'Is there a lab report for what I receive?',
@@ -220,7 +220,7 @@ export const COLLECTIONS: Collection[] = [
       },
       {
         q: 'Is there a minimum order?',
-        a: 'No. One vial ships the same way a case does. Orders over $300 ship free.',
+        a: 'No. One vial ships the same way a case does. Orders over $100 ship free.',
       },
     ],
     assayTopic: 'skin',

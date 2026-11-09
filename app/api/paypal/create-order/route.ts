@@ -86,7 +86,7 @@ function cleanAddress(a: AddressIn | undefined): {
  * to render Smart Buttons / Card Fields.
  */
 
-const FREE_SHIPPING_CENTS_THRESHOLD = 30_000; // $300 — authoritative free-shipping gate
+const FREE_SHIPPING_CENTS_THRESHOLD = 10_000; // $100 — authoritative free-shipping gate
 const FLAT_SHIPPING_CENTS = 999;               // $9.99
 
 // Ad-funnel codes live in lib/welcome-offer.ts, with the offer they belong to.

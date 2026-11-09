@@ -16,7 +16,7 @@ import { money, productImage } from '@/lib/product-types';
  */
 const FLAT_SHIPPING_CENTS = 999; // $9.99 under threshold
 
-export function CartDrawer({ freeShippingThresholdCents = 35_000 }: { freeShippingThresholdCents?: number }) {
+export function CartDrawer({ freeShippingThresholdCents = 10_000 }: { freeShippingThresholdCents?: number }) {
   const isOpen     = useCart((s) => s.isDrawerOpen);
   const lines      = useCart((s) => s.lines);
   const closeDrawer = useCart((s) => s.closeDrawer);

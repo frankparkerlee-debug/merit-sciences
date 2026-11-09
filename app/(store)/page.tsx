@@ -135,7 +135,7 @@ export default async function HomePage() {
 
   // Ticker facts — live prices where we have them, standing facts otherwise.
   const ticker = [
-    'FREE SHIPPING OVER $300',
+    'FREE SHIPPING OVER $100',
     'SHIPS IN 48 HOURS FROM SAN ANTONIO',
     '≥99% HPLC PURITY',
     'FENTANYL-SCREENED EVERY BATCH',
