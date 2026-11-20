@@ -285,7 +285,7 @@ export default async function CatalogPage({
       products={enriched}
       stacks={stacksResolved}
       accessories={accessories}
-      totalCount={products.length}
+      totalCount={enriched.length}
       isPractitionerPricing={isPractitionerPricing}
       referralPct={referral?.discountPct ?? 0}
       compact={adsView}
