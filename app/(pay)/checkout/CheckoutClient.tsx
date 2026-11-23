@@ -856,7 +856,7 @@ export function CheckoutClient({
         </div>
 
         <p className="text-[11px] text-ink-soft/70 mt-4 leading-relaxed">
-          US shipping only. Free over $300. Card details are encrypted end-to-end by PayPal — we never see or store them.
+          US shipping only. Free over $300. Card details are encrypted end-to-end by {provider === 'stripe' ? 'Stripe' : 'PayPal'}; we never see or store them.
         </p>
       </aside>
     </div>

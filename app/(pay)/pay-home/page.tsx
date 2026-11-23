@@ -1,4 +1,5 @@
 import { PaymentShellHeader } from '@/components/PaymentShell';
+import { paymentsProvider } from '@/lib/stripe';
 
 /**
  * Landing page for the ROOT of the payment domain.
@@ -55,7 +56,8 @@ export default function PayHomePage() {
         </h1>
         <p className="text-base text-ink-soft leading-relaxed mb-4">
           This domain handles payment for orders placed with Merit. Card details are
-          encrypted end-to-end by PayPal — they are never seen or stored by us.
+          encrypted end-to-end by {paymentsProvider() === 'stripe' ? 'Stripe' : 'PayPal'}; they
+          are never seen or stored by us.
         </p>
         <p className="text-base text-ink-soft leading-relaxed mb-8">
           If you were sent here to complete an order, use the link from your email or

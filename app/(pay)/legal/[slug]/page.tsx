@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { PaymentShellHeader, PaymentShellFooter } from '@/components/PaymentShell';
+import { paymentsProvider } from '@/lib/stripe';
 
 /**
  * Minimal policies for the PAYMENT domain.
@@ -32,6 +33,8 @@ type Section = { h?: string; p: string[] };
 type Policy = { title: string; subtitle: string; sections: Section[] };
 
 function policies(email: string): Record<string, Policy> {
+  // Name the processor actually taking cards, so the notice stays true if it changes.
+  const processor = paymentsProvider() === 'stripe' ? 'Stripe' : 'PayPal';
   return {
     returns: {
       title: 'Refunds & Returns',
@@ -99,7 +102,7 @@ function policies(email: string): Record<string, Policy> {
         {
           h: 'Payment information',
           p: [
-            'Card details are entered into fields hosted and encrypted by PayPal. They are transmitted directly to PayPal and are never seen, processed, or stored by us. PayPal’s handling of that data is governed by their privacy notice.',
+            `Card details are entered into fields hosted and encrypted by ${processor}. They are transmitted directly to ${processor} and are never seen, processed, or stored by us. ${processor}’s handling of that data is governed by their privacy notice.`,
           ],
         },
         {
