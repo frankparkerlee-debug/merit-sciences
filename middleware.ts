@@ -431,24 +431,33 @@ export async function middleware(req: NextRequest) {
 
   setReferredFlag(response, reqHost);
 
-  // Fire-and-forget click log. We never await this — if it fails, the
-  // user still gets their redirect with the cookie set. Cookie = source
-  // of truth for attribution; click log is for stats only.
+  // Click log. Awaited with a short timeout: an un-awaited fetch is dropped
+  // when middleware returns, which is why no click was ever recorded. A
+  // failure or timeout still lets the redirect through with the cookie set.
+  // Cookie = source of truth for attribution; click log is for stats only.
   const ipHeader = req.headers.get('x-forwarded-for');
   const ipAddress = ipHeader ? ipHeader.split(',')[0].trim() : null;
-  fetch(new URL('/api/affiliate/track-click', req.nextUrl.origin), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      slug,
-      ipAddress,
-      userAgent:   req.headers.get('user-agent'),
-      referrer:    req.headers.get('referer'),
-      landingPath: pathname,
-    }),
-  }).catch(() => {
-    // Swallow — never block the user redirect on logging
-  });
+  // Self-hosted behind Caddy: call the app directly, not back through the
+  // public hostname (nextUrl.origin there is http://, which Caddy bounces).
+  const internalOrigin = process.env.PORT
+    ? `http://127.0.0.1:${process.env.PORT}`
+    : req.nextUrl.origin;
+  try {
+    await fetch(new URL('/api/affiliate/track-click', internalOrigin), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug,
+        ipAddress,
+        userAgent:   req.headers.get('user-agent'),
+        referrer:    req.headers.get('referer'),
+        landingPath: pathname,
+      }),
+      signal: AbortSignal.timeout(1500),
+    });
+  } catch {
+    // Never block the user redirect on logging
+  }
 
   return withAttr(response);
 }
