@@ -49,6 +49,8 @@ type Props = {
   isPractitioner?: boolean;
   /** The card that account has on file, display facts only. */
   savedCard?: SavedCard | null;
+  /** Reports the email as the buyer types it, so the parent can save the cart. */
+  onEmailChange?: (email: string) => void;
 };
 
 type FormProps = Props & {
@@ -127,6 +129,7 @@ function StripeForm({
   onError,
   isPractitioner,
   savedCard,
+  onEmailChange,
   useSaved,
   setUseSaved,
   saveCard,
@@ -347,7 +350,10 @@ function StripeForm({
         <input
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            onEmailChange?.(e.target.value);
+          }}
           required
           autoComplete="email"
           placeholder="you@example.com"

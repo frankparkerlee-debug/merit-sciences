@@ -382,6 +382,11 @@ export async function createOrderFromPayPal(
       },
     });
     if (preCreated.status === 'PENDING_PAYMENT') {
+      // A paid order closes any saved cart for this buyer, whichever
+      // processor took the payment, so no recovery email chases a sale.
+      import('@/lib/abandoned-cart')
+        .then((m) => m.markCartsRecovered([promoted.customerEmail]))
+        .catch(() => {});
       await recordOrderEvent({
         orderId: promoted.id,
         kind: 'PAYMENT_CAPTURED',

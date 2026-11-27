@@ -691,6 +691,7 @@ export function CheckoutClient({
               onError={setFormError}
               isPractitioner={!!practitioner}
               savedCard={practitioner?.savedCard ?? null}
+              onEmailChange={(v) => setForm((f) => ({ ...f, email: v }))}
             />
           </PaymentSection>
         ) : !resolvedPaypalClientId ? (
