@@ -125,9 +125,10 @@ export type CreateIntentArgs = {
    */
   idempotencyKey: string;
   /**
-   * Practitioner checkout only: the practice's Stripe Customer, so the card
-   * used for this payment can be kept for future orders. Set together with
-   * setupFutureUsage; neither is ever set for a retail buyer.
+   * The Stripe Customer the card should be kept on: a practice saving a card
+   * on file, or a retail buyer starting a Subscribe & Save subscription (who
+   * ticked the consent box). Set together with setupFutureUsage; neither is
+   * set for an ordinary one-time retail order.
    */
   customerId?: string | null;
   /** 'off_session' tells Stripe to store the instrument for later charges

@@ -69,8 +69,9 @@ export type LifecycleShell = {
   subject: string;
   /** Inbox preview line shown after the subject. */
   preheader: string;
-  /** Composed art that opens the email. The alt text is the headline. */
-  art: { src: string; alt: string; href: string };
+  /** Composed art that opens the email. The alt text is the headline.
+   *  Account notices leave it out and get a plain wordmark bar instead. */
+  art?: { src: string; alt: string; href: string };
   /** Sections built with kit(theme). */
   body: string;
   unsubscribeUrl?: string;
@@ -96,9 +97,13 @@ export function wrapLifecycleEmail(s: LifecycleShell): string {
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${t.field}" style="background:${t.field};">
     <tr><td align="center" style="padding:24px 10px 36px;">
       <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" bgcolor="${t.sheet}" style="width:100%;max-width:600px;background:${t.sheet};border-radius:14px;overflow:hidden;">
-        <tr><td bgcolor="${INK}" style="background:${INK};font-size:0;line-height:0;">
+        ${
+          s.art
+            ? `<tr><td bgcolor="${INK}" style="background:${INK};font-size:0;line-height:0;">
           <a href="${esc(s.art.href)}"><img src="${abs(s.art.src)}" alt="${esc(s.art.alt)}" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;font-family:${SANS};font-size:28px;line-height:34px;font-weight:700;color:#ffffff;" /></a>
-        </td></tr>
+        </td></tr>`
+            : `<tr><td class="px" bgcolor="${INK}" style="background:${INK};padding:22px 40px;font-family:${SANS};font-size:24px;line-height:26px;font-weight:700;letter-spacing:-0.03em;"><a href="${SITE}" style="color:#ffffff;text-decoration:none;">Merit<span style="color:${t.dot};">.</span></a></td></tr>`
+        }
         ${s.body}
         <tr><td class="px" bgcolor="${INK}" style="background:${INK};padding:30px 40px 32px;">
           <p style="margin:0 0 14px;font-family:${SANS};font-size:24px;line-height:26px;font-weight:700;letter-spacing:-0.03em;"><a href="${SITE}" style="color:#ffffff;text-decoration:none;">Merit<span style="color:${t.dot};">.</span></a></p>

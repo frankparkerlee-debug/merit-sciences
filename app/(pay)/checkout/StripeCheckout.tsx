@@ -60,6 +60,18 @@ type FormProps = Props & {
   setSaveCard: (v: boolean) => void;
 };
 
+/** Subscribe lines in the cart, with the schedule each one renews on. */
+function subscribeLinesOf(lines: CartLine[]): Array<{ title: string; qty: number; schedule: string }> {
+  return lines
+    .filter((l) => (l.bundleLabel || '').toLowerCase().includes('subscribe'))
+    .map((l) => {
+      const m = /every\s+(?:(\d+)\s+)?(week|month)s?/i.exec(l.bundleLabel);
+      const n = m?.[1] ? parseInt(m[1], 10) : 1;
+      const unit = (m?.[2] || 'month').toLowerCase();
+      return { title: l.title, qty: l.qty, schedule: n === 1 ? `every ${unit}` : `every ${n} ${unit}s` };
+    });
+}
+
 function fmt(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
@@ -79,6 +91,9 @@ export function StripeCheckout(props: Props) {
   const [useSaved, setUseSaved] = useState<boolean>(!!props.savedCard);
   const [saveCard, setSaveCard] = useState(false);
   const payingWithSaved = !!props.savedCard && useSaved;
+  // Retail Subscribe & Save keeps the card for renewals. Practitioner
+  // accounts are not enrolled, so their Subscribe lines stay one-time.
+  const startsSubscription = !props.isPractitioner && subscribeLinesOf(props.lines).length > 0;
 
   if (!stripePromise) {
     return (
@@ -97,7 +112,7 @@ export function StripeCheckout(props: Props) {
         currency: 'usd',
         // Must match the intent the server will open: a "save this card"
         // intent carries setup_future_usage, so Elements has to declare it.
-        ...(props.isPractitioner && saveCard && !payingWithSaved
+        ...((props.isPractitioner && saveCard && !payingWithSaved) || startsSubscription
           ? { setupFutureUsage: 'off_session' as const }
           : {}),
         appearance: {
@@ -153,8 +168,15 @@ function StripeForm({
         : `a${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
   }
 
+  const subLines = isPractitioner ? [] : subscribeLinesOf(lines);
+  const [subConsent, setSubConsent] = useState(false);
+
   function preflight(): boolean {
     onError(null);
+    if (subLines.length > 0 && !subConsent) {
+      onError('Please tick the box to confirm your subscription before paying.');
+      return false;
+    }
     if (!ruoAttested) {
       onError('Please confirm the research-use-only attestation before paying.');
       return false;
@@ -293,6 +315,7 @@ function StripeForm({
         ruoAttested: true,
         attemptId: attemptIdRef.current,
         saveCard: !!isPractitioner && saveCard,
+        subscriptionConsent: subLines.length > 0 && subConsent,
         buyer: { email: email.trim(), phone: phone.trim(), ...address },
       }),
     });
@@ -445,6 +468,35 @@ function StripeForm({
               </span>
             </label>
           )}
+        </div>
+      )}
+
+      {subLines.length > 0 && (
+        <div className="rounded-xl border border-cobalt/30 bg-cobalt/5 px-4 py-3.5">
+          <p className="text-[13px] font-bold text-ink mb-1.5">You are starting a subscription</p>
+          <ul className="text-[13px] text-ink leading-snug mb-2.5 space-y-0.5">
+            {subLines.map((l, i) => (
+              <li key={i}>
+                {l.qty} x {l.title}, ships and bills {l.schedule}
+              </li>
+            ))}
+          </ul>
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={subConsent}
+              onChange={(e) => setSubConsent(e.target.checked)}
+              className="mt-0.5 accent-cobalt"
+            />
+            <span className="text-[13px] text-ink leading-snug">
+              I agree that Merit will keep this card and charge it on that schedule until I cancel. Each renewal is
+              billed at today&rsquo;s Subscribe price, which stays locked, plus shipping. A discount code applies to this
+              first order only.
+              <span className="block text-[11px] text-ink-muted mt-1">
+                We email you 3 days before every charge. Skip, pause or cancel any time from the link in that email.
+              </span>
+            </span>
+          </label>
         </div>
       )}
 

@@ -1173,3 +1173,51 @@ model ProductHandleAlias {
   @@index([newHandle])
   @@map("product_handle_aliases")
 }
+
+// A retail Subscribe & Save subscription. Created when a paid order carries
+// Subscribe lines; the card used at checkout is kept at Stripe and a daily job
+// (/api/cron/subscription-renewals) charges each renewal as an ordinary order.
+// Merit owns the schedule; Stripe only ever sees an amount and internal ids.
+// Table created via Supabase SQL (the pooler cannot migrate).
+model RetailSubscription {
+  id               String    @id @default(cuid())
+  /// ACTIVE | PAUSED | PAST_DUE | CANCELED
+  status           String    @default("ACTIVE")
+  customerEmail    String
+  customerName     String
+  customerPhone    String?
+  shippingFullName String
+  shippingLine1    String
+  shippingLine2    String?
+  shippingCity     String
+  shippingState    String
+  shippingZip      String
+  stripeCustomerId String
+  paymentMethodId  String
+  cardBrand        String?
+  cardLast4        String?
+  /// [{ handle, title, bundleLabel, unitCents, qty, imageUrl }] — what ships
+  /// each cycle. Prices are re-derived at every renewal; unitCents is only
+  /// the figure from the day they subscribed.
+  lines            Json
+  intervalUnit     String    @default("month")
+  intervalCount    Int       @default(1)
+  nextChargeAt     DateTime
+  lastChargedAt    DateTime?
+  /// The nextChargeAt value the "renews soon" email was last sent for.
+  reminderSentFor  DateTime?
+  failedAttempts   Int       @default(0)
+  cycleCount       Int       @default(0)
+  originOrderId    String
+  lastOrderId      String?
+  affiliateId      String?
+  canceledAt       DateTime?
+  cancelReason     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+
+  @@unique([originOrderId, intervalUnit, intervalCount])
+  @@index([status, nextChargeAt])
+  @@index([customerEmail])
+  @@map("retail_subscriptions")
+}

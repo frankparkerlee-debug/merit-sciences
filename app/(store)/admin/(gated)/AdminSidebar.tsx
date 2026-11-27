@@ -29,6 +29,7 @@ const NAV: Section[] = [
     section: 'Audience',
     items: [
       { label: 'Customers', href: '/admin/customers' },
+      { label: 'Subscriptions', href: '/admin/subscriptions' },
       { label: 'Newsletter', href: '/admin/newsletter' },
       {
         label: 'Affiliates',

@@ -255,7 +255,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
   // Add a single product line to the cart + fire the analytics event.
   function addProductToCart(product: Product, source: string) {
     const { bundle, unitCents } = priceForProduct(product);
-    const bundleLabel = subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label;
+    const bundleLabel = subscribeMode ? "Subscribe · Every month" : bundle.label;
     addToCart(
       {
         handle: product.handle,
@@ -332,7 +332,7 @@ export function CatalogClient({ products, stacks, accessories, totalCount, isPra
         {
           handle: product.handle,
           title: product.title,
-          bundleLabel: subscribeMode ? `Subscribe · ${bundle.label}` : bundle.label,
+          bundleLabel: subscribeMode ? "Subscribe · Every month" : bundle.label,
           unitCents,
           imageUrl: product.imageUrl,
         },

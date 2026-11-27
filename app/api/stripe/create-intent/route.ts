@@ -29,6 +29,7 @@ import { sanitizeCartLines, priceCart, isPriceError } from '@/lib/checkout-prici
 import { ATTR_COOKIE, decodeAttrCookie, orderAttributionFields } from '@/lib/attribution';
 import { normalizeClickGoId } from '@/lib/clickgo';
 import { ensureStripeCustomer } from '@/lib/practitioner-card';
+import { isSubscribeLabel, ensureRetailCustomer } from '@/lib/retail-subscriptions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -133,6 +134,28 @@ export async function POST(req: Request) {
     } catch (err) {
       // Saving the card is a convenience; the payment itself must not fail on it.
       console.error('[stripe/create-intent] could not resolve Stripe customer for card on file', err);
+    }
+  }
+
+  // Retail Subscribe & Save: the card is kept so renewals can be charged
+  // without the buyer present. That needs their explicit yes, shown and
+  // ticked on the checkout page next to the renewal terms.
+  const startsSubscription =
+    !priced.practitionerApplicationId && priced.lines.some((l) => isSubscribeLabel(l.bundleLabel));
+  if (startsSubscription) {
+    if (body?.subscriptionConsent !== true) {
+      return NextResponse.json(
+        { error: 'Please confirm the subscription terms before paying.', field: 'subscription' },
+        { status: 400 },
+      );
+    }
+    try {
+      customerId = await ensureRetailCustomer(buyer.email, buyer.fullName);
+    } catch (err) {
+      // Unlike "save card", this is not optional: without a customer the card
+      // cannot be kept and the buyer would be sold a subscription that never renews.
+      console.error('[stripe/create-intent] could not create the subscriber customer', err);
+      return NextResponse.json({ error: 'Could not start the subscription. Try again in a moment.' }, { status: 502 });
     }
   }
 

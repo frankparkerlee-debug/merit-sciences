@@ -34,6 +34,7 @@ import { findByStripeId, syncStatus } from '@/lib/subscriptions';
 import { fulfillSubscriptionInvoice } from '@/lib/subscription-fulfillment';
 import { storeCardFromPaymentMethod } from '@/lib/practitioner-card';
 import { syncStripeRefund } from '@/lib/refunds';
+import { startSubscriptionsFromOrder } from '@/lib/retail-subscriptions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -94,6 +95,17 @@ export async function POST(req: Request) {
               if (card) console.log(`[stripe/webhook] card on file saved for ${practitionerApplicationId}: ${card.brand} ${card.last4}`);
             })
             .catch((err) => console.error('[stripe/webhook] card mirror failed', err));
+        }
+
+        // Retail Subscribe & Save: this payment kept the card (the buyer
+        // agreed to renewals at checkout), so open the subscription now that
+        // the first order is booked. Renewal charges carry no
+        // setup_future_usage, so they never come through here. Idempotent,
+        // and best-effort for the same reason as the card mirror above.
+        if (!practitionerApplicationId && pi.setup_future_usage && pi.customer && result.orderId) {
+          await startSubscriptionsFromOrder(result.orderId, pi)
+            .then((n) => { if (n) console.log(`[stripe/webhook] started ${n} subscription(s) from order ${result.orderId}`); })
+            .catch((err) => console.error('[stripe/webhook] subscription start failed', err));
         }
         break;
       }
