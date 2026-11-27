@@ -191,7 +191,7 @@ export async function validateDiscountCode(
       select: { id: true },
     });
     if (priorUse) {
-      return { ok: false, error: 'This code has already been used on a first order' };
+      return { ok: false, error: code.startsWith('welcome') ? 'This code has already been used on a first order' : 'This code has already been used' };
     }
   }
 

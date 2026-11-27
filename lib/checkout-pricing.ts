@@ -66,6 +66,24 @@ export function hasTierDiscount(bundleLabel: string): boolean {
   return packMultiplier(bundleLabel) !== 1;
 }
 
+/**
+ * Sale codes that set their own line rules instead of the one-offer-per-item
+ * rule above (Parker, 2026-11-27).
+ *
+ * BLACKFRIDAY: the code's percent applies to every one-time line, single
+ * vials and multi-packs alike, on top of pack pricing. Subscribe & Save lines
+ * do not get the sale percent; they get `subscribeExtraPct` off instead, on
+ * top of their own 10%. The percent itself and the end date live on the
+ * Discount row. Keys are lowercase.
+ */
+const SALE_CODES: Record<string, { subscribeExtraPct: number }> = {
+  blackfriday: { subscribeExtraPct: 10 },
+};
+
+function isSubscribeLine(bundleLabel: string): boolean {
+  return (bundleLabel || '').toLowerCase().includes('subscribe');
+}
+
 export type CartLineIn = {
   handle: string;
   title: string;
@@ -312,13 +330,25 @@ export async function priceCart(args: {
   // Lines already priced at a discounted tier (Subscribe & Save, 3-Pack,
   // 6-Pack) are likewise excluded: one offer per item, by Parker's rule of
   // 2026-10-01. A code still applies to the full-price lines in the same cart.
-  const codeEligible = (l: CartLineIn) => !l.handle.startsWith('supply:') && !hasTierDiscount(l.bundleLabel);
+  //
+  // A sale code (SALE_CODES) replaces that rule with its own: its percent
+  // covers every one-time line including multi-packs, and Subscribe lines get
+  // a smaller extra percent instead.
+  const sale = SALE_CODES[discountCodeInput.toLowerCase()] ?? null;
+  const isSupply = (l: CartLineIn) => l.handle.startsWith('supply:');
+  const codeEligible = (l: CartLineIn) =>
+    !isSupply(l) && (sale ? !isSubscribeLine(l.bundleLabel) : !hasTierDiscount(l.bundleLabel));
   const discountableCents = lines
     .filter(codeEligible)
     .reduce((sum, l) => sum + l.unitCents * l.qty, 0);
-  const codeIneligibleCents = lines
-    .filter((l) => !l.handle.startsWith('supply:') && hasTierDiscount(l.bundleLabel))
-    .reduce((sum, l) => sum + l.unitCents * l.qty, 0);
+  const saleSubscribeCents = sale
+    ? lines.filter((l) => !isSupply(l) && isSubscribeLine(l.bundleLabel)).reduce((sum, l) => sum + l.unitCents * l.qty, 0)
+    : 0;
+  const codeIneligibleCents = sale
+    ? 0
+    : lines
+        .filter((l) => !isSupply(l) && hasTierDiscount(l.bundleLabel))
+        .reduce((sum, l) => sum + l.unitCents * l.qty, 0);
 
   // ── Discount + attribution ─────────────────────────────────────────────
   let affiliateId: string | null = null;
@@ -329,7 +359,7 @@ export async function priceCart(args: {
   let attributionVia: 'discount_code' | 'cookie' | null = null;
 
   if (discountCodeInput) {
-    if (discountableCents <= 0) {
+    if (discountableCents <= 0 && saleSubscribeCents <= 0) {
       return {
         error:
           codeIneligibleCents > 0
@@ -345,7 +375,7 @@ export async function priceCart(args: {
     // Validated against the DISCOUNTABLE subtotal, not the cart total — a
     // minimum-spend code must not be unlocked by supply lines it can't apply to.
     const v = await validateDiscountCode(discountCodeInput, {
-      subtotalCents: discountableCents,
+      subtotalCents: discountableCents > 0 ? discountableCents : saleSubscribeCents,
       buyerEmail: args.buyerEmail ?? null,
       shipping: args.shipping ?? null,
       cartQuantity,
@@ -353,7 +383,9 @@ export async function priceCart(args: {
     if (!v.ok) return { error: v.error, field: 'discountCode', status: 400 };
     discountCode = v.code;
     // Clamped: a fixed-amount code must never eat into the supply lines.
-    discountCents = Math.min(v.discountCents, discountableCents);
+    discountCents = discountableCents > 0 ? Math.min(v.discountCents, discountableCents) : 0;
+    // Sale codes: Subscribe lines take the smaller extra percent instead.
+    if (sale) discountCents += Math.floor((saleSubscribeCents * sale.subscribeExtraPct) / 100);
     freeShipping = v.freeShipping;
     if (v.source === 'affiliate') {
       // Affiliate codes carry their own attribution — this wins over ?ref=.
