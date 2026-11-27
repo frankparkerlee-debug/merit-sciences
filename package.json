@@ -8,7 +8,7 @@
     "start": "next start -p ${PORT:-3000}",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && node scripts/patch-next-font.js",
     "db:push": "prisma db push",
     "db:studio": "prisma studio"
   },
