@@ -27,7 +27,10 @@ export type Attribution = {
 };
 
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
-const CLICK_ID_KEYS = ['fbclid', 'ttclid', 'gclid', 'gbraid', 'wbraid', 'msclkid'];
+/** Platform click-id params. Exported so anything that needs to recognise a
+ *  paid click (without treating organic UTM traffic as paid) can match this
+ *  list instead of keeping a second, driftable copy. */
+export const CLICK_ID_KEYS = ['fbclid', 'ttclid', 'gclid', 'gbraid', 'wbraid', 'msclkid'];
 
 export function hasAttributionParams(sp: URLSearchParams): boolean {
   return UTM_KEYS.some((k) => sp.has(k)) || CLICK_ID_KEYS.some((k) => sp.has(k));

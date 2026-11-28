@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { track, identify } from '@/lib/analytics';
 import { isVendorVisitor } from '@/lib/clickgo';
+import { CLICK_ID_KEYS } from '@/lib/attribution';
 
 /**
  * Subscribe / exit-intent popup → email capture → first-order welcome code.
@@ -84,6 +85,12 @@ export function SubscribePopup() {
     // for anyone whose browser already stores a welcome code. Checked both
     // now and at show time: DiscountCodeCapture strips ?code= and writes the
     // localStorage slot after this effect has already run.
+    //
+    // ?code=/?ads=1 only cover Merit's own paid landers. A platform click id
+    // (gclid, etc.) means the same thing — this visit came from a paid ad —
+    // but arrives on links this exemption never saw, so it was still taking
+    // over the screen for real ad clicks (decision #358). Match the
+    // platform's own click-id params too, not just the custom flag.
     const holdsCode = (): boolean => {
       // Vendor (BHS) visitors never see Merit's offer: their rep's commission
       // and our discount don't stack.
@@ -93,6 +100,7 @@ export function SubscribePopup() {
       try {
         const sp = new URLSearchParams(window.location.search);
         if (sp.has('code') || sp.get('ads') === '1') return true;
+        if (CLICK_ID_KEYS.some((k) => sp.has(k))) return true;
         if (localStorage.getItem('merit_welcome_code')) return true;
         if (document.cookie.includes('merit_welcome=')) return true;
       } catch {
